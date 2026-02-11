@@ -1706,7 +1706,7 @@ function excerpt(text, maxChars = 1000) {
         turnstile_token: turnstileToken
       };
 
-      const resp = await fetch(`${SUPABASE_URL}/functions/v1/new-post`, {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/dynamic-service`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -1875,6 +1875,7 @@ function excerpt(text, maxChars = 1000) {
   </script>
 </body>
 </html>
+
 
 
 
