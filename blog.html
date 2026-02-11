@@ -1693,6 +1693,10 @@ function excerpt(text, maxChars = 1000) {
         return;
       }
 
+      console.log("turnstile token length", turnstileToken ? turnstileToken.length : 0);
+      if (turnstileToken && turnstileToken.length < 20) {
+        turnstileToken = "";
+      }
       if (!turnstileToken) {
         alert("Please complete the anti-spam check.");
         return;
@@ -1744,6 +1748,9 @@ function excerpt(text, maxChars = 1000) {
       composerModal.classList.add("open");
       composerModal.setAttribute("aria-hidden", "false");
       lockScroll();
+      if (window.turnstile && window.turnstile.reset) {
+        window.turnstile.reset();
+      }
       // focus title input for fast typing
       setTimeout(() => {
         const el = document.getElementById("postTitle");
