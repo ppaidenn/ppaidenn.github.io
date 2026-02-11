@@ -1754,7 +1754,6 @@ function excerpt(text, maxChars = 1000) {
       if (window.turnstile && window.turnstile.reset) {
         window.turnstile.reset();
       }
-      console.log("secret starts with", TURNSTILE_SECRET.slice(0, 6));
       
       // focus title input for fast typing
       setTimeout(() => {
