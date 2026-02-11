@@ -8,6 +8,7 @@
 <meta content="Paiden's blog page — write posts and view them in a pop-up modal." name="description"/>
 <!-- Font Awesome Kit -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <style>
     /* CUSTOM PROPERTIES: Adjust these values to tweak proportions */
     :root {
@@ -271,6 +272,11 @@
       justify-content: flex-end;
       flex: 0 0 auto;
       margin-left: 0px; /* EDIT: nudge Publish left/right */
+    }
+    .turnstile-wrap{
+      margin-top: 8px;
+      display: flex;
+      justify-content: flex-start;
     }
 
     /* Publish button styling */
@@ -1154,15 +1160,26 @@
         </article>
         -->
 <!-- POST:START static-001 -->
-<article class="post-card" data-author="Paiden" data-body="This is the blog page.\n\nClick any post to open it in a popup.\n\nYou can also create new posts with photos using the form above." data-created="2025-12-16T00:00:00Z" data-images="" data-post-id="static-001" data-title="Welcome to the blog">
-<div class="post-inner"><div class="post-left"><div class="post-topline"><h4 class="post-title">Welcome to the blog</h4><span class="post-date">Dec 16, 2025</span></div><div class="post-author">By <span class="post-author-name"></span></div><p class="post-excerpt">This is the blog page. Click any post to open it in a popup. You can also create new posts with photos using the form above.</p></div><div aria-hidden="true" class="post-right"><div class="post-thumbrow"></div></div></div>
+<article class="post-card" data-author="Paiden" data-body="This is a public forum that anyone may use to spread their message. Click any post to open it in a popup. You can also create new posts with photos using the form above.
+
+Note: I am notified of all posts and will be moderating content. You do not have free speech, I am the dictator of this blog." data-created="2025-12-16T00:00:00Z" data-images="" data-post-id="static-001" data-title="Welcome to the blog">
+<div class="post-inner">
+  <div class="post-left">
+    <h4 class="post-title">Welcome to the blog</h4>
+    <div class="post-author">By <span class="post-author-name"></span></div>
+    <div class="post-date">Dec 16, 2025</div>
+    <p class="post-excerpt">This is a public forum that anyone may use to spread their message. 
+      Click any post to open it in a popup. You can also create new posts with photos using the form above.
+      <br><br>
+      Note: I am notified of all posts and will be moderating content. You do not have free speech, I am the dictator of this blog.
+    </p>
+  </div>
+  <div aria-hidden="true" class="post-right">
+    <div class="post-thumbrow"></div>
+  </div>
+</div>
 </article>
 <!-- POST:END static-001 -->
-<!-- POST:START static-002 -->
-<article class="post-card" data-author="Paiden" data-body="This site is my personal hub: projects, photos, and whatever else I’m doing.\n\nThe blog is where I’ll dump quick updates, trip notes, and random thoughts." data-created="2025-12-10T00:00:00Z" data-images="" data-post-id="static-002" data-title="How I use this site">
-<div class="post-inner"><div class="post-left"><div class="post-topline"><h4 class="post-title">How I use this site</h4><span class="post-date">Dec 10, 2025</span></div><div class="post-author">By <span class="post-author-name"></span></div><p class="post-excerpt">This site is my personal hub: projects, photos, and whatever else I’m doing. The blog is where I’ll dump quick updates, trip notes, and random thoughts.</p></div><div aria-hidden="true" class="post-right"><div class="post-thumbrow"></div></div></div>
-</article>
-<!-- POST:END static-002 -->
 <!-- ===================== BLOG POSTS END ===================== -->
 <!-- ===========================================
              USER POSTS (AUTO-INSERTED VIA localStorage)
@@ -1216,6 +1233,9 @@
 	      <i class="fa-solid fa-paper-plane"></i> Publish
 	    </button>
 	  </div>
+	</div>
+	<div class="turnstile-wrap">
+	  <div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITE_KEY" data-callback="onTurnstile" data-expired-callback="onTurnstileExpired"></div>
 	</div>
 <div aria-label="Photo preview" class="preview-grid" id="photoPreview"></div>
 <p class="muted-note">Tip: the first 3 photos become the “thumbnail row” on the post card.</p>
@@ -1301,6 +1321,10 @@
     const sb = (window.supabase && window.supabase.createClient)
       ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
       : null;
+
+    let turnstileToken = "";
+    window.onTurnstile = (token) => { turnstileToken = token || ""; };
+    window.onTurnstileExpired = () => { turnstileToken = ""; };
 
     const blogGrid = document.getElementById("blogGrid");
         const pageRangeLabel = document.getElementById("pageRangeLabel");
@@ -1669,16 +1693,27 @@ function excerpt(text, maxChars = 1000) {
         return;
       }
 
-      const post = {
+      if (!turnstileToken) {
+        alert("Please complete the anti-spam check.");
+        return;
+      }
+
+      const payload = {
         title,
         author,
         body,
-        images: draftImages.slice(0, 18) // keep it reasonable
+        images: draftImages.slice(0, 18), // keep it reasonable
+        turnstile_token: turnstileToken
       };
 
-      const { error } = await sb.from("posts").insert([post]);
-      if (error) {
-        console.error("Failed to publish post:", error);
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/new-post`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!resp.ok) {
+        const msg = await resp.text().catch(() => "");
+        console.error("Failed to publish post:", msg);
         alert("Post could not be published. Please try again.");
         return;
       }
@@ -1687,6 +1722,10 @@ function excerpt(text, maxChars = 1000) {
       authorEl.value = "";
       bodyEl.value = "";
       clearPreview();
+      turnstileToken = "";
+      if (window.turnstile && window.turnstile.reset) {
+        window.turnstile.reset();
+      }
       currentPage = 1;
       await renderUserPostsIntoGrid();
 });
@@ -1775,7 +1814,7 @@ function excerpt(text, maxChars = 1000) {
       const who = (author && author.trim()) ? `By ${author.trim()}` : "By Anonymous";
       const when = created ? formatDateShort(created) : "";
       modalMeta.textContent = when ? `${who} • ${when}` : who;
-      modalBody.textContent = body || "";
+      modalBody.innerHTML = body ? body.replace(/\n/g, "<br>") : "";
 
       modalImages = images;
       modalIndex = 0;
