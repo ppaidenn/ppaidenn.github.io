@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>paiden.com</title>
+  <meta name="description" content="Paiden's personal website showcasing his bio, projects, education, and career experience.">
+
+  <!-- 1. FONT AWESOME LINK -->
+  <script src="https://kit.fontawesome.com/cfa95956d7.js" crossorigin="anonymous"></script>
+
+  <style>
+    /* CUSTOM PROPERTIES: Adjust these values to tweak proportions */
+    :root {
+      --side-margin: 10vw;            /* Responsive horizontal margin */
+      --nav-height: 20vh;             /* Height of navigation overlay */
+      --slideshow-height: 85vh;       /* Height of the slideshow container */
+      --footer-padding: 7vh;          /* Vertical padding for the footer */
+      --brand-font-size: 2.5vw;       /* Font size for nav brand (paiden.com) */
+      --nav-font-size: 1.2vw;         /* Font size for other nav links */
+      --header-font-size: 4vw;        /* Font size for overlay header */
+      --subheader-font-size: 1.5vw;   /* Font size for overlay subheader */
+      --footer-title-font-size: 2vw;  /* Font size for footer brand/button */
+      --footer-subtitle-font-size: 1vw; /* Font size for footer text */
+      --footer-button-spacing: 0.75vw; /* Adjustable space between paiden.com and footer text */
+      --footer-nav-font-size: 1vw;    /* Font size for footer navigation links */
+      --footer-nav-left: 15vw;        /* Adjustable left offset for footer navigation links */
+      --spacing-small: 0.5vw;         /* Small vertical spacing */
+      --spacing-large: 1.5vw;         /* Larger horizontal spacing */
+    }
+
+    /* Global box-sizing and reserve scrollbar space */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    html {
+      scrollbar-gutter: stable;
+    }
+
+    /* Overall page styling using the responsive side margin */
+    body {
+      margin: 0 var(--side-margin);
+      padding: 0;
+      font-family: Arial, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Full-width slideshow container spanning the entire viewport */
+    .slideshow-container {
+      position: relative;
+      width: 100vw;
+      height: var(--slideshow-height);
+      margin-left: calc(50% - 50vw);
+      overflow: hidden;
+    }
+
+    /* Navigation overlay spanning full width with gradient shading */
+    .nav-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--nav-height);
+      background: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+      z-index: 3;
+      display: flex;
+      align-items: center;
+    }
+
+    /* Inner container for nav buttons, constrained within the responsive side margin */
+    .nav-inner {
+      width: 100%;
+      margin-left: var(--side-margin);
+      margin-right: var(--side-margin);
+      display: flex;
+      align-items: flex-end;
+    }
+
+    /* Styling for the brand button in nav */
+    .brand a {
+      color: white;
+      text-decoration: none;
+      font-size: var(--brand-font-size);
+      font-weight: bold;
+      padding-bottom: var(--spacing-small);
+      padding-right: var(--spacing-large);
+      border-right: 0.1vw solid white;
+      margin-right: var(--spacing-large);
+    }
+
+    /* Container for the remaining nav links */
+    .nav-items {
+      display: flex;
+      align-items: flex-end;
+    }
+
+    /* Styling for the nav links */
+    .nav-items a {
+      color: white;
+      text-decoration: none;
+      margin-right: var(--spacing-large);
+      font-size: var(--nav-font-size);
+      font-weight: bold;
+      padding-bottom: var(--spacing-small);
+    }
+
+    .nav-items a:hover {
+      text-decoration: underline;
+    }
+
+    /* Constant overlay text container with header and sub-header */
+    .slideshow-text {
+      position: absolute;
+      top: 65%;
+      left: var(--side-margin);
+      transform: translateY(-50%);
+      color: white;
+      text-align: left;
+      z-index: 2;
+    }
+
+    .slideshow-text h1 {
+      margin: 0;
+      margin-bottom: var(--spacing-small);
+      font-size: var(--header-font-size);
+      font-weight: bold;
+    }
+
+    .slideshow-text h2 {
+      margin: 0;
+      font-size: var(--subheader-font-size);
+      font-weight: normal;
+    }
+
+    /* Slide styling with fade effect */
+    .slide {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+
+    .slide.active {
+      opacity: 1;
+    }
+
+    .slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(50%);
+    }
+
+    /* Main content styling remains within the responsive margins */
+    .main-content {
+      padding: 20px;
+    }
+
+    
+
+    /* FOOTER STYLING: Full-width background with inner container */
+    .footer { width: 100vw; margin-left: calc(50% - 50vw); background-color: #000; padding: var(--footer-padding) 0; position: relative; }
+
+    /* Footer inner container aligning content with responsive margins */
+    .footer-inner {
+      margin: 0 var(--side-margin); text-align: left; position: relative;
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+
+    /* Footer left column */
+    .footer-left { display: flex; flex-direction: column; align-items: flex-start; }
+    .footer-left .footer-brand { font-size: var(--footer-title-font-size); font-weight: bold; color: white; text-decoration: none; margin-bottom: var(--footer-button-spacing); }
+    .footer-left .footer-created, .footer-left .footer-updated { font-size: var(--footer-subtitle-font-size); color: white; margin-top: var(--spacing-small); }
+
+    /* The vertical nav in the footer */
+    .footer-nav { position: absolute; top: 50%; left: var(--footer-nav-left); transform: translateY(-45%); display: flex; flex-direction: column; align-items: flex-start; }
+    .footer-nav a { font-size: var(--footer-nav-font-size); color: white; text-decoration: none; margin-bottom: var(--spacing-small); }
+    .footer-nav a:hover { text-decoration: underline; }
+
+    /* Social icons section (right aligned) */
+    .footer-social { display: flex; flex-direction: column; align-items: flex-end; color: white; }
+    .footer-social .follow-text { font-size: var(--footer-nav-font-size); font-weight: bold; margin-bottom: var(--spacing-small); }
+    .social-icons { display: flex; gap: 1vw; }
+    .social-icons a { color: white; font-size: 2vw; transition: transform 0.2s ease; text-decoration: none; }
+    .social-icons a:hover { transform: scale(1.1); }
+
+    /* Media query for smaller screens */
+    @media (max-width: 600px) {
+      :root {
+        --side-margin: 5vw;
+        --brand-font-size: 4vw;
+        --nav-font-size: 3vw;
+        --header-font-size: 6vw;
+        --subheader-font-size: 3vw;
+        --footer-title-font-size: 4vw;
+        --footer-subtitle-font-size: 2vw;
+        --footer-nav-font-size: 3vw;
+      }
+
+      .nav-inner, .footer-inner {
+        margin-left: var(--side-margin);
+        margin-right: var(--side-margin);
+      }
+
+      .social-icons a {
+        font-size: 5vw; /* Larger icons on small screens */
+      }
+    }
+
+    /* ===== Home (center section only) ===== */
+    .home-cream{
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      background: #e0e0e0; /* match other pages */
+      padding: 6vh 0;
+    }
+    .home-wrap{
+      max-width: 1500px;           /* wider content block */
+      margin: 0 auto;
+      padding: 0 3vw;              /* equal side breathing room */
+    }
+
+    .home-panel{
+      background: #f4f0e7;
+      border-radius: 32px;
+      padding: 4vw;                /* equal padding on all sides */
+      box-shadow: 0 18px 45px rgba(0,0,0,0.10);
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .home-panel{
+      background: #f4f0e7; /* cream card */
+      border-radius: 28px;
+      padding: 5vh 4vw;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.10);
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    .home-lede p{
+      max-width: 100%;
+      font-size: 1.35vw;
+      line-height: 1.7;
+      color: #222;
+      margin: 0 0 5vh 0;
+    }
+
+    .home-cards{
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3vw;
+      margin-bottom: 5vh;
+    }
+    .home-card{
+      display: block;
+      background: rgba(255,255,255,0.60);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 22px;
+      padding: 2.2vw;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 14px 30px rgba(0,0,0,0.08);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+    .home-card:hover{
+      transform: translateY(-0.2vw);
+      box-shadow: 0 1.1vw 2.4vw rgba(0,0,0,0.10);
+      background: rgba(255,255,255,0.70);
+    }
+    .home-card h3{
+      margin: 0 0 1vw 0;
+      font-size: 1.3vw;
+      letter-spacing: 0.01em;
+      color: #111;
+    }
+    .home-card p{
+      margin: 0 0 2vw 0;
+      font-size: 1.05vw;
+      line-height: 1.6;
+      color: #333;
+    }
+    .home-card-link{
+      display: inline-block;
+      font-size: 1vw;
+      font-weight: 700;
+      color: #111;
+      border-bottom: 0.12vw solid rgba(0,0,0,0.25);
+      padding-bottom: 0.2vw;
+    }
+
+    .home-rule{
+      border: none;
+      height: 1px;
+      background: rgba(0,0,0,0.20);
+      margin: 4vh 0 4vh 0;
+    }
+
+    .home-bottom{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4vw;
+      align-items: start;
+    }
+
+    .home-kicker{
+      font-size: 0.95vw;
+      letter-spacing: 0.25em;
+      font-weight: 800;
+      color: #111;
+      margin-bottom: 1.2vw;
+    }
+
+    .home-current ul{
+      margin: 0;
+      padding-left: 1.2em;
+      color: #222;
+      font-size: 1.05vw;
+      line-height: 1.8;
+    }
+    .home-current li{
+      margin-bottom: 0.6vw;
+    }
+
+    .home-pills{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.9vw;
+    }
+    .pill{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.75vw 1.2vw;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,0.22);
+      background: #fff;
+      text-decoration: none;
+      color: #111;
+      font-weight: 700;
+      font-size: 1vw;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+    .pill:hover{
+      background: rgba(255,255,255,0.60);
+      transform: translateY(-0.1vw);
+    }
+
+    /* Mobile tweaks (center section only) */
+    @media (max-width: 900px){
+      .home-wrap{ max-width: 100%; padding: 0 16px; }
+      .home-panel{ padding: 24px; border-radius: 22px; }
+
+      .home-panel{ border-radius: 22px; padding: 28px 18px; }
+
+      .home-lede p{ font-size: 16px; padding: 0 6px; }
+      .home-cards{ grid-template-columns: 1fr; gap: 18px; }
+      .home-card{ border-radius: 18px; padding: 18px; box-shadow: 0 10px 28px rgba(0,0,0,0.10); }
+      .home-card h3{ font-size: 18px; }
+      .home-card p{ font-size: 14px; }
+      .home-card-link{ font-size: 14px; }
+      .home-bottom{ grid-template-columns: 1fr; gap: 28px; }
+      .home-kicker{ font-size: 12px; margin-bottom: 14px; }
+      .home-current ul{ font-size: 14px; }
+      .home-pills{ gap: 10px; }
+      .pill{ font-size: 14px; padding: 10px 14px; }
+    }
+
+  </style>
+</head>
+<body>
+  <!-- Full-width slideshow container -->
+  <div class="slideshow-container">
+    <!-- Navigation overlay with gradient shading -->
+    <div class="nav-overlay">
+      <div class="nav-inner">
+        <!-- Brand button in nav -->
+        <div class="brand">
+          <a href="main_page.html">paiden.com</a>
+        </div>
+        <!-- Navigation buttons -->
+        <div class="nav-items">
+          <a href="resume.html">Resume</a>
+          <a href="photos.html">Photos</a>
+          <a href="blog.html">Blog</a>
+          <a href="contact_me.html">Contact Me</a>
+        </div>
+      </div>
+    </div>
+    <!-- Constant overlay text -->
+    <div class="slideshow-text">
+      <h1>Hello, I'm Paiden</h1>
+      <h2>Welcome to my website</h2>
+    </div>
+    <!-- Slides -->
+    <!-- Slides -->
+    <div class="slide active"><img src="images/header/falls.jpg" alt="falls" /></div>
+    <div class="slide"><img src="images/header/swiss.JPG" alt="Swiss" /></div>
+    <div class="slide"><img src="images/header/rocket.JPG" alt="Rocket" /></div>
+    <div class="slide"><img src="images/header/chief_mtn.JPG" alt="Chief Mtn" /></div>
+    <div class="slide"><img src="images/header/land.JPG" alt="Land" /></div>
+    <div class="slide"><img src="images/header/incline.JPG" alt="incline" /></div>
+    <div class="slide"><img src="images/header/castle.JPG" alt="castle" /></div>
+    <div class="slide"><img src="images/header/lake.JPG" alt="lake" /></div>
+    <div class="slide"><img src="images/header/avalanche.JPG" alt="avalanche" /></div>
+    <div class="slide"><img src="images/header/sistine.JPG" alt="sistine" /></div>
+  </div>
+
+    <!-- Main content section -->
+    <div class="main-content home-cream">
+      <section class="home-wrap">
+        <div class="home-panel">
+<div class="home-lede">
+          <p>
+            I built this website as an educational project and a place to document what I’m working on. It includes my professional background as well as some interactive personal projects. Read about some of the options below and feel free to explore.
+          </p>
+        </div>
+
+        <div class="home-cards">
+          <a class="home-card" href="resume.html">
+            <h3>Professional Content</h3>
+            <p>The Resume page showcases my accomplishments and abilities within an embedded PDF.</p>
+            <span class="home-card-link">View resume <span aria-hidden="true">→</span></span>
+          </a>
+
+          <a class="home-card" href="blog.html">
+            <h3>Social Media</h3>
+            <p>An independent social media page can be found in the Blog section, free for anyone to post!</p>
+            <span class="home-card-link">Read posts <span aria-hidden="true">→</span></span>
+          </a>
+
+          <a class="home-card" href="contact_me.html">
+            <h3>Get In Touch</h3>
+            <p>Feel free to message me with ideas for the website, important news, or just to say hello in the Contact Me page.</p>
+            <span class="home-card-link">Find me <span aria-hidden="true">→</span></span>
+          </a>
+        </div>
+
+        <hr class="home-rule" />
+
+        <div class="home-bottom">
+          <div class="home-current">
+            <div class="home-kicker">CURRENTLY</div>
+            <ul>
+              <li>Documenting projects as I build them (not just the final output).</li>
+              <li>Collecting useful notes, explanations, and write-ups in the blog.</li>
+              <li>Keeping a lightweight photo archive that’s easy to browse.</li>
+              <li>These bullet points are AI slop, but I think the list looks nice.</li>
+            </ul>
+          </div>
+
+          <div class="home-links">
+            <div class="home-kicker">QUICK LINKS</div>
+            <div class="home-pills">
+              <a class="pill" href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener">paiden.org</a>
+              <a class="pill" href="https://canvas.iastate.edu/" target="_blank" rel="noopener">Canvas</a>
+              <a class="pill" href="https://outlook.office.com/mail/" target="_blank" rel="noopener">Outlook</a>
+              <a class="pill" href="https://open.spotify.com/user/osrc077sckr4onucbypo1l65z" target="_blank" rel="noopener">Spotify</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+      </section>
+    </div>
+<!-- Footer section with inner container -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <!-- Left side: paiden.com, Created by, Last Updated -->
+      <div class="footer-left">
+        <a class="footer-brand" href="main_page.html">paiden.com</a>
+        <div class="footer-created">Created by Paiden Nicks</div>
+        <div class="footer-updated" id="last-updated"></div>
+      </div>
+
+      <!-- Existing vertical nav (absolutely positioned) -->
+      <div class="footer-nav">
+        <a href="resume.html">Resume</a>
+        <a href="photos.html">Photos</a>
+        <a href="blog.html">Blog</a>
+        <a href="contact_me.html">Contact Me</a>
+      </div>
+
+      <!-- Right side: Social Icons -->
+      <div class="footer-social">
+        <span class="follow-text">Follow Me</span>
+        <div class="social-icons">
+          <!-- Replace “YourProfile” with your actual username/ID -->
+          <a href="https://www.linkedin.com/in/paiden" target="_blank">
+            <i class="fab fa-linkedin-in"></i>
+          </a>
+          <a href="https://www.instagram.com/paiden_26" target="_blank">
+            <i class="fab fa-instagram"></i>
+          </a>
+          <a href="https://snapchat.com/t/m04JWymy" target="_blank">
+            <i class="fab fa-snapchat"></i>
+          </a>
+          <a href="https://x.com/PaidenN" target="_blank">
+            <i class="fab fa-x-twitter"></i>
+            <!-- If fa-x-twitter doesn't load, fallback to fa-twitter:
+                 <i class="fab fa-twitter"></i> -->
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JavaScript to cycle through slides automatically and update footer date -->
+  <script>
+    let slideIndex = 0;
+    const slides = document.getElementsByClassName("slide");
+    function showSlides() {
+      for (let i = 0; i < slides.length; i++) {
+        slides[i].classList.remove("active");
+      }
+      slideIndex++;
+      if (slideIndex > slides.length) {
+        slideIndex = 1;
+      }
+      slides[slideIndex - 1].classList.add("active");
+      setTimeout(showSlides, 5000); // Change slide every 5 seconds
+    }
+    showSlides();
+    
+    // Update footer with the current date
+    document.getElementById("last-updated").innerText =
+      "Today's Date: " + new Date().toLocaleDateString();
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
