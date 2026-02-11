@@ -1086,7 +1086,7 @@
 <div class="slideshow-container">
 <div class="nav-overlay">
 <div class="nav-inner">
-<div class="brand"><a href="index.html">paiden.com</a></div>
+<div class="brand"><a href="main_page.html">paiden.com</a></div>
 <div class="nav-items">
 <a href="resume.html">Resume</a>
 <a href="photos.html">Photos</a>
@@ -1257,7 +1257,7 @@
 <footer class="footer">
 <div class="footer-inner">
 <div class="footer-left">
-<a class="footer-brand" href="index.html">paiden.com</a>
+<a class="footer-brand" href="main_page.html">paiden.com</a>
 <div class="footer-created">Created by Paiden Nicks</div>
 <div class="footer-updated" id="last-updated"></div>
 </div>
@@ -1278,7 +1278,7 @@
 </div>
 </div>
   </footer>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
     // ===== Header slideshow + footer date =====
     let slideIndex = 0;
@@ -1298,7 +1298,9 @@
     // ===== Blog logic (static posts + Supabase posts) =====
     const SUPABASE_URL = "https://irauuqhqqkctcwulqzsw.supabase.co";
     const SUPABASE_KEY = "sb_publishable_93dGo8oZILIYg9NSotz9MQ_T8v22oXR";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = (window.supabase && window.supabase.createClient)
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+      : null;
 
     const blogGrid = document.getElementById("blogGrid");
         const pageRangeLabel = document.getElementById("pageRangeLabel");
@@ -1376,6 +1378,10 @@ const titleEl = document.getElementById("postTitle");
     }
 
     async function loadPostsFromSupabase() {
+      if (!supabase) {
+        console.error("Supabase client not available. Check script load or ad blockers.");
+        return [];
+      }
       const { data, error } = await supabase
         .from("posts")
         .select("id,title,author,body,images,created_at")
@@ -1650,6 +1656,10 @@ function excerpt(text, maxChars = 1000) {
 
     // Publish
     btnPublish.addEventListener("click", async () => {
+      if (!supabase) {
+        alert("Post service unavailable. Please refresh or disable blockers.");
+        return;
+      }
       const title = (titleEl.value || "").trim();
       const author = (authorEl.value || "").trim();
       const body = (bodyEl.value || "").trim();
