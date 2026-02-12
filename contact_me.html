@@ -8,6 +8,7 @@
 
   <!-- Font Awesome Kit -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
   <style>
     /* CUSTOM PROPERTIES: Adjust these values to tweak proportions */
@@ -343,6 +344,9 @@
       border: 1px solid rgba(0,0,0,0.10);
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
+    .turnstile-wrap{
+      margin: 0 0 1.6vw 0;
+    }
 
     .contact-form button:hover{
       transform: translateY(-0.12vw);
@@ -477,7 +481,7 @@
           <div class="field-spacer"></div>
 
           <!-- Note: This is a front-end-only form (no backend). Add your own form handler later if you want. -->
-          <form class="contact-form" onsubmit="event.preventDefault(); alert('Thanks! (This form is not wired up yet.)');">
+          <form class="contact-form" id="contactForm">
             <div>
               <label for="name">Name</label>
               <input id="name" name="name" type="text" placeholder="Your name" autocomplete="name" />
@@ -493,6 +497,9 @@
               <textarea id="message" name="message" placeholder="What’s up?"></textarea>
             </div>
 
+            <div class="turnstile-wrap">
+              <div class="cf-turnstile" data-sitekey="0x4AAAAAACayR7BTiRED3OPy" data-callback="onTurnstileContact" data-expired-callback="onTurnstileContactExpired"></div>
+            </div>
             <button type="submit">Send</button>
           </form>
         </div>
@@ -588,6 +595,51 @@
     // Update footer with the current date
     document.getElementById("last-updated").innerText =
       "Today's Date: " + new Date().toLocaleDateString();
+
+    // Contact form -> Edge Function
+    const CONTACT_ENDPOINT = "https://irauuqhqqkctcwulqzsw.supabase.co/functions/v1/contact-message";
+    let contactTurnstileToken = "";
+    window.onTurnstileContact = (token) => { contactTurnstileToken = token || ""; };
+    window.onTurnstileContactExpired = () => { contactTurnstileToken = ""; };
+
+    const contactForm = document.getElementById("contactForm");
+    if (contactForm) {
+      contactForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = (document.getElementById("name")?.value || "").trim();
+        const email = (document.getElementById("email")?.value || "").trim();
+        const message = (document.getElementById("message")?.value || "").trim();
+
+        if (!message) {
+          alert("Please enter a message.");
+          return;
+        }
+        if (!contactTurnstileToken) {
+          alert("Please complete the anti-spam check.");
+          return;
+        }
+
+        const payload = { name, email, message, turnstile_token: contactTurnstileToken };
+        const resp = await fetch(CONTACT_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (!resp.ok) {
+          const msg = await resp.text().catch(() => "");
+          alert("Could not send message. Please try again.");
+          console.error("Contact error:", msg);
+          return;
+        }
+
+        contactForm.reset();
+        contactTurnstileToken = "";
+        if (window.turnstile && window.turnstile.reset) {
+          window.turnstile.reset();
+        }
+        alert("Message sent. Thanks!");
+      });
+    }
   </script>
 
 </body>
