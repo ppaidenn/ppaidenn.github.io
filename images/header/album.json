@@ -1,5 +1,5 @@
 {
-  "images": ["avalanche.JPG", "castle.JPG", "chief_mtn.JPG", "falls.JPG", "incline.HEIC", "lake.JPG", "land.jpg", "rocket.JPG", "sistine.JPG", "swiss.JPG"],
+  "images": ["avalanche.JPG", "castle.JPG", "chief_mtn.JPG", "falls.jpg", "incline.HEIC", "lake.JPG", "land.jpg", "rocket.JPG", "sistine.JPG", "swiss.JPG"],
   "interval_ms": 5000,
   "shuffle": false
 }
