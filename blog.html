@@ -1336,6 +1336,18 @@ Note: I am notified of all posts and will be moderating content. You do not have
     let turnstileToken = "";
     window.onTurnstile = (token) => { turnstileToken = token || ""; };
     window.onTurnstileExpired = () => { turnstileToken = ""; };
+    function formatWaitTime(seconds) {
+      const total = Math.max(1, Number(seconds) || 0);
+      if (total < 60) {
+        return `${total} second${total === 1 ? "" : "s"}`;
+      }
+      const minutes = Math.floor(total / 60);
+      const remainingSeconds = total % 60;
+      if (!remainingSeconds) {
+        return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+      }
+      return `${minutes} minute${minutes === 1 ? "" : "s"} ${remainingSeconds} second${remainingSeconds === 1 ? "" : "s"}`;
+    }
 
     const blogGrid = document.getElementById("blogGrid");
         const pageRangeLabel = document.getElementById("pageRangeLabel");
@@ -1731,9 +1743,20 @@ function excerpt(text, maxChars = 1000) {
         body: JSON.stringify(payload)
       });
       if (!resp.ok) {
-        const msg = await resp.text().catch(() => "");
-        console.error("Failed to publish post:", msg);
-        alert("Post could not be published. Please try again.");
+        let errJson = null;
+        try {
+          errJson = await resp.json();
+        } catch (_) {
+          // Ignore non-JSON error responses and show fallback text.
+        }
+
+        console.error("Failed to publish post:", errJson);
+        if (resp.status === 429) {
+          const wait = formatWaitTime(errJson?.wait_seconds);
+          alert(`Please wait ${wait} before sending another message.`);
+        } else {
+          alert(errJson?.message || errJson?.error || "Post could not be published. Please try again.");
+        }
         return;
       }
 // Reset form + rerender

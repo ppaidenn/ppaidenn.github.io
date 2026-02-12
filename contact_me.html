@@ -650,7 +650,7 @@
 
           if (resp.status === 429) {
             const wait = formatWaitTime(errJson?.wait_seconds);
-            alert(`Please wait ${wait} between messages.`);
+            alert(`Please wait ${wait} before sending another message.`);
           } else {
             alert(errJson?.message || errJson?.error || "Could not send message. Please try again.");
           }
