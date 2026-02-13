@@ -323,10 +323,7 @@
     }
 
     .home-bottom{
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4vw;
-      align-items: start;
+      display: block;
     }
 
     .home-kicker{
@@ -337,39 +334,54 @@
       margin-bottom: 1.2vw;
     }
 
-    .home-current ul{
-      margin: 0;
-      padding-left: 1.2em;
-      color: #222;
-      font-size: 1.05vw;
-      line-height: 1.8;
+    .home-links-full{
+      width: 100%;
     }
-    .home-current li{
-      margin-bottom: 0.6vw;
+    .quick-grid{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.2vw;
     }
-
-    .home-pills{
+    .quick-tile{
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.9vw;
-    }
-    .pill{
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.75vw 1.2vw;
-      border-radius: 999px;
-      border: 1px solid rgba(0,0,0,0.22);
-      background: #fff;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: clamp(180px, 16vw, 300px);
+      border-radius: 20px;
+      padding: 1.4vw;
       text-decoration: none;
       color: #111;
-      font-weight: 700;
-      font-size: 1vw;
-      transition: background 0.15s ease, transform 0.15s ease;
+      border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 14px 30px rgba(0,0,0,0.08);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      background: linear-gradient(160deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
     }
-    .pill:hover{
-      background: rgba(255,255,255,0.60);
-      transform: translateY(-0.1vw);
+    .quick-tile:hover{
+      transform: translateY(-0.2vw);
+      box-shadow: 0 18px 36px rgba(0,0,0,0.12);
+    }
+    .quick-tile i{
+      font-size: 1.8vw;
+      margin-bottom: 0.8vw;
+      color: #111;
+    }
+    .quick-tile h4{
+      margin: 0 0 0.6vw 0;
+      font-size: 1.3vw;
+      color: #111;
+    }
+    .quick-tile p{
+      margin: 0;
+      font-size: 1vw;
+      line-height: 1.55;
+      color: #2a2a2a;
+    }
+    .quick-cta{
+      margin-top: 1vw;
+      font-size: 0.95vw;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #111;
     }
 
     /* Mobile tweaks (center section only) */
@@ -385,11 +397,14 @@
       .home-card h3{ font-size: 18px; }
       .home-card p{ font-size: 14px; }
       .home-card-link{ font-size: 14px; }
-      .home-bottom{ grid-template-columns: 1fr; gap: 28px; }
+      .home-bottom{ display: block; }
       .home-kicker{ font-size: 12px; margin-bottom: 14px; }
-      .home-current ul{ font-size: 14px; }
-      .home-pills{ gap: 10px; }
-      .pill{ font-size: 14px; padding: 10px 14px; }
+      .quick-grid{ grid-template-columns: 1fr; gap: 12px; }
+      .quick-tile{ min-height: 160px; padding: 16px; border-radius: 16px; }
+      .quick-tile i{ font-size: 22px; margin-bottom: 10px; }
+      .quick-tile h4{ font-size: 18px; margin-bottom: 8px; }
+      .quick-tile p{ font-size: 14px; }
+      .quick-cta{ font-size: 13px; margin-top: 10px; }
     }
 
   </style>
@@ -465,23 +480,41 @@
         <hr class="home-rule" />
 
         <div class="home-bottom">
-          <div class="home-current">
-            <div class="home-kicker">CURRENTLY</div>
-            <ul>
-              <li>Documenting projects as I build them (not just the final output).</li>
-              <li>Collecting useful notes, explanations, and write-ups in the blog.</li>
-              <li>Keeping a lightweight photo archive that’s easy to browse.</li>
-              <li>These bullet points are AI slop, but I think the list looks nice.</li>
-            </ul>
-          </div>
-
-          <div class="home-links">
+          <div class="home-links-full">
             <div class="home-kicker">QUICK LINKS</div>
-            <div class="home-pills">
-              <a class="pill" href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener">paiden.org</a>
-              <a class="pill" href="https://canvas.iastate.edu/" target="_blank" rel="noopener">Canvas</a>
-              <a class="pill" href="https://outlook.office.com/mail/" target="_blank" rel="noopener">Outlook</a>
-              <a class="pill" href="https://open.spotify.com/user/osrc077sckr4onucbypo1l65z" target="_blank" rel="noopener">Spotify</a>
+            <div class="quick-grid">
+              <a class="quick-tile" href="https://canvas.iastate.edu/" target="_blank" rel="noopener">
+                <div>
+                  <i class="fa-solid fa-graduation-cap" aria-hidden="true"></i>
+                  <h4>Canvas</h4>
+                  <p>Jump straight to classes, assignments, and course updates.</p>
+                </div>
+                <span class="quick-cta">Open dashboard &rarr;</span>
+              </a>
+              <a class="quick-tile" href="https://outlook.office.com/mail/" target="_blank" rel="noopener">
+                <div>
+                  <i class="fa-solid fa-envelope-open-text" aria-hidden="true"></i>
+                  <h4>Outlook</h4>
+                  <p>Quick access to your inbox.</p>
+                </div>
+                <span class="quick-cta">Open inbox &rarr;</span>
+              </a>
+              <a class="quick-tile" href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener">
+                <div>
+                  <i class="fa-solid fa-globe" aria-hidden="true"></i>
+                  <h4>paiden.org</h4>
+                  <p>My secondary webpage, feel free to check it out!</p>
+                </div>
+                <span class="quick-cta">Visit site &rarr;</span>
+              </a>
+              <a class="quick-tile" href="https://open.spotify.com/user/osrc077sckr4onucbypo1l65z" target="_blank" rel="noopener">
+                <div>
+                  <i class="fab fa-spotify" aria-hidden="true"></i>
+                  <h4>Spotify</h4>
+                  <p>Visit my profile and drop a follow.</p>
+                </div>
+                <span class="quick-cta">Open profile &rarr;</span>
+              </a>
             </div>
           </div>
         </div>
