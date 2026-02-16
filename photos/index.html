@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="/">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>paiden.com</title>
+  <meta name="description" content="Template for Paiden's website pages.">
+
+  <!-- Font Awesome CSS (more reliable for file://) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    /* CUSTOM PROPERTIES: Adjust these values to tweak proportions */
+    :root {
+      --side-margin: 10vw;            /* Responsive horizontal margin */
+      --nav-height: 20vh;             /* Height of navigation overlay */
+      --slideshow-height: 85vh;       /* Height of the slideshow container */
+      --footer-padding: 7vh;          /* Vertical padding for the footer */
+      --brand-font-size: 2.5vw;       /* Font size for nav brand (paiden.com) */
+      --nav-font-size: 1.2vw;         /* Font size for other nav links */
+      --header-font-size: 4vw;        /* Font size for overlay header */
+      --subheader-font-size: 1.5vw;   /* Font size for overlay subheader */
+      --footer-title-font-size: 2vw;  /* Font size for footer brand/button */
+      --footer-subtitle-font-size: 1vw; /* Font size for footer text */
+      --footer-button-spacing: 0.75vw; /* Adjustable space between paiden.com and footer text */
+      --footer-nav-font-size: 1vw;    /* Font size for footer navigation links */
+      --footer-nav-left: 15vw;        /* Adjustable left offset for footer navigation links */
+      --spacing-small: 0.5vw;         /* Small vertical spacing */
+      --spacing-large: 1.5vw;         /* Larger horizontal spacing */
+    }
+
+    /* Global box-sizing and reserve scrollbar space */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scrollbar-gutter: stable; }
+
+    /* Overall page styling using the responsive side margin */
+    body {
+      margin: 0 var(--side-margin);
+      padding: 0;
+      font-family: Arial, sans-serif;
+      overflow-x: hidden;
+      color: #fff;
+      background: #0e1116;
+    }
+
+    /* Full-width slideshow container spanning the entire viewport */
+    .slideshow-container {
+      position: relative;
+      width: 100vw;
+      height: var(--slideshow-height);
+      margin-left: calc(50% - 50vw);
+      overflow: hidden;
+    }
+
+    /* Navigation overlay spanning full width with gradient shading */
+    .nav-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: var(--nav-height);
+      background: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+      z-index: 3;
+      display: flex; align-items: center;
+    }
+
+    /* Inner container for nav buttons, constrained within the responsive side margin */
+    .nav-inner {
+      width: 100%;
+      margin-left: var(--side-margin);
+      margin-right: var(--side-margin);
+      display: flex; align-items: flex-end;
+    }
+
+    /* Styling for the brand button in nav */
+    .brand a {
+      color: white; text-decoration: none; font-size: var(--brand-font-size); font-weight: bold;
+      padding-bottom: var(--spacing-small); padding-right: var(--spacing-large);
+      border-right: 0.1vw solid white; margin-right: var(--spacing-large);
+    }
+
+    /* Container for the remaining nav links */
+    .nav-items { display: flex; align-items: flex-end; }
+
+    /* Styling for the nav links */
+    .nav-items a {
+      color: white; text-decoration: none; margin-right: var(--spacing-large);
+      font-size: var(--nav-font-size); font-weight: bold; padding-bottom: var(--spacing-small);
+    }
+
+    .nav-items a:hover { text-decoration: underline; }
+
+    /* Constant overlay text container with header and sub-header */
+    .slideshow-text {
+      position: absolute; top: 65%; left: var(--side-margin);
+      transform: translateY(-50%); color: white; text-align: left; z-index: 2;
+    }
+    .slideshow-text h1 { margin: 0 0 var(--spacing-small); font-size: var(--header-font-size); font-weight: bold; }
+    .slideshow-text h2 { margin: 0; font-size: var(--subheader-font-size); font-weight: normal; }
+
+    /* Slide styling with fade effect */
+    .slide { position: absolute; width: 100%; height: 100%; opacity: 0; transition: opacity 1s ease-in-out; }
+    .slide.active { opacity: 1; }
+    .slide img { width: 100%; height: 100%; object-fit: cover; filter: brightness(50%); }
+
+    /* FOOTER STYLING: Full-width background with inner container */
+    .footer { width: 100vw; margin-left: calc(50% - 50vw); background-color: #000; padding: var(--footer-padding) 0; position: relative; }
+
+    /* Footer inner container aligning content with responsive margins */
+    .footer-inner {
+      margin: 0 var(--side-margin); text-align: left; position: relative;
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+
+    /* Footer left column */
+    .footer-left { display: flex; flex-direction: column; align-items: flex-start; }
+    .footer-left .footer-brand { font-size: var(--footer-title-font-size); font-weight: bold; color: white; text-decoration: none; margin-bottom: var(--footer-button-spacing); }
+    .footer-left .footer-created, .footer-left .footer-updated { font-size: var(--footer-subtitle-font-size); color: white; margin-top: var(--spacing-small); }
+
+    /* The vertical nav in the footer */
+    .footer-nav { position: absolute; top: 50%; left: var(--footer-nav-left); transform: translateY(-45%); display: flex; flex-direction: column; align-items: flex-start; }
+    .footer-nav a { font-size: var(--footer-nav-font-size); color: white; text-decoration: none; margin-bottom: var(--spacing-small); }
+    .footer-nav a:hover { text-decoration: underline; }
+
+    /* Social icons section (right aligned) */
+    .footer-social { display: flex; flex-direction: column; align-items: flex-end; color: white; }
+    .footer-social .follow-text { font-size: var(--footer-nav-font-size); font-weight: bold; margin-bottom: var(--spacing-small); }
+    .social-icons { display: flex; gap: 1vw; }
+    .social-icons a { color: white; font-size: 2vw; transition: transform 0.2s ease; text-decoration: none; }
+    .social-icons a:hover { transform: scale(1.1); }
+
+    /* PHOTO FOLDERS SECTION */
+    .gallery-wrap { width: 100vw; margin-left: calc(50% - 50vw); background: #e0e0e0; padding: 6vh 0; }
+    .gallery-inner { margin: 0 var(--side-margin); display: grid; gap: 4vh; }
+
+    /* Each folder row is now a BUTTON, not a link */
+    .gallery-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 3vw;
+      padding: 2.5vh 2vw; background: rgba(255,255,255,0.6); border-radius: 1vw; box-shadow: 0 0.6vw 2vw rgba(0,0,0,0.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease; border: 0; cursor: pointer; color: #000;
+      text-align: left; width: 100%;
+    }
+    .gallery-row:hover, .gallery-row:focus-visible { transform: translateY(-0.2vh); box-shadow: 0 1vw 2.6vw rgba(0,0,0,0.12); outline: none; }
+
+    /* Alternate layout: even rows flip */
+    .gallery-inner > .gallery-row:nth-child(even) { flex-direction: row-reverse; }
+
+    /* Title block */
+    .folder-title { flex: 1 1 48%; display: flex; align-items: center; font-size: clamp(1.4rem, 3.2vw, 3rem); font-weight: 800; line-height: 1.15; }
+
+    /* Stack preview block */
+    .folder-stack { flex: 1 1 48%; position: relative; height: clamp(220px, 28vh, 520px); min-height: 200px; }
+
+    /* Stacked image cards */
+    .stack-card { position: absolute; inset: 0; border-radius: 1vw; overflow: hidden; box-shadow: 0 0.6vw 2vw rgba(0,0,0,0.12); transform-origin: center; }
+    .stack-card:nth-child(1) { transform: rotate(-6deg) translate(-1.2vw, -0.6vh); z-index: 1; }
+    .stack-card:nth-child(2) { transform: rotate(0deg); z-index: 2; }
+    .stack-card:nth-child(3) { transform: rotate(6deg) translate(1.2vw, 0.6vh); z-index: 1; }
+    .stack-card img { width: 100%; height: 100%; object-fit: cover; display: block; background: #ddd; }
+
+    .folder-cue { margin-top: 1.2vh; font-size: clamp(.9rem, 1.2vw, 1.05rem); opacity: 0.7; }
+
+    /* Modal slideshow */
+    .modal { display: none; position: fixed; z-index: 9999; padding-top: 48px; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); }
+    .modal.open { display: block; }
+
+    .modal-inner { position: relative; margin: 0 auto; width: min(92vw, 1400px); height: min(82vh, 900px); display: flex; align-items: center; justify-content: center; }
+
+    .modal-img { max-width: 100%; max-height: 100%; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+
+    .modal-close { position: absolute; top: 10px; right: 14px; font-size: 34px; color: #fff; background: transparent; border: 0; cursor: pointer; }
+
+    .modal-nav-btn { position: absolute; top: 50%; transform: translateY(-50%); border: 0; width: 56px; height: 56px; border-radius: 999px; background: rgba(255,255,255,0.12); color: #fff; font-size: 26px; cursor: pointer; }
+    .modal-nav-btn:hover { background: rgba(255,255,255,0.22); }
+    .modal-prev { left: 10px; }
+    .modal-next { right: 10px; }
+
+    .modal-toolbar { display: flex; gap: 10px; justify-content: center; margin-top: 12px; }
+    .toolbar-btn { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 10px; padding: 10px 14px; background: #52a9ff; color: #071018; font-weight: 700; cursor: pointer; }
+    .toolbar-btn:hover { filter: brightness(0.95); }
+
+    .toolbar-title { text-align: center; color: #e6edf3; margin: 6px 0 16px; font-weight: 700; font-size: clamp(1rem, 1.2vw, 1.25rem); }
+
+    /* Mobile adjustments */
+    @media (max-width: 800px) {
+      .gallery-row { flex-direction: column; padding: 2vh 4vw; }
+      .gallery-inner > .gallery-row:nth-child(even) { flex-direction: column; }
+      .folder-title, .folder-stack { flex-basis: 100%; width: 100%; }
+      .folder-stack { height: clamp(200px, 36vh, 420px); }
+      .modal-inner { width: 94vw; height: 72vh; }
+      .modal-nav-btn { width: 44px; height: 44px; font-size: 22px; }
+    }
+
+    @media (max-width: 600px) {
+      :root {
+        --side-margin: 5vw; --brand-font-size: 4vw; --nav-font-size: 3vw; --header-font-size: 6vw; --subheader-font-size: 3vw; --footer-title-font-size: 4vw; --footer-subtitle-font-size: 2vw; --footer-nav-font-size: 3vw;
+      }
+      .nav-inner, .footer-inner { margin-left: var(--side-margin); margin-right: var(--side-margin); }
+      .social-icons a { font-size: 5vw; }
+    }
+
+    @media (max-width: 600px) {
+      .footer-inner {
+        display: grid;
+        grid-template-columns: auto auto 1fr;
+        column-gap: 4vw;
+        align-items: start;
+      }
+      .footer-left { min-width: 0; }
+      .footer-nav {
+        position: static;
+        top: auto;
+        left: auto;
+        transform: none;
+        margin: 0;
+        padding-top: 0.2rem;
+      }
+      .footer-nav a {
+        line-height: 1.25;
+        margin-bottom: 0.35rem;
+      }
+      .footer-social {
+        margin-left: auto;
+        align-items: flex-end;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Full-width slideshow container -->
+  <div class="slideshow-container">
+    <!-- Navigation overlay with gradient shading -->
+    <div class="nav-overlay">
+      <div class="nav-inner">
+        <!-- Brand button in nav -->
+        <div class="brand"><a href="/">paiden.com</a></div>
+        <!-- Navigation buttons -->
+        <div class="nav-items">
+          <a href="/resume">Resume</a>
+          <a href="/photos">Photos</a>
+          <a href="/blog">Blog</a>
+          <a href="/contactme">Contact Me</a>
+        </div>
+      </div>
+    </div>
+    <!-- Constant overlay text -->
+    <div class="slideshow-text">
+      <h1>Photos</h1>
+      <h2>My finsta</h2>
+    </div>
+    <!-- Slides (built from images/header/album.json) -->
+    <div id="headerSlides"></div>
+  </div>
+
+  <!-- PHOTO FOLDERS SECTION -->
+  <section class="gallery-wrap" aria-label="Photo folders">
+    <div class="gallery-inner">
+      <!-- Change: <a> → <button>, add data-album path and title -->
+
+      <button class="gallery-row" type="button" data-album="images/fall25" data-title="Fall 2025">
+        <div class="folder-stack" aria-hidden="true">
+          <div class="stack-card"><img src="images/fall25/IMG_8358.JPG" alt="" /></div>
+          <div class="stack-card"><img src="images/fall25/IMG_8419.JPG" alt="" /></div>
+          <div class="stack-card"><img src="images/fall25/IMG_8545.JPG" alt="" /></div>
+        </div>
+        <div class="folder-title">Fall 2025</div>
+      </button>
+      
+      <button class="gallery-row" type="button" data-album="images/europe" data-title="Europe 2025">
+        <div class="folder-stack" aria-hidden="true">
+          <div class="stack-card"><img src="images/europe/IMG_6956.JPG" alt="" /></div>
+          <div class="stack-card"><img src="images/europe/IMG_6974.JPG" alt="" /></div>
+          <div class="stack-card"><img src="images/europe/IMG_6983.JPG" alt="" /></div>
+        </div>
+        <div class="folder-title">Europe 2025</div>
+      </button>
+
+      <button class="gallery-row" type="button" data-album="images/iceland23" data-title="Iceland">
+        <div class="folder-stack" aria-hidden="true">
+          <div class="stack-card"><img src="images/iceland23/IMG_5319.jpg" alt="" /></div>
+          <div class="stack-card"><img src="images/iceland23/IMG_5321.jpg" alt="" /></div>
+          <div class="stack-card"><img src="images/iceland23/IMG_5322.jpg" alt="" /></div>
+        </div>
+        <div class="folder-title">Iceland 2023</div>
+      </button>
+
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <a class="footer-brand" href="/">paiden.com</a>
+        <div class="footer-created">Created by Paiden Nicks</div>
+        <div class="footer-updated" id="last-updated"></div>
+      </div>
+      <div class="footer-nav">
+        <a href="/resume">Resume</a>
+        <a href="/photos">Photos</a>
+        <a href="/blog">Blog</a>
+        <a href="/contactme">Contact Me</a>
+      </div>
+      <div class="footer-social">
+        <span class="follow-text">Follow Me</span>
+        <div class="social-icons">
+          <!-- Replace “YourProfile” with your actual username/ID -->
+          <a href="https://www.linkedin.com/in/paiden" target="_blank">
+            <i class="fab fa-linkedin-in"></i>
+          </a>
+          <a href="https://www.instagram.com/paiden_26" target="_blank">
+            <i class="fab fa-instagram"></i>
+          </a>
+          <a href="https://snapchat.com/t/m04JWymy" target="_blank">
+            <i class="fab fa-snapchat"></i>
+          </a>
+          </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Slideshow Modal -->
+  <div id="albumModal" class="modal" aria-hidden="true" aria-label="Album slideshow">
+    <div class="toolbar-title" id="modalTitle"></div>
+    <div class="modal-inner" id="modalInner">
+      <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+      <button class="modal-nav-btn modal-prev" id="modalPrev" aria-label="Previous">&#10094;</button>
+      <img class="modal-img" id="modalImg" alt="Album image" />
+      <button class="modal-nav-btn modal-next" id="modalNext" aria-label="Next">&#10095;</button>
+    </div>
+    <div class="modal-toolbar">
+      <button class="toolbar-btn" id="btnFullscreen"><i class="fa-solid fa-expand"></i> Fullscreen</button>
+      <button class="toolbar-btn" id="btnDownload"><i class="fa-solid fa-file-zipper"></i> Download ZIP</button>
+    </div>
+  </div>
+
+  <!-- JavaScript to cycle through header slides automatically and update footer date DELETED-->
+
+  <!-- JSZip + FileSaver CDN for ZIP downloads -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha512-ZN5c8zqJcV8Kq0D8P6aEKlH9o9k3dkrq0qp1z4I2lA2sM3uQ3QzT5+7bGzXo2c2W3J1g2oVRa/Zb0a1I5s1d3g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" integrity="sha512-5x3G6QkKydf1pVgWg8v+2m5l0xvY6zv8m3oX8i6CjX6dybG3q5A4z0g4y3iM3xVf4mJ8k8P1q4F8a0ZsQ3w3hA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <script>
+    // ===== Embedded Slideshow + ZIP =====
+    // How image loading works:
+    // 1) We try to fetch `${albumPath}/album.json` which should look like:
+    //    { "title": "Trips 2025", "images": ["IMG_0001.jpg", "sub/IMG_0002.jpg"] }
+    // 2) If missing, we fall back to ALBUM_FALLBACKS mapping below.
+
+    const ALBUM_FALLBACKS = {
+      "images/europe": ["images/europe/IMG_6956.JPG", "images/europe/IMG_6957.JPG", "images/europe/IMG_6958.JPG", "images/europe/IMG_6959.JPG", "images/europe/IMG_6963.JPG", "images/europe/IMG_6964.JPG", "images/europe/IMG_6969.JPG", "images/europe/IMG_6972.JPG", "images/europe/IMG_6973.JPG", "images/europe/IMG_6974.JPG", "images/europe/IMG_6978.JPG", "images/europe/IMG_6980.JPG", "images/europe/IMG_6981.JPG", "images/europe/IMG_6982.JPG", "images/europe/IMG_6983.JPG", "images/europe/IMG_6984.JPG", "images/europe/IMG_6986.JPG", "images/europe/IMG_6987.JPG", "images/europe/IMG_6988.JPG", "images/europe/IMG_6989.JPG", "images/europe/IMG_6991.JPG", "images/europe/IMG_6992.JPG", "images/europe/IMG_6993.JPG", "images/europe/IMG_7004.JPG", "images/europe/IMG_7015.JPG", "images/europe/IMG_7029.JPG", "images/europe/IMG_7030.JPG", "images/europe/IMG_7034.JPG", "images/europe/IMG_7036.JPG", "images/europe/IMG_7038.JPG", "images/europe/IMG_7039.JPG", "images/europe/IMG_7044.JPG", "images/europe/IMG_7047.JPG", "images/europe/IMG_7057.JPG", "images/europe/IMG_7061.JPG", "images/europe/IMG_7074.JPG", "images/europe/IMG_7081.JPG", "images/europe/IMG_7083.JPG", "images/europe/IMG_7097.JPG", "images/europe/IMG_7100.JPG", "images/europe/IMG_7108.JPG", "images/europe/IMG_7112.JPG", "images/europe/IMG_7113.JPG", "images/europe/IMG_7114.JPG", "images/europe/IMG_7115.JPG", "images/europe/IMG_7117.JPG", "images/europe/IMG_7118.JPG", "images/europe/IMG_7121.JPG", "images/europe/IMG_7124.JPG", "images/europe/IMG_7128.JPG", "images/europe/IMG_7133.JPG", "images/europe/IMG_7135.JPG", "images/europe/IMG_7143.JPG", "images/europe/IMG_7155.JPG", "images/europe/IMG_7162.JPG", "images/europe/IMG_7169.JPG", "images/europe/IMG_7195.JPG", "images/europe/IMG_7196.JPG", "images/europe/IMG_7202.JPG", "images/europe/IMG_7206.JPG", "images/europe/IMG_7209.JPG", "images/europe/IMG_7212.JPG", "images/europe/IMG_7214.JPG", "images/europe/IMG_7217.JPG", "images/europe/IMG_7218.JPG", "images/europe/IMG_7221.JPG", "images/europe/IMG_7223.JPG", "images/europe/IMG_7226.JPG", "images/europe/IMG_7235.JPG", "images/europe/IMG_7236.JPG", "images/europe/IMG_7241.JPG", "images/europe/IMG_7244.JPG", "images/europe/IMG_7246.JPG", "images/europe/IMG_7256.JPG", "images/europe/IMG_7257.JPG", "images/europe/IMG_7259.JPG", "images/europe/IMG_7266.JPG", "images/europe/IMG_7268.JPG", "images/europe/IMG_7272.JPG", "images/europe/IMG_7277.JPG", "images/europe/IMG_7290.JPG", "images/europe/IMG_7291.JPG", "images/europe/IMG_7299.JPG", "images/europe/IMG_7305.JPG", "images/europe/IMG_7309.JPG", "images/europe/IMG_7322.JPG", "images/europe/IMG_7324.JPG", "images/europe/IMG_7327.JPG", "images/europe/IMG_7329.JPG", "images/europe/IMG_7338.JPG", "images/europe/IMG_7342.JPG", "images/europe/IMG_7345.JPG", "images/europe/IMG_7351.JPG", "images/europe/IMG_7353.JPG", "images/europe/IMG_7367.JPG", "images/europe/IMG_7369.JPG", "images/europe/IMG_7371.JPG", "images/europe/IMG_7388.JPG", "images/europe/IMG_7389.JPG", "images/europe/IMG_7391.JPG", "images/europe/IMG_7392.JPG", "images/europe/IMG_7393.JPG", "images/europe/IMG_7402.JPG", "images/europe/IMG_7404.JPG", "images/europe/IMG_7405.JPG", "images/europe/IMG_7413.JPG", "images/europe/IMG_7415.JPG", "images/europe/IMG_7431.JPG", "images/europe/IMG_7442.JPG", "images/europe/IMG_7445.JPG", "images/europe/IMG_7451.JPG", "images/europe/IMG_7464.JPG", "images/europe/IMG_7480.JPG", "images/europe/IMG_7482.JPG", "images/europe/IMG_7488.JPG", "images/europe/IMG_7494.JPG", "images/europe/IMG_7500.JPG", "images/europe/IMG_7506.JPG", "images/europe/IMG_7509.JPG", "images/europe/IMG_7514.JPG", "images/europe/IMG_7517.JPG", "images/europe/IMG_7523.JPG", "images/europe/IMG_7527.JPG", "images/europe/IMG_7530.JPG", "images/europe/IMG_7541.JPG", "images/europe/IMG_7542.JPG", "images/europe/IMG_7544.JPG", "images/europe/IMG_7546.JPG", "images/europe/IMG_7549.JPG", "images/europe/IMG_7559.JPG", "images/europe/IMG_7563.JPG", "images/europe/IMG_7572.JPG", "images/europe/IMG_7573.JPG", "images/europe/IMG_7576.JPG", "images/europe/IMG_7580.JPG", "images/europe/IMG_7592.JPG", "images/europe/IMG_7595.JPG", "images/europe/IMG_7596.JPG", "images/europe/IMG_7599.JPG", "images/europe/IMG_7601.JPG", "images/europe/IMG_7615.JPG", "images/europe/IMG_7616.JPG", "images/europe/KGUKE4000.JPG", "images/europe/SVYCE8154.JPG"],
+      "images/iceland23": ["images/iceland23/IMG_5319.jpg", "images/iceland23/IMG_5321.jpg", "images/iceland23/IMG_5322.jpg", "images/iceland23/IMG_5326.jpg", "images/iceland23/IMG_5329.jpg", "images/iceland23/IMG_5333.jpg", "images/iceland23/IMG_5342.jpg", "images/iceland23/IMG_5345.jpg", "images/iceland23/IMG_5352.jpg", "images/iceland23/IMG_5356.jpg", "images/iceland23/IMG_5362.jpg", "images/iceland23/IMG_5371.jpg", "images/iceland23/IMG_5373.jpg", "images/iceland23/IMG_5381.jpg", "images/iceland23/IMG_5388.jpg", "images/iceland23/IMG_5394.jpg", "images/iceland23/IMG_5395.jpg", "images/iceland23/IMG_5401.jpg", "images/iceland23/IMG_5403.jpg", "images/iceland23/IMG_5405.jpg", "images/iceland23/IMG_5489.jpg", "images/iceland23/IMG_5490.JPG", "images/iceland23/IMG_5491.JPG", "images/iceland23/image000000.JPEG"],
+      "images/fall25": ["images/fall25/4748456492716765856.JPG", "images/fall25/5782130944499018615.JPG", "images/fall25/IMG_0171.jpg", "images/fall25/IMG_0195.JPEG", "images/fall25/IMG_0210.JPEG", "images/fall25/IMG_0609.jpg", "images/fall25/IMG_0625.jpg", "images/fall25/IMG_0685.jpg", "images/fall25/IMG_1275.JPEG", "images/fall25/IMG_1586.jpg", "images/fall25/IMG_1592.jpg", "images/fall25/IMG_2605.JPEG", "images/fall25/IMG_2606.JPEG", "images/fall25/IMG_2607.JPEG", "images/fall25/IMG_2610.JPEG", "images/fall25/IMG_3124.PNG", "images/fall25/IMG_5275.JPEG", "images/fall25/IMG_7035.jpg", "images/fall25/IMG_7042.jpg", "images/fall25/IMG_7043.jpg", "images/fall25/IMG_7046.jpg", "images/fall25/IMG_7052.jpg", "images/fall25/IMG_7920_Original.JPG", "images/fall25/IMG_7924_Original.JPG", "images/fall25/IMG_7939_Original.JPG", "images/fall25/IMG_8100.JPG", "images/fall25/IMG_8104.JPG", "images/fall25/IMG_8122.JPG", "images/fall25/IMG_8129.JPG", "images/fall25/IMG_8133.JPG", "images/fall25/IMG_8143.JPG", "images/fall25/IMG_8155.JPG", "images/fall25/IMG_8158.JPG", "images/fall25/IMG_8159.JPG", "images/fall25/IMG_8178.JPG", "images/fall25/IMG_8198.JPG", "images/fall25/IMG_8214.JPG", "images/fall25/IMG_8217.JPG", "images/fall25/IMG_8223.JPG", "images/fall25/IMG_8230.JPG", "images/fall25/IMG_8232.JPG", "images/fall25/IMG_8246.jpg", "images/fall25/IMG_8248.JPG", "images/fall25/IMG_8257.JPG", "images/fall25/IMG_8265.JPG", "images/fall25/IMG_8271.JPG", "images/fall25/IMG_8282.JPG", "images/fall25/IMG_8288.JPG", "images/fall25/IMG_8300.JPG", "images/fall25/IMG_8337.JPG", "images/fall25/IMG_8343.JPG", "images/fall25/IMG_8348.JPG", "images/fall25/IMG_8358.JPG", "images/fall25/IMG_8389.PNG", "images/fall25/IMG_8390.PNG", "images/fall25/IMG_8392.JPG", "images/fall25/IMG_8403.JPG", "images/fall25/IMG_8419.JPG", "images/fall25/IMG_8426.PNG", "images/fall25/IMG_8444.JPG", "images/fall25/IMG_8447.JPG", "images/fall25/IMG_8456.JPG", "images/fall25/IMG_8459.JPG", "images/fall25/IMG_8471.jpg", "images/fall25/IMG_8474.JPG", "images/fall25/IMG_8482.JPG", "images/fall25/IMG_8487.JPG", "images/fall25/IMG_8489.JPG", "images/fall25/IMG_8520.JPG", "images/fall25/IMG_8521.JPG", "images/fall25/IMG_8524.JPG", "images/fall25/IMG_8525.JPG", "images/fall25/IMG_8531.JPG", "images/fall25/IMG_8538.JPG", "images/fall25/IMG_8541.JPG", "images/fall25/IMG_8542.JPG", "images/fall25/IMG_8544.JPG", "images/fall25/IMG_8546.JPG", "images/fall25/IMG_8547.JPG", "images/fall25/IMG_8550.JPG", "images/fall25/IMG_8565.JPG", "images/fall25/IMG_8584.JPG", "images/fall25/IMG_8587.JPG", "images/fall25/IMG_8590.JPG", "images/fall25/IMG_8591.JPG", "images/fall25/IMG_8592.JPG", "images/fall25/IMG_8593.JPG", "images/fall25/IMG_8594.JPG", "images/fall25/IMG_8596.JPG", "images/fall25/IMG_8597.JPG", "images/fall25/IMG_8601.PNG", "images/fall25/IMG_8602.JPG", "images/fall25/IMG_8603.JPG", "images/fall25/IMG_8604.JPG", "images/fall25/IMG_8605.JPG", "images/fall25/IMG_8606.JPG", "images/fall25/IMG_8612.JPG", "images/fall25/IMG_8621.JPG", "images/fall25/IMG_8626.JPG", "images/fall25/IMG_8637.PNG", "images/fall25/IMG_8645.JPG", "images/fall25/IMG_8650.JPG", "images/fall25/IMG_8651.JPG", "images/fall25/IMG_8656.JPG", "images/fall25/IMG_8665.JPG", "images/fall25/IMG_8672.JPG", "images/fall25/IMG_8673.JPG", "images/fall25/IMG_8679.JPG", "images/fall25/IMG_8700.JPG", "images/fall25/IMG_8713.JPG", "images/fall25/IMG_8715.JPG"]
+    };
+
+    const modal = document.getElementById('albumModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalInner = document.getElementById('modalInner');
+    const modalImg = document.getElementById('modalImg');
+    const btnClose = document.getElementById('modalClose');
+    const btnPrev = document.getElementById('modalPrev');
+    const btnNext = document.getElementById('modalNext');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+    const btnDownload = document.getElementById('btnDownload');
+
+    let currentAlbum = { title: '', path: '', images: [], index: 0 };
+
+    const HEIC_EXT_RE = /\.heic$|\.heif$/i;
+    const HEIC_CACHE_MAX = 24;
+    const heicCache = new Map(); // src -> objectURL
+    const heicCacheOrder = [];
+
+    function isHeic(path) {
+      return HEIC_EXT_RE.test(path || '');
+    }
+
+    function addHeicCache(src, objectUrl) {
+      heicCache.set(src, objectUrl);
+      heicCacheOrder.push(src);
+      if (heicCacheOrder.length > HEIC_CACHE_MAX) {
+        const old = heicCacheOrder.shift();
+        const oldUrl = heicCache.get(old);
+        if (oldUrl) URL.revokeObjectURL(oldUrl);
+        heicCache.delete(old);
+      }
+    }
+
+    async function resolveImageUrl(src) {
+      if (!isHeic(src)) return src;
+      if (heicCache.has(src)) return heicCache.get(src);
+      if (typeof heic2any !== 'function') return src;
+      const resp = await fetch(src, { cache: 'no-store' });
+      if (!resp.ok) return src;
+      const blob = await resp.blob();
+      const converted = await heic2any({ blob, toType: 'image/jpeg', quality: 0.9 });
+      const outBlob = Array.isArray(converted) ? converted[0] : converted;
+      const objectUrl = URL.createObjectURL(outBlob);
+      addHeicCache(src, objectUrl);
+      return objectUrl;
+    }
+
+    async function upgradeHeicImagesInDom() {
+      const imgs = Array.from(document.querySelectorAll('img[src]'));
+      for (const img of imgs) {
+        const src = img.getAttribute('src');
+        if (!isHeic(src)) continue;
+        try {
+          img.src = await resolveImageUrl(src);
+        } catch (e) {
+          // Keep original src on failure
+        }
+      }
+    }
+
+    // Open album from a folder button
+    document.querySelectorAll('.gallery-row').forEach(row => {
+      row.addEventListener('click', async () => {
+        const albumPath = row.getAttribute('data-album');
+        const albumTitle = row.getAttribute('data-title') || albumPath.split('/').pop();
+        const images = await loadAlbumImages(albumPath);
+        if (!images || images.length === 0) {
+          alert('No images found for ' + albumTitle + '.\nAdd an album.json or update ALBUM_FALLBACKS.');
+          return;
+        }
+        currentAlbum = { title: albumTitle, path: albumPath, images, index: 0 };
+        modalTitle.textContent = albumTitle;
+        openModal();
+        showImage(0);
+      });
+    });
+
+    async function loadAlbumImages(path) {
+      // Try album.json first
+      try {
+        const res = await fetch(`${path}/album.json`, { cache: 'no-store' });
+        if (res.ok) {
+          const json = await res.json();
+          // Allow images to be relative to the album folder
+          return (json.images || []).map(p => `${path}/${p}`);
+        }
+      } catch (e) { /* ignore and fall back */ }
+      // Fallback map
+      return ALBUM_FALLBACKS[path] || [];
+    }
+
+    function openModal() {
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      // Lock page scroll behind modal
+      document.documentElement.style.overflow = 'hidden';
+    }
+    function closeModal() {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      document.documentElement.style.overflow = '';
+      // Exit fullscreen if open
+      if (document.fullscreenElement) document.exitFullscreen();
+    }
+
+    async function showImage(i) {
+      currentAlbum.index = (i + currentAlbum.images.length) % currentAlbum.images.length;
+      const src = currentAlbum.images[currentAlbum.index];
+      modalImg.src = '';
+      modalImg.src = await resolveImageUrl(src);
+    }
+
+    btnPrev.addEventListener('click', () => showImage(currentAlbum.index - 1));
+    btnNext.addEventListener('click', () => showImage(currentAlbum.index + 1));
+    btnClose.addEventListener('click', closeModal);
+
+    // Close on outside click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    // Keyboard controls while modal open
+    document.addEventListener('keydown', (e) => {
+      if (!modal.classList.contains('open')) return;
+      if (e.key === 'ArrowLeft') showImage(currentAlbum.index - 1);
+      if (e.key === 'ArrowRight') showImage(currentAlbum.index + 1);
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // Basic swipe for mobile
+    (function addSwipe(el){
+      let x0 = null;
+      el.addEventListener('touchstart', e => x0 = e.touches[0].clientX, {passive:true});
+      el.addEventListener('touchend', e => {
+        if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null;
+        if (Math.abs(dx) > 40) dx > 0 ? showImage(currentAlbum.index - 1) : showImage(currentAlbum.index + 1);
+      }, {passive:true});
+    })(modalInner);
+
+    // Fullscreen toggle
+    btnFullscreen.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        modal.requestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+    });
+
+    // ZIP download of current album
+    btnDownload.addEventListener('click', async () => {
+      if (!currentAlbum.images.length) return;
+      const zip = new JSZip();
+      const folder = zip.folder(currentAlbum.title.replace(/\s+/g, '_'));
+      for (const url of currentAlbum.images) {
+        try {
+          const resp = await fetch(url, { cache: 'no-store' });
+          if (!resp.ok) continue;
+          const blob = await resp.blob();
+          const name = url.split('/').pop();
+          folder.file(name, blob);
+        } catch (e) { /* skip failed file */ }
+      }
+      const content = await zip.generateAsync({ type: 'blob' });
+      saveAs(content, `${currentAlbum.title.replace(/\s+/g, '_')}.zip`);
+    });
+
+    upgradeHeicImagesInDom();
+  </script>
+  <!-- JavaScript to cycle through slides automatically and update footer date -->
+  <script>
+    const HEADER_FALLBACK = [
+      "images/header/land.JPG",
+      "images/header/incline.JPG",
+      "images/header/castle.JPG",
+      "images/header/lake.JPG",
+      "images/header/avalanche.JPG",
+      "images/header/sistine.JPG",
+      "images/header/falls.JPG",
+      "images/header/swiss.JPG",
+      "images/header/rocket.JPG",
+      "images/header/chief_mtn.JPG"
+    ];
+
+    async function loadHeaderConfig() {
+      try {
+        const res = await fetch("images/header/album.json", { cache: 'no-store' });
+        if (res.ok) {
+          const json = await res.json();
+          const images = (json.images || []).map(p => `images/header/${p}`);
+          return {
+            images: images.length ? images : HEADER_FALLBACK,
+            interval: Number(json.interval_ms) || 5000,
+            shuffle: Boolean(json.shuffle)
+          };
+        }
+      } catch (e) { /* ignore and fall back */ }
+      return { images: HEADER_FALLBACK, interval: 5000, shuffle: false };
+    }
+
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    async function initHeaderSlideshow() {
+      const headerSlides = document.getElementById("headerSlides");
+      if (!headerSlides) return;
+
+      const cfg = await loadHeaderConfig();
+      const images = cfg.shuffle ? shuffleArray([...cfg.images]) : cfg.images;
+
+      headerSlides.innerHTML = "";
+      images.forEach((src, idx) => {
+        const slide = document.createElement("div");
+        slide.className = "slide" + (idx === 0 ? " active" : "");
+        const img = document.createElement("img");
+        img.alt = "Header image";
+        img.loading = idx === 0 ? "eager" : "lazy";
+        slide.appendChild(img);
+        headerSlides.appendChild(slide);
+        resolveImageUrl(src).then(resolved => { img.src = resolved; }).catch(() => { img.src = src; });
+      });
+
+      let slideIndex = 0;
+      const slides = document.getElementsByClassName("slide");
+      function showSlides() {
+        for (let i = 0; i < slides.length; i++) {
+          slides[i].classList.remove("active");
+        }
+        slideIndex++;
+        if (slideIndex > slides.length) {
+          slideIndex = 1;
+        }
+        slides[slideIndex - 1].classList.add("active");
+        setTimeout(showSlides, cfg.interval);
+      }
+      if (slides.length) showSlides();
+    }
+
+    initHeaderSlideshow();
+    
+    // Update footer with the current date
+    document.getElementById("last-updated").innerText =
+      "Today's Date: " + new Date().toLocaleDateString();
+  </script>
+</body>
+</html>
+
+
+
+
+

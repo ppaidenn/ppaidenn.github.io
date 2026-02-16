@@ -1,0 +1,1979 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <base href="/">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>paiden.com</title>
+<meta content="Paiden's blog page — write posts and view them in a pop-up modal." name="description"/>
+<!-- Font Awesome Kit -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<style>
+    /* CUSTOM PROPERTIES: Adjust these values to tweak proportions */
+    :root {
+      --side-margin: 10vw;
+      --nav-height: 20vh;
+      --slideshow-height: 85vh;
+      --footer-padding: 7vh;
+      --brand-font-size: 2.5vw;
+      --nav-font-size: 1.2vw;
+      --header-font-size: 4vw;
+      --subheader-font-size: 1.5vw;
+      --footer-title-font-size: 2vw;
+      --footer-subtitle-font-size: 1vw;
+      --footer-button-spacing: 0.75vw;
+      --footer-nav-font-size: 1vw;
+      --footer-nav-left: 15vw;
+      --spacing-small: 0.5vw;
+      --spacing-large: 1.5vw;
+
+      /* Blog theme */
+      --bg: #0e1116;
+      --text: #e9eef6;
+      --muted: rgba(233, 238, 246, 0.75);
+      --card: rgba(255,255,255,0.78);
+      --cardText: #10151c;
+    
+
+/* ================================
+   NEW POST POPUP (COMPOSER) TUNING
+   Change these to adjust the look of the "New Post" popup.
+   ================================ */
+--composer-panel-max-width: 920px;   /* overall content width inside the popup */
+--composer-head-padding-y: 22px;     /* top/bottom padding of the popup header */
+--composer-head-padding-x: 26px;     /* left/right padding of the popup header */
+--composer-body-padding-x: 26px;     /* left/right padding of scrollable popup body */
+--composer-title-size: 2.2rem;       /* "New Post" */
+--composer-title-weight: 950;
+--composer-subtitle-size: 1.05rem;   /* "Write a post, add photos..." */
+--composer-subtitle-color: rgba(11,15,20,0.72);
+--composer-note-size: 0rem;       /* tip + "no delete buttons" note */
+--composer-note-color: rgba(11,15,20,0.68);
+
+--composer-label-size: 1.05rem;      /* "Title", "Name (optional)", etc. */
+--composer-label-weight: 800;
+--composer-input-font: 1.05rem;      /* text inside inputs/textarea */
+--composer-input-padding-y: 16px;
+--composer-input-padding-x: 18px;
+--composer-input-radius: 16px;
+--composer-textarea-min-h: 190px;
+}
+
+    /* Remove Clear Draft btn */
+    #btnClearDraft {
+      display: none !important;
+    }
+
+    /* Global box-sizing and reserve scrollbar space */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scrollbar-gutter: stable; overflow-y: scroll; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      overflow-x: hidden;
+      background: var(--bg);
+      color: #0e1116;
+    }
+
+    /* Full-width slideshow container spanning the entire viewport */
+    .slideshow-container {
+      position: relative;
+      width: 100vw;
+      height: var(--slideshow-height);
+      margin-left: calc(50% - 50vw);
+      overflow: hidden;
+    }
+
+    /* Navigation overlay spanning full width with gradient shading */
+    .nav-overlay {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: var(--nav-height);
+      background: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+      z-index: 3;
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-inner {
+      width: 100%;
+      margin-left: var(--side-margin);
+      margin-right: var(--side-margin);
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .brand a {
+      color: white;
+      text-decoration: none;
+      font-size: var(--brand-font-size);
+      font-weight: bold;
+      padding-bottom: var(--spacing-small);
+      padding-right: var(--spacing-large);
+      border-right: 0.1vw solid white;
+      margin-right: var(--spacing-large);
+    }
+
+    .nav-items { display: flex; align-items: flex-end; }
+
+    .nav-items a {
+      color: white;
+      text-decoration: none;
+      margin-right: var(--spacing-large);
+      font-size: var(--nav-font-size);
+      font-weight: bold;
+      padding-bottom: var(--spacing-small);
+    }
+    .nav-items a:hover { text-decoration: underline; }
+
+    .slideshow-text {
+      position: absolute;
+      top: 65%;
+      left: var(--side-margin);
+      transform: translateY(-50%);
+      color: white;
+      text-align: left;
+      z-index: 2;
+    }
+
+    .slideshow-text h1 {
+      margin: 0 0 var(--spacing-small);
+      font-size: var(--header-font-size);
+      font-weight: bold;
+    }
+
+    .slideshow-text h2 {
+      margin: 0;
+      font-size: var(--subheader-font-size);
+      font-weight: normal;
+    }
+
+    .slide { position: absolute; width: 100%; height: 100%; opacity: 0; transition: opacity 1s ease-in-out; }
+    .slide.active { opacity: 1; }
+    .slide img { width: 100%; height: 100%; object-fit: cover; filter: brightness(50%); }
+
+    /* ===== BLOG SECTION ===== */
+    .blog-wrap {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      background: #e0e0e0; /* match Photos page gallery-wrap */
+      padding: 6vh 0;
+      color: #0e1116;
+    }
+
+    .blog-inner { margin: 0 var(--side-margin); }
+
+    .blog-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 2vw;
+      margin-bottom: 2.5vh;
+    }
+
+    .blog-header .posts-title {
+      margin: 0;
+      line-height: 1.05;
+      font-size: clamp(2.3rem, 3.2vw, 3.4rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .blog-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(0.95rem, 1.1vw, 1.05rem);
+      max-width: 54ch;
+      line-height: 1.35;
+    }
+
+    .composer {
+      margin-top: 2vh;
+      border-radius: 1.1vw;
+      padding: 2.2vh 2vw;
+      background: rgba(0,0,0,0.40);
+      box-shadow: 0 1vw 3vw rgba(0,0,0,0.18);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0,0,0,0.15);
+    }
+
+    .composer-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 1.4vw;
+      margin-top: 1.4vh;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field label { font-weight: 800; font-size: 0.95rem; letter-spacing: 0.02em; }
+    .field input[type="text"], .field textarea {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.92);
+      color: #0b0f14;
+      outline: none;
+      box-shadow: 0 0.6vw 2vw rgba(0,0,0,0.08);
+      font-size: 1rem;
+    }
+    .field textarea { min-height: 180px; resize: vertical; line-height: 1.35; }
+
+    .muted-note {
+      margin: 10px 0 0;
+      color: rgba(14,17,22,0.65);
+      font-size: 0.95rem;
+      line-height: 1.35;
+    }
+
+    .composer-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 1vw;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* ===== NEW POST MODAL: photos + publish layout =====
+       You asked for two separate containers next to each other:
+       - LEFT: "Photos (optional)" label + Choose Files control
+       - RIGHT: Publish button
+
+       Edit points:
+       - Move Publish left/right: tweak .photo-right { margin-left: ... }
+       - Reduce label-to-input gap: tweak .photo-left label { margin-bottom: ... }
+    ===== */
+
+    .photo-actions-row{
+      display:flex;
+      align-items:flex-end; /* aligns Publish with the file input, not the label */
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+      margin-bottom: 10px;
+    }
+    .photo-left{
+      display:flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 260px;
+      flex: 1 1 420px;
+    }
+    .photo-left label{
+      margin-bottom: 2px; /* tighter spacing between label and Choose Files */
+    }
+    .photo-right{
+      display:flex;
+      justify-content: flex-end;
+      flex: 0 0 auto;
+      margin-left: 0px; /* EDIT: nudge Publish left/right */
+    }
+    .turnstile-wrap{
+      margin-top: 8px;
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    /* Publish button styling */
+    #composerModal .photo-actions-row .btn-primary{
+      background: rgba(255,255,255,0.95);
+      color: #0e1116;
+      border: 1px solid rgba(14,17,22,0.12);
+      border-radius: 999px;
+      padding: 14px 22px;
+      font-size: 1.05rem;
+      box-shadow: 0 10px 30px rgba(14,17,22,0.12);
+    }
+    #composerModal .photo-actions-row .btn-primary:hover{ filter: brightness(0.98); transform: translateY(-1px); }
+
+    .btn {
+      border: 0;
+      cursor: pointer;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: transform 0.15s ease, filter 0.15s ease;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .btn:hover { transform: translateY(-1px); filter: brightness(0.98); }
+    .btn:disabled {
+      opacity: 0.72;
+      cursor: not-allowed;
+      transform: none;
+      filter: none;
+    }
+
+    .btn-primary {
+      color: #071018;
+      background: linear-gradient(90deg, #52a9ff, #ff55bb 55%, #7dffab);
+      box-shadow: 0 1.0vw 2.8vw rgba(0,0,0,0.22);
+    }
+
+    
+    /* New Post button: larger + white */
+    #btnOpenComposer{
+      background: rgba(255,255,255,0.95) !important;
+      color: #0b0f14 !important;
+      border: 1px solid rgba(0,0,0,0.10);
+      padding: 18px 26px;
+      font-size: 1.25rem;
+      box-shadow: 0 0.9vw 2.6vw rgba(0,0,0,0.12);
+    
+      border-radius: 999px;
+}
+    #btnOpenComposer:hover{
+      filter: brightness(1.02);
+      transform: translateY(-1px);
+    }
+.btn-secondary {
+      color: #071018;
+      background: rgba(255,255,255,0.85);
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .preview-tile {
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(0,0,0,0.15);
+      aspect-ratio: 1 / 1;
+    }
+    .preview-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    /* Hover-to-delete icon for composer photo previews */
+    .preview-remove{
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: 0;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      background: rgba(0,0,0,0.60);
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+      opacity: 0;
+      transform: translateY(-2px);
+      transition: opacity 140ms ease, transform 140ms ease, filter 140ms ease;
+    }
+    .preview-tile:hover .preview-remove{
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .preview-remove:hover{ filter: brightness(1.08); }
+    .preview-remove:active{ transform: translateY(1px); }
+
+    .blog-grid {
+      margin-top: 4vh;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.6vw;
+    }
+
+    /* Colorful rounded post cards (similar “soft card” feel to photos page, but punchier) */
+    .post-card {
+      position: relative;
+      border-radius: 1.1vw;
+      padding: 32px 34px 40px;
+      cursor: pointer;
+      border: 0;
+      text-align: left;
+      background: rgba(255,255,255,0.70);
+      box-shadow: 0 0.9vw 2.6vw rgba(0,0,0,0.20);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+      overflow: hidden;
+      color: #0e1116;
+      box-sizing: border-box;
+      height: 270px; /* uniform card height */
+    }
+
+    .post-card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      right: 0;
+      height: 8px;
+      background: linear-gradient(90deg, #52a9ff, #ff55bb 55%, #7dffab);
+      z-index: 0;
+      opacity: 0.95;
+    }
+
+    .post-card > * { position: relative; z-index: 1; }
+
+
+    .post-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 1.1vw;
+      background: transparent;
+      z-index: 0;
+      border: 1px solid rgba(0,0,0,0.10);
+    }
+
+    .post-card:hover { transform: translateY(-0.25vh); box-shadow: 0 1.2vw 3vw rgba(0,0,0,0.28); }
+
+    .post-inner {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr min(520px, 50%);
+      gap: 28px;
+      align-items: stretch;
+      height: 100%;
+    }
+
+    /* Responsive: stack text + photos on smaller screens */
+    @media (max-width: 900px){
+      .post-card{ height: auto; }
+      .post-inner{ grid-template-columns: 1fr; gap: 18px; }
+      .post-right{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      /* extra right padding shifts collage left so it never clips */
+      padding: 18px 72px 18px 28px;
+      height: 100%;
+      box-sizing: border-box;
+    }
+      .thumb-collage{ height: 240px; }
+    }
+
+    
+    
+    /* Collage thumbnails (matches your sketches) */
+    .thumb-collage{
+      position: relative;
+      width: min(520px, 100%);
+      height: 100%;
+      margin: 0 auto;
+      display: block;
+    }
+    .thumb-collage img{
+      position:absolute;
+      z-index: 1;
+      object-fit: cover;
+      border-radius: 14px;
+      border: 3px solid rgba(255,255,255,0.95);
+      box-shadow: 0 14px 30px rgba(0,0,0,0.18);
+      background: #fff;
+      display:block;
+      will-change: transform;
+    }
+    .thumb-collage.one img:nth-child(1){
+      left: 14%;
+      top: 7%;
+      transform: rotate(0deg);
+      z-index: 2;
+      width: 72%;
+      height: 86%;
+    }
+    .thumb-collage.two img:nth-child(1){
+      left: 2%;
+      top: 8%;
+      transform: rotate(-10deg);
+      z-index: 2;
+      width: 70%;
+      height: 84%;
+    }
+    .thumb-collage.two img:nth-child(2){
+      left: 30%;
+      top: 20%;
+      transform: rotate(8deg);
+      z-index: 1;
+      width: 70%;
+      height: 84%;
+    }
+    /* 3+ photos: 1st on top-left, 2nd lower-middle, 3rd behind far-right */
+    .thumb-collage.three img:nth-child(1){
+      left: 0%;
+      top: 8%;
+      transform: rotate(-8deg);
+      z-index: 3;
+      width: 68%;
+      height: 84%;
+    }
+    .thumb-collage.three img:nth-child(2){
+      left: 16%;
+      top: 24%;
+      transform: rotate(4deg);
+      z-index: 2;
+      width: 68%;
+      height: 84%;
+    }
+    .thumb-collage.three img:nth-child(3){
+      left: 34%;
+      top: 10%;
+      transform: rotate(12deg);
+      z-index: 1;
+      width: 68%;
+      height: 84%;
+    }
+
+    .post-author {
+      margin-top: 10px;
+      font-weight: 700;
+      opacity: 0.9;
+      font-size: 0.98rem;
+    }
+    .post-topline{
+      display:flex;
+      flex-direction: column;
+      align-items:flex-start;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .post-title {
+      margin: 0;
+      font-weight: 950;
+      font-size: clamp(1.8rem, 1.4vw, 2rem);
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+    }
+
+    .post-date{
+      display: inline-block;
+      font-size: 0.98rem;
+      opacity: 0.9;
+      margin-top: 4px;
+      font-weight: 700;
+    }
+
+    .post-excerpt {
+      margin: 0;
+      color: rgba(14,17,22,0.82);
+      line-height: 1.35;
+      font-size: 0.98rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      max-height: calc(0.98rem * 4 * 3);
+      padding: 35px 0px 0px;
+    }
+
+    .post-thumbrow{
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    .post-thumb {
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(255,255,255,0.12);
+      aspect-ratio: 1 / 1;
+    }
+    .post-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: #071018;
+      background: rgba(255,255,255,0.85);
+      padding: 8px 10px;
+      border-radius: 999px;
+      width: fit-content;
+    }
+
+    /* ===== POST MODAL ===== */
+.modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      padding: 24px 16px;
+      overflow: auto;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal.open { display: flex; }
+    body.no-scroll { overflow: hidden; }
+    
+    /* Composer modal: lighter overlay + cream panel */
+    #composerModal{
+      background: rgba(0,0,0,0.55);
+    }
+    #composerModal .modal-shell{
+      background: #f6f2e9;
+      color: #0b0f14;
+      border: 1px solid rgba(0,0,0,0.10);
+    }
+    #composerModal .modal-meta{
+      color: rgba(11,15,20,0.65);
+    }
+    
+/* ------------------------------
+   POST VIEWER META (AUTHOR / DATE)
+   ------------------------------ */
+#postModal .modal-meta{
+  color: rgba(0,0,0,0.70);
+  margin-top: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}
+#composerModal .modal-titlewrap{
+      max-width: 920px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    #composerModal .modal-close{
+      background: rgba(0,0,0,0.06);
+      color: #0b0f14;
+    }
+    #composerModal .modal-close:hover{
+      background: rgba(0,0,0,0.10);
+    }
+    /* Center the composer content and give it the full width */
+    #composerModal .composer{
+      margin-top: 0;
+      padding: 0;
+      background: transparent;
+      box-shadow: none;
+      border: 0;
+      backdrop-filter: none;
+    }
+    #composerModal .composer-grid{
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    /* Post viewer modal: use same cream theme as page */
+    #postModal{
+      background: rgba(0,0,0,0.55);
+    }
+    #postModal .modal-shell{
+      background: #f6f2e9;
+      color: #0b0f14;
+      backdrop-filter: none;
+      box-shadow: 0 14px 70px rgba(0,0,0,0.45);
+    }
+    #postModal .modal-text{
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(0,0,0,0.10);
+      color: #0b0f14;
+    }
+    #postModal .modal-gallery{
+      background: rgba(255,255,255,0.58);
+      border: 1px solid rgba(0,0,0,0.10);
+    }
+
+    
+    /* ============================================================
+       POST VIEWER (READ) — FIXED IMAGE COLUMN, SCROLLING TEXT
+       Text (left) scrolls independently; images (right) stay visible.
+       ============================================================ */
+    #postModal .modal-body{
+      overflow: hidden;            /* stop whole modal from scrolling */
+      align-items: stretch;
+    }
+    #postModal .modal-text{
+      height: 100%;
+      max-height: 100%;
+      overflow: auto;              /* scroll only the text column */
+    }
+    #postModal .modal-gallery{
+      height: 100%;
+      max-height: 100%;
+      overflow: auto;              /* if images overflow, scroll this column only */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+/* Composer modal: ensure full-width centered form */
+    #composerModal .modal-body{
+      display: block;
+      padding: 0 18px 20px;
+      flex: 1 1 auto;
+      overflow: auto;
+    }
+    #composerModal .composer{
+      margin-top: 12px;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+    #composerModal .composer-grid{
+      grid-template-columns: 1fr;
+      max-width: 920px;
+      margin: 0 auto;
+    }
+    #composerModal .composer-actions{
+      max-width: 920px;
+      margin: 14px auto 0;
+    }
+
+
+/* ============================================================
+   NEW POST POPUP (COMPOSER) STYLES — EDIT THESE FIRST
+   These overrides ONLY affect the "New Post" popup (composerModal).
+   ============================================================ */
+
+/* Width + scroll behavior of the popup shell */
+#composerModal .modal-shell{
+  /* If you want the popup wider/narrower, edit --composer-panel-max-width above */
+  width: min(92vw, var(--composer-panel-max-width));
+
+  /* EDIT: remove forced empty space at bottom */
+  height: auto;          /* let the panel shrink when content is short */
+  max-height: 86vh;      /* but still cap it so long drafts scroll */
+}
+
+/* Header (contains "New Post" + subtitle) */
+#composerModal .modal-head{
+  padding: var(--composer-head-padding-y) var(--composer-head-padding-x) 14px;
+}
+
+/* "New Post" title */
+#composerModal .modal-title{
+  font-size: var(--composer-title-size);
+  font-weight: var(--composer-title-weight);
+  line-height: 1.05;
+}
+
+/* Subtitle: "Write a post, add photos, then publish." */
+#composerModal .modal-meta{
+  font-size: var(--composer-subtitle-size);
+  color: var(--composer-subtitle-color);
+  max-width: 70ch;
+}
+
+/* Scrollable body padding (where the form lives) */
+#composerModal .modal-body{
+  padding: 0 var(--composer-body-padding-x) 22px;
+}
+
+/* Form labels: "Title", "Name (optional)", "Body", "Photos (optional)" */
+#composerModal .field label{
+  font-size: var(--composer-label-size);
+  font-weight: var(--composer-label-weight);
+  letter-spacing: 0.01em;
+}
+
+/* Inputs + textarea */
+#composerModal .field input[type="text"],
+#composerModal .field textarea{
+  font-size: var(--composer-input-font);
+  padding: var(--composer-input-padding-y) var(--composer-input-padding-x);
+  border-radius: var(--composer-input-radius);
+}
+
+/* Textarea height */
+#composerModal .field textarea{
+  min-height: var(--composer-textarea-min-h);
+  line-height: 1.45;
+}
+
+/* Tip + "No delete buttons..." note text */
+#composerModal .muted-note{
+  font-size: var(--composer-note-size);
+  color: var(--composer-note-color);
+} 
+
+
+.modal-shell {
+      width: min(92vw, 1100px);
+      margin: 0 auto;
+      height: 86vh;
+      max-height: 86vh;
+      display: flex;
+      flex-direction: column;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 12px 60px rgba(0,0,0,0.65);
+      border: 1px solid rgba(0,0,0,0.15);
+      background:
+        radial-gradient(900px 500px at 10% 0%, rgba(82,169,255,0.30), transparent 60%),
+        radial-gradient(900px 500px at 90% 0%, rgba(255,85,187,0.26), transparent 55%),
+        linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+      backdrop-filter: blur(12px);
+    }
+
+    .modal-head {
+      padding: 18px 18px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .modal-titlewrap { display: flex; flex-direction: column; gap: 6px; }
+    .modal-title {
+      margin: 0;
+      font-size: clamp(1.3rem, 2.2vw, 2rem);
+      font-weight: 950;
+      letter-spacing: -0.02em;
+    }
+    .modal-meta { color: rgba(233,238,246,0.78); font-size: 0.95rem; }
+
+    .modal-close {
+      appearance: none;
+      border: 0;
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 26px;
+      line-height: 44px;
+    }
+    .modal-close:hover { background: rgba(255,255,255,0.18); }
+
+    .modal-body {
+      padding: 0 18px 18px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 16px;
+      flex: 1 1 auto;
+      overflow: auto;
+    }
+
+    .modal-text {
+      border-radius: 16px;
+      background: rgba(0,0,0,0.42);
+      border: 1px solid rgba(0,0,0,0.15);
+      padding: 14px 14px;
+      color: rgba(233,238,246,0.92);
+      line-height: 1.45;
+      overflow: visible;
+      white-space: pre-wrap;
+    }
+
+    .modal-gallery {
+      border-radius: 16px;
+      background: rgba(0,0,0,0.42);
+      border: 1px solid rgba(0,0,0,0.15);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 260px;
+    }
+
+    .modal-imgwrap {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.75);
+      border: 1px solid rgba(255,255,255,0.12);
+      flex: 1 1 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-img { max-width: 100%; max-height: 52vh; display: block; }
+
+    .modal-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .modal-nav-btn {
+      border: 0;
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      cursor: pointer;
+      font-size: 22px;
+    }
+    .modal-nav-btn:hover { background: rgba(255,255,255,0.18); }
+
+    .modal-counter { color: rgba(233,238,246,0.78); font-weight: 800; }
+
+    .modal-thumbs {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+    .modal-thumb {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.12);
+      cursor: pointer;
+      background: rgba(255,255,255,0.75);
+      aspect-ratio: 1 / 1;
+      opacity: 0.8;
+    }
+    .modal-thumb.active { outline: 2px solid rgba(255,255,255,0.7); opacity: 1; }
+    .modal-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* FOOTER STYLING */
+    .footer {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      background-color: #000;
+      padding: var(--footer-padding) 0;
+      position: relative;
+    }
+
+    .footer-inner {
+      margin: 0 var(--side-margin);
+      text-align: left;
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .footer-left {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .footer-left .footer-brand {
+      font-size: var(--footer-title-font-size);
+      font-weight: bold;
+      color: white;
+      text-decoration: none;
+      margin-bottom: var(--footer-button-spacing);
+    }
+
+    .footer-left .footer-created,
+    .footer-left .footer-updated {
+      font-size: var(--footer-subtitle-font-size);
+      color: white;
+      margin-top: var(--spacing-small);
+    }
+
+    .footer-nav {
+      position: absolute;
+      top: 50%;
+      left: var(--footer-nav-left);
+      transform: translateY(-45%);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .footer-nav a {
+      font-size: var(--footer-nav-font-size);
+      color: white;
+      text-decoration: none;
+      margin-bottom: var(--spacing-small);
+    }
+    .footer-nav a:hover { text-decoration: underline; }
+
+    .footer-social {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      color: white;
+    }
+    .footer-social .follow-text {
+      font-size: var(--footer-nav-font-size);
+      font-weight: bold;
+      margin-bottom: var(--spacing-small);
+    }
+    .social-icons { display: flex; gap: 1vw; }
+    .social-icons a { color: white; font-size: 2vw; transition: transform 0.2s ease; text-decoration: none; }
+    .social-icons a:hover { transform: scale(1.1); }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .composer-grid { grid-template-columns: 1fr; }
+      .blog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3.2vw; }
+      .modal-body { grid-template-columns: 1fr; }
+      .modal-thumbs { grid-template-columns: repeat(6, 1fr); }
+    }
+
+    @media (max-width: 600px) {
+      :root {
+        --side-margin: 5vw;
+        --brand-font-size: 4vw;
+        --nav-font-size: 3vw;
+        --header-font-size: 6vw;
+        --subheader-font-size: 3vw;
+        --footer-title-font-size: 4vw;
+        --footer-subtitle-font-size: 2vw;
+        --footer-nav-font-size: 3vw;
+      }
+      .nav-inner, .footer-inner { margin-left: var(--side-margin); margin-right: var(--side-margin); }
+      .social-icons a { font-size: 5vw; }
+      .blog-grid { grid-template-columns: 1fr; gap: 16px; }
+      .preview-grid { grid-template-columns: repeat(4, 1fr); }
+      .modal { padding: 18px 0; }
+      .modal-thumbs { grid-template-columns: repeat(5, 1fr); }
+    }
+
+    @media (max-width: 600px) {
+      .footer-inner {
+        display: grid;
+        grid-template-columns: auto auto 1fr;
+        column-gap: 4vw;
+        align-items: start;
+      }
+      .footer-left { min-width: 0; }
+      .footer-nav {
+        position: static;
+        top: auto;
+        left: auto;
+        transform: none;
+        margin: 0;
+        padding-top: 0.2rem;
+      }
+      .footer-nav a {
+        line-height: 1.25;
+        margin-bottom: 0.35rem;
+      }
+      .footer-social {
+        margin-left: auto;
+        align-items: flex-end;
+      }
+    }
+  
+
+    .post-left{ min-width:0; }
+
+    @media (max-width: 900px){
+      .post-inner{ grid-template-columns: 1fr; }}
+      
+/* ===================== PAGINATION CONTROLS ===================== */
+.page-range{
+  margin: 10px 0 18px;
+  font-size: 0.98rem;
+  color: rgba(14,17,22,0.72);
+}
+.post-card.is-hidden{ display:none !important; }
+
+.pagination{
+  display:flex;
+  justify-content:center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 18px 0 10px;
+  margin-top: 40px;  
+}
+.pagination .page-btn,
+.pagination .page-ellipsis{
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: rgba(255,255,255,0.75);
+}
+.pagination .page-btn{
+  cursor:pointer;
+}
+.pagination .page-btn:hover{
+  transform: translateY(-1px);
+}
+.pagination .page-btn.is-active{
+  background: rgba(255,255,255,1);
+  border-color: rgba(0,0,0,0.25);
+  font-weight: 700;
+}
+.pagination .page-btn:disabled{
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+/* === Modal Meta (Author + Date under title) === */
+.modal-meta {
+  font-size: 0.9rem;
+  color: #777;
+  margin-top: 4px;
+  margin-bottom: 18px;
+}
+
+</style>
+</head>
+<body>
+<!-- Full-width slideshow container -->
+<div class="slideshow-container">
+<div class="nav-overlay">
+<div class="nav-inner">
+<div class="brand"><a href="/">paiden.com</a></div>
+<div class="nav-items">
+<a href="/resume">Resume</a>
+<a href="/photos">Photos</a>
+<a href="/blog">Blog</a>
+<a href="/contactme">Contact Me</a>
+</div>
+</div>
+</div>
+<div class="slideshow-text">
+<h1>Blog</h1>
+<h2>Public blog. Feel free to reflect!</h2>
+</div>
+  <!-- Slides -->
+  <div class="slide active"><img src="images/header/rocket.JPG" alt="Rocket" /></div>
+  <div class="slide"><img src="images/header/chief_mtn.JPG" alt="Chief Mtn" /></div>
+  <div class="slide"><img src="images/header/land.JPG" alt="Land" /></div>
+  <div class="slide"><img src="images/header/incline.JPG" alt="incline" /></div>
+  <div class="slide"><img src="images/header/castle.JPG" alt="castle" /></div>
+  <div class="slide"><img src="images/header/lake.JPG" alt="lake" /></div>
+  <div class="slide"><img src="images/header/avalanche.JPG" alt="avalanche" /></div>
+  <div class="slide"><img src="images/header/sistine.JPG" alt="sistine" /></div>
+  <div class="slide"><img src="images/header/falls.JPG" alt="falls" /></div>
+  <div class="slide"><img src="images/header/swiss.JPG" alt="Swiss" /></div>
+</div>
+<!-- BLOG -->
+<section aria-label="Blog posts" class="blog-wrap">
+<div class="blog-inner">
+<div class="blog-header">
+<h2 class="posts-title">Posts</h2>
+<button class="btn btn-primary" id="btnOpenComposer" type="button">
+<i class="fa-solid fa-pen-to-square"></i> New Post
+        </button>
+</div>
+<div class="page-range" id="pageRangeLabel"></div>
+
+<!-- Grid -->
+<div class="blog-grid" id="blogGrid">
+<!-- ===================== BLOG POSTS START =====================
+             STATIC POSTS (EDIT/DELETE IN THIS FILE)
+             - Each <article class="post-card"> block below is ONE post.
+             - To delete a post: remove the whole block from POST:START to POST:END.
+             - Keep this section for "permanent" posts that ship with the site.
+             ===================== BLOG POSTS START ===================== -->
+<!-- TEMPLATE (copy/paste to add a new static post)
+        <article class="post-card" data-post-id="static-003"
+                 data-title="Your title"
+                 data-author="Your name"
+                 data-created="2025-12-16T00:00:00Z"
+                 data-body="Write your post here. Use \n for new lines."
+                 data-images="data:image/jpeg;base64,...||data:image/png;base64,...">
+          <div class="post-inner">
+            <div class="post-topline">
+              <h4 class="post-title">Your title</h4>
+              <span class="post-date">Dec 16, 2025</span>
+            </div>
+            
+            <div class="post-author">By <span class="post-author-name"></span></div>
+            <div class="post-content-row">
+              <div class="post-content-left">
+                <p class="post-excerpt">Short preview text...</p>
+              </div>
+              <div class="post-thumbrow" aria-hidden="true"></div>
+            </div>
+          </div>
+        </article>
+        -->
+<!-- POST:START static-001 -->
+<article class="post-card" data-author="Paiden" data-body="This is a public forum that anyone may use to spread their message. Click any post to open it in a popup. You can also create new posts with photos using the form above.
+
+Note: I am notified of all posts and will be moderating content. You do not have free speech, I am the dictator of this blog." data-created="2025-12-16T00:00:00Z" data-images="" data-post-id="static-001" data-title="Welcome to the blog">
+<div class="post-inner">
+  <div class="post-left">
+    <h4 class="post-title">Welcome to the blog</h4>
+    <div class="post-author">By <span class="post-author-name"></span></div>
+    <div class="post-date">Dec 16, 2025</div>
+    <p class="post-excerpt">This is a public forum that anyone may use to spread their message. 
+      Click any post to open it in a popup. You can also create new posts with photos using the form above.
+      <br><br>
+      Note: I am notified of all posts and will be moderating content. You do not have free speech, I am the dictator of this blog.
+    </p>
+  </div>
+  <div aria-hidden="true" class="post-right">
+    <div class="post-thumbrow"></div>
+  </div>
+</div>
+</article>
+<!-- POST:END static-001 -->
+<!-- ===================== BLOG POSTS END ===================== -->
+<!-- ===========================================
+             USER POSTS (AUTO-INSERTED VIA localStorage)
+             =========================================== -->
+</div>
+<div class="pagination" id="paginationBar"></div>
+
+</div>
+</section>
+<!-- Composer Modal -->
+<div aria-hidden="true" aria-label="New post" class="modal" id="composerModal">
+<div aria-labelledby="composerTitle" aria-modal="true" class="modal-shell" role="dialog">
+<div class="modal-head">
+<!-- ===== EDIT: New Post modal heading & subheading (text, size, spacing) ===== -->
+<div class="modal-titlewrap">
+<h3 class="modal-title" id="composerTitle">New Post</h3>
+<div class="modal-meta">Write a post, add photos, then publish.</div>
+</div>
+<button aria-label="Close" class="modal-close" id="composerClose">×</button>
+</div>
+<div class="modal-body">
+<div class="composer" id="composer">
+<!-- ===== EDIT: Form field labels + inputs (font, spacing, widths) ===== -->
+<div class="composer-grid">
+<div class="field">
+<label for="postTitle">Title</label>
+<input id="postTitle" maxlength="90" placeholder="What’s this post about?" type="text"/>
+</div>
+<div class="field">
+<label for="postAuthor">Name (optional)</label>
+<input id="postAuthor" maxlength="40" placeholder="Anonymous is fine" type="text"/>
+</div>
+<div class="field" style="grid-column: 1 / -1;">
+<label for="postBody">Body</label>
+<textarea id="postBody" placeholder="Write your post here..."></textarea>
+</div>
+	<div class="field" style="grid-column: 1 / -1;">
+	<!-- ===== EDIT: Photos label / Choose Files / Publish layout =====
+	     Two containers next to each other:
+	       LEFT  (.photo-left): label + file picker
+	       RIGHT (.photo-right): Publish button
+	     Styling knobs are in CSS under: NEW POST MODAL: photos + publish layout
+	===== -->
+	<div class="photo-actions-row">
+	  <div class="photo-left">
+	    <label for="postPhotos">Photos (optional)</label>
+	    <input accept="image" id="postPhotos" multiple="" type="file"/>
+	  </div>
+	  <div class="photo-right">
+	    <button class="btn btn-primary" id="btnPublish" type="button">
+	      <i class="fa-solid fa-paper-plane"></i> Publish
+	    </button>
+	  </div>
+	</div>
+	<div class="turnstile-wrap">
+	  <div class="cf-turnstile" data-sitekey="0x4AAAAAACayR7BTiRED3OPy" data-callback="onTurnstile" data-expired-callback="onTurnstileExpired"></div>
+	</div>
+<div aria-label="Photo preview" class="preview-grid" id="photoPreview"></div>
+<p class="muted-note">Tip: the first 3 photos become the “thumbnail row” on the post card.</p>
+</div>
+</div>
+<!-- ===== EDIT: "No delete buttons..." note styling/text ===== -->
+<p class="muted-note"><strong>No delete buttons.</strong> This page intentionally doesn’t offer deletion. If you add static posts below, they’re organized so you can remove an entire <code>&lt;article&gt;</code> block from the HTML file.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Post Modal -->
+<div aria-hidden="true" aria-label="Post viewer" class="modal" id="postModal">
+<div aria-labelledby="modalTitle" aria-modal="true" class="modal-shell" role="dialog">
+<div class="modal-head">
+<div class="modal-titlewrap">
+<h3 class="modal-title" id="modalTitle"></h3>
+<div class="modal-meta" id="modalMeta"></div>
+</div>
+<button aria-label="Close" class="modal-close" id="modalClose">×</button>
+</div>
+<div class="modal-body">
+<div class="modal-text" id="modalBody"></div>
+<div class="modal-gallery" id="modalGallery">
+<div class="modal-imgwrap">
+<img alt="Post photo" class="modal-img" id="modalImg">
+</img></div>
+<div class="modal-nav">
+<button aria-label="Previous" class="modal-nav-btn" id="modalPrev">❮</button>
+<div class="modal-counter" id="modalCounter"></div>
+<button aria-label="Next" class="modal-nav-btn" id="modalNext">❯</button>
+</div>
+<div class="modal-thumbs" id="modalThumbs"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- FOOTER -->
+<footer class="footer">
+<div class="footer-inner">
+<div class="footer-left">
+<a class="footer-brand" href="/">paiden.com</a>
+<div class="footer-created">Created by Paiden Nicks</div>
+<div class="footer-updated" id="last-updated"></div>
+</div>
+<div class="footer-nav">
+<a href="/resume">Resume</a>
+<a href="/photos">Photos</a>
+<a href="/blog">Blog</a>
+<a href="/contactme">Contact Me</a>
+</div>
+<div class="footer-social">
+        <span class="follow-text">Follow Me</span>
+        <div class="social-icons">
+          <!-- Replace “YourProfile” with your actual username/ID -->
+          <a href="https://www.linkedin.com/in/paiden" target="_blank">
+            <i class="fab fa-linkedin-in"></i>
+          </a>
+          <a href="https://www.instagram.com/paiden_26" target="_blank">
+            <i class="fab fa-instagram"></i>
+          </a>
+          <a href="https://snapchat.com/t/m04JWymy" target="_blank">
+            <i class="fab fa-snapchat"></i>
+          </a>
+          </div>
+      </div>
+    </div>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    // ===== Header slideshow + footer date =====
+    let slideIndex = 0;
+    const slides = document.getElementsByClassName("slide");
+    function showSlides() {
+      for (let i = 0; i < slides.length; i++) slides[i].classList.remove("active");
+      slideIndex++;
+      if (slideIndex > slides.length) slideIndex = 1;
+      slides[slideIndex - 1].classList.add("active");
+      setTimeout(showSlides, 5000);
+    }
+    showSlides();
+
+    document.getElementById("last-updated").innerText =
+      "Today's Date: " + new Date().toLocaleDateString();
+
+    // ===== Blog logic (static posts + sb posts) =====
+    const SUPABASE_URL = "https://irauuqhqqkctcwulqzsw.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_93dGo8oZILIYg9NSotz9MQ_T8v22oXR";
+    const sb = (window.supabase && window.supabase.createClient)
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+      : null;
+
+    let turnstileToken = "";
+    window.onTurnstile = (token) => { turnstileToken = token || ""; };
+    window.onTurnstileExpired = () => { turnstileToken = ""; };
+    function formatWaitTime(seconds) {
+      const total = Math.max(1, Number(seconds) || 0);
+      if (total < 60) {
+        return `${total} second${total === 1 ? "" : "s"}`;
+      }
+      const minutes = Math.floor(total / 60);
+      const remainingSeconds = total % 60;
+      if (!remainingSeconds) {
+        return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+      }
+      return `${minutes} minute${minutes === 1 ? "" : "s"} ${remainingSeconds} second${remainingSeconds === 1 ? "" : "s"}`;
+    }
+
+    const blogGrid = document.getElementById("blogGrid");
+        const pageRangeLabel = document.getElementById("pageRangeLabel");
+    const paginationBar = document.getElementById("paginationBar");
+    const PAGE_SIZE = 10;
+    let currentPage = 1;
+const titleEl = document.getElementById("postTitle");
+    const authorEl = document.getElementById("postAuthor");
+    const bodyEl = document.getElementById("postBody");
+    const photosEl = document.getElementById("postPhotos");
+    const previewEl = document.getElementById("photoPreview");
+    const btnPublish = document.getElementById("btnPublish");
+    const btnClearDraft = document.getElementById("btnClearDraft");
+    const PUBLISH_BTN_IDLE_HTML = '<i class="fa-solid fa-paper-plane"></i> Publish';
+    function setPublishSubmitting(isSubmitting) {
+      if (!btnPublish) return;
+      btnPublish.disabled = !!isSubmitting;
+      btnPublish.innerHTML = isSubmitting ? "Publishing..." : PUBLISH_BTN_IDLE_HTML;
+    }
+
+    let draftImages = []; 
+
+    // ===== Image helpers (prevents publish failures when photos are included) =====
+    function readFileAsDataURL(fileOrBlob) {
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result || ""));
+        r.onerror = reject;
+        r.readAsDataURL(fileOrBlob);
+      });
+    }
+
+    async function downscaleImageToDataURL(file, { maxDim = 1600, quality = 0.82 } = {}) {
+      if (!file || !file.type || !file.type.startsWith("image/")) return "";
+
+      // Prefer createImageBitmap for speed; fall back to Image() if needed.
+      const img = await (async () => {
+        if ("createImageBitmap" in window) {
+          try { return await createImageBitmap(file); } catch (_) {}
+        }
+        const dataUrl = await readFileAsDataURL(file);
+        return await new Promise((resolve, reject) => {
+          const el = new Image();
+          el.onload = () => resolve(el);
+          el.onerror = reject;
+          el.src = dataUrl;
+        });
+      })();
+
+      const w = img.width || img.naturalWidth || 0;
+      const h = img.height || img.naturalHeight || 0;
+      if (!w || !h) return await readFileAsDataURL(file);
+
+      const scale = Math.min(1, maxDim / Math.max(w, h));
+      const tw = Math.max(1, Math.round(w * scale));
+      const th = Math.max(1, Math.round(h * scale));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = tw;
+      canvas.height = th;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, tw, th);
+
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+      if (!blob) return await readFileAsDataURL(file);
+      return await readFileAsDataURL(blob);
+    }
+// data URLs
+
+    function escapeHTML(str) {
+      return String(str).replace(/[&<>"']/g, s => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+      })[s]);
+    }
+
+    function formatDateShort(iso) {
+      try {
+        const d = new Date(iso);
+        return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+      } catch { return ""; }
+    }
+
+    async function loadPostsFromSupabase() {
+      if (!sb) {
+        console.error("sb client not available. Check script load or ad blockers.");
+        return [];
+      }
+      const { data, error } = await sb
+        .from("posts")
+        .select("id,title,author,body,images,created_at")
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.error("Failed to load posts:", error);
+        return [];
+      }
+      return Array.isArray(data) ? data : [];
+    }
+
+    
+    function buildThumbRow(images) {
+      if (!images || !images.length) return "";
+      const n = images.length;
+
+      // We only show up to 3 thumbnails in the card collage
+      const picks = images.slice(0, 3);
+
+      let cls = "three";
+      if (n === 1) cls = "one";
+      else if (n === 2) cls = "two";
+
+      return `<div class="thumb-collage ${cls}">` + 
+        picks.map(src => `<img src="${src}" alt="" />`).join("") +
+      `</div>`;
+    }
+
+function excerpt(text, maxChars = 1000) {
+      const t = String(text || "").trim().replace(/\s+/g, " ");
+      if (t.length <= maxChars) return t;
+      return t.slice(0, maxChars - 1) + "…";
+    }
+
+    async function renderUserPostsIntoGrid() {
+      // Remove any previously-rendered user posts
+      blogGrid.querySelectorAll('[data-source="user"]').forEach(n => n.remove());
+
+      const posts = await loadPostsFromSupabase();
+
+      for (const p of posts) {
+        const card = document.createElement("article");
+        card.className = "post-card";
+        card.setAttribute("data-source", "user");
+        card.setAttribute("data-post-id", p.id || "");
+        card.setAttribute("data-title", p.title || "");
+        card.setAttribute("data-author", p.author || "");
+        card.setAttribute("data-created", p.created_at || "");
+        card.setAttribute("data-body", p.body || "");
+        card.setAttribute("data-images", (p.images || []).join("||"));
+
+        card.innerHTML = `
+          <div class="post-inner">
+            <div class="post-left">
+              <div class="post-left">
+                <h4 class="post-title">${escapeHTML(p.title || "Untitled")}</h4>
+
+                <div class="post-author">
+                  By <span class="post-author-name">
+                    ${escapeHTML(p.author || "Anonymous")}
+                  </span>
+                </div>
+
+                <div class="post-date">
+                  ${escapeHTML(formatDateShort(p.created_at))}
+                </div>
+
+                <p class="post-excerpt">
+                  ${escapeHTML(excerpt(p.body || ""))}
+                </p>
+              </div>
+            </div>
+            <div class="post-right" aria-hidden="true">
+              <div class="post-thumbrow">${buildThumbRow(p.images || [])}</div>
+            </div>
+          </div>
+        `;
+        // Put user posts at the top of the grid (right after composer section)
+        blogGrid.appendChild(card);
+      }
+      sortAllPostsByDateDesc();
+    }
+
+    function hydrateStaticThumbs() {
+      blogGrid.querySelectorAll('.post-card:not([data-source="user"])').forEach(card => {
+        // Fill visible author line for static cards
+        const author = card.getAttribute('data-author') || '';
+        const authorSpan = card.querySelector('.post-author-name');
+        if (authorSpan) authorSpan.textContent = author || 'Anonymous';
+
+        const imagesRaw = card.getAttribute("data-images") || "";
+        const images = imagesRaw ? imagesRaw.split("||").filter(Boolean) : [];
+        const row = card.querySelector(".post-thumbrow");
+        if (row) row.innerHTML = buildThumbRow(images);
+      });
+    }
+
+    // ===== Preview handling =====
+    function clearPreview() {
+      draftImages = [];
+      previewEl.innerHTML = "";
+      photosEl.value = "";
+    }
+
+    function lockScroll(){
+      const sw = window.innerWidth - document.documentElement.clientWidth;
+      document.body.classList.add("no-scroll");
+      if (sw > 0) document.body.style.paddingRight = sw + "px";
+    }
+    function unlockScroll(){
+      document.body.classList.remove("no-scroll");
+      document.body.style.paddingRight = "";
+    }
+
+
+    function sortAllPostsByDateDesc(){
+      const cards = Array.from(blogGrid.querySelectorAll('article.post-card, article.blog-post, article'));
+      cards.sort((a,b)=>{
+        const da = a.getAttribute('data-created') || '';
+        const db = b.getAttribute('data-created') || '';
+        // ISO strings compare lexicographically
+        return db.localeCompare(da);
+      });
+      for(const c of cards){ blogGrid.appendChild(c); }
+      applyPagination();
+    }
+
+    // ===================== PAGINATION =====================
+    function setCurrentPage(p){
+      const next = Math.max(1, p);
+      if (next === currentPage) return;
+      currentPage = next;
+      applyPagination();
+      const anchor = document.querySelector('.posts-title');
+      if (anchor) anchor.scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+
+    function applyPagination(){
+      const cards = Array.from(blogGrid.querySelectorAll('article.post-card, article.blog-post, article'));
+      const total = cards.length;
+      const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const startIdx = (currentPage - 1) * PAGE_SIZE;
+      const endIdx = Math.min(total, startIdx + PAGE_SIZE);
+
+      cards.forEach((c, idx) => {
+        const show = idx >= startIdx && idx < endIdx;
+        c.classList.toggle('is-hidden', !show);
+        c.style.display = show ? '' : 'none';
+      });
+
+      updatePageRangeLabel(cards.slice(startIdx, endIdx));
+      renderPagination(totalPages);
+    }
+
+    function updatePageRangeLabel(visibleCards){
+      if (!pageRangeLabel) return;
+      if (!visibleCards.length){
+        pageRangeLabel.textContent = "";
+        return;
+      }
+      // Cards are already sorted newest->oldest
+      const newestISO = visibleCards[0].getAttribute('data-created') || "";
+      const oldestISO = visibleCards[visibleCards.length - 1].getAttribute('data-created') || "";
+      const newest = formatDateShort(newestISO);
+      const oldest = formatDateShort(oldestISO);
+      pageRangeLabel.textContent = (newest && oldest)
+        ? `${oldest} to ${newest}.`
+        : "";
+    }
+
+    function renderPagination(totalPages){
+      if (!paginationBar) return;
+      paginationBar.innerHTML = "";
+
+      const mkBtn = (label, page, opts={}) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'page-btn';
+        b.textContent = label;
+        if (opts.active) b.classList.add('is-active');
+        if (opts.disabled) b.disabled = true;
+        b.addEventListener('click', (e)=>{ e.preventDefault(); setCurrentPage(page); });
+        return b;
+      };
+
+      const mkEllipsis = () => {
+        const s = document.createElement('span');
+        s.className = 'page-ellipsis';
+        s.textContent = '…';
+        return s;
+      };
+
+      // Always show: 1, last, and a window around current
+      const windowSize = 2;
+      const pages = new Set([1, totalPages]);
+      for (let p = currentPage - windowSize; p <= currentPage + windowSize; p++){
+        if (p >= 1 && p <= totalPages) pages.add(p);
+      }
+      const sorted = Array.from(pages).sort((a,b)=>a-b);
+
+      // If only a few pages, show all
+      if (totalPages <= 9){
+        for (let p=1; p<=totalPages; p++){
+          paginationBar.appendChild(mkBtn(String(p), p, {active: p===currentPage}));
+        }
+        return;
+      }
+
+      // Build with ellipses
+      let prev = 0;
+      for (const p of sorted){
+        if (prev && p - prev > 1) paginationBar.appendChild(mkEllipsis());
+        paginationBar.appendChild(mkBtn(String(p), p, {active: p===currentPage}));
+        prev = p;
+      }
+    }
+
+
+    function renderPreviewGrid() {
+      previewEl.innerHTML = "";
+      draftImages.forEach((src, idx) => {
+        const tile = document.createElement("div");
+        tile.className = "preview-tile";
+        tile.innerHTML = `
+          <img src="${src}" alt="Photo preview" />
+          <button type="button" class="preview-remove" aria-label="Remove photo" title="Remove photo">
+            <i class="fa-solid fa-trash"></i>
+          </button>`;
+        const btn = tile.querySelector(".preview-remove");
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          draftImages.splice(idx, 1);
+          renderPreviewGrid();
+        });
+        previewEl.appendChild(tile);
+      });
+    }
+
+    // Allow incremental photo adds: pick 1, then pick more later without wiping earlier selections.
+    photosEl.addEventListener("change", async () => {
+      const files = Array.from(photosEl.files || []);
+      if (!files.length) return;
+
+      // Add to existing selection (do not reset draftImages).
+      for (const f of files) {
+        try {
+          // Downscale to reduce localStorage usage (prevents "won't publish with photo").
+          const dataUrl = await downscaleImageToDataURL(f, { maxDim: 1600, quality: 0.82 });
+          if (dataUrl) draftImages.push(dataUrl);
+        } catch (err) {
+          console.error("Failed to process image:", err);
+        }
+      }
+
+      renderPreviewGrid();
+
+      // IMPORTANT: clear the input so you can add more photos without wiping the previous selection
+      photosEl.value = "";
+    });
+
+    // Clear draft (optional button)
+    if (btnClearDraft) btnClearDraft.addEventListener("click", () => {
+      titleEl.value = "";
+      authorEl.value = "";
+      bodyEl.value = "";
+      clearPreview();
+    });
+
+    // Publish
+    btnPublish.addEventListener("click", async () => {
+      if (!sb) {
+        alert("Post service unavailable. Please refresh or disable blockers.");
+        return;
+      }
+      const title = (titleEl.value || "").trim();
+      const author = (authorEl.value || "").trim();
+      const body = (bodyEl.value || "").trim();
+
+      if (!title || !body) {
+        alert("Please add at least a title and some body text.");
+        return;
+      }
+
+      console.log("turnstile token length", turnstileToken ? turnstileToken.length : 0);
+      if (turnstileToken && turnstileToken.length < 20) {
+        turnstileToken = "";
+      }
+      if (!turnstileToken) {
+        alert("Please complete the anti-spam check.");
+        return;
+      }
+
+      const payload = {
+        title,
+        author,
+        body,
+        images: draftImages.slice(0, 18), // keep it reasonable
+        turnstile_token: turnstileToken
+      };
+
+      // log print statement
+      console.log("turnstile token", turnstileToken);
+      console.log("turnstile token length", turnstileToken ? turnstileToken.length : 0);
+      setPublishSubmitting(true);
+      try {
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/dynamic-service`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (!resp.ok) {
+          let errJson = null;
+          try {
+            errJson = await resp.json();
+          } catch (_) {
+            // Ignore non-JSON error responses and show fallback text.
+          }
+
+          console.error("Failed to publish post:", errJson);
+          if (resp.status === 429) {
+            const wait = formatWaitTime(errJson?.wait_seconds);
+            alert(`Please wait ${wait} before sending your next post.`);
+          } else {
+            alert(errJson?.message || errJson?.error || "Post could not be published. Please try again.");
+          }
+          return;
+        }
+
+        // Reset form + rerender
+        titleEl.value = "";
+        authorEl.value = "";
+        bodyEl.value = "";
+        clearPreview();
+        turnstileToken = "";
+        if (window.turnstile && window.turnstile.reset) {
+          window.turnstile.reset();
+        }
+        alert("Post published.");
+        currentPage = 1;
+        closeComposer();
+        await renderUserPostsIntoGrid();
+      } catch (err) {
+        console.error("Failed to publish post:", err);
+        alert("Post could not be published. Please try again.");
+      } finally {
+        setPublishSubmitting(false);
+      }
+});
+
+// ===== Modal handling =====
+    const modal = document.getElementById("postModal");
+    const composerModal = document.getElementById("composerModal");
+    const composerOpen = document.getElementById("btnOpenComposer");
+    const composerClose = document.getElementById("composerClose");
+
+    function openComposer() {
+      if (!composerModal) return;
+      composerModal.classList.add("open");
+      composerModal.setAttribute("aria-hidden", "false");
+      lockScroll();
+      setPublishSubmitting(false);
+
+      // added for testing
+      if (window.turnstile && window.turnstile.reset) {
+        window.turnstile.reset();
+      }
+      
+      // focus title input for fast typing
+      setTimeout(() => {
+        const el = document.getElementById("postTitle");
+        if (el) el.focus();
+      }, 0);
+    }
+    function closeComposer() {
+      if (!composerModal) return;
+      composerModal.classList.remove("open");
+      composerModal.setAttribute("aria-hidden", "true");
+      unlockScroll();
+    }
+
+    const modalClose = document.getElementById("modalClose");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalMeta = document.getElementById("modalMeta");
+    const modalBody = document.getElementById("modalBody");
+    const modalGallery = document.getElementById("modalGallery");
+    const modalImg = document.getElementById("modalImg");
+    const modalPrev = document.getElementById("modalPrev");
+    const modalNext = document.getElementById("modalNext");
+    const modalCounter = document.getElementById("modalCounter");
+    const modalThumbs = document.getElementById("modalThumbs");
+
+    let modalImages = [];
+    let modalIndex = 0;
+
+    function openModal() {
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+      lockScroll();
+    }
+    function closeModal() {
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+      unlockScroll();
+    }
+
+    function showModalImage(i) {
+      if (!modalImages.length) return;
+      modalIndex = (i + modalImages.length) % modalImages.length;
+      modalImg.src = modalImages[modalIndex];
+      modalCounter.textContent = (modalIndex + 1) + " / " + modalImages.length;
+
+      modalThumbs.querySelectorAll(".modal-thumb").forEach((t, idx) => {
+        t.classList.toggle("active", idx === modalIndex);
+      });
+    }
+
+    function setModalThumbs(images) {
+      modalThumbs.innerHTML = "";
+      images.forEach((src, idx) => {
+        const d = document.createElement("div");
+        d.className = "modal-thumb" + (idx === 0 ? " active" : "");
+        d.innerHTML = `<img src="${src}" alt="Thumbnail" />`;
+        d.addEventListener("click", () => showModalImage(idx));
+        modalThumbs.appendChild(d);
+      });
+    }
+
+    function openPostFromCard(card) {
+      const title = card.getAttribute("data-title") || "";
+      const author = card.getAttribute("data-author") || "";
+      const created = card.getAttribute("data-created") || "";
+      const body = card.getAttribute("data-body") || "";
+
+      const imagesRaw = card.getAttribute("data-images") || "";
+      const images = imagesRaw ? imagesRaw.split("||").filter(Boolean) : [];
+
+      modalTitle.textContent = title || "Untitled";
+      const who = (author && author.trim()) ? `By ${author.trim()}` : "By Anonymous";
+      const when = created ? formatDateShort(created) : "";
+      modalMeta.textContent = when ? `${who} • ${when}` : who;
+      modalBody.innerHTML = body ? body.replace(/\n/g, "<br>") : "";
+
+      modalImages = images;
+      modalIndex = 0;
+
+      if (!modalImages.length) {
+        modalGallery.style.display = "none";
+      } else {
+        modalGallery.style.display = "flex";
+        setModalThumbs(modalImages);
+        showModalImage(0);
+      }
+
+      openModal();
+    }
+
+    // Click handling (event delegation)
+    blogGrid.addEventListener("click", (e) => {
+      const card = e.target.closest(".post-card");
+      if (!card) return;
+      openPostFromCard(card);
+    });
+
+    modalPrev.addEventListener("click", () => showModalImage(modalIndex - 1));
+    modalNext.addEventListener("click", () => showModalImage(modalIndex + 1));
+    modalClose.addEventListener("click", closeModal);
+    if (composerOpen) composerOpen.addEventListener("click", openComposer);
+    if (composerClose) composerClose.addEventListener("click", closeComposer);
+
+    if (composerModal) {
+      composerModal.addEventListener("click", (e) => {
+        if (e.target === composerModal) closeComposer();
+      });
+    }
+
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      // Close composer modal
+      if (composerModal && composerModal.classList.contains("open")) {
+        if (e.key === "Escape") closeComposer();
+        return;
+      }
+
+      // Post viewer modal
+      if (!modal.classList.contains("open")) return;
+      if (e.key === "Escape") closeModal();
+      if (e.key === "ArrowLeft") showModalImage(modalIndex - 1);
+      if (e.key === "ArrowRight") showModalImage(modalIndex + 1);
+    });
+
+    // Init
+    hydrateStaticThumbs();
+    renderUserPostsIntoGrid();
+    sortAllPostsByDateDesc();
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
