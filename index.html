@@ -417,14 +417,14 @@
       <div class="nav-inner">
         <!-- Brand button in nav -->
         <div class="brand">
-          <a href="index.html">paiden.com</a>
+          <a href="/">paiden.com</a>
         </div>
         <!-- Navigation buttons -->
         <div class="nav-items">
-          <a href="resume.html">Resume</a>
-          <a href="photos.html">Photos</a>
-          <a href="blog.html">Blog</a>
-          <a href="contact_me.html">Contact Me</a>
+          <a href="/resume">Resume</a>
+          <a href="/photos">Photos</a>
+          <a href="/blog">Blog</a>
+          <a href="/contactme">Contact Me</a>
         </div>
       </div>
     </div>
@@ -458,19 +458,19 @@
         </div>
 
         <div class="home-cards">
-          <a class="home-card" href="resume.html">
+          <a class="home-card" href="/resume">
             <h3>Professional Content</h3>
             <p>The Resume page showcases my accomplishments and abilities within an embedded PDF.</p>
             <span class="home-card-link">View resume <span aria-hidden="true">→</span></span>
           </a>
 
-          <a class="home-card" href="blog.html">
+          <a class="home-card" href="/blog">
             <h3>Social Media</h3>
             <p>An independent social media page can be found in the Blog section, free for anyone to post!</p>
             <span class="home-card-link">Read posts <span aria-hidden="true">→</span></span>
           </a>
 
-          <a class="home-card" href="contact_me.html">
+          <a class="home-card" href="/contactme">
             <h3>Get In Touch</h3>
             <p>Feel free to message me with ideas for the website, important news, or just to say hello in the Contact Me page.</p>
             <span class="home-card-link">Find me <span aria-hidden="true">→</span></span>
@@ -527,17 +527,17 @@
     <div class="footer-inner">
       <!-- Left side: paiden.com, Created by, Last Updated -->
       <div class="footer-left">
-        <a class="footer-brand" href="index.html">paiden.com</a>
+        <a class="footer-brand" href="/">paiden.com</a>
         <div class="footer-created">Created by Paiden Nicks</div>
         <div class="footer-updated" id="last-updated"></div>
       </div>
 
       <!-- Existing vertical nav (absolutely positioned) -->
       <div class="footer-nav">
-        <a href="resume.html">Resume</a>
-        <a href="photos.html">Photos</a>
-        <a href="blog.html">Blog</a>
-        <a href="contact_me.html">Contact Me</a>
+        <a href="/resume">Resume</a>
+        <a href="/photos">Photos</a>
+        <a href="/blog">Blog</a>
+        <a href="/contactme">Contact Me</a>
       </div>
 
       <!-- Right side: Social Icons -->
@@ -561,6 +561,11 @@
 
   <!-- JavaScript to cycle through slides automatically and update footer date -->
   <script>
+    // Normalize homepage URL so it stays at "/" instead of "/index.html".
+    if (window.location.pathname.endsWith("/index.html")) {
+      window.history.replaceState({}, "", "/");
+    }
+
     let slideIndex = 0;
     const slides = document.getElementsByClassName("slide");
     function showSlides() {
@@ -582,6 +587,8 @@
   </script>
 </body>
 </html>
+
+
 
 
 
