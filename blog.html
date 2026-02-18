@@ -551,6 +551,10 @@
       font-size: clamp(1.8rem, 1.4vw, 2rem);
       line-height: 1.2;
       letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
     }
 
     .post-date{
@@ -1402,7 +1406,7 @@ Note: I am notified of all posts and will be moderating content. You do not have
 <div class="composer-grid">
 <div class="field">
 <label for="postTitle">Title</label>
-<input id="postTitle" maxlength="90" placeholder="What’s this post about?" type="text"/>
+<input id="postTitle" maxlength="90" placeholder="What is this post about?" type="text"/>
 </div>
 <div class="field">
 <label for="postAuthor">Name (optional)</label>
@@ -2392,6 +2396,7 @@ function excerpt(text, maxChars = 1000) {
   </script>
 </body>
 </html>
+
 
 
 
