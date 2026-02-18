@@ -566,12 +566,17 @@
       color: rgba(14,17,22,0.82);
       line-height: 1.35;
       font-size: 0.98rem;
-      display: -webkit-box;
-      -webkit-line-clamp: 4;
-      -webkit-box-orient: vertical;
+      display: block;
       overflow: hidden;
-      max-height: calc(0.98rem * 4 * 3);
+      height: calc(1.35em * 4);
+      max-height: calc(1.35em * 4);
       padding: 35px 0px 0px;
+    }
+    .post-comments-cta{
+      margin-top: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: rgba(14,17,22,0.72);
     }
 
     .post-thumbrow{
@@ -713,7 +718,163 @@
       align-items: center;
       justify-content: center;
     }
-
+    #postModal .modal-leftcol{
+      min-height: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #postModal .modal-post-actions{
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+      min-height: 68px;
+      border-bottom: 1px solid rgba(0,0,0,0.2);
+    }
+    #postModal .modal-post-btn{
+      flex: 1 1 0;
+      border: 1px solid rgba(0,0,0,0.22);
+      border-bottom: 0;
+      border-radius: 14px 14px 0 0;
+      min-height: 66px;
+      padding: 12px 18px;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #0b0f14;
+      background: #e3e6eb;
+      cursor: pointer;
+      margin: 0;
+    }
+    #postModal .modal-post-btn:hover{
+      background: #edf0f4;
+    }
+    #postModal .modal-post-btn.is-active{
+      background: #d7dde5;
+    }
+    #postModal .modal-post-btn + .modal-post-btn{
+      border-left: 0;
+    }
+    #postModal .modal-leftcol.is-tab-open .modal-text{
+      flex: 0 0 auto;
+      max-height: calc(1.4em * 2 + 10px);
+      overflow: hidden;
+      cursor: pointer;
+      transition: background 0.16s ease;
+    }
+    #postModal .modal-leftcol.is-tab-open .modal-text:hover{
+      background: #edf0f4;
+    }
+    #postModal .modal-tab-panel{
+      display: none;
+      flex: 1 1 auto;
+      min-height: 0;
+      height: 100%;
+      max-height: 100%;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.82);
+      padding: 12px;
+      overflow: auto;
+      overscroll-behavior: contain;
+    }
+    #postModal .modal-tab-panel.is-open{
+      display: block;
+    }
+    #postModal .comments-list{
+      margin: 0;
+      padding: 0;
+      color: #0b0f14;
+      list-style: none;
+    }
+    #postModal .comments-list li{
+      margin-bottom: 14px;
+      line-height: 1.4;
+      border: 0;
+      border-bottom: 1px solid rgba(0,0,0,0.12);
+      border-radius: 0;
+      background: transparent;
+      padding: 8px 0 12px;
+    }
+    #postModal .comment-meta{
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      margin-top: 7px;
+    }
+    #postModal .comment-author{
+      display: inline;
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: rgba(11,15,20,0.68);
+    }
+    #postModal .comment-date{
+      display: inline;
+      font-weight: 700;
+      font-size: 0.84rem;
+      color: rgba(11,15,20,0.45);
+    }
+    #postModal .comment-body{
+      display: block;
+      color: rgba(11,15,20,0.86);
+      font-weight: 700;
+    }
+    #postModal .comments-empty{
+      color: rgba(11,15,20,0.7);
+      font-weight: 600;
+    }
+    #postModal .new-comment-label{
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: #0b0f14;
+    }
+    #postModal .new-comment-name{
+      width: 100%;
+      margin-bottom: 10px;
+      border: 1px solid rgba(0,0,0,0.18);
+      border-radius: 10px;
+      padding: 9px 11px;
+      font: inherit;
+      color: #0b0f14;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    #postModal .new-comment-input{
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      border: 1px solid rgba(0,0,0,0.18);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+      color: #0b0f14;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    #postModal .comment-turnstile-wrap{
+      margin-top: 10px;
+    }
+    #postModal .comment-turnstile-wrap .cf-turnstile{
+      transform-origin: left top;
+    }
+    #postModal .new-comment-actions{
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    #postModal .new-comment-submit{
+      border: 1px solid rgba(0,0,0,0.2);
+      border-radius: 10px;
+      padding: 8px 12px;
+      background: #e3e6eb;
+      color: #0b0f14;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    #postModal .new-comment-submit:hover{
+      background: #edf0f4;
+    }
 /* Composer modal: ensure full-width centered form */
     #composerModal .modal-body{
       display: block;
@@ -1196,7 +1357,7 @@
 <!-- POST:START static-001 -->
 <article class="post-card" data-author="Paiden" data-body="This is a public forum that anyone may use to spread their message. Click any post to open it in a popup. You can also create new posts with photos using the form above.
 
-Note: I am notified of all posts and will be moderating content. You do not have free speech, I am the dictator of this blog." data-created="2025-12-16T00:00:00Z" data-images="" data-post-id="static-001" data-title="Welcome to the blog">
+Note: I am notified of all posts and will be moderating content. You do not have free speech, I am the dictator of this blog." data-comments-count="9" data-comments-sample="Avery::This layout is clean and easy to read.::Feb 10, 2026||Milo::Could use a little more spacing between title and body text.::Feb 11, 2026||::Really like the tab feel now, this is much cleaner.::Feb 12, 2026||Nora::The post cards are way easier to scan now.::Feb 13, 2026||Devon::I like that the tabs stay inside the modal instead of opening another page.::Feb 14, 2026||Kai::Could make the new comment box a bit taller on desktop.::Feb 15, 2026||Riley::Date + name line looks solid.::Feb 16, 2026||Morgan::Scroll feels smooth in the comments view.::Feb 17, 2026||::Anonymous feedback: this is looking very close.::Feb 18, 2026" data-created="2025-12-16T00:00:00Z" data-images="" data-post-id="static-001" data-title="Welcome to the blog">
 <div class="post-inner">
   <div class="post-left">
     <h4 class="post-title">Welcome to the blog</h4>
@@ -1207,6 +1368,7 @@ Note: I am notified of all posts and will be moderating content. You do not have
       <br><br>
       Note: I am notified of all posts and will be moderating content. You do not have free speech, I am the dictator of this blog.
     </p>
+    <div class="post-comments-cta">View <span class="post-comments-count">9</span> comments</div>
   </div>
   <div aria-hidden="true" class="post-right">
     <div class="post-thumbrow"></div>
@@ -1292,7 +1454,28 @@ Note: I am notified of all posts and will be moderating content. You do not have
 <button aria-label="Close" class="modal-close" id="modalClose">×</button>
 </div>
 <div class="modal-body">
+<div class="modal-leftcol">
 <div class="modal-text" id="modalBody"></div>
+<div class="modal-post-actions">
+<button class="modal-post-btn" id="btnViewComments" type="button">View 0 Comments</button>
+<button class="modal-post-btn" id="btnNewComment" type="button">New Comment</button>
+</div>
+<div class="modal-tab-panel" id="commentsTabPanel">
+<div class="comments-empty" id="commentsEmpty">No comments yet.</div>
+<ol class="comments-list" id="commentsList" hidden></ol>
+</div>
+<div class="modal-tab-panel" id="newCommentTabPanel">
+<label class="new-comment-label" for="newCommentInput">Add a new comment</label>
+<input class="new-comment-name" id="newCommentName" maxlength="40" placeholder="Your name (optional)" type="text"/>
+<textarea class="new-comment-input" id="newCommentInput" maxlength="400" placeholder="Write your comment..."></textarea>
+<div class="turnstile-wrap comment-turnstile-wrap">
+<div class="cf-turnstile" data-sitekey="0x4AAAAAACayR7BTiRED3OPy" data-callback="onCommentTurnstile" data-expired-callback="onCommentTurnstileExpired" id="commentTurnstile"></div>
+</div>
+<div class="new-comment-actions">
+<button class="new-comment-submit" id="btnSubmitNewComment" type="button">Post Comment</button>
+</div>
+</div>
+</div>
 <div class="modal-gallery" id="modalGallery">
 <div class="modal-imgwrap">
 <img alt="Post photo" class="modal-img" id="modalImg">
@@ -1344,6 +1527,7 @@ Note: I am notified of all posts and will be moderating content. You do not have
     let slideIndex = 0;
     const slides = document.getElementsByClassName("slide");
     function showSlides() {
+      if (!slides || slides.length === 0) return;
       for (let i = 0; i < slides.length; i++) slides[i].classList.remove("active");
       slideIndex++;
       if (slideIndex > slides.length) slideIndex = 1;
@@ -1365,6 +1549,9 @@ Note: I am notified of all posts and will be moderating content. You do not have
     let turnstileToken = "";
     window.onTurnstile = (token) => { turnstileToken = token || ""; };
     window.onTurnstileExpired = () => { turnstileToken = ""; };
+    let commentTurnstileToken = "";
+    window.onCommentTurnstile = (token) => { commentTurnstileToken = token || ""; };
+    window.onCommentTurnstileExpired = () => { commentTurnstileToken = ""; };
     function formatWaitTime(seconds) {
       const total = Math.max(1, Number(seconds) || 0);
       if (total < 60) {
@@ -1498,6 +1685,12 @@ function excerpt(text, maxChars = 1000) {
       return t.slice(0, maxChars - 1) + "…";
     }
 
+    function getCommentsCountFromCard(card) {
+      const raw = card.getAttribute("data-comments-count");
+      const count = Number.parseInt(raw || "0", 10);
+      return Number.isFinite(count) && count >= 0 ? count : 0;
+    }
+
     async function renderUserPostsIntoGrid() {
       // Remove any previously-rendered user posts
       blogGrid.querySelectorAll('[data-source="user"]').forEach(n => n.remove());
@@ -1514,6 +1707,7 @@ function excerpt(text, maxChars = 1000) {
         card.setAttribute("data-created", p.created_at || "");
         card.setAttribute("data-body", p.body || "");
         card.setAttribute("data-images", (p.images || []).join("||"));
+        card.setAttribute("data-comments-count", "0");
 
         card.innerHTML = `
           <div class="post-inner">
@@ -1534,6 +1728,7 @@ function excerpt(text, maxChars = 1000) {
                 <p class="post-excerpt">
                   ${escapeHTML(excerpt(p.body || ""))}
                 </p>
+                <div class="post-comments-cta">View <span class="post-comments-count">0</span> comments</div>
               </div>
             </div>
             <div class="post-right" aria-hidden="true">
@@ -1558,6 +1753,18 @@ function excerpt(text, maxChars = 1000) {
         const images = imagesRaw ? imagesRaw.split("||").filter(Boolean) : [];
         const row = card.querySelector(".post-thumbrow");
         if (row) row.innerHTML = buildThumbRow(images);
+
+        const commentsCount = getCommentsCountFromCard(card);
+        let commentsEl = card.querySelector(".post-comments-cta");
+        if (!commentsEl) {
+          commentsEl = document.createElement("div");
+          commentsEl.className = "post-comments-cta";
+          commentsEl.innerHTML = 'View <span class="post-comments-count">0</span> comments';
+          const excerptEl = card.querySelector(".post-excerpt");
+          if (excerptEl && excerptEl.parentNode) excerptEl.parentNode.appendChild(commentsEl);
+        }
+        const countEl = commentsEl.querySelector(".post-comments-count");
+        if (countEl) countEl.textContent = String(commentsCount);
       });
     }
 
@@ -1851,6 +2058,7 @@ function excerpt(text, maxChars = 1000) {
     const modalClose = document.getElementById("modalClose");
     const modalTitle = document.getElementById("modalTitle");
     const modalMeta = document.getElementById("modalMeta");
+    const modalLeftCol = document.querySelector("#postModal .modal-leftcol");
     const modalBody = document.getElementById("modalBody");
     const modalGallery = document.getElementById("modalGallery");
     const modalImg = document.getElementById("modalImg");
@@ -1858,9 +2066,24 @@ function excerpt(text, maxChars = 1000) {
     const modalNext = document.getElementById("modalNext");
     const modalCounter = document.getElementById("modalCounter");
     const modalThumbs = document.getElementById("modalThumbs");
+    const btnViewComments = document.getElementById("btnViewComments");
+    const btnNewComment = document.getElementById("btnNewComment");
+    const commentsTabPanel = document.getElementById("commentsTabPanel");
+    const newCommentTabPanel = document.getElementById("newCommentTabPanel");
+    const commentsEmpty = document.getElementById("commentsEmpty");
+    const commentsList = document.getElementById("commentsList");
+    const newCommentName = document.getElementById("newCommentName");
+    const newCommentInput = document.getElementById("newCommentInput");
+    const commentTurnstileEl = document.getElementById("commentTurnstile");
+    const btnSubmitNewComment = document.getElementById("btnSubmitNewComment");
 
     let modalImages = [];
     let modalIndex = 0;
+    let activePostId = "";
+    let activePostCard = null;
+    let activePostCommentsCount = 0;
+    let activePostComments = [];
+    let activeModalTab = null;
 
     function openModal() {
       modal.classList.add("open");
@@ -1894,21 +2117,126 @@ function excerpt(text, maxChars = 1000) {
         modalThumbs.appendChild(d);
       });
     }
+    function parseSampleCommentsFromCard(card) {
+      const sampleRaw = card.getAttribute("data-comments-sample") || "";
+      if (!sampleRaw) return [];
+      return sampleRaw.split("||")
+        .map((entry) => String(entry).trim())
+        .filter(Boolean)
+        .map((raw, idx) => {
+          const parts = raw.split("::");
+          const author = ((parts[0] || "").trim()) || "Anonymous";
+          const body = (parts[1] || raw).trim();
+          const date = (parts[2] || "").trim();
+          const ts = date ? Date.parse(date) : NaN;
+          return { author, body, date, ts, idx };
+        });
+    }
+    function updateCommentCountUI(count) {
+      activePostCommentsCount = Math.max(0, Number(count) || 0);
+      if (btnViewComments) btnViewComments.textContent = `View ${activePostCommentsCount} Comments`;
+      if (!activePostId) return;
+      const cards = blogGrid ? blogGrid.querySelectorAll(`.post-card[data-post-id="${activePostId}"]`) : [];
+      cards.forEach((card) => {
+        card.setAttribute("data-comments-count", String(activePostCommentsCount));
+        const cta = card.querySelector(".post-comments-count");
+        if (cta) cta.textContent = String(activePostCommentsCount);
+      });
+    }
+    function renderCommentsTab() {
+      if (!commentsEmpty || !commentsList) return;
+      if (!activePostComments.length) {
+        commentsEmpty.hidden = false;
+        commentsList.hidden = true;
+        commentsList.innerHTML = "";
+        return;
+      }
+      commentsEmpty.hidden = true;
+      commentsList.hidden = false;
+      commentsList.innerHTML = "";
+      const sorted = [...activePostComments].sort((a, b) => {
+        const aValid = Number.isFinite(a.ts);
+        const bValid = Number.isFinite(b.ts);
+        if (aValid && bValid) return b.ts - a.ts;
+        if (aValid && !bValid) return -1;
+        if (!aValid && bValid) return 1;
+        return (b.idx || 0) - (a.idx || 0);
+      });
+      for (const c of sorted) {
+        const li = document.createElement("li");
+        const dateHtml = c.date ? `<span class="comment-date">${escapeHTML(c.date)}</span>` : "";
+        li.innerHTML = `<span class="comment-body">${escapeHTML(c.body)}</span><div class="comment-meta"><span class="comment-author">${escapeHTML(c.author)}</span>${dateHtml}</div>`;
+        commentsList.appendChild(li);
+      }
+    }
+    async function loadLiveCommentsForActivePost() {
+      if (!sb || !activePostId) return;
+      const { data, error } = await sb
+        .from("comments")
+        .select("author,body,created_at")
+        .eq("post_id", activePostId)
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.error("Failed to load comments:", error);
+        return;
+      }
+      const rows = Array.isArray(data) ? data : [];
+      if (!rows.length) return;
+      activePostComments = rows.map((row, idx) => ({
+        author: (row.author && String(row.author).trim()) ? String(row.author).trim() : "Anonymous",
+        body: String(row.body || ""),
+        date: row.created_at ? formatDateShort(row.created_at) : "",
+        ts: row.created_at ? Date.parse(row.created_at) : NaN,
+        idx,
+      }));
+      updateCommentCountUI(activePostComments.length);
+      if (activeModalTab === "comments") renderCommentsTab();
+    }
+    function setModalTab(tab) {
+      activeModalTab = tab;
+      const isComments = tab === "comments";
+      const isNew = tab === "new";
+
+      if (btnViewComments) btnViewComments.classList.toggle("is-active", isComments);
+      if (btnNewComment) btnNewComment.classList.toggle("is-active", isNew);
+      if (commentsTabPanel) commentsTabPanel.classList.toggle("is-open", isComments);
+      if (newCommentTabPanel) newCommentTabPanel.classList.toggle("is-open", isNew);
+      if (modalLeftCol) modalLeftCol.classList.toggle("is-tab-open", !!tab);
+
+      if (isComments) renderCommentsTab();
+      if (isNew && newCommentInput) {
+        setTimeout(() => newCommentInput.focus(), 0);
+        if (window.turnstile && window.turnstile.reset && commentTurnstileEl) {
+          window.turnstile.reset(commentTurnstileEl);
+        }
+        commentTurnstileToken = "";
+      }
+    }
 
     function openPostFromCard(card) {
       const title = card.getAttribute("data-title") || "";
       const author = card.getAttribute("data-author") || "";
       const created = card.getAttribute("data-created") || "";
       const body = card.getAttribute("data-body") || "";
+      activePostCard = card;
+      activePostId = card.getAttribute("data-post-id") || "";
 
       const imagesRaw = card.getAttribute("data-images") || "";
       const images = imagesRaw ? imagesRaw.split("||").filter(Boolean) : [];
+      activePostComments = parseSampleCommentsFromCard(card);
+      const seededCount = getCommentsCountFromCard(card);
+      if (seededCount > activePostComments.length) {
+        updateCommentCountUI(seededCount);
+      } else {
+        updateCommentCountUI(activePostComments.length);
+      }
 
       modalTitle.textContent = title || "Untitled";
       const who = (author && author.trim()) ? `By ${author.trim()}` : "By Anonymous";
       const when = created ? formatDateShort(created) : "";
       modalMeta.textContent = when ? `${who} • ${when}` : who;
       modalBody.innerHTML = body ? body.replace(/\n/g, "<br>") : "";
+      setModalTab(null);
 
       modalImages = images;
       modalIndex = 0;
@@ -1922,6 +2250,7 @@ function excerpt(text, maxChars = 1000) {
       }
 
       openModal();
+      loadLiveCommentsForActivePost();
     }
 
     // Click handling (event delegation)
@@ -1934,6 +2263,67 @@ function excerpt(text, maxChars = 1000) {
     modalPrev.addEventListener("click", () => showModalImage(modalIndex - 1));
     modalNext.addEventListener("click", () => showModalImage(modalIndex + 1));
     modalClose.addEventListener("click", closeModal);
+    if (modalBody) modalBody.addEventListener("click", () => {
+      if (activeModalTab) setModalTab(null);
+    });
+    if (btnViewComments) btnViewComments.addEventListener("click", () => setModalTab("comments"));
+    if (btnNewComment) btnNewComment.addEventListener("click", () => setModalTab("new"));
+    if (btnSubmitNewComment) btnSubmitNewComment.addEventListener("click", async () => {
+      if (!activePostId) {
+        alert("No post selected.");
+        return;
+      }
+      const author = (newCommentName && newCommentName.value ? newCommentName.value : "").trim();
+      const msg = (newCommentInput && newCommentInput.value ? newCommentInput.value : "").trim();
+      if (!msg) {
+        alert("Write a comment first.");
+        return;
+      }
+      if (commentTurnstileToken && commentTurnstileToken.length < 20) commentTurnstileToken = "";
+      if (!commentTurnstileToken) {
+        alert("Please complete the anti-spam check before posting a comment.");
+        return;
+      }
+      btnSubmitNewComment.disabled = true;
+      const oldLabel = btnSubmitNewComment.textContent;
+      btnSubmitNewComment.textContent = "Posting...";
+      try {
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/post-comment`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            post_id: activePostId,
+            author,
+            body: msg,
+            turnstile_token: commentTurnstileToken,
+          }),
+        });
+        if (!resp.ok) {
+          let errJson = null;
+          try { errJson = await resp.json(); } catch (_) {}
+          if (resp.status === 429 && errJson && typeof errJson.wait_seconds !== "undefined") {
+            alert(`Please wait ${formatWaitTime(errJson.wait_seconds)} before posting another comment.`);
+          } else {
+            alert((errJson && (errJson.message || errJson.error)) || "Comment could not be posted.");
+          }
+          return;
+        }
+        if (newCommentInput) newCommentInput.value = "";
+        if (newCommentName) newCommentName.value = "";
+        commentTurnstileToken = "";
+        if (window.turnstile && window.turnstile.reset && commentTurnstileEl) {
+          window.turnstile.reset(commentTurnstileEl);
+        }
+        await loadLiveCommentsForActivePost();
+        setModalTab("comments");
+      } catch (err) {
+        console.error("Failed to post comment:", err);
+        alert("Comment could not be posted. Please try again.");
+      } finally {
+        btnSubmitNewComment.disabled = false;
+        btnSubmitNewComment.textContent = oldLabel || "Post Comment";
+      }
+    });
     if (composerOpen) composerOpen.addEventListener("click", openComposer);
     if (composerClose) composerClose.addEventListener("click", closeComposer);
 
