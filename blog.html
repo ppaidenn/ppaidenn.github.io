@@ -487,7 +487,7 @@
       transform: rotate(0deg);
       z-index: 2;
       width: 72%;
-      height: 86%;
+      height: 91%;
     }
     .thumb-collage.two img:nth-child(1){
       left: 2%;
@@ -495,7 +495,7 @@
       transform: rotate(-10deg);
       z-index: 2;
       width: 70%;
-      height: 84%;
+      height: 89%;
     }
     .thumb-collage.two img:nth-child(2){
       left: 30%;
@@ -503,7 +503,7 @@
       transform: rotate(8deg);
       z-index: 1;
       width: 70%;
-      height: 84%;
+      height: 89%;
     }
     /* 3+ photos: 1st on top-left, 2nd lower-middle, 3rd behind far-right */
     .thumb-collage.three img:nth-child(1){
@@ -512,7 +512,7 @@
       transform: rotate(-8deg);
       z-index: 3;
       width: 68%;
-      height: 84%;
+      height: 89%;
     }
     .thumb-collage.three img:nth-child(2){
       left: 16%;
@@ -520,7 +520,7 @@
       transform: rotate(4deg);
       z-index: 2;
       width: 68%;
-      height: 84%;
+      height: 89%;
     }
     .thumb-collage.three img:nth-child(3){
       left: 34%;
@@ -528,7 +528,7 @@
       transform: rotate(12deg);
       z-index: 1;
       width: 68%;
-      height: 84%;
+      height: 89%;
     }
 
     .post-author {
@@ -585,7 +585,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 8px;
       box-sizing: border-box;
     }
 
@@ -1690,6 +1690,29 @@ function excerpt(text, maxChars = 1000) {
       const count = Number.parseInt(raw || "0", 10);
       return Number.isFinite(count) && count >= 0 ? count : 0;
     }
+    async function hydrateAllCommentCountsFromSupabase() {
+      if (!sb || !blogGrid) return;
+      const { data, error } = await sb
+        .from("comments")
+        .select("post_id");
+      if (error) {
+        console.error("Failed to hydrate comment counts:", error);
+        return;
+      }
+      const counts = new Map();
+      for (const row of (Array.isArray(data) ? data : [])) {
+        const postId = row && row.post_id ? String(row.post_id) : "";
+        if (!postId) continue;
+        counts.set(postId, (counts.get(postId) || 0) + 1);
+      }
+      blogGrid.querySelectorAll(".post-card").forEach((card) => {
+        const postId = card.getAttribute("data-post-id") || "";
+        const count = counts.get(postId) || 0;
+        card.setAttribute("data-comments-count", String(count));
+        const cta = card.querySelector(".post-comments-count");
+        if (cta) cta.textContent = String(count);
+      });
+    }
 
     async function renderUserPostsIntoGrid() {
       // Remove any previously-rendered user posts
@@ -1740,6 +1763,7 @@ function excerpt(text, maxChars = 1000) {
         blogGrid.appendChild(card);
       }
       sortAllPostsByDateDesc();
+      await hydrateAllCommentCountsFromSupabase();
     }
 
     function hydrateStaticThumbs() {
@@ -2080,6 +2104,8 @@ function excerpt(text, maxChars = 1000) {
     let modalImages = [];
     let modalIndex = 0;
     let activePostId = "";
+    let activePostTitle = "";
+    let activePostCreated = "";
     let activePostCard = null;
     let activePostCommentsCount = 0;
     let activePostComments = [];
@@ -2204,8 +2230,11 @@ function excerpt(text, maxChars = 1000) {
       if (modalLeftCol) modalLeftCol.classList.toggle("is-tab-open", !!tab);
 
       if (isComments) renderCommentsTab();
-      if (isNew && newCommentInput) {
-        setTimeout(() => newCommentInput.focus(), 0);
+      if (isNew) {
+        setTimeout(() => {
+          if (newCommentName) newCommentName.focus();
+          else if (newCommentInput) newCommentInput.focus();
+        }, 0);
         if (window.turnstile && window.turnstile.reset && commentTurnstileEl) {
           window.turnstile.reset(commentTurnstileEl);
         }
@@ -2220,6 +2249,8 @@ function excerpt(text, maxChars = 1000) {
       const body = card.getAttribute("data-body") || "";
       activePostCard = card;
       activePostId = card.getAttribute("data-post-id") || "";
+      activePostTitle = title || "";
+      activePostCreated = created || "";
 
       const imagesRaw = card.getAttribute("data-images") || "";
       const images = imagesRaw ? imagesRaw.split("||").filter(Boolean) : [];
@@ -2293,6 +2324,8 @@ function excerpt(text, maxChars = 1000) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             post_id: activePostId,
+            post_title: activePostTitle,
+            post_created: activePostCreated,
             author,
             body: msg,
             turnstile_token: commentTurnstileToken,
@@ -2354,8 +2387,8 @@ function excerpt(text, maxChars = 1000) {
 
     // Init
     hydrateStaticThumbs();
+    hydrateAllCommentCountsFromSupabase();
     renderUserPostsIntoGrid();
-    sortAllPostsByDateDesc();
   </script>
 </body>
 </html>
