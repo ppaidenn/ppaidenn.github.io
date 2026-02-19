@@ -2291,6 +2291,17 @@ function excerpt(text, maxChars = 1000) {
       openModal();
       loadLiveCommentsForActivePost();
     }
+    function openPostFromUrlParam() {
+      try {
+        const postId = new URLSearchParams(window.location.search).get("post");
+        if (!postId || !blogGrid) return;
+        const card = blogGrid.querySelector(`.post-card[data-post-id="${postId}"]`);
+        if (!card) return;
+        openPostFromCard(card);
+      } catch (_) {
+        // no-op
+      }
+    }
 
     // Click handling (event delegation)
     blogGrid.addEventListener("click", (e) => {
@@ -2398,9 +2409,12 @@ function excerpt(text, maxChars = 1000) {
     });
 
     // Init
-    hydrateStaticThumbs();
-    hydrateAllCommentCountsFromSupabase();
-    renderUserPostsIntoGrid();
+    (async () => {
+      hydrateStaticThumbs();
+      await renderUserPostsIntoGrid();
+      await hydrateAllCommentCountsFromSupabase();
+      openPostFromUrlParam();
+    })();
   </script>
 </body>
 </html>
