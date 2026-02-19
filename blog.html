@@ -2020,6 +2020,10 @@ function excerpt(text, maxChars = 1000) {
           } catch (_) {
             // Ignore non-JSON error responses and show fallback text.
           }
+          if (resp.status === 403) {
+            alert(errJson?.message || "You're blocked pal \uD83D\uDE08, reach out to Paiden to appeal");
+            return;
+          }
 
           console.error("Failed to publish post:", errJson);
           if (resp.status === 429) {
@@ -2338,6 +2342,10 @@ function excerpt(text, maxChars = 1000) {
         if (!resp.ok) {
           let errJson = null;
           try { errJson = await resp.json(); } catch (_) {}
+          if (resp.status === 403) {
+            alert((errJson && errJson.message) || "You're blocked pal \uD83D\uDE08, reach out to Paiden to appeal");
+            return;
+          }
           if (resp.status === 429 && errJson && typeof errJson.wait_seconds !== "undefined") {
             alert(`Please wait ${formatWaitTime(errJson.wait_seconds)} before posting another comment.`);
           } else {
@@ -2396,6 +2404,7 @@ function excerpt(text, maxChars = 1000) {
   </script>
 </body>
 </html>
+
 
 
 
