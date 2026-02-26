@@ -556,6 +556,12 @@
       text-overflow: ellipsis;
       max-width: 100%;
     }
+    .post-right{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 220px;
+    }
 
     .post-date{
       display: inline-block;
@@ -758,6 +764,10 @@
     }
     #postModal .modal-post-btn + .modal-post-btn{
       border-left: 0;
+    }
+    #postModal .modal-post-btn.modal-post-btn-back{
+      display: none;
+      background: #dce8f8;
     }
     #postModal .modal-leftcol.is-tab-open .modal-text{
       flex: 0 0 auto;
@@ -1039,6 +1049,8 @@
       line-height: 1.45;
       overflow: visible;
       white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     .modal-gallery {
@@ -1198,9 +1210,73 @@
       .nav-inner, .footer-inner { margin-left: var(--side-margin); margin-right: var(--side-margin); }
       .social-icons a { font-size: 5vw; }
       .blog-grid { grid-template-columns: 1fr; gap: 16px; }
+      .post-card{
+        padding: 18px 16px 22px;
+        border-radius: 16px;
+      }
+      .post-inner{
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+      .post-right{
+        min-height: 200px;
+        padding: 0;
+      }
+      .thumb-collage{
+        width: 100%;
+        max-width: 340px;
+        height: 205px;
+      }
+      .post-title{
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
       .preview-grid { grid-template-columns: repeat(4, 1fr); }
       .modal { padding: 18px 0; }
       .modal-thumbs { grid-template-columns: repeat(5, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      #postModal .modal-shell{
+        width: 96vw;
+        height: 92vh;
+        max-height: 92vh;
+      }
+      #postModal .modal-body{
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      #postModal .modal-leftcol{
+        min-height: 0;
+      }
+      #postModal .modal-tab-panel{
+        min-height: 44vh;
+        max-height: 44vh;
+      }
+      #postModal .new-comment-input{
+        min-height: 150px;
+        max-height: 34vh;
+      }
+      #postModal.mobile-tab-open .modal-gallery{
+        display: none !important;
+      }
+      #postModal.mobile-tab-open .modal-leftcol{
+        height: 100%;
+      }
+      #postModal.mobile-tab-open .modal-tab-panel{
+        flex: 1 1 auto;
+        min-height: 52vh;
+        max-height: 52vh;
+      }
+      #postModal.mobile-tab-open .modal-post-btn.modal-post-btn-back{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
     }
 
     @media (max-width: 600px) {
@@ -1463,6 +1539,7 @@ Note: I am notified of all posts and will be moderating content. You do not have
 <div class="modal-post-actions">
 <button class="modal-post-btn" id="btnViewComments" type="button">View 0 Comments</button>
 <button class="modal-post-btn" id="btnNewComment" type="button">New Comment</button>
+<button class="modal-post-btn modal-post-btn-back" hidden id="btnBackToPhotos" type="button">Back To Photo</button>
 </div>
 <div class="modal-tab-panel" id="commentsTabPanel">
 <div class="comments-empty" id="commentsEmpty">No comments yet.</div>
@@ -2123,6 +2200,7 @@ function excerpt(text, maxChars = 1000) {
     const modalThumbs = document.getElementById("modalThumbs");
     const btnViewComments = document.getElementById("btnViewComments");
     const btnNewComment = document.getElementById("btnNewComment");
+    const btnBackToPhotos = document.getElementById("btnBackToPhotos");
     const commentsTabPanel = document.getElementById("commentsTabPanel");
     const newCommentTabPanel = document.getElementById("newCommentTabPanel");
     const commentsEmpty = document.getElementById("commentsEmpty");
@@ -2141,6 +2219,7 @@ function excerpt(text, maxChars = 1000) {
     let activePostCommentsCount = 0;
     let activePostComments = [];
     let activeModalTab = null;
+    const isMobileViewport = () => window.matchMedia("(max-width: 768px)").matches;
 
     function openModal() {
       modal.classList.add("open");
@@ -2148,6 +2227,7 @@ function excerpt(text, maxChars = 1000) {
       lockScroll();
     }
     function closeModal() {
+      setModalTab(null);
       modal.classList.remove("open");
       modal.setAttribute("aria-hidden", "true");
       unlockScroll();
@@ -2251,14 +2331,17 @@ function excerpt(text, maxChars = 1000) {
     }
     function setModalTab(tab) {
       activeModalTab = tab;
+      const hasTab = !!tab;
       const isComments = tab === "comments";
       const isNew = tab === "new";
 
       if (btnViewComments) btnViewComments.classList.toggle("is-active", isComments);
       if (btnNewComment) btnNewComment.classList.toggle("is-active", isNew);
+      if (btnBackToPhotos) btnBackToPhotos.hidden = !hasTab;
       if (commentsTabPanel) commentsTabPanel.classList.toggle("is-open", isComments);
       if (newCommentTabPanel) newCommentTabPanel.classList.toggle("is-open", isNew);
-      if (modalLeftCol) modalLeftCol.classList.toggle("is-tab-open", !!tab);
+      if (modalLeftCol) modalLeftCol.classList.toggle("is-tab-open", hasTab);
+      if (modal) modal.classList.toggle("mobile-tab-open", hasTab && isMobileViewport());
 
       if (isComments) renderCommentsTab();
       if (isNew) {
@@ -2341,6 +2424,7 @@ function excerpt(text, maxChars = 1000) {
     });
     if (btnViewComments) btnViewComments.addEventListener("click", () => setModalTab("comments"));
     if (btnNewComment) btnNewComment.addEventListener("click", () => setModalTab("new"));
+    if (btnBackToPhotos) btnBackToPhotos.addEventListener("click", () => setModalTab(null));
     if (btnSubmitNewComment) btnSubmitNewComment.addEventListener("click", async () => {
       if (!activePostId) {
         alert("No post selected.");
