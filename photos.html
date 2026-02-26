@@ -258,27 +258,27 @@
 
       <button class="gallery-row" type="button" data-album="images/fall25" data-title="Fall 2025">
         <div class="folder-stack" aria-hidden="true">
-          <div class="stack-card"><img src="images/fall25/IMG_8358.JPG" alt="" /></div>
-          <div class="stack-card"><img src="images/fall25/IMG_8419.JPG" alt="" /></div>
-          <div class="stack-card"><img src="images/fall25/IMG_8545.JPG" alt="" /></div>
+          <div class="stack-card"><img src="images/fall25/IMG_8358.webp" alt="" /></div>
+          <div class="stack-card"><img src="images/fall25/IMG_8419.webp" alt="" /></div>
+          <div class="stack-card"><img src="images/fall25/IMG_8545.webp" alt="" /></div>
         </div>
         <div class="folder-title">Fall 2025</div>
       </button>
       
       <button class="gallery-row" type="button" data-album="images/europe" data-title="Europe 2025">
         <div class="folder-stack" aria-hidden="true">
-          <div class="stack-card"><img src="images/europe/IMG_6956.JPG" alt="" /></div>
-          <div class="stack-card"><img src="images/europe/IMG_6974.JPG" alt="" /></div>
-          <div class="stack-card"><img src="images/europe/IMG_6983.JPG" alt="" /></div>
+          <div class="stack-card"><img src="images/europe/IMG_6956.webp" alt="" /></div>
+          <div class="stack-card"><img src="images/europe/IMG_6974.webp" alt="" /></div>
+          <div class="stack-card"><img src="images/europe/IMG_6983.webp" alt="" /></div>
         </div>
         <div class="folder-title">Europe 2025</div>
       </button>
 
       <button class="gallery-row" type="button" data-album="images/iceland23" data-title="Iceland">
         <div class="folder-stack" aria-hidden="true">
-          <div class="stack-card"><img src="images/iceland23/IMG_5319.jpg" alt="" /></div>
-          <div class="stack-card"><img src="images/iceland23/IMG_5321.jpg" alt="" /></div>
-          <div class="stack-card"><img src="images/iceland23/IMG_5322.jpg" alt="" /></div>
+          <div class="stack-card"><img src="images/iceland23/IMG_5319.webp" alt="" /></div>
+          <div class="stack-card"><img src="images/iceland23/IMG_5321.webp" alt="" /></div>
+          <div class="stack-card"><img src="images/iceland23/IMG_5322.webp" alt="" /></div>
         </div>
         <div class="folder-title">Iceland 2023</div>
       </button>
@@ -338,20 +338,25 @@
   <!-- JSZip + FileSaver CDN for ZIP downloads -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha512-ZN5c8zqJcV8Kq0D8P6aEKlH9o9k3dkrq0qp1z4I2lA2sM3uQ3QzT5+7bGzXo2c2W3J1g2oVRa/Zb0a1I5s1d3g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" integrity="sha512-5x3G6QkKydf1pVgWg8v+2m5l0xvY6zv8m3oX8i6CjX6dybG3q5A4z0g4y3iM3xVf4mJ8k8P1q4F8a0ZsQ3w3hA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
   <script>
     // ===== Embedded Slideshow + ZIP =====
     // How image loading works:
     // 1) We try to fetch `${albumPath}/album.json` which should look like:
     //    { "title": "Trips 2025", "images": ["IMG_0001.jpg", "sub/IMG_0002.jpg"] }
-    // 2) If missing, we fall back to ALBUM_FALLBACKS mapping below.
+    // 2) All album entries are normalized to .webp paths at runtime.
+    // 3) If album.json is missing, we fall back to ALBUM_FALLBACKS mapping below.
 
     const ALBUM_FALLBACKS = {
       "images/europe": ["images/europe/IMG_6956.JPG", "images/europe/IMG_6957.JPG", "images/europe/IMG_6958.JPG", "images/europe/IMG_6959.JPG", "images/europe/IMG_6963.JPG", "images/europe/IMG_6964.JPG", "images/europe/IMG_6969.JPG", "images/europe/IMG_6972.JPG", "images/europe/IMG_6973.JPG", "images/europe/IMG_6974.JPG", "images/europe/IMG_6978.JPG", "images/europe/IMG_6980.JPG", "images/europe/IMG_6981.JPG", "images/europe/IMG_6982.JPG", "images/europe/IMG_6983.JPG", "images/europe/IMG_6984.JPG", "images/europe/IMG_6986.JPG", "images/europe/IMG_6987.JPG", "images/europe/IMG_6988.JPG", "images/europe/IMG_6989.JPG", "images/europe/IMG_6991.JPG", "images/europe/IMG_6992.JPG", "images/europe/IMG_6993.JPG", "images/europe/IMG_7004.JPG", "images/europe/IMG_7015.JPG", "images/europe/IMG_7029.JPG", "images/europe/IMG_7030.JPG", "images/europe/IMG_7034.JPG", "images/europe/IMG_7036.JPG", "images/europe/IMG_7038.JPG", "images/europe/IMG_7039.JPG", "images/europe/IMG_7044.JPG", "images/europe/IMG_7047.JPG", "images/europe/IMG_7057.JPG", "images/europe/IMG_7061.JPG", "images/europe/IMG_7074.JPG", "images/europe/IMG_7081.JPG", "images/europe/IMG_7083.JPG", "images/europe/IMG_7097.JPG", "images/europe/IMG_7100.JPG", "images/europe/IMG_7108.JPG", "images/europe/IMG_7112.JPG", "images/europe/IMG_7113.JPG", "images/europe/IMG_7114.JPG", "images/europe/IMG_7115.JPG", "images/europe/IMG_7117.JPG", "images/europe/IMG_7118.JPG", "images/europe/IMG_7121.JPG", "images/europe/IMG_7124.JPG", "images/europe/IMG_7128.JPG", "images/europe/IMG_7133.JPG", "images/europe/IMG_7135.JPG", "images/europe/IMG_7143.JPG", "images/europe/IMG_7155.JPG", "images/europe/IMG_7162.JPG", "images/europe/IMG_7169.JPG", "images/europe/IMG_7195.JPG", "images/europe/IMG_7196.JPG", "images/europe/IMG_7202.JPG", "images/europe/IMG_7206.JPG", "images/europe/IMG_7209.JPG", "images/europe/IMG_7212.JPG", "images/europe/IMG_7214.JPG", "images/europe/IMG_7217.JPG", "images/europe/IMG_7218.JPG", "images/europe/IMG_7221.JPG", "images/europe/IMG_7223.JPG", "images/europe/IMG_7226.JPG", "images/europe/IMG_7235.JPG", "images/europe/IMG_7236.JPG", "images/europe/IMG_7241.JPG", "images/europe/IMG_7244.JPG", "images/europe/IMG_7246.JPG", "images/europe/IMG_7256.JPG", "images/europe/IMG_7257.JPG", "images/europe/IMG_7259.JPG", "images/europe/IMG_7266.JPG", "images/europe/IMG_7268.JPG", "images/europe/IMG_7272.JPG", "images/europe/IMG_7277.JPG", "images/europe/IMG_7290.JPG", "images/europe/IMG_7291.JPG", "images/europe/IMG_7299.JPG", "images/europe/IMG_7305.JPG", "images/europe/IMG_7309.JPG", "images/europe/IMG_7322.JPG", "images/europe/IMG_7324.JPG", "images/europe/IMG_7327.JPG", "images/europe/IMG_7329.JPG", "images/europe/IMG_7338.JPG", "images/europe/IMG_7342.JPG", "images/europe/IMG_7345.JPG", "images/europe/IMG_7351.JPG", "images/europe/IMG_7353.JPG", "images/europe/IMG_7367.JPG", "images/europe/IMG_7369.JPG", "images/europe/IMG_7371.JPG", "images/europe/IMG_7388.JPG", "images/europe/IMG_7389.JPG", "images/europe/IMG_7391.JPG", "images/europe/IMG_7392.JPG", "images/europe/IMG_7393.JPG", "images/europe/IMG_7402.JPG", "images/europe/IMG_7404.JPG", "images/europe/IMG_7405.JPG", "images/europe/IMG_7413.JPG", "images/europe/IMG_7415.JPG", "images/europe/IMG_7431.JPG", "images/europe/IMG_7442.JPG", "images/europe/IMG_7445.JPG", "images/europe/IMG_7451.JPG", "images/europe/IMG_7464.JPG", "images/europe/IMG_7480.JPG", "images/europe/IMG_7482.JPG", "images/europe/IMG_7488.JPG", "images/europe/IMG_7494.JPG", "images/europe/IMG_7500.JPG", "images/europe/IMG_7506.JPG", "images/europe/IMG_7509.JPG", "images/europe/IMG_7514.JPG", "images/europe/IMG_7517.JPG", "images/europe/IMG_7523.JPG", "images/europe/IMG_7527.JPG", "images/europe/IMG_7530.JPG", "images/europe/IMG_7541.JPG", "images/europe/IMG_7542.JPG", "images/europe/IMG_7544.JPG", "images/europe/IMG_7546.JPG", "images/europe/IMG_7549.JPG", "images/europe/IMG_7559.JPG", "images/europe/IMG_7563.JPG", "images/europe/IMG_7572.JPG", "images/europe/IMG_7573.JPG", "images/europe/IMG_7576.JPG", "images/europe/IMG_7580.JPG", "images/europe/IMG_7592.JPG", "images/europe/IMG_7595.JPG", "images/europe/IMG_7596.JPG", "images/europe/IMG_7599.JPG", "images/europe/IMG_7601.JPG", "images/europe/IMG_7615.JPG", "images/europe/IMG_7616.JPG", "images/europe/KGUKE4000.JPG", "images/europe/SVYCE8154.JPG"],
       "images/iceland23": ["images/iceland23/IMG_5319.jpg", "images/iceland23/IMG_5321.jpg", "images/iceland23/IMG_5322.jpg", "images/iceland23/IMG_5326.jpg", "images/iceland23/IMG_5329.jpg", "images/iceland23/IMG_5333.jpg", "images/iceland23/IMG_5342.jpg", "images/iceland23/IMG_5345.jpg", "images/iceland23/IMG_5352.jpg", "images/iceland23/IMG_5356.jpg", "images/iceland23/IMG_5362.jpg", "images/iceland23/IMG_5371.jpg", "images/iceland23/IMG_5373.jpg", "images/iceland23/IMG_5381.jpg", "images/iceland23/IMG_5388.jpg", "images/iceland23/IMG_5394.jpg", "images/iceland23/IMG_5395.jpg", "images/iceland23/IMG_5401.jpg", "images/iceland23/IMG_5403.jpg", "images/iceland23/IMG_5405.jpg", "images/iceland23/IMG_5489.jpg", "images/iceland23/IMG_5490.JPG", "images/iceland23/IMG_5491.JPG", "images/iceland23/image000000.JPEG"],
       "images/fall25": ["images/fall25/4748456492716765856.JPG", "images/fall25/5782130944499018615.JPG", "images/fall25/IMG_0171.jpg", "images/fall25/IMG_0195.JPEG", "images/fall25/IMG_0210.JPEG", "images/fall25/IMG_0609.jpg", "images/fall25/IMG_0625.jpg", "images/fall25/IMG_0685.jpg", "images/fall25/IMG_1275.JPEG", "images/fall25/IMG_1586.jpg", "images/fall25/IMG_1592.jpg", "images/fall25/IMG_2605.JPEG", "images/fall25/IMG_2606.JPEG", "images/fall25/IMG_2607.JPEG", "images/fall25/IMG_2610.JPEG", "images/fall25/IMG_3124.PNG", "images/fall25/IMG_5275.JPEG", "images/fall25/IMG_7035.jpg", "images/fall25/IMG_7042.jpg", "images/fall25/IMG_7043.jpg", "images/fall25/IMG_7046.jpg", "images/fall25/IMG_7052.jpg", "images/fall25/IMG_7920_Original.JPG", "images/fall25/IMG_7924_Original.JPG", "images/fall25/IMG_7939_Original.JPG", "images/fall25/IMG_8100.JPG", "images/fall25/IMG_8104.JPG", "images/fall25/IMG_8122.JPG", "images/fall25/IMG_8129.JPG", "images/fall25/IMG_8133.JPG", "images/fall25/IMG_8143.JPG", "images/fall25/IMG_8155.JPG", "images/fall25/IMG_8158.JPG", "images/fall25/IMG_8159.JPG", "images/fall25/IMG_8178.JPG", "images/fall25/IMG_8198.JPG", "images/fall25/IMG_8214.JPG", "images/fall25/IMG_8217.JPG", "images/fall25/IMG_8223.JPG", "images/fall25/IMG_8230.JPG", "images/fall25/IMG_8232.JPG", "images/fall25/IMG_8246.jpg", "images/fall25/IMG_8248.JPG", "images/fall25/IMG_8257.JPG", "images/fall25/IMG_8265.JPG", "images/fall25/IMG_8271.JPG", "images/fall25/IMG_8282.JPG", "images/fall25/IMG_8288.JPG", "images/fall25/IMG_8300.JPG", "images/fall25/IMG_8337.JPG", "images/fall25/IMG_8343.JPG", "images/fall25/IMG_8348.JPG", "images/fall25/IMG_8358.JPG", "images/fall25/IMG_8389.PNG", "images/fall25/IMG_8390.PNG", "images/fall25/IMG_8392.JPG", "images/fall25/IMG_8403.JPG", "images/fall25/IMG_8419.JPG", "images/fall25/IMG_8426.PNG", "images/fall25/IMG_8444.JPG", "images/fall25/IMG_8447.JPG", "images/fall25/IMG_8456.JPG", "images/fall25/IMG_8459.JPG", "images/fall25/IMG_8471.jpg", "images/fall25/IMG_8474.JPG", "images/fall25/IMG_8482.JPG", "images/fall25/IMG_8487.JPG", "images/fall25/IMG_8489.JPG", "images/fall25/IMG_8520.JPG", "images/fall25/IMG_8521.JPG", "images/fall25/IMG_8524.JPG", "images/fall25/IMG_8525.JPG", "images/fall25/IMG_8531.JPG", "images/fall25/IMG_8538.JPG", "images/fall25/IMG_8541.JPG", "images/fall25/IMG_8542.JPG", "images/fall25/IMG_8544.JPG", "images/fall25/IMG_8546.JPG", "images/fall25/IMG_8547.JPG", "images/fall25/IMG_8550.JPG", "images/fall25/IMG_8565.JPG", "images/fall25/IMG_8584.JPG", "images/fall25/IMG_8587.JPG", "images/fall25/IMG_8590.JPG", "images/fall25/IMG_8591.JPG", "images/fall25/IMG_8592.JPG", "images/fall25/IMG_8593.JPG", "images/fall25/IMG_8594.JPG", "images/fall25/IMG_8596.JPG", "images/fall25/IMG_8597.JPG", "images/fall25/IMG_8601.PNG", "images/fall25/IMG_8602.JPG", "images/fall25/IMG_8603.JPG", "images/fall25/IMG_8604.JPG", "images/fall25/IMG_8605.JPG", "images/fall25/IMG_8606.JPG", "images/fall25/IMG_8612.JPG", "images/fall25/IMG_8621.JPG", "images/fall25/IMG_8626.JPG", "images/fall25/IMG_8637.PNG", "images/fall25/IMG_8645.JPG", "images/fall25/IMG_8650.JPG", "images/fall25/IMG_8651.JPG", "images/fall25/IMG_8656.JPG", "images/fall25/IMG_8665.JPG", "images/fall25/IMG_8672.JPG", "images/fall25/IMG_8673.JPG", "images/fall25/IMG_8679.JPG", "images/fall25/IMG_8700.JPG", "images/fall25/IMG_8713.JPG", "images/fall25/IMG_8715.JPG"]
     };
+
+    const WEBPABLE_EXT_RE = /\.(jpe?g|png)$/i;
+    function toWebpPath(path) {
+      return (path || '').replace(WEBPABLE_EXT_RE, '.webp');
+    }
 
     const modal = document.getElementById('albumModal');
     const modalTitle = document.getElementById('modalTitle');
@@ -365,50 +370,15 @@
 
     let currentAlbum = { title: '', path: '', images: [], index: 0 };
 
-    const HEIC_EXT_RE = /\.heic$|\.heif$/i;
-    const HEIC_CACHE_MAX = 24;
-    const heicCache = new Map(); // src -> objectURL
-    const heicCacheOrder = [];
-
-    function isHeic(path) {
-      return HEIC_EXT_RE.test(path || '');
-    }
-
-    function addHeicCache(src, objectUrl) {
-      heicCache.set(src, objectUrl);
-      heicCacheOrder.push(src);
-      if (heicCacheOrder.length > HEIC_CACHE_MAX) {
-        const old = heicCacheOrder.shift();
-        const oldUrl = heicCache.get(old);
-        if (oldUrl) URL.revokeObjectURL(oldUrl);
-        heicCache.delete(old);
-      }
-    }
-
     async function resolveImageUrl(src) {
-      if (!isHeic(src)) return src;
-      if (heicCache.has(src)) return heicCache.get(src);
-      if (typeof heic2any !== 'function') return src;
-      const resp = await fetch(src, { cache: 'no-store' });
-      if (!resp.ok) return src;
-      const blob = await resp.blob();
-      const converted = await heic2any({ blob, toType: 'image/jpeg', quality: 0.9 });
-      const outBlob = Array.isArray(converted) ? converted[0] : converted;
-      const objectUrl = URL.createObjectURL(outBlob);
-      addHeicCache(src, objectUrl);
-      return objectUrl;
+      return toWebpPath(src);
     }
 
-    async function upgradeHeicImagesInDom() {
+    async function upgradeImageSourcesInDom() {
       const imgs = Array.from(document.querySelectorAll('img[src]'));
       for (const img of imgs) {
         const src = img.getAttribute('src');
-        if (!isHeic(src)) continue;
-        try {
-          img.src = await resolveImageUrl(src);
-        } catch (e) {
-          // Keep original src on failure
-        }
+        img.src = toWebpPath(src);
       }
     }
 
@@ -429,6 +399,10 @@
       });
     });
 
+    const ALBUM_FALLBACKS_WEBP = Object.fromEntries(
+      Object.entries(ALBUM_FALLBACKS).map(([k, v]) => [k, (v || []).map(toWebpPath)])
+    );
+
     async function loadAlbumImages(path) {
       // Try album.json first
       try {
@@ -436,11 +410,11 @@
         if (res.ok) {
           const json = await res.json();
           // Allow images to be relative to the album folder
-          return (json.images || []).map(p => `${path}/${p}`);
+          return (json.images || []).map(p => toWebpPath(`${path}/${p}`));
         }
       } catch (e) { /* ignore and fall back */ }
       // Fallback map
-      return ALBUM_FALLBACKS[path] || [];
+      return ALBUM_FALLBACKS_WEBP[path] || [];
     }
 
     function openModal() {
@@ -461,7 +435,7 @@
       currentAlbum.index = (i + currentAlbum.images.length) % currentAlbum.images.length;
       const src = currentAlbum.images[currentAlbum.index];
       modalImg.src = '';
-      modalImg.src = await resolveImageUrl(src);
+      modalImg.src = src;
     }
 
     btnPrev.addEventListener('click', () => showImage(currentAlbum.index - 1));
@@ -518,21 +492,21 @@
       saveAs(content, `${currentAlbum.title.replace(/\s+/g, '_')}.zip`);
     });
 
-    upgradeHeicImagesInDom();
+    upgradeImageSourcesInDom();
   </script>
   <!-- JavaScript to cycle through slides automatically and update footer date -->
   <script>
     const HEADER_FALLBACK = [
-      "images/header/land.JPG",
-      "images/header/incline.jpg",
-      "images/header/castle.JPG",
-      "images/header/lake.JPG",
-      "images/header/avalanche.JPG",
-      "images/header/sistine.JPG",
-      "images/header/falls.JPG",
-      "images/header/swiss.JPG",
-      "images/header/rocket.JPG",
-      "images/header/chief_mtn.JPG"
+      "images/header/land.webp",
+      "images/header/incline.webp",
+      "images/header/castle.webp",
+      "images/header/lake.webp",
+      "images/header/avalanche.webp",
+      "images/header/sistine.webp",
+      "images/header/falls.webp",
+      "images/header/swiss.webp",
+      "images/header/rocket.webp",
+      "images/header/chief_mtn.webp"
     ];
 
     async function loadHeaderConfig() {
@@ -540,7 +514,7 @@
         const res = await fetch("images/header/album.json");
         if (res.ok) {
           const json = await res.json();
-          const images = (json.images || []).map(p => `images/header/${p}`);
+          const images = (json.images || []).map(p => toWebpPath(`images/header/${p}`));
           return {
             images: images.length ? images : HEADER_FALLBACK,
             interval: Number(json.interval_ms) || 5000,
@@ -588,7 +562,7 @@
         if (idx === 0) {
           img.srcset = srcset;
           img.sizes = "100vw";
-          resolveImageUrl(src).then(resolved => { img.src = resolved; }).catch(() => { img.src = src; });
+          img.src = src;
         } else {
           img.dataset.src = src;
           img.dataset.srcset = srcset;
@@ -612,7 +586,7 @@
           img.sizes = img.dataset.sizes;
         }
         const source = img.dataset.src;
-        resolveImageUrl(source).then(resolved => { img.src = resolved; }).catch(() => { img.src = source; });
+        img.src = source;
       }
       if (slides.length) {
         loadSlideImage(0);
