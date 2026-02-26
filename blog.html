@@ -574,13 +574,12 @@
     .post-excerpt {
       margin: 0;
       color: rgba(14,17,22,0.82);
-      line-height: 1.35;
+      line-height: 1.4;
       font-size: 0.98rem;
       display: block;
       overflow: hidden;
-      height: calc(1.35em * 4);
-      max-height: calc(1.35em * 4);
-      padding: 35px 0px 0px;
+      max-height: calc(1.4em * 4);
+      padding: 12px 0 0;
     }
     .post-comments-cta{
       margin-top: 10px;
@@ -1030,6 +1029,13 @@
       line-height: 44px;
     }
     .modal-close:hover { background: rgba(255,255,255,0.18); }
+    #postModal .modal-close{
+      color: #10151c;
+      background: rgba(0,0,0,0.08);
+    }
+    #postModal .modal-close:hover{
+      background: rgba(0,0,0,0.14);
+    }
 
     .modal-body {
       padding: 0 18px 18px;
@@ -1260,6 +1266,9 @@
       #postModal .new-comment-input{
         min-height: 150px;
         max-height: 34vh;
+      }
+      #postModal .modal-leftcol.is-tab-open .modal-text{
+        max-height: calc(1.45em * 3 + 12px);
       }
       #postModal.mobile-tab-open .modal-gallery{
         display: none !important;
@@ -1539,7 +1548,7 @@ Note: I am notified of all posts and will be moderating content. You do not have
 <div class="modal-post-actions">
 <button class="modal-post-btn" id="btnViewComments" type="button">View 0 Comments</button>
 <button class="modal-post-btn" id="btnNewComment" type="button">New Comment</button>
-<button class="modal-post-btn modal-post-btn-back" hidden id="btnBackToPhotos" type="button">Back To Photo</button>
+<button class="modal-post-btn modal-post-btn-back" hidden id="btnBackToPhotos" type="button">Return</button>
 </div>
 <div class="modal-tab-panel" id="commentsTabPanel">
 <div class="comments-empty" id="commentsEmpty">No comments yet.</div>
