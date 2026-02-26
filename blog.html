@@ -1305,16 +1305,16 @@
 <h2>Public blog. Feel free to reflect!</h2>
 </div>
   <!-- Slides -->
-  <div class="slide active"><img src="images/header/rocket.JPG" alt="Rocket" /></div>
-  <div class="slide"><img src="images/header/chief_mtn.JPG" alt="Chief Mtn" /></div>
-  <div class="slide"><img src="images/header/land.JPG" alt="Land" /></div>
-  <div class="slide"><img src="images/header/incline.JPG" alt="incline" /></div>
-  <div class="slide"><img src="images/header/castle.JPG" alt="castle" /></div>
-  <div class="slide"><img src="images/header/lake.JPG" alt="lake" /></div>
-  <div class="slide"><img src="images/header/avalanche.JPG" alt="avalanche" /></div>
-  <div class="slide"><img src="images/header/sistine.JPG" alt="sistine" /></div>
-  <div class="slide"><img src="images/header/falls.JPG" alt="falls" /></div>
-  <div class="slide"><img src="images/header/swiss.JPG" alt="Swiss" /></div>
+  <div class="slide active"><img src="images/header/rocket.JPG" srcset="images/header/rocket-800.webp 800w, images/header/rocket-1600.webp 1600w" sizes="100vw" alt="Rocket" loading="eager" fetchpriority="high" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/chief_mtn.JPG" data-srcset="images/header/chief_mtn-800.webp 800w, images/header/chief_mtn-1600.webp 1600w" data-sizes="100vw" alt="Chief Mtn" loading="lazy" fetchpriority="low" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/land.JPG" data-srcset="images/header/land-800.webp 800w, images/header/land-1600.webp 1600w" data-sizes="100vw" alt="Land" loading="lazy" fetchpriority="low" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/incline.jpg" data-srcset="images/header/incline-800.webp 800w, images/header/incline-1600.webp 1600w" data-sizes="100vw" alt="incline" loading="lazy" fetchpriority="low" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/castle.JPG" data-srcset="images/header/castle-800.webp 800w, images/header/castle-1600.webp 1600w" data-sizes="100vw" alt="castle" loading="lazy" fetchpriority="low" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/lake.JPG" data-srcset="images/header/lake-800.webp 800w, images/header/lake-1600.webp 1600w" data-sizes="100vw" alt="lake" loading="lazy" fetchpriority="low" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/avalanche.JPG" data-srcset="images/header/avalanche-800.webp 800w, images/header/avalanche-1600.webp 1600w" data-sizes="100vw" alt="avalanche" loading="lazy" fetchpriority="low" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/sistine.JPG" data-srcset="images/header/sistine-800.webp 800w, images/header/sistine-1600.webp 1600w" data-sizes="100vw" alt="sistine" loading="lazy" fetchpriority="low" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/falls.JPG" data-srcset="images/header/falls-800.webp 800w, images/header/falls-1600.webp 1600w" data-sizes="100vw" alt="falls" loading="lazy" fetchpriority="low" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/swiss.JPG" data-srcset="images/header/swiss-800.webp 800w, images/header/swiss-1600.webp 1600w" data-sizes="100vw" alt="Swiss" loading="lazy" fetchpriority="low" decoding="async" /></div>
 </div>
 <!-- BLOG -->
 <section aria-label="Blog posts" class="blog-wrap">
@@ -1528,17 +1528,40 @@ Note: I am notified of all posts and will be moderating content. You do not have
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
     // ===== Header slideshow + footer date =====
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
     let slideIndex = 0;
     const slides = document.getElementsByClassName("slide");
+    function loadSlideImage(index) {
+      const slide = slides[index];
+      if (!slide) return;
+      const img = slide.querySelector("img");
+      if (img && !img.getAttribute("src") && img.dataset.src) {
+        if (img.dataset.srcset) {
+          img.srcset = img.dataset.srcset;
+        }
+        if (img.dataset.sizes) {
+          img.sizes = img.dataset.sizes;
+        }
+        img.src = img.dataset.src;
+      }
+    }
+    if (slides.length) {
+      loadSlideImage(0);
+      if (!isMobile && slides.length > 1) {
+        loadSlideImage(1);
+      }
+    }
     function showSlides() {
-      if (!slides || slides.length === 0) return;
+      if (isMobile || !slides || slides.length <= 1) return;
       for (let i = 0; i < slides.length; i++) slides[i].classList.remove("active");
       slideIndex++;
       if (slideIndex > slides.length) slideIndex = 1;
       slides[slideIndex - 1].classList.add("active");
+      loadSlideImage(slideIndex - 1);
+      loadSlideImage(slideIndex % slides.length);
       setTimeout(showSlides, 5000);
     }
-    showSlides();
+    if (!isMobile) showSlides();
 
     document.getElementById("last-updated").innerText =
       "Today's Date: " + new Date().toLocaleDateString();

@@ -524,7 +524,7 @@
   <script>
     const HEADER_FALLBACK = [
       "images/header/land.JPG",
-      "images/header/incline.JPG",
+      "images/header/incline.jpg",
       "images/header/castle.JPG",
       "images/header/lake.JPG",
       "images/header/avalanche.JPG",
@@ -537,7 +537,7 @@
 
     async function loadHeaderConfig() {
       try {
-        const res = await fetch("images/header/album.json", { cache: 'no-store' });
+        const res = await fetch("images/header/album.json");
         if (res.ok) {
           const json = await res.json();
           const images = (json.images || []).map(p => `images/header/${p}`);
@@ -558,10 +558,19 @@
       }
       return arr;
     }
+    function buildWebpSrcSet(src) {
+      const slash = src.lastIndexOf("/");
+      const dot = src.lastIndexOf(".");
+      if (dot <= slash) return "";
+      const dir = src.slice(0, slash);
+      const stem = src.slice(slash + 1, dot);
+      return `${dir}/${stem}-800.webp 800w, ${dir}/${stem}-1600.webp 1600w`;
+    }
 
     async function initHeaderSlideshow() {
       const headerSlides = document.getElementById("headerSlides");
       if (!headerSlides) return;
+      const isMobile = window.matchMedia("(max-width: 768px)").matches;
 
       const cfg = await loadHeaderConfig();
       const images = cfg.shuffle ? shuffleArray([...cfg.images]) : cfg.images;
@@ -571,16 +580,48 @@
         const slide = document.createElement("div");
         slide.className = "slide" + (idx === 0 ? " active" : "");
         const img = document.createElement("img");
+        const srcset = buildWebpSrcSet(src);
         img.alt = "Header image";
         img.loading = idx === 0 ? "eager" : "lazy";
+        img.fetchPriority = idx === 0 ? "high" : "low";
+        img.decoding = "async";
+        if (idx === 0) {
+          img.srcset = srcset;
+          img.sizes = "100vw";
+          resolveImageUrl(src).then(resolved => { img.src = resolved; }).catch(() => { img.src = src; });
+        } else {
+          img.dataset.src = src;
+          img.dataset.srcset = srcset;
+          img.dataset.sizes = "100vw";
+        }
         slide.appendChild(img);
         headerSlides.appendChild(slide);
-        resolveImageUrl(src).then(resolved => { img.src = resolved; }).catch(() => { img.src = src; });
       });
 
       let slideIndex = 0;
       const slides = document.getElementsByClassName("slide");
+      function loadSlideImage(index) {
+        const slide = slides[index];
+        if (!slide) return;
+        const img = slide.querySelector("img");
+        if (!img || !img.dataset.src || img.getAttribute("src")) return;
+        if (img.dataset.srcset) {
+          img.srcset = img.dataset.srcset;
+        }
+        if (img.dataset.sizes) {
+          img.sizes = img.dataset.sizes;
+        }
+        const source = img.dataset.src;
+        resolveImageUrl(source).then(resolved => { img.src = resolved; }).catch(() => { img.src = source; });
+      }
+      if (slides.length) {
+        loadSlideImage(0);
+        if (!isMobile && slides.length > 1) {
+          loadSlideImage(1);
+        }
+      }
       function showSlides() {
+        if (isMobile || slides.length <= 1) return;
         for (let i = 0; i < slides.length; i++) {
           slides[i].classList.remove("active");
         }
@@ -589,9 +630,11 @@
           slideIndex = 1;
         }
         slides[slideIndex - 1].classList.add("active");
+        loadSlideImage(slideIndex - 1);
+        loadSlideImage(slideIndex % slides.length);
         setTimeout(showSlides, cfg.interval);
       }
-      if (slides.length) showSlides();
+      if (!isMobile && slides.length) showSlides();
     }
 
     initHeaderSlideshow();
