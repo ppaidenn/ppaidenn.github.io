@@ -64,9 +64,19 @@
     .nav-overlay {
       position: absolute;
       top: 0; left: 0; width: 100%; height: calc(var(--nav-height) + var(--safe-top));
-      background: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+      background: transparent;
       z-index: 3;
       display: flex; align-items: center;
+    }
+    .nav-overlay::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: var(--safe-top);
+      height: var(--nav-height);
+      background: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+      pointer-events: none;
     }
 
     /* Inner container for nav buttons, constrained within the responsive side margin */
