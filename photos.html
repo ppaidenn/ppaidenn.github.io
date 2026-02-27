@@ -20,12 +20,12 @@
     :root {
       --side-margin: 10vw;            /* Responsive horizontal margin */
       --nav-height: 20vh;             /* Height of navigation overlay */
-      --slideshow-height: 85vh;       /* Height of the slideshow container */
+      --slideshow-height: 62vh;       /* Height of the slideshow container */
       --footer-padding: 7vh;          /* Vertical padding for the footer */
       --brand-font-size: 2.5vw;       /* Font size for nav brand (paiden.com) */
       --nav-font-size: 1.2vw;         /* Font size for other nav links */
-      --header-font-size: 4vw;        /* Font size for overlay header */
-      --subheader-font-size: 1.5vw;   /* Font size for overlay subheader */
+      --header-font-size: 5vw;        /* Font size for overlay header */
+      --subheader-font-size: 2vw;   /* Font size for overlay subheader */
       --footer-title-font-size: 2vw;  /* Font size for footer brand/button */
       --footer-subtitle-font-size: 1vw; /* Font size for footer text */
       --footer-button-spacing: 0.75vw; /* Adjustable space between paiden.com and footer text */
@@ -58,6 +58,17 @@
       padding-top: var(--safe-top);
       margin-left: calc(50% - 50vw);
       overflow: hidden;
+    }
+    .slideshow-container::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 16vh;
+      background: linear-gradient(to bottom, rgba(224,224,224,0), #e0e0e0 90%);
+      pointer-events: none;
+      z-index: 1;
     }
 
     /* Navigation overlay spanning full width with gradient shading */
@@ -211,7 +222,7 @@
 
     @media (max-width: 600px) {
       :root {
-        --side-margin: 5vw; --brand-font-size: 4vw; --nav-font-size: 3vw; --header-font-size: 6vw; --subheader-font-size: 3vw; --footer-title-font-size: 4vw; --footer-subtitle-font-size: 2vw; --footer-nav-font-size: 3vw;
+        --side-margin: 5vw; --slideshow-height: 46vh; --brand-font-size: 4vw; --nav-font-size: 3vw; --header-font-size: 8.5vw; --subheader-font-size: 4.8vw; --footer-title-font-size: 4vw; --footer-subtitle-font-size: 2vw; --footer-nav-font-size: 3vw;
       }
       .nav-inner, .footer-inner { margin-left: var(--side-margin); margin-right: var(--side-margin); }
       .social-icons a { font-size: 5vw; }
@@ -412,18 +423,13 @@
     </div>
     <div class="modal-toolbar">
       <button class="toolbar-btn" id="btnFullscreen"><i class="fa-solid fa-expand"></i> Fullscreen</button>
-      <button class="toolbar-btn" id="btnDownload"><i class="fa-solid fa-file-zipper"></i> Download ZIP</button>
     </div>
   </div>
 
   <!-- JavaScript to cycle through header slides automatically and update footer date DELETED-->
 
-  <!-- JSZip + FileSaver CDN for ZIP downloads -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha512-ZN5c8zqJcV8Kq0D8P6aEKlH9o9k3dkrq0qp1z4I2lA2sM3uQ3QzT5+7bGzXo2c2W3J1g2oVRa/Zb0a1I5s1d3g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" integrity="sha512-5x3G6QkKydf1pVgWg8v+2m5l0xvY6zv8m3oX8i6CjX6dybG3q5A4z0g4y3iM3xVf4mJ8k8P1q4F8a0ZsQ3w3hA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
   <script>
-    // ===== Embedded Slideshow + ZIP =====
+    // ===== Embedded Slideshow =====
     // How image loading works:
     // 1) We try to fetch `${albumPath}/album.json` which should look like:
     //    { "title": "Trips 2025", "images": ["IMG_0001.jpg", "sub/IMG_0002.jpg"] }
@@ -436,7 +442,6 @@
     const btnPrev = document.getElementById('modalPrev');
     const btnNext = document.getElementById('modalNext');
     const btnFullscreen = document.getElementById('btnFullscreen');
-    const btnDownload = document.getElementById('btnDownload');
 
     let currentAlbum = { title: '', path: '', images: [], index: 0 };
 
@@ -526,25 +531,6 @@
       }
     });
 
-    // ZIP download of current album
-    btnDownload.addEventListener('click', async () => {
-      if (!currentAlbum.images.length) return;
-      const zip = new JSZip();
-      const folder = zip.folder(currentAlbum.title.replace(/\s+/g, '_'));
-      for (const url of currentAlbum.images) {
-        try {
-          const resp = await fetch(url, { cache: 'no-store' });
-          if (!resp.ok) continue;
-          const blob = await resp.blob();
-          const name = url.split('/').pop();
-          folder.file(name, blob);
-        } catch (e) { /* skip failed file */ }
-      }
-      const content = await zip.generateAsync({ type: 'blob' });
-      saveAs(content, `${currentAlbum.title.replace(/\s+/g, '_')}.zip`);
-    });
-
-    
   </script>
   <!-- JavaScript to cycle through slides automatically and update footer date -->
   <script>

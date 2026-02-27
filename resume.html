@@ -20,12 +20,12 @@
     :root {
       --side-margin: 10vw;            /* Responsive horizontal margin */
       --nav-height: 20vh;             /* Height of navigation overlay */
-      --slideshow-height: 85vh;       /* Height of the slideshow container */
+      --slideshow-height: 62vh;       /* Height of the slideshow container */
       --footer-padding: 7vh;          /* Vertical padding for the footer */
       --brand-font-size: 2.5vw;       /* Font size for nav brand (paiden.com) */
       --nav-font-size: 1.2vw;         /* Font size for other nav links */
-      --header-font-size: 4vw;        /* Font size for overlay header */
-      --subheader-font-size: 1.5vw;   /* Font size for overlay subheader */
+      --header-font-size: 5vw;        /* Font size for overlay header */
+      --subheader-font-size: 2vw;   /* Font size for overlay subheader */
       --footer-title-font-size: 2vw;  /* Font size for footer brand/button */
       --footer-subtitle-font-size: 1vw; /* Font size for footer text */
       --footer-button-spacing: 0.75vw; /* Adjustable space between paiden.com and footer text */
@@ -60,6 +60,17 @@
       padding-top: var(--safe-top);
       margin-left: calc(50% - 50vw);
       overflow: hidden;
+    }
+    .slideshow-container::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 16vh;
+      background: linear-gradient(to bottom, rgba(224,224,224,0), #e0e0e0 90%);
+      pointer-events: none;
+      z-index: 1;
     }
 
     /* Navigation overlay spanning full width with gradient shading */
@@ -315,10 +326,11 @@
     @media (max-width: 600px) {
       :root {
         --side-margin: 5vw;
+        --slideshow-height: 46vh;
         --brand-font-size: 4vw;
         --nav-font-size: 3vw;
-        --header-font-size: 6vw;
-        --subheader-font-size: 3vw;
+        --header-font-size: 8.5vw;
+        --subheader-font-size: 4.8vw;
         --footer-title-font-size: 4vw;
         --footer-subtitle-font-size: 2vw;
         --footer-nav-font-size: 3vw;
