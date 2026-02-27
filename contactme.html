@@ -7,7 +7,7 @@
   <meta name="description" content="Template for Paiden's website pages.">
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" type="image/png" href="/images/favicon.png">
   <link rel="apple-touch-icon" href="/images/favicon.png">
@@ -127,6 +127,8 @@
     .nav-items a:hover {
       text-decoration: underline;
     }
+
+    .mobile-fixed-header { display: none; }
 
     /* Constant overlay text container with header and sub-header */
     .slideshow-text {
@@ -458,6 +460,60 @@
       }
     }
 
+    @media (max-width: 768px) {
+      html, body {
+        background: #000;
+        overscroll-behavior-y: contain;
+      }
+      body {
+        padding-top: calc(env(safe-area-inset-top, 0px) + 58px);
+      }
+      .mobile-fixed-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: calc(env(safe-area-inset-top, 0px) + 58px);
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-left: 5vw;
+        padding-right: 5vw;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #000;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        z-index: 10000;
+      }
+      .mobile-fixed-brand {
+        color: #fff;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: clamp(22px, 6.4vw, 30px);
+        line-height: 1;
+      }
+      .mobile-fixed-nav {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding-left: 12px;
+        border-left: 2px solid rgba(255,255,255,0.9);
+      }
+      .mobile-fixed-nav a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 22px;
+        line-height: 1;
+      }
+      .nav-overlay { display: none; }
+      .slideshow-container {
+        padding-top: 0;
+        height: var(--slideshow-height);
+      }
+      .slideshow-text {
+        top: 65%;
+      }
+    }
+
     @media (max-width: 600px) {
       .footer-inner {
         display: grid;
@@ -486,6 +542,15 @@
   </style>
 </head>
 <body>
+  <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation">
+    <a class="mobile-fixed-brand" href="/">paiden.com</a>
+    <div class="mobile-fixed-nav">
+      <a href="/resume" aria-label="Resume"><i class="fa-solid fa-file-lines" aria-hidden="true"></i></a>
+      <a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a>
+      <a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a>
+      <a href="/contactme" aria-label="Contact Me"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a>
+    </div>
+  </div>
   <!-- Full-width slideshow container -->
   <div class="slideshow-container">
     <!-- Navigation overlay with gradient shading -->
