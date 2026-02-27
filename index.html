@@ -191,10 +191,12 @@
     @media (max-width: 600px) {
       :root {
         --side-margin: 5vw;
-        --brand-font-size: 4vw;
-        --nav-font-size: 3vw;
-        --header-font-size: 6vw;
-        --subheader-font-size: 3vw;
+        --nav-height: 16vh;
+        --slideshow-height: 56vh;
+        --brand-font-size: 7vw;
+        --nav-font-size: 4.4vw;
+        --header-font-size: 9.5vw;
+        --subheader-font-size: 5.2vw;
         --footer-title-font-size: 4vw;
         --footer-subtitle-font-size: 2vw;
         --footer-nav-font-size: 3vw;
@@ -203,6 +205,36 @@
       .nav-inner, .footer-inner {
         margin-left: var(--side-margin);
         margin-right: var(--side-margin);
+      }
+      .nav-inner {
+        align-items: center;
+        gap: 10px;
+      }
+      .brand a {
+        padding: 10px 12px 10px 0;
+        border-right: 2px solid rgba(255,255,255,0.9);
+        margin-right: 10px;
+        line-height: 1;
+      }
+      .nav-items {
+        flex-wrap: wrap;
+        gap: 8px 12px;
+        align-items: center;
+      }
+      .nav-items a {
+        margin-right: 0;
+        padding: 8px 0;
+        line-height: 1;
+      }
+      .slideshow-text {
+        top: 67%;
+      }
+      .slideshow-text h1 {
+        line-height: 1.06;
+        margin-bottom: 10px;
+      }
+      .slideshow-text h2 {
+        line-height: 1.18;
       }
 
       .social-icons a {
