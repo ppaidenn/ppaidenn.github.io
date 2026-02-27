@@ -4,11 +4,14 @@
 <head>
   <link rel="icon" type="image/png" href="/images/favicon.png">
   <link rel="apple-touch-icon" href="/images/favicon.png">
-  <base href="/">
 <meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
 <title>paiden.com</title>
-<meta content="Paiden's blog page — write posts and view them in a pop-up modal." name="description"/>
+<meta content="Paiden's blog page - write posts and view them in a pop-up modal." name="description"/>
+<meta name="theme-color" content="#000000"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<link rel="manifest" href="/manifest.webmanifest"/>
 <!-- Font Awesome Kit -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
@@ -30,6 +33,7 @@
       --footer-nav-left: 15vw;
       --spacing-small: 0.5vw;
       --spacing-large: 1.5vw;
+      --safe-top: env(safe-area-inset-top, 0px);
 
       /* Blog theme */
       --bg: #0e1116;
@@ -85,9 +89,22 @@
     .slideshow-container {
       position: relative;
       width: 100vw;
-      height: var(--slideshow-height);
+      height: calc(var(--slideshow-height) + var(--safe-top));
+      padding-top: var(--safe-top);
       margin-left: calc(50% - 50vw);
       overflow: hidden;
+    }
+    .slideshow-container::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 16vh;
+      background: linear-gradient(to bottom, rgba(224,224,224,0), #e0e0e0 90%);
+      pointer-events: none;
+      z-index: 1;
+      display: none;
     }
 
     /* Navigation overlay spanning full width with gradient shading */
@@ -95,17 +112,28 @@
       position: absolute;
       top: 0; left: 0;
       width: 100%;
-      height: var(--nav-height);
-      background: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+      height: calc(var(--nav-height) + var(--safe-top));
+      background: transparent;
       z-index: 3;
       display: flex;
       align-items: center;
+    }
+    .nav-overlay::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: var(--safe-top);
+      height: var(--nav-height);
+      background: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+      pointer-events: none;
     }
 
     .nav-inner {
       width: 100%;
       margin-left: var(--side-margin);
       margin-right: var(--side-margin);
+      padding-top: var(--safe-top);
       display: flex;
       align-items: flex-end;
     }
@@ -133,9 +161,11 @@
     }
     .nav-items a:hover { text-decoration: underline; }
 
+    .mobile-fixed-header { display: none; }
+
     .slideshow-text {
       position: absolute;
-      top: 65%;
+      top: calc(65% + (var(--safe-top) * 0.35));
       left: var(--side-margin);
       transform: translateY(-50%);
       color: white;
@@ -488,7 +518,7 @@
       transform: rotate(0deg);
       z-index: 2;
       width: 72%;
-      height: 86%;
+      height: 91%;
     }
     .thumb-collage.two img:nth-child(1){
       left: 2%;
@@ -496,7 +526,7 @@
       transform: rotate(-10deg);
       z-index: 2;
       width: 70%;
-      height: 84%;
+      height: 89%;
     }
     .thumb-collage.two img:nth-child(2){
       left: 30%;
@@ -504,7 +534,7 @@
       transform: rotate(8deg);
       z-index: 1;
       width: 70%;
-      height: 84%;
+      height: 89%;
     }
     /* 3+ photos: 1st on top-left, 2nd lower-middle, 3rd behind far-right */
     .thumb-collage.three img:nth-child(1){
@@ -513,7 +543,7 @@
       transform: rotate(-8deg);
       z-index: 3;
       width: 68%;
-      height: 84%;
+      height: 89%;
     }
     .thumb-collage.three img:nth-child(2){
       left: 16%;
@@ -521,7 +551,7 @@
       transform: rotate(4deg);
       z-index: 2;
       width: 68%;
-      height: 84%;
+      height: 89%;
     }
     .thumb-collage.three img:nth-child(3){
       left: 34%;
@@ -529,7 +559,7 @@
       transform: rotate(12deg);
       z-index: 1;
       width: 68%;
-      height: 84%;
+      height: 89%;
     }
 
     .post-author {
@@ -552,6 +582,16 @@
       font-size: clamp(1.8rem, 1.4vw, 2rem);
       line-height: 1.2;
       letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    .post-right{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 220px;
     }
 
     .post-date{
@@ -565,14 +605,18 @@
     .post-excerpt {
       margin: 0;
       color: rgba(14,17,22,0.82);
-      line-height: 1.35;
+      line-height: 1.4;
       font-size: 0.98rem;
-      display: -webkit-box;
-      -webkit-line-clamp: 4;
-      -webkit-box-orient: vertical;
+      display: block;
       overflow: hidden;
-      max-height: calc(0.98rem * 4 * 3);
-      padding: 35px 0px 0px;
+      max-height: calc(1.4em * 4);
+      padding: 12px 0 0;
+    }
+    .post-comments-cta{
+      margin-top: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: rgba(14,17,22,0.72);
     }
 
     .post-thumbrow{
@@ -581,7 +625,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 8px;
       box-sizing: border-box;
     }
 
@@ -620,7 +664,11 @@
       justify-content: center;
     }
     .modal.open { display: flex; }
-    body.no-scroll { overflow: hidden; }
+    html.no-scroll,
+    body.no-scroll {
+      overflow: hidden !important;
+      height: 100%;
+    }
     
     /* Composer modal: lighter overlay + cream panel */
     #composerModal{
@@ -714,7 +762,174 @@
       align-items: center;
       justify-content: center;
     }
-
+    #postModal .modal-leftcol{
+      min-height: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #postModal .modal-post-actions{
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+      min-height: 68px;
+      border-bottom: 1px solid rgba(0,0,0,0.2);
+    }
+    #postModal .modal-post-btn{
+      flex: 1 1 0;
+      border: 1px solid rgba(0,0,0,0.22);
+      border-bottom: 0;
+      border-radius: 14px 14px 0 0;
+      min-height: 66px;
+      padding: 12px 18px;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #0b0f14;
+      background: #e3e6eb;
+      cursor: pointer;
+      margin: 0;
+    }
+    #postModal .modal-post-btn:hover{
+      background: #edf0f4;
+    }
+    #postModal .modal-post-btn.is-active{
+      background: #d7dde5;
+    }
+    #postModal .modal-post-btn + .modal-post-btn{
+      border-left: 0;
+    }
+    #postModal .modal-post-btn.modal-post-btn-back{
+      display: none;
+      background: #dce8f8;
+    }
+    #postModal .modal-leftcol.is-tab-open .modal-text{
+      flex: 0 0 auto;
+      max-height: calc(1.4em * 6 + 14px);
+      min-height: calc(1.4em * 6 + 14px);
+      overflow: hidden;
+      cursor: pointer;
+      transition: background 0.16s ease;
+    }
+    #postModal .modal-leftcol.is-tab-open .modal-text:hover{
+      background: #edf0f4;
+    }
+    #postModal .modal-leftcol.is-text-expanded .modal-text{
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: none;
+      overflow: auto;
+    }
+    #postModal .modal-tab-panel{
+      display: none;
+      flex: 1 1 auto;
+      min-height: 0;
+      height: 100%;
+      max-height: 100%;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.82);
+      padding: 12px;
+      overflow: auto;
+      overscroll-behavior: contain;
+    }
+    #postModal .modal-tab-panel.is-open{
+      display: block;
+    }
+    #postModal .comments-list{
+      margin: 0;
+      padding: 0;
+      color: #0b0f14;
+      list-style: none;
+    }
+    #postModal .comments-list li{
+      margin-bottom: 14px;
+      line-height: 1.4;
+      border: 0;
+      border-bottom: 1px solid rgba(0,0,0,0.12);
+      border-radius: 0;
+      background: transparent;
+      padding: 8px 0 12px;
+    }
+    #postModal .comment-meta{
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      margin-top: 7px;
+    }
+    #postModal .comment-author{
+      display: inline;
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: rgba(11,15,20,0.68);
+    }
+    #postModal .comment-date{
+      display: inline;
+      font-weight: 700;
+      font-size: 0.84rem;
+      color: rgba(11,15,20,0.45);
+    }
+    #postModal .comment-body{
+      display: block;
+      color: rgba(11,15,20,0.86);
+      font-weight: 700;
+    }
+    #postModal .comments-empty{
+      color: rgba(11,15,20,0.7);
+      font-weight: 600;
+    }
+    #postModal .new-comment-label{
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: #0b0f14;
+    }
+    #postModal .new-comment-name{
+      width: 100%;
+      margin-bottom: 10px;
+      border: 1px solid rgba(0,0,0,0.18);
+      border-radius: 10px;
+      padding: 9px 11px;
+      font: inherit;
+      color: #0b0f14;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    #postModal .new-comment-input{
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      border: 1px solid rgba(0,0,0,0.18);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+      color: #0b0f14;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    #postModal .comment-turnstile-wrap{
+      margin-top: 10px;
+    }
+    #postModal .comment-turnstile-wrap .cf-turnstile{
+      transform-origin: left top;
+    }
+    #postModal .new-comment-actions{
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    #postModal .new-comment-submit{
+      border: 1px solid rgba(0,0,0,0.2);
+      border-radius: 10px;
+      padding: 8px 12px;
+      background: #e3e6eb;
+      color: #0b0f14;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    #postModal .new-comment-submit:hover{
+      background: #edf0f4;
+    }
 /* Composer modal: ensure full-width centered form */
     #composerModal .modal-body{
       display: block;
@@ -856,6 +1071,13 @@
       line-height: 44px;
     }
     .modal-close:hover { background: rgba(255,255,255,0.18); }
+    #postModal .modal-close{
+      color: #10151c;
+      background: rgba(0,0,0,0.08);
+    }
+    #postModal .modal-close:hover{
+      background: rgba(0,0,0,0.14);
+    }
 
     .modal-body {
       padding: 0 18px 18px;
@@ -875,6 +1097,8 @@
       line-height: 1.45;
       overflow: visible;
       white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     .modal-gallery {
@@ -884,7 +1108,7 @@
       padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 0;
       min-height: 260px;
     }
 
@@ -900,14 +1124,18 @@
       justify-content: center;
     }
 
-    .modal-img { max-width: 100%; max-height: 52vh; display: block; }
-
-    .modal-nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+    .modal-img {
+      max-width: 100%;
+      max-height: 52vh;
+      width: auto;
+      height: auto;
+      display: block;
+      cursor: zoom-in;
+      object-fit: contain;
+      image-orientation: from-image;
     }
+
+    .modal-nav { display: none; }
 
     .modal-nav-btn {
       border: 0;
@@ -921,7 +1149,18 @@
     }
     .modal-nav-btn:hover { background: rgba(255,255,255,0.18); }
 
-    .modal-counter { color: rgba(233,238,246,0.78); font-weight: 800; }
+    .modal-counter {
+      color: #fff;
+      font-weight: 800;
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      z-index: 2;
+      background: rgba(0,0,0,0.45);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.85rem;
+    }
 
     .modal-thumbs {
       display: grid;
@@ -939,6 +1178,73 @@
     }
     .modal-thumb.active { outline: 2px solid rgba(255,255,255,0.7); opacity: 1; }
     .modal-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .image-lightbox{
+      position: fixed;
+      inset: 0;
+      z-index: 12000;
+      background: rgba(0,0,0,0.94);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      touch-action: pan-y;
+    }
+    .image-lightbox.open{ display: flex; }
+    .image-lightbox-inner{
+      position: relative;
+      width: min(98vw, 1100px);
+      height: min(92vh, 900px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .image-lightbox img{
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 10px;
+    }
+    .image-lightbox-close{
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 44px;
+      height: 44px;
+      border: 0;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.16);
+      color: #fff;
+      font-size: 28px;
+      cursor: pointer;
+    }
+    .image-lightbox-nav{
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.16);
+      color: #fff;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .image-lightbox-prev{ left: 6px; }
+    .image-lightbox-next{ right: 6px; }
+    .image-lightbox-counter{
+      position: absolute;
+      left: 50%;
+      bottom: 8px;
+      transform: translateX(-50%);
+      color: #fff;
+      font-weight: 700;
+      background: rgba(0,0,0,0.35);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.95rem;
+    }
 
     /* FOOTER STYLING */
     .footer {
@@ -1023,10 +1329,11 @@
     @media (max-width: 600px) {
       :root {
         --side-margin: 5vw;
+        --slideshow-height: 46vh;
         --brand-font-size: 4vw;
         --nav-font-size: 3vw;
-        --header-font-size: 6vw;
-        --subheader-font-size: 3vw;
+        --header-font-size: 8.5vw;
+        --subheader-font-size: 4.8vw;
         --footer-title-font-size: 4vw;
         --footer-subtitle-font-size: 2vw;
         --footer-nav-font-size: 3vw;
@@ -1034,9 +1341,215 @@
       .nav-inner, .footer-inner { margin-left: var(--side-margin); margin-right: var(--side-margin); }
       .social-icons a { font-size: 5vw; }
       .blog-grid { grid-template-columns: 1fr; gap: 16px; }
+      .post-card{
+        padding: 18px 16px 22px;
+        border-radius: 16px;
+      }
+      .post-inner{
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+      .post-right{
+        min-height: 200px;
+        padding: 0;
+      }
+      .thumb-collage{
+        width: 100%;
+        max-width: 340px;
+        height: 205px;
+      }
+      .post-title{
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
       .preview-grid { grid-template-columns: repeat(4, 1fr); }
       .modal { padding: 18px 0; }
       .modal-thumbs { grid-template-columns: repeat(5, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .mobile-fixed-header {
+        z-index: 13000;
+      }
+      #composerModal{
+        align-items: flex-start;
+        padding-top: calc(env(safe-area-inset-top, 0px) + 64px);
+        padding-left: 8px;
+        padding-right: 8px;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+        background: transparent;
+      }
+      #composerModal .modal-shell{
+        width: 100%;
+        height: auto;
+        max-height: calc(100vh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 88px));
+      }
+      #postModal{
+        align-items: flex-start;
+        padding-top: calc(env(safe-area-inset-top, 0px) + 64px);
+        padding-left: 8px;
+        padding-right: 8px;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+        background: rgba(0,0,0,0.55);
+      }
+      #postModal .modal-shell{
+        width: 100%;
+        height: calc(100vh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 88px));
+        max-height: calc(100vh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 88px));
+      }
+      #postModal .modal-body{
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+        overflow: hidden;
+      }
+      #postModal .modal-leftcol{
+        min-height: 0;
+        gap: 8px;
+      }
+      #postModal .modal-text{
+        min-height: calc(1.4em * 6 + 14px);
+        max-height: calc(1.4em * 6 + 14px);
+        overflow: auto;
+      }
+      #postModal .modal-tab-panel{
+        min-height: 39vh;
+        max-height: 39vh;
+      }
+      #postModal .new-comment-input{
+        min-height: 120px;
+        max-height: 26vh;
+      }
+      #postModal .modal-leftcol.is-tab-open .modal-text{
+        min-height: calc(1.4em * 6 + 14px);
+        max-height: calc(1.4em * 6 + 14px);
+      }
+      #postModal.mobile-tab-open .modal-gallery{
+        display: none !important;
+      }
+      #postModal.mobile-tab-open .modal-leftcol{
+        height: 100%;
+      }
+      #postModal.mobile-tab-open .modal-tab-panel{
+        flex: 1 1 auto;
+        min-height: 42vh;
+        max-height: 42vh;
+      }
+      #postModal.mobile-tab-open .modal-post-btn.modal-post-btn-back{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #postModal .modal-gallery{
+        min-height: 39vh;
+        max-height: 39vh;
+        padding: 8px;
+      }
+      #postModal .modal-img{
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+      }
+      #postModal .modal-thumbs{
+        display: none;
+      }
+      #postModal .modal-nav{
+        margin-top: 6px;
+      }
+      #postModal .modal-nav .modal-counter{
+        position: absolute;
+        right: 10px;
+        top: 10px;
+        margin: 0;
+      }
+      #postModal .modal-leftcol.is-text-expanded .modal-gallery{
+        display: none !important;
+      }
+      .image-lightbox{
+        z-index: 12000;
+        top: calc(env(safe-area-inset-top, 0px) + 58px);
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 8px 8px calc(env(safe-area-inset-bottom, 0px) + 14px);
+        background: rgba(0,0,0,0.7);
+      }
+      .image-lightbox-inner{
+        width: 100%;
+        height: calc(100vh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 74px));
+      }
+      .image-lightbox-close{
+        top: 8px;
+        right: 8px;
+      }
+      .image-lightbox-nav{
+        display: none !important;
+      }
+
+      html, body {
+        background: #0e1116;
+        overscroll-behavior-y: contain;
+      }
+      body {
+        padding-top: calc(env(safe-area-inset-top, 0px) + 58px);
+      }
+      .mobile-fixed-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: calc(env(safe-area-inset-top, 0px) + 58px);
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-left: 5vw;
+        padding-right: 5vw;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #000;
+        z-index: 10000;
+      }
+      .mobile-fixed-brand {
+        color: #fff;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: clamp(22px, 6.4vw, 30px);
+        line-height: 1;
+      }
+      .mobile-fixed-nav {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding-left: 12px;
+      }
+      .mobile-fixed-nav a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 22px;
+        line-height: 1;
+      }
+      a[href="/resume"],
+      a[href="/resume/"] {
+        display: none !important;
+      }
+      .nav-overlay { display: none; }
+      .slideshow-container {
+        padding-top: 0;
+        height: var(--slideshow-height);
+      }
+      .slideshow-container::after {
+        display: block;
+      }
+      .slideshow-text {
+        top: 65%;
+      }
+      .footer {
+        display: none !important;
+      }
     }
 
     @media (max-width: 600px) {
@@ -1123,6 +1636,14 @@
 </style>
 </head>
 <body>
+<div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation">
+<a class="mobile-fixed-brand" href="/">paiden.com</a>
+<div class="mobile-fixed-nav">
+<a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a>
+<a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a>
+<a href="/contactme" aria-label="Contact Me"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a>
+</div>
+</div>
 <!-- Full-width slideshow container -->
 <div class="slideshow-container">
 <div class="nav-overlay">
@@ -1141,16 +1662,16 @@
 <h2>Public blog. Feel free to reflect!</h2>
 </div>
   <!-- Slides -->
-  <div class="slide active"><img src="images/header/rocket.JPG" alt="Rocket" /></div>
-  <div class="slide"><img src="images/header/chief_mtn.JPG" alt="Chief Mtn" /></div>
-  <div class="slide"><img src="images/header/land.JPG" alt="Land" /></div>
-  <div class="slide"><img src="images/header/incline.JPG" alt="incline" /></div>
-  <div class="slide"><img src="images/header/castle.JPG" alt="castle" /></div>
-  <div class="slide"><img src="images/header/lake.JPG" alt="lake" /></div>
-  <div class="slide"><img src="images/header/avalanche.JPG" alt="avalanche" /></div>
-  <div class="slide"><img src="images/header/sistine.JPG" alt="sistine" /></div>
-  <div class="slide"><img src="images/header/falls.JPG" alt="falls" /></div>
-  <div class="slide"><img src="images/header/swiss.JPG" alt="Swiss" /></div>
+  <div class="slide active"><img src="images/header/rocket.JPG" srcset="images/header/rocket-800.webp 800w, images/header/rocket-1600.webp 1600w" sizes="100vw" alt="Rocket" loading="eager" fetchpriority="high" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/chief_mtn.JPG" data-srcset="images/header/chief_mtn-800.webp 800w, images/header/chief_mtn-1600.webp 1600w" data-sizes="100vw" alt="Chief Mtn" loading="lazy" fetchpriority="low" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/land.JPG" data-srcset="images/header/land-800.webp 800w, images/header/land-1600.webp 1600w" data-sizes="100vw" alt="Land" loading="lazy" fetchpriority="low" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/incline.jpg" data-srcset="images/header/incline-800.webp 800w, images/header/incline-1600.webp 1600w" data-sizes="100vw" alt="incline" loading="lazy" fetchpriority="low" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/castle.JPG" data-srcset="images/header/castle-800.webp 800w, images/header/castle-1600.webp 1600w" data-sizes="100vw" alt="castle" loading="lazy" fetchpriority="low" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/lake.JPG" data-srcset="images/header/lake-800.webp 800w, images/header/lake-1600.webp 1600w" data-sizes="100vw" alt="lake" loading="lazy" fetchpriority="low" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/avalanche.JPG" data-srcset="images/header/avalanche-800.webp 800w, images/header/avalanche-1600.webp 1600w" data-sizes="100vw" alt="avalanche" loading="lazy" fetchpriority="low" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/sistine.JPG" data-srcset="images/header/sistine-800.webp 800w, images/header/sistine-1600.webp 1600w" data-sizes="100vw" alt="sistine" loading="lazy" fetchpriority="low" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/falls.JPG" data-srcset="images/header/falls-800.webp 800w, images/header/falls-1600.webp 1600w" data-sizes="100vw" alt="falls" loading="lazy" fetchpriority="low" decoding="async" /></div>
+  <div class="slide"><img data-src="images/header/swiss.JPG" data-srcset="images/header/swiss-800.webp 800w, images/header/swiss-1600.webp 1600w" data-sizes="100vw" alt="Swiss" loading="lazy" fetchpriority="low" decoding="async" /></div>
 </div>
 <!-- BLOG -->
 <section aria-label="Blog posts" class="blog-wrap">
@@ -1197,7 +1718,7 @@
 <!-- POST:START static-001 -->
 <article class="post-card" data-author="Paiden" data-body="This is a public forum that anyone may use to spread their message. Click any post to open it in a popup. You can also create new posts with photos using the form above.
 
-Note: I am notified of all posts and will be moderating content. You do not have free speech, I am the dictator of this blog." data-created="2025-12-16T00:00:00Z" data-images="" data-post-id="static-001" data-title="Welcome to the blog">
+Note: I am notified of all posts and will be moderating content. You do not have free speech, I am the dictator of this blog." data-comments-count="0" data-created="2025-12-16T00:00:00Z" data-images="" data-post-id="static-001" data-title="Welcome to the blog">
 <div class="post-inner">
   <div class="post-left">
     <h4 class="post-title">Welcome to the blog</h4>
@@ -1208,6 +1729,7 @@ Note: I am notified of all posts and will be moderating content. You do not have
       <br><br>
       Note: I am notified of all posts and will be moderating content. You do not have free speech, I am the dictator of this blog.
     </p>
+    <div class="post-comments-cta">View <span class="post-comments-count">0</span> comments</div>
   </div>
   <div aria-hidden="true" class="post-right">
     <div class="post-thumbrow"></div>
@@ -1241,7 +1763,7 @@ Note: I am notified of all posts and will be moderating content. You do not have
 <div class="composer-grid">
 <div class="field">
 <label for="postTitle">Title</label>
-<input id="postTitle" maxlength="90" placeholder="What’s this post about?" type="text"/>
+<input id="postTitle" maxlength="90" placeholder="What is this post about?" type="text"/>
 </div>
 <div class="field">
 <label for="postAuthor">Name (optional)</label>
@@ -1293,19 +1815,50 @@ Note: I am notified of all posts and will be moderating content. You do not have
 <button aria-label="Close" class="modal-close" id="modalClose">×</button>
 </div>
 <div class="modal-body">
+<div class="modal-leftcol">
 <div class="modal-text" id="modalBody"></div>
+<div class="modal-post-actions">
+<button class="modal-post-btn" id="btnViewComments" type="button">View 0 Comments</button>
+<button class="modal-post-btn" id="btnNewComment" type="button">New Comment</button>
+<button class="modal-post-btn modal-post-btn-back" hidden id="btnBackToPhotos" type="button">Return</button>
+</div>
+<div class="modal-tab-panel" id="commentsTabPanel">
+<div class="comments-empty" id="commentsEmpty">No comments yet.</div>
+<ol class="comments-list" id="commentsList" hidden></ol>
+</div>
+<div class="modal-tab-panel" id="newCommentTabPanel">
+<label class="new-comment-label" for="newCommentInput">Add a new comment</label>
+<input class="new-comment-name" id="newCommentName" maxlength="40" placeholder="Your name (optional)" type="text"/>
+<textarea class="new-comment-input" id="newCommentInput" maxlength="400" placeholder="Write your comment..."></textarea>
+<div class="turnstile-wrap comment-turnstile-wrap">
+<div class="cf-turnstile" data-sitekey="0x4AAAAAACayR7BTiRED3OPy" data-callback="onCommentTurnstile" data-expired-callback="onCommentTurnstileExpired" id="commentTurnstile"></div>
+</div>
+<div class="new-comment-actions">
+<button class="new-comment-submit" id="btnSubmitNewComment" type="button">Post Comment</button>
+</div>
+</div>
+</div>
 <div class="modal-gallery" id="modalGallery">
 <div class="modal-imgwrap">
+<div class="modal-counter" id="modalCounter"></div>
 <img alt="Post photo" class="modal-img" id="modalImg">
 </img></div>
 <div class="modal-nav">
 <button aria-label="Previous" class="modal-nav-btn" id="modalPrev">❮</button>
-<div class="modal-counter" id="modalCounter"></div>
 <button aria-label="Next" class="modal-nav-btn" id="modalNext">❯</button>
 </div>
 <div class="modal-thumbs" id="modalThumbs"></div>
 </div>
 </div>
+</div>
+</div>
+<div aria-hidden="true" class="image-lightbox" id="imageLightbox">
+<div class="image-lightbox-inner" id="imageLightboxInner">
+<button aria-label="Close image viewer" class="image-lightbox-close" id="imageLightboxClose" type="button">&times;</button>
+<button aria-label="Previous image" class="image-lightbox-nav image-lightbox-prev" id="imageLightboxPrev" type="button">&#10094;</button>
+<img alt="Expanded post photo" id="imageLightboxImg"/>
+<button aria-label="Next image" class="image-lightbox-nav image-lightbox-next" id="imageLightboxNext" type="button">&#10095;</button>
+<div class="image-lightbox-counter" id="imageLightboxCounter"></div>
 </div>
 </div>
 <!-- FOOTER -->
@@ -1342,16 +1895,40 @@ Note: I am notified of all posts and will be moderating content. You do not have
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
     // ===== Header slideshow + footer date =====
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
     let slideIndex = 0;
     const slides = document.getElementsByClassName("slide");
+    function loadSlideImage(index) {
+      const slide = slides[index];
+      if (!slide) return;
+      const img = slide.querySelector("img");
+      if (img && !img.getAttribute("src") && img.dataset.src) {
+        if (img.dataset.srcset) {
+          img.srcset = img.dataset.srcset;
+        }
+        if (img.dataset.sizes) {
+          img.sizes = img.dataset.sizes;
+        }
+        img.src = img.dataset.src;
+      }
+    }
+    if (slides.length) {
+      loadSlideImage(0);
+      if (!isMobile && slides.length > 1) {
+        loadSlideImage(1);
+      }
+    }
     function showSlides() {
+      if (isMobile || !slides || slides.length <= 1) return;
       for (let i = 0; i < slides.length; i++) slides[i].classList.remove("active");
       slideIndex++;
       if (slideIndex > slides.length) slideIndex = 1;
       slides[slideIndex - 1].classList.add("active");
+      loadSlideImage(slideIndex - 1);
+      loadSlideImage(slideIndex % slides.length);
       setTimeout(showSlides, 5000);
     }
-    showSlides();
+    if (!isMobile) showSlides();
 
     document.getElementById("last-updated").innerText =
       "Today's Date: " + new Date().toLocaleDateString();
@@ -1366,6 +1943,9 @@ Note: I am notified of all posts and will be moderating content. You do not have
     let turnstileToken = "";
     window.onTurnstile = (token) => { turnstileToken = token || ""; };
     window.onTurnstileExpired = () => { turnstileToken = ""; };
+    let commentTurnstileToken = "";
+    window.onCommentTurnstile = (token) => { commentTurnstileToken = token || ""; };
+    window.onCommentTurnstileExpired = () => { commentTurnstileToken = ""; };
     function formatWaitTime(seconds) {
       const total = Math.max(1, Number(seconds) || 0);
       if (total < 60) {
@@ -1439,6 +2019,9 @@ const titleEl = document.getElementById("postTitle");
       canvas.width = tw;
       canvas.height = th;
       const ctx = canvas.getContext("2d");
+      // Fill transparent pixels before JPEG encode to avoid dark/black bands.
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, tw, th);
       ctx.drawImage(img, 0, 0, tw, th);
 
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
@@ -1499,6 +2082,35 @@ function excerpt(text, maxChars = 1000) {
       return t.slice(0, maxChars - 1) + "…";
     }
 
+    function getCommentsCountFromCard(card) {
+      const raw = card.getAttribute("data-comments-count");
+      const count = Number.parseInt(raw || "0", 10);
+      return Number.isFinite(count) && count >= 0 ? count : 0;
+    }
+    async function hydrateAllCommentCountsFromSupabase() {
+      if (!sb || !blogGrid) return;
+      const { data, error } = await sb
+        .from("comments")
+        .select("post_id");
+      if (error) {
+        console.error("Failed to hydrate comment counts:", error);
+        return;
+      }
+      const counts = new Map();
+      for (const row of (Array.isArray(data) ? data : [])) {
+        const postId = row && row.post_id ? String(row.post_id) : "";
+        if (!postId) continue;
+        counts.set(postId, (counts.get(postId) || 0) + 1);
+      }
+      blogGrid.querySelectorAll(".post-card").forEach((card) => {
+        const postId = card.getAttribute("data-post-id") || "";
+        const count = counts.get(postId) || 0;
+        card.setAttribute("data-comments-count", String(count));
+        const cta = card.querySelector(".post-comments-count");
+        if (cta) cta.textContent = String(count);
+      });
+    }
+
     async function renderUserPostsIntoGrid() {
       // Remove any previously-rendered user posts
       blogGrid.querySelectorAll('[data-source="user"]').forEach(n => n.remove());
@@ -1515,6 +2127,7 @@ function excerpt(text, maxChars = 1000) {
         card.setAttribute("data-created", p.created_at || "");
         card.setAttribute("data-body", p.body || "");
         card.setAttribute("data-images", (p.images || []).join("||"));
+        card.setAttribute("data-comments-count", "0");
 
         card.innerHTML = `
           <div class="post-inner">
@@ -1535,6 +2148,7 @@ function excerpt(text, maxChars = 1000) {
                 <p class="post-excerpt">
                   ${escapeHTML(excerpt(p.body || ""))}
                 </p>
+                <div class="post-comments-cta">View <span class="post-comments-count">0</span> comments</div>
               </div>
             </div>
             <div class="post-right" aria-hidden="true">
@@ -1546,6 +2160,7 @@ function excerpt(text, maxChars = 1000) {
         blogGrid.appendChild(card);
       }
       sortAllPostsByDateDesc();
+      await hydrateAllCommentCountsFromSupabase();
     }
 
     function hydrateStaticThumbs() {
@@ -1559,6 +2174,18 @@ function excerpt(text, maxChars = 1000) {
         const images = imagesRaw ? imagesRaw.split("||").filter(Boolean) : [];
         const row = card.querySelector(".post-thumbrow");
         if (row) row.innerHTML = buildThumbRow(images);
+
+        const commentsCount = getCommentsCountFromCard(card);
+        let commentsEl = card.querySelector(".post-comments-cta");
+        if (!commentsEl) {
+          commentsEl = document.createElement("div");
+          commentsEl.className = "post-comments-cta";
+          commentsEl.innerHTML = 'View <span class="post-comments-count">0</span> comments';
+          const excerptEl = card.querySelector(".post-excerpt");
+          if (excerptEl && excerptEl.parentNode) excerptEl.parentNode.appendChild(commentsEl);
+        }
+        const countEl = commentsEl.querySelector(".post-comments-count");
+        if (countEl) countEl.textContent = String(commentsCount);
       });
     }
 
@@ -1571,10 +2198,12 @@ function excerpt(text, maxChars = 1000) {
 
     function lockScroll(){
       const sw = window.innerWidth - document.documentElement.clientWidth;
+      document.documentElement.classList.add("no-scroll");
       document.body.classList.add("no-scroll");
       if (sw > 0) document.body.style.paddingRight = sw + "px";
     }
     function unlockScroll(){
+      document.documentElement.classList.remove("no-scroll");
       document.body.classList.remove("no-scroll");
       document.body.style.paddingRight = "";
     }
@@ -1786,6 +2415,10 @@ function excerpt(text, maxChars = 1000) {
           } catch (_) {
             // Ignore non-JSON error responses and show fallback text.
           }
+          if (resp.status === 403) {
+            alert(errJson?.message || "You're blocked pal \uD83D\uDE08, reach out to Paiden to appeal");
+            return;
+          }
 
           console.error("Failed to publish post:", errJson);
           if (resp.status === 429) {
@@ -1852,6 +2485,7 @@ function excerpt(text, maxChars = 1000) {
     const modalClose = document.getElementById("modalClose");
     const modalTitle = document.getElementById("modalTitle");
     const modalMeta = document.getElementById("modalMeta");
+    const modalLeftCol = document.querySelector("#postModal .modal-leftcol");
     const modalBody = document.getElementById("modalBody");
     const modalGallery = document.getElementById("modalGallery");
     const modalImg = document.getElementById("modalImg");
@@ -1859,9 +2493,37 @@ function excerpt(text, maxChars = 1000) {
     const modalNext = document.getElementById("modalNext");
     const modalCounter = document.getElementById("modalCounter");
     const modalThumbs = document.getElementById("modalThumbs");
+    const imageLightbox = document.getElementById("imageLightbox");
+    const imageLightboxInner = document.getElementById("imageLightboxInner");
+    const imageLightboxImg = document.getElementById("imageLightboxImg");
+    const imageLightboxCounter = document.getElementById("imageLightboxCounter");
+    const imageLightboxClose = document.getElementById("imageLightboxClose");
+    const imageLightboxPrev = document.getElementById("imageLightboxPrev");
+    const imageLightboxNext = document.getElementById("imageLightboxNext");
+    const btnViewComments = document.getElementById("btnViewComments");
+    const btnNewComment = document.getElementById("btnNewComment");
+    const btnBackToPhotos = document.getElementById("btnBackToPhotos");
+    const commentsTabPanel = document.getElementById("commentsTabPanel");
+    const newCommentTabPanel = document.getElementById("newCommentTabPanel");
+    const commentsEmpty = document.getElementById("commentsEmpty");
+    const commentsList = document.getElementById("commentsList");
+    const newCommentName = document.getElementById("newCommentName");
+    const newCommentInput = document.getElementById("newCommentInput");
+    const commentTurnstileEl = document.getElementById("commentTurnstile");
+    const btnSubmitNewComment = document.getElementById("btnSubmitNewComment");
 
     let modalImages = [];
     let modalIndex = 0;
+    let activePostId = "";
+    let activePostTitle = "";
+    let activePostCreated = "";
+    let activePostCard = null;
+    let activePostCommentsCount = 0;
+    let activePostComments = [];
+    let activeModalTab = null;
+    const isMobileViewport = () => window.matchMedia("(max-width: 768px)").matches;
+    let isImageLightboxOpen = false;
+    let isTextExpanded = false;
 
     function openModal() {
       modal.classList.add("open");
@@ -1869,6 +2531,9 @@ function excerpt(text, maxChars = 1000) {
       lockScroll();
     }
     function closeModal() {
+      closeImageLightbox();
+      setTextExpanded(false);
+      setModalTab(null);
       modal.classList.remove("open");
       modal.setAttribute("aria-hidden", "true");
       unlockScroll();
@@ -1883,6 +2548,51 @@ function excerpt(text, maxChars = 1000) {
       modalThumbs.querySelectorAll(".modal-thumb").forEach((t, idx) => {
         t.classList.toggle("active", idx === modalIndex);
       });
+      if (isImageLightboxOpen) renderLightboxImage();
+    }
+    function renderLightboxImage() {
+      if (!modalImages.length || !imageLightboxImg) return;
+      imageLightboxImg.src = modalImages[modalIndex];
+      if (imageLightboxCounter) {
+        imageLightboxCounter.textContent = (modalIndex + 1) + " / " + modalImages.length;
+      }
+    }
+    function openImageLightbox() {
+      if (!modalImages.length || !imageLightbox) return;
+      isImageLightboxOpen = true;
+      imageLightbox.classList.add("open");
+      imageLightbox.setAttribute("aria-hidden", "false");
+      renderLightboxImage();
+    }
+    function closeImageLightbox() {
+      if (!imageLightbox) return;
+      isImageLightboxOpen = false;
+      imageLightbox.classList.remove("open");
+      imageLightbox.setAttribute("aria-hidden", "true");
+    }
+    function updateBackButton() {
+      if (!btnBackToPhotos) return;
+      const show = !!activeModalTab || isTextExpanded;
+      btnBackToPhotos.hidden = !show;
+      btnBackToPhotos.textContent = isTextExpanded ? "Return to Photo" : "Return";
+    }
+    function syncModalPanelState() {
+      const mobilePanelOpen = isMobileViewport() && (!!activeModalTab || isTextExpanded);
+      if (modal) modal.classList.toggle("mobile-tab-open", mobilePanelOpen);
+      if (modalLeftCol) modalLeftCol.classList.toggle("is-text-expanded", !!isTextExpanded);
+      updateBackButton();
+    }
+    function setTextExpanded(expanded) {
+      isTextExpanded = !!expanded;
+      syncModalPanelState();
+    }
+    function ensureOverlayScrollState() {
+      const modalOpen = !!(modal && modal.classList.contains("open"));
+      const composerOpenNow = !!(composerModal && composerModal.classList.contains("open"));
+      const lightboxOpen = !!(imageLightbox && imageLightbox.classList.contains("open"));
+      if (!modalOpen && !composerOpenNow && !lightboxOpen) {
+        unlockScroll();
+      }
     }
 
     function setModalThumbs(images) {
@@ -1895,21 +2605,134 @@ function excerpt(text, maxChars = 1000) {
         modalThumbs.appendChild(d);
       });
     }
+    function parseSampleCommentsFromCard(card) {
+      const sampleRaw = card.getAttribute("data-comments-sample") || "";
+      if (!sampleRaw) return [];
+      return sampleRaw.split("||")
+        .map((entry) => String(entry).trim())
+        .filter(Boolean)
+        .map((raw, idx) => {
+          const parts = raw.split("::");
+          const author = ((parts[0] || "").trim()) || "Anonymous";
+          const body = (parts[1] || raw).trim();
+          const date = (parts[2] || "").trim();
+          const ts = date ? Date.parse(date) : NaN;
+          return { author, body, date, ts, idx };
+        });
+    }
+    function updateCommentCountUI(count) {
+      activePostCommentsCount = Math.max(0, Number(count) || 0);
+      if (btnViewComments) btnViewComments.textContent = `View ${activePostCommentsCount} Comments`;
+      if (!activePostId) return;
+      const cards = blogGrid ? blogGrid.querySelectorAll(`.post-card[data-post-id="${activePostId}"]`) : [];
+      cards.forEach((card) => {
+        card.setAttribute("data-comments-count", String(activePostCommentsCount));
+        const cta = card.querySelector(".post-comments-count");
+        if (cta) cta.textContent = String(activePostCommentsCount);
+      });
+    }
+    function renderCommentsTab() {
+      if (!commentsEmpty || !commentsList) return;
+      if (!activePostComments.length) {
+        commentsEmpty.hidden = false;
+        commentsList.hidden = true;
+        commentsList.innerHTML = "";
+        return;
+      }
+      commentsEmpty.hidden = true;
+      commentsList.hidden = false;
+      commentsList.innerHTML = "";
+      const sorted = [...activePostComments].sort((a, b) => {
+        const aValid = Number.isFinite(a.ts);
+        const bValid = Number.isFinite(b.ts);
+        if (aValid && bValid) return b.ts - a.ts;
+        if (aValid && !bValid) return -1;
+        if (!aValid && bValid) return 1;
+        return (b.idx || 0) - (a.idx || 0);
+      });
+      for (const c of sorted) {
+        const li = document.createElement("li");
+        const dateHtml = c.date ? `<span class="comment-date">${escapeHTML(c.date)}</span>` : "";
+        li.innerHTML = `<span class="comment-body">${escapeHTML(c.body)}</span><div class="comment-meta"><span class="comment-author">${escapeHTML(c.author)}</span>${dateHtml}</div>`;
+        commentsList.appendChild(li);
+      }
+    }
+    async function loadLiveCommentsForActivePost() {
+      if (!sb || !activePostId) return;
+      const { data, error } = await sb
+        .from("comments")
+        .select("author,body,created_at")
+        .eq("post_id", activePostId)
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.error("Failed to load comments:", error);
+        return;
+      }
+      const rows = Array.isArray(data) ? data : [];
+      if (!rows.length) return;
+      activePostComments = rows.map((row, idx) => ({
+        author: (row.author && String(row.author).trim()) ? String(row.author).trim() : "Anonymous",
+        body: String(row.body || ""),
+        date: row.created_at ? formatDateShort(row.created_at) : "",
+        ts: row.created_at ? Date.parse(row.created_at) : NaN,
+        idx,
+      }));
+      updateCommentCountUI(activePostComments.length);
+      if (activeModalTab === "comments") renderCommentsTab();
+    }
+    function setModalTab(tab) {
+      activeModalTab = tab;
+      const hasTab = !!tab;
+      const isComments = tab === "comments";
+      const isNew = tab === "new";
+
+      if (btnViewComments) btnViewComments.classList.toggle("is-active", isComments);
+      if (btnNewComment) btnNewComment.classList.toggle("is-active", isNew);
+      if (commentsTabPanel) commentsTabPanel.classList.toggle("is-open", isComments);
+      if (newCommentTabPanel) newCommentTabPanel.classList.toggle("is-open", isNew);
+      if (modalLeftCol) modalLeftCol.classList.toggle("is-tab-open", hasTab);
+      syncModalPanelState();
+
+      if (isComments) renderCommentsTab();
+      if (isNew) {
+        setTimeout(() => {
+          if (newCommentName) newCommentName.focus();
+          else if (newCommentInput) newCommentInput.focus();
+        }, 0);
+        if (window.turnstile && window.turnstile.reset && commentTurnstileEl) {
+          window.turnstile.reset(commentTurnstileEl);
+        }
+        commentTurnstileToken = "";
+      }
+    }
 
     function openPostFromCard(card) {
       const title = card.getAttribute("data-title") || "";
       const author = card.getAttribute("data-author") || "";
       const created = card.getAttribute("data-created") || "";
       const body = card.getAttribute("data-body") || "";
+      activePostCard = card;
+      activePostId = card.getAttribute("data-post-id") || "";
+      activePostTitle = title || "";
+      activePostCreated = created || "";
 
       const imagesRaw = card.getAttribute("data-images") || "";
       const images = imagesRaw ? imagesRaw.split("||").filter(Boolean) : [];
+      activePostComments = parseSampleCommentsFromCard(card);
+      const seededCount = getCommentsCountFromCard(card);
+      if (seededCount > activePostComments.length) {
+        updateCommentCountUI(seededCount);
+      } else {
+        updateCommentCountUI(activePostComments.length);
+      }
 
       modalTitle.textContent = title || "Untitled";
       const who = (author && author.trim()) ? `By ${author.trim()}` : "By Anonymous";
       const when = created ? formatDateShort(created) : "";
       modalMeta.textContent = when ? `${who} • ${when}` : who;
       modalBody.innerHTML = body ? body.replace(/\n/g, "<br>") : "";
+      setTextExpanded(false);
+      setModalTab(null);
 
       modalImages = images;
       modalIndex = 0;
@@ -1918,11 +2741,27 @@ function excerpt(text, maxChars = 1000) {
         modalGallery.style.display = "none";
       } else {
         modalGallery.style.display = "flex";
-        setModalThumbs(modalImages);
+        if (isMobileViewport()) {
+          modalThumbs.innerHTML = "";
+        } else {
+          setModalThumbs(modalImages);
+        }
         showModalImage(0);
       }
 
       openModal();
+      loadLiveCommentsForActivePost();
+    }
+    function openPostFromUrlParam() {
+      try {
+        const postId = new URLSearchParams(window.location.search).get("post");
+        if (!postId || !blogGrid) return;
+        const card = blogGrid.querySelector(`.post-card[data-post-id="${postId}"]`);
+        if (!card) return;
+        openPostFromCard(card);
+      } catch (_) {
+        // no-op
+      }
     }
 
     // Click handling (event delegation)
@@ -1935,6 +2774,118 @@ function excerpt(text, maxChars = 1000) {
     modalPrev.addEventListener("click", () => showModalImage(modalIndex - 1));
     modalNext.addEventListener("click", () => showModalImage(modalIndex + 1));
     modalClose.addEventListener("click", closeModal);
+    if (modalImg) modalImg.addEventListener("click", openImageLightbox);
+    if (imageLightboxClose) imageLightboxClose.addEventListener("click", closeImageLightbox);
+    if (imageLightboxPrev) imageLightboxPrev.addEventListener("click", () => showModalImage(modalIndex - 1));
+    if (imageLightboxNext) imageLightboxNext.addEventListener("click", () => showModalImage(modalIndex + 1));
+    if (imageLightbox) {
+      imageLightbox.addEventListener("click", (e) => {
+        if (e.target === imageLightbox) closeImageLightbox();
+      });
+    }
+    if (imageLightboxInner) {
+      let x0 = null;
+      let y0 = null;
+      imageLightboxInner.addEventListener("touchstart", (e) => {
+        x0 = e.touches[0].clientX;
+        y0 = e.touches[0].clientY;
+      }, { passive: true });
+      imageLightboxInner.addEventListener("touchend", (e) => {
+        if (x0 === null || y0 === null) return;
+        const dx = e.changedTouches[0].clientX - x0;
+        const dy = e.changedTouches[0].clientY - y0;
+        x0 = null;
+        y0 = null;
+        if (Math.abs(dy) > 48 && Math.abs(dy) > Math.abs(dx)) {
+          closeImageLightbox();
+          return;
+        }
+        if (Math.abs(dx) > 40) {
+          if (dx > 0) showModalImage(modalIndex - 1);
+          else showModalImage(modalIndex + 1);
+        }
+      }, { passive: true });
+    }
+    if (modalBody) modalBody.addEventListener("click", () => {
+      if (!isMobileViewport()) return;
+      if (!isTextExpanded) {
+        setTextExpanded(true);
+      }
+    });
+    if (btnViewComments) btnViewComments.addEventListener("click", () => setModalTab("comments"));
+    if (btnNewComment) btnNewComment.addEventListener("click", () => setModalTab("new"));
+    if (btnBackToPhotos) btnBackToPhotos.addEventListener("click", () => {
+      if (isTextExpanded) {
+        setTextExpanded(false);
+      }
+      if (activeModalTab) {
+        setModalTab(null);
+      } else {
+        updateBackButton();
+      }
+    });
+    if (btnSubmitNewComment) btnSubmitNewComment.addEventListener("click", async () => {
+      if (!activePostId) {
+        alert("No post selected.");
+        return;
+      }
+      const author = (newCommentName && newCommentName.value ? newCommentName.value : "").trim();
+      const msg = (newCommentInput && newCommentInput.value ? newCommentInput.value : "").trim();
+      if (!msg) {
+        alert("Write a comment first.");
+        return;
+      }
+      if (commentTurnstileToken && commentTurnstileToken.length < 20) commentTurnstileToken = "";
+      if (!commentTurnstileToken) {
+        alert("Please complete the anti-spam check before posting a comment.");
+        return;
+      }
+      btnSubmitNewComment.disabled = true;
+      const oldLabel = btnSubmitNewComment.textContent;
+      btnSubmitNewComment.textContent = "Posting...";
+      try {
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/post-comment`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            post_id: activePostId,
+            post_title: activePostTitle,
+            post_created: activePostCreated,
+            author,
+            body: msg,
+            turnstile_token: commentTurnstileToken,
+          }),
+        });
+        if (!resp.ok) {
+          let errJson = null;
+          try { errJson = await resp.json(); } catch (_) {}
+          if (resp.status === 403) {
+            alert((errJson && errJson.message) || "You're blocked pal \uD83D\uDE08, reach out to Paiden to appeal");
+            return;
+          }
+          if (resp.status === 429 && errJson && typeof errJson.wait_seconds !== "undefined") {
+            alert(`Please wait ${formatWaitTime(errJson.wait_seconds)} before posting another comment.`);
+          } else {
+            alert((errJson && (errJson.message || errJson.error)) || "Comment could not be posted.");
+          }
+          return;
+        }
+        if (newCommentInput) newCommentInput.value = "";
+        if (newCommentName) newCommentName.value = "";
+        commentTurnstileToken = "";
+        if (window.turnstile && window.turnstile.reset && commentTurnstileEl) {
+          window.turnstile.reset(commentTurnstileEl);
+        }
+        await loadLiveCommentsForActivePost();
+        setModalTab("comments");
+      } catch (err) {
+        console.error("Failed to post comment:", err);
+        alert("Comment could not be posted. Please try again.");
+      } finally {
+        btnSubmitNewComment.disabled = false;
+        btnSubmitNewComment.textContent = oldLabel || "Post Comment";
+      }
+    });
     if (composerOpen) composerOpen.addEventListener("click", openComposer);
     if (composerClose) composerClose.addEventListener("click", closeComposer);
 
@@ -1958,18 +2909,40 @@ function excerpt(text, maxChars = 1000) {
 
       // Post viewer modal
       if (!modal.classList.contains("open")) return;
+      if (isImageLightboxOpen) {
+        if (e.key === "Escape") closeImageLightbox();
+        if (e.key === "ArrowLeft") showModalImage(modalIndex - 1);
+        if (e.key === "ArrowRight") showModalImage(modalIndex + 1);
+        return;
+      }
       if (e.key === "Escape") closeModal();
       if (e.key === "ArrowLeft") showModalImage(modalIndex - 1);
       if (e.key === "ArrowRight") showModalImage(modalIndex + 1);
     });
 
+    window.addEventListener("resize", () => {
+      ensureOverlayScrollState();
+      syncModalPanelState();
+    });
+    window.addEventListener("pageshow", () => {
+      ensureOverlayScrollState();
+      syncModalPanelState();
+    });
+
     // Init
-    hydrateStaticThumbs();
-    renderUserPostsIntoGrid();
-    sortAllPostsByDateDesc();
+    (async () => {
+      ensureOverlayScrollState();
+      hydrateStaticThumbs();
+      await renderUserPostsIntoGrid();
+      await hydrateAllCommentCountsFromSupabase();
+      openPostFromUrlParam();
+    })();
   </script>
 </body>
 </html>
+
+
+
 
 
 
