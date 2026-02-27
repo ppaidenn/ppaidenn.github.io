@@ -1483,9 +1483,16 @@
         width: 100%;
         height: calc(100vh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 74px));
       }
+      .image-lightbox-close{
+        top: 8px;
+        right: 8px;
+      }
+      .image-lightbox-nav{
+        display: none !important;
+      }
 
       html, body {
-        background: #e0e0e0;
+        background: #0e1116;
         overscroll-behavior-y: contain;
       }
       body {
@@ -2778,13 +2785,21 @@ function excerpt(text, maxChars = 1000) {
     }
     if (imageLightboxInner) {
       let x0 = null;
+      let y0 = null;
       imageLightboxInner.addEventListener("touchstart", (e) => {
         x0 = e.touches[0].clientX;
+        y0 = e.touches[0].clientY;
       }, { passive: true });
       imageLightboxInner.addEventListener("touchend", (e) => {
-        if (x0 === null) return;
+        if (x0 === null || y0 === null) return;
         const dx = e.changedTouches[0].clientX - x0;
+        const dy = e.changedTouches[0].clientY - y0;
         x0 = null;
+        y0 = null;
+        if (Math.abs(dy) > 48 && Math.abs(dy) > Math.abs(dx)) {
+          closeImageLightbox();
+          return;
+        }
         if (Math.abs(dx) > 40) {
           if (dx > 0) showModalImage(modalIndex - 1);
           else showModalImage(modalIndex + 1);
