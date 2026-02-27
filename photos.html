@@ -20,12 +20,12 @@
     :root {
       --side-margin: 10vw;            /* Responsive horizontal margin */
       --nav-height: 20vh;             /* Height of navigation overlay */
-      --slideshow-height: 62vh;       /* Height of the slideshow container */
+      --slideshow-height: 85vh;       /* Height of the slideshow container */
       --footer-padding: 7vh;          /* Vertical padding for the footer */
       --brand-font-size: 2.5vw;       /* Font size for nav brand (paiden.com) */
       --nav-font-size: 1.2vw;         /* Font size for other nav links */
-      --header-font-size: 5vw;        /* Font size for overlay header */
-      --subheader-font-size: 2vw;   /* Font size for overlay subheader */
+      --header-font-size: 4vw;        /* Font size for overlay header */
+      --subheader-font-size: 1.5vw;   /* Font size for overlay subheader */
       --footer-title-font-size: 2vw;  /* Font size for footer brand/button */
       --footer-subtitle-font-size: 1vw; /* Font size for footer text */
       --footer-button-spacing: 0.75vw; /* Adjustable space between paiden.com and footer text */
@@ -69,6 +69,7 @@
       background: linear-gradient(to bottom, rgba(224,224,224,0), #e0e0e0 90%);
       pointer-events: none;
       z-index: 1;
+      display: none;
     }
 
     /* Navigation overlay spanning full width with gradient shading */
@@ -270,10 +271,17 @@
         font-size: 22px;
         line-height: 1;
       }
+      a[href="/resume"],
+      a[href="/resume/"] {
+        display: none !important;
+      }
       .nav-overlay { display: none; }
       .slideshow-container {
         padding-top: 0;
         height: var(--slideshow-height);
+      }
+      .slideshow-container::after {
+        display: block;
       }
       .slideshow-text {
         top: 65%;
@@ -314,7 +322,6 @@
   <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation">
     <a class="mobile-fixed-brand" href="/">paiden.com</a>
     <div class="mobile-fixed-nav">
-      <a href="/resume" aria-label="Resume"><i class="fa-solid fa-file-lines" aria-hidden="true"></i></a>
       <a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a>
       <a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a>
       <a href="/contactme" aria-label="Contact Me"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a>
