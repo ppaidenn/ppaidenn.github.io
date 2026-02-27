@@ -1108,7 +1108,7 @@
       padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 0;
       min-height: 260px;
     }
 
@@ -1135,12 +1135,7 @@
       image-orientation: from-image;
     }
 
-    .modal-nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
+    .modal-nav { display: none; }
 
     .modal-nav-btn {
       border: 0;
@@ -2554,6 +2549,14 @@ function excerpt(text, maxChars = 1000) {
       isTextExpanded = !!expanded;
       syncModalPanelState();
     }
+    function ensureOverlayScrollState() {
+      const modalOpen = !!(modal && modal.classList.contains("open"));
+      const composerOpenNow = !!(composerModal && composerModal.classList.contains("open"));
+      const lightboxOpen = !!(imageLightbox && imageLightbox.classList.contains("open"));
+      if (!modalOpen && !composerOpenNow && !lightboxOpen) {
+        unlockScroll();
+      }
+    }
 
     function setModalThumbs(images) {
       modalThumbs.innerHTML = "";
@@ -2873,17 +2876,17 @@ function excerpt(text, maxChars = 1000) {
     });
 
     window.addEventListener("resize", () => {
-      const modalOpen = !!(modal && modal.classList.contains("open"));
-      const composerOpenNow = !!(composerModal && composerModal.classList.contains("open"));
-      const lightboxOpen = !!(imageLightbox && imageLightbox.classList.contains("open"));
-      if (!modalOpen && !composerOpenNow && !lightboxOpen) {
-        unlockScroll();
-      }
+      ensureOverlayScrollState();
+      syncModalPanelState();
+    });
+    window.addEventListener("pageshow", () => {
+      ensureOverlayScrollState();
       syncModalPanelState();
     });
 
     // Init
     (async () => {
+      ensureOverlayScrollState();
       hydrateStaticThumbs();
       await renderUserPostsIntoGrid();
       await hydrateAllCommentCountsFromSupabase();
