@@ -664,7 +664,11 @@
       justify-content: center;
     }
     .modal.open { display: flex; }
-    body.no-scroll { overflow: hidden; }
+    html.no-scroll,
+    body.no-scroll {
+      overflow: hidden !important;
+      height: 100%;
+    }
     
     /* Composer modal: lighter overlay + cream panel */
     #composerModal{
@@ -1120,7 +1124,16 @@
       justify-content: center;
     }
 
-    .modal-img { max-width: 100%; max-height: 52vh; width: auto; height: auto; display: block; cursor: zoom-in; object-fit: contain; }
+    .modal-img {
+      max-width: 100%;
+      max-height: 52vh;
+      width: auto;
+      height: auto;
+      display: block;
+      cursor: zoom-in;
+      object-fit: contain;
+      image-orientation: from-image;
+    }
 
     .modal-nav {
       display: flex;
@@ -1372,8 +1385,8 @@
       }
       #postModal .modal-shell{
         width: 100%;
-        height: calc(100vh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 98px));
-        max-height: calc(100vh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 98px));
+        height: calc(100vh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 88px));
+        max-height: calc(100vh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 88px));
       }
       #postModal .modal-body{
         display: grid;
@@ -1419,13 +1432,16 @@
         justify-content: center;
       }
       #postModal .modal-gallery{
-        min-height: 34vh;
-        max-height: 34vh;
+        min-height: 39vh;
+        max-height: 39vh;
         padding: 8px;
       }
       #postModal .modal-img{
+        width: 100%;
+        height: 100%;
         max-height: 100%;
         max-width: 100%;
+        object-fit: contain;
       }
       #postModal .modal-thumbs{
         display: none;
@@ -1434,8 +1450,10 @@
         margin-top: 6px;
       }
       #postModal .modal-nav .modal-counter{
-        position: static;
-        margin: 0 auto;
+        position: absolute;
+        right: 10px;
+        top: 10px;
+        margin: 0;
       }
       #postModal .modal-leftcol.is-text-expanded .modal-gallery{
         display: none !important;
@@ -1969,6 +1987,9 @@ const titleEl = document.getElementById("postTitle");
       canvas.width = tw;
       canvas.height = th;
       const ctx = canvas.getContext("2d");
+      // Fill transparent pixels before JPEG encode to avoid dark/black bands.
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, tw, th);
       ctx.drawImage(img, 0, 0, tw, th);
 
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
@@ -2145,10 +2166,12 @@ function excerpt(text, maxChars = 1000) {
 
     function lockScroll(){
       const sw = window.innerWidth - document.documentElement.clientWidth;
+      document.documentElement.classList.add("no-scroll");
       document.body.classList.add("no-scroll");
       if (sw > 0) document.body.style.paddingRight = sw + "px";
     }
     function unlockScroll(){
+      document.documentElement.classList.remove("no-scroll");
       document.body.classList.remove("no-scroll");
       document.body.style.paddingRight = "";
     }
@@ -2847,6 +2870,16 @@ function excerpt(text, maxChars = 1000) {
       if (e.key === "Escape") closeModal();
       if (e.key === "ArrowLeft") showModalImage(modalIndex - 1);
       if (e.key === "ArrowRight") showModalImage(modalIndex + 1);
+    });
+
+    window.addEventListener("resize", () => {
+      const modalOpen = !!(modal && modal.classList.contains("open"));
+      const composerOpenNow = !!(composerModal && composerModal.classList.contains("open"));
+      const lightboxOpen = !!(imageLightbox && imageLightbox.classList.contains("open"));
+      if (!modalOpen && !composerOpenNow && !lightboxOpen) {
+        unlockScroll();
+      }
+      syncModalPanelState();
     });
 
     // Init
