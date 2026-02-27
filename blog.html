@@ -801,14 +801,20 @@
     }
     #postModal .modal-leftcol.is-tab-open .modal-text{
       flex: 0 0 auto;
-      max-height: calc(1.4em * 4 + 12px);
-      min-height: calc(1.4em * 4 + 12px);
+      max-height: calc(1.4em * 6 + 14px);
+      min-height: calc(1.4em * 6 + 14px);
       overflow: hidden;
       cursor: pointer;
       transition: background 0.16s ease;
     }
     #postModal .modal-leftcol.is-tab-open .modal-text:hover{
       background: #edf0f4;
+    }
+    #postModal .modal-leftcol.is-text-expanded .modal-text{
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: none;
+      overflow: auto;
     }
     #postModal .modal-tab-panel{
       display: none;
@@ -1114,7 +1120,7 @@
       justify-content: center;
     }
 
-    .modal-img { max-width: 100%; max-height: 52vh; display: block; cursor: zoom-in; }
+    .modal-img { max-width: 100%; max-height: 52vh; width: auto; height: auto; display: block; cursor: zoom-in; object-fit: contain; }
 
     .modal-nav {
       display: flex;
@@ -1135,7 +1141,18 @@
     }
     .modal-nav-btn:hover { background: rgba(255,255,255,0.18); }
 
-    .modal-counter { color: rgba(233,238,246,0.78); font-weight: 800; }
+    .modal-counter {
+      color: #fff;
+      font-weight: 800;
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      z-index: 2;
+      background: rgba(0,0,0,0.45);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.85rem;
+    }
 
     .modal-thumbs {
       display: grid;
@@ -1351,12 +1368,12 @@
         padding-top: calc(env(safe-area-inset-top, 0px) + 64px);
         padding-left: 8px;
         padding-right: 8px;
-        padding-bottom: 8px;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
       }
       #postModal .modal-shell{
         width: 100%;
-        height: calc(100vh - (env(safe-area-inset-top, 0px) + 76px));
-        max-height: calc(100vh - (env(safe-area-inset-top, 0px) + 76px));
+        height: calc(100vh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 98px));
+        max-height: calc(100vh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 98px));
       }
       #postModal .modal-body{
         display: grid;
@@ -1369,8 +1386,8 @@
         gap: 8px;
       }
       #postModal .modal-text{
-        min-height: calc(1.4em * 4 + 12px);
-        max-height: calc(1.4em * 4 + 12px);
+        min-height: calc(1.4em * 6 + 14px);
+        max-height: calc(1.4em * 6 + 14px);
         overflow: auto;
       }
       #postModal .modal-tab-panel{
@@ -1382,8 +1399,8 @@
         max-height: 26vh;
       }
       #postModal .modal-leftcol.is-tab-open .modal-text{
-        min-height: calc(1.4em * 4 + 12px);
-        max-height: calc(1.4em * 4 + 12px);
+        min-height: calc(1.4em * 6 + 14px);
+        max-height: calc(1.4em * 6 + 14px);
       }
       #postModal.mobile-tab-open .modal-gallery{
         display: none !important;
@@ -1402,15 +1419,26 @@
         justify-content: center;
       }
       #postModal .modal-gallery{
-        min-height: 28vh;
-        max-height: 28vh;
+        min-height: 34vh;
+        max-height: 34vh;
         padding: 8px;
       }
       #postModal .modal-img{
-        max-height: 18vh;
+        max-height: 100%;
+        max-width: 100%;
       }
       #postModal .modal-thumbs{
-        grid-template-columns: repeat(4, 1fr);
+        display: none;
+      }
+      #postModal .modal-nav{
+        margin-top: 6px;
+      }
+      #postModal .modal-nav .modal-counter{
+        position: static;
+        margin: 0 auto;
+      }
+      #postModal .modal-leftcol.is-text-expanded .modal-gallery{
+        display: none !important;
       }
 
       html, body {
@@ -1762,11 +1790,11 @@ Note: I am notified of all posts and will be moderating content. You do not have
 </div>
 <div class="modal-gallery" id="modalGallery">
 <div class="modal-imgwrap">
+<div class="modal-counter" id="modalCounter"></div>
 <img alt="Post photo" class="modal-img" id="modalImg">
 </img></div>
 <div class="modal-nav">
 <button aria-label="Previous" class="modal-nav-btn" id="modalPrev">❮</button>
-<div class="modal-counter" id="modalCounter"></div>
 <button aria-label="Next" class="modal-nav-btn" id="modalNext">❯</button>
 </div>
 <div class="modal-thumbs" id="modalThumbs"></div>
@@ -2440,6 +2468,7 @@ function excerpt(text, maxChars = 1000) {
     let activeModalTab = null;
     const isMobileViewport = () => window.matchMedia("(max-width: 768px)").matches;
     let isImageLightboxOpen = false;
+    let isTextExpanded = false;
 
     function openModal() {
       modal.classList.add("open");
@@ -2448,6 +2477,7 @@ function excerpt(text, maxChars = 1000) {
     }
     function closeModal() {
       closeImageLightbox();
+      setTextExpanded(false);
       setModalTab(null);
       modal.classList.remove("open");
       modal.setAttribute("aria-hidden", "true");
@@ -2484,6 +2514,22 @@ function excerpt(text, maxChars = 1000) {
       isImageLightboxOpen = false;
       imageLightbox.classList.remove("open");
       imageLightbox.setAttribute("aria-hidden", "true");
+    }
+    function updateBackButton() {
+      if (!btnBackToPhotos) return;
+      const show = !!activeModalTab || isTextExpanded;
+      btnBackToPhotos.hidden = !show;
+      btnBackToPhotos.textContent = isTextExpanded ? "Return to Photo" : "Return";
+    }
+    function syncModalPanelState() {
+      const mobilePanelOpen = isMobileViewport() && (!!activeModalTab || isTextExpanded);
+      if (modal) modal.classList.toggle("mobile-tab-open", mobilePanelOpen);
+      if (modalLeftCol) modalLeftCol.classList.toggle("is-text-expanded", !!isTextExpanded);
+      updateBackButton();
+    }
+    function setTextExpanded(expanded) {
+      isTextExpanded = !!expanded;
+      syncModalPanelState();
     }
 
     function setModalThumbs(images) {
@@ -2579,11 +2625,10 @@ function excerpt(text, maxChars = 1000) {
 
       if (btnViewComments) btnViewComments.classList.toggle("is-active", isComments);
       if (btnNewComment) btnNewComment.classList.toggle("is-active", isNew);
-      if (btnBackToPhotos) btnBackToPhotos.hidden = !hasTab;
       if (commentsTabPanel) commentsTabPanel.classList.toggle("is-open", isComments);
       if (newCommentTabPanel) newCommentTabPanel.classList.toggle("is-open", isNew);
       if (modalLeftCol) modalLeftCol.classList.toggle("is-tab-open", hasTab);
-      if (modal) modal.classList.toggle("mobile-tab-open", hasTab && isMobileViewport());
+      syncModalPanelState();
 
       if (isComments) renderCommentsTab();
       if (isNew) {
@@ -2623,6 +2668,7 @@ function excerpt(text, maxChars = 1000) {
       const when = created ? formatDateShort(created) : "";
       modalMeta.textContent = when ? `${who} • ${when}` : who;
       modalBody.innerHTML = body ? body.replace(/\n/g, "<br>") : "";
+      setTextExpanded(false);
       setModalTab(null);
 
       modalImages = images;
@@ -2632,7 +2678,11 @@ function excerpt(text, maxChars = 1000) {
         modalGallery.style.display = "none";
       } else {
         modalGallery.style.display = "flex";
-        setModalThumbs(modalImages);
+        if (isMobileViewport()) {
+          modalThumbs.innerHTML = "";
+        } else {
+          setModalThumbs(modalImages);
+        }
         showModalImage(0);
       }
 
@@ -2686,11 +2736,23 @@ function excerpt(text, maxChars = 1000) {
       }, { passive: true });
     }
     if (modalBody) modalBody.addEventListener("click", () => {
-      if (activeModalTab) setModalTab(null);
+      if (!isMobileViewport()) return;
+      if (!isTextExpanded) {
+        setTextExpanded(true);
+      }
     });
     if (btnViewComments) btnViewComments.addEventListener("click", () => setModalTab("comments"));
     if (btnNewComment) btnNewComment.addEventListener("click", () => setModalTab("new"));
-    if (btnBackToPhotos) btnBackToPhotos.addEventListener("click", () => setModalTab(null));
+    if (btnBackToPhotos) btnBackToPhotos.addEventListener("click", () => {
+      if (isTextExpanded) {
+        setTextExpanded(false);
+      }
+      if (activeModalTab) {
+        setModalTab(null);
+      } else {
+        updateBackButton();
+      }
+    });
     if (btnSubmitNewComment) btnSubmitNewComment.addEventListener("click", async () => {
       if (!activePostId) {
         alert("No post selected.");
@@ -2797,6 +2859,8 @@ function excerpt(text, maxChars = 1000) {
   </script>
 </body>
 </html>
+
+
 
 
 
