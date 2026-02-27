@@ -801,7 +801,8 @@
     }
     #postModal .modal-leftcol.is-tab-open .modal-text{
       flex: 0 0 auto;
-      max-height: calc(1.4em * 2 + 10px);
+      max-height: calc(1.4em * 4 + 12px);
+      min-height: calc(1.4em * 4 + 12px);
       overflow: hidden;
       cursor: pointer;
       transition: background 0.16s ease;
@@ -1113,7 +1114,7 @@
       justify-content: center;
     }
 
-    .modal-img { max-width: 100%; max-height: 52vh; display: block; }
+    .modal-img { max-width: 100%; max-height: 52vh; display: block; cursor: zoom-in; }
 
     .modal-nav {
       display: flex;
@@ -1152,6 +1153,73 @@
     }
     .modal-thumb.active { outline: 2px solid rgba(255,255,255,0.7); opacity: 1; }
     .modal-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .image-lightbox{
+      position: fixed;
+      inset: 0;
+      z-index: 12000;
+      background: rgba(0,0,0,0.94);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      touch-action: pan-y;
+    }
+    .image-lightbox.open{ display: flex; }
+    .image-lightbox-inner{
+      position: relative;
+      width: min(98vw, 1100px);
+      height: min(92vh, 900px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .image-lightbox img{
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 10px;
+    }
+    .image-lightbox-close{
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 44px;
+      height: 44px;
+      border: 0;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.16);
+      color: #fff;
+      font-size: 28px;
+      cursor: pointer;
+    }
+    .image-lightbox-nav{
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.16);
+      color: #fff;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .image-lightbox-prev{ left: 6px; }
+    .image-lightbox-next{ right: 6px; }
+    .image-lightbox-counter{
+      position: absolute;
+      left: 50%;
+      bottom: 8px;
+      transform: translateX(-50%);
+      color: #fff;
+      font-weight: 700;
+      background: rgba(0,0,0,0.35);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.95rem;
+    }
 
     /* FOOTER STYLING */
     .footer {
@@ -1278,29 +1346,44 @@
     }
 
     @media (max-width: 768px) {
+      #postModal{
+        align-items: flex-start;
+        padding-top: calc(env(safe-area-inset-top, 0px) + 64px);
+        padding-left: 8px;
+        padding-right: 8px;
+        padding-bottom: 8px;
+      }
       #postModal .modal-shell{
-        width: 96vw;
-        height: 92vh;
-        max-height: 92vh;
+        width: 100%;
+        height: calc(100vh - (env(safe-area-inset-top, 0px) + 76px));
+        max-height: calc(100vh - (env(safe-area-inset-top, 0px) + 76px));
       }
       #postModal .modal-body{
         display: grid;
         grid-template-columns: 1fr;
         gap: 12px;
+        overflow: hidden;
       }
       #postModal .modal-leftcol{
         min-height: 0;
+        gap: 8px;
+      }
+      #postModal .modal-text{
+        min-height: calc(1.4em * 4 + 12px);
+        max-height: calc(1.4em * 4 + 12px);
+        overflow: auto;
       }
       #postModal .modal-tab-panel{
-        min-height: 44vh;
-        max-height: 44vh;
+        min-height: 39vh;
+        max-height: 39vh;
       }
       #postModal .new-comment-input{
-        min-height: 150px;
-        max-height: 34vh;
+        min-height: 120px;
+        max-height: 26vh;
       }
       #postModal .modal-leftcol.is-tab-open .modal-text{
-        max-height: calc(1.45em * 3 + 12px);
+        min-height: calc(1.4em * 4 + 12px);
+        max-height: calc(1.4em * 4 + 12px);
       }
       #postModal.mobile-tab-open .modal-gallery{
         display: none !important;
@@ -1310,13 +1393,24 @@
       }
       #postModal.mobile-tab-open .modal-tab-panel{
         flex: 1 1 auto;
-        min-height: 52vh;
-        max-height: 52vh;
+        min-height: 42vh;
+        max-height: 42vh;
       }
       #postModal.mobile-tab-open .modal-post-btn.modal-post-btn-back{
         display: inline-flex;
         align-items: center;
         justify-content: center;
+      }
+      #postModal .modal-gallery{
+        min-height: 28vh;
+        max-height: 28vh;
+        padding: 8px;
+      }
+      #postModal .modal-img{
+        max-height: 18vh;
+      }
+      #postModal .modal-thumbs{
+        grid-template-columns: repeat(4, 1fr);
       }
 
       html, body {
@@ -1678,6 +1772,15 @@ Note: I am notified of all posts and will be moderating content. You do not have
 <div class="modal-thumbs" id="modalThumbs"></div>
 </div>
 </div>
+</div>
+</div>
+<div aria-hidden="true" class="image-lightbox" id="imageLightbox">
+<div class="image-lightbox-inner" id="imageLightboxInner">
+<button aria-label="Close image viewer" class="image-lightbox-close" id="imageLightboxClose" type="button">&times;</button>
+<button aria-label="Previous image" class="image-lightbox-nav image-lightbox-prev" id="imageLightboxPrev" type="button">&#10094;</button>
+<img alt="Expanded post photo" id="imageLightboxImg"/>
+<button aria-label="Next image" class="image-lightbox-nav image-lightbox-next" id="imageLightboxNext" type="button">&#10095;</button>
+<div class="image-lightbox-counter" id="imageLightboxCounter"></div>
 </div>
 </div>
 <!-- FOOTER -->
@@ -2307,6 +2410,13 @@ function excerpt(text, maxChars = 1000) {
     const modalNext = document.getElementById("modalNext");
     const modalCounter = document.getElementById("modalCounter");
     const modalThumbs = document.getElementById("modalThumbs");
+    const imageLightbox = document.getElementById("imageLightbox");
+    const imageLightboxInner = document.getElementById("imageLightboxInner");
+    const imageLightboxImg = document.getElementById("imageLightboxImg");
+    const imageLightboxCounter = document.getElementById("imageLightboxCounter");
+    const imageLightboxClose = document.getElementById("imageLightboxClose");
+    const imageLightboxPrev = document.getElementById("imageLightboxPrev");
+    const imageLightboxNext = document.getElementById("imageLightboxNext");
     const btnViewComments = document.getElementById("btnViewComments");
     const btnNewComment = document.getElementById("btnNewComment");
     const btnBackToPhotos = document.getElementById("btnBackToPhotos");
@@ -2329,6 +2439,7 @@ function excerpt(text, maxChars = 1000) {
     let activePostComments = [];
     let activeModalTab = null;
     const isMobileViewport = () => window.matchMedia("(max-width: 768px)").matches;
+    let isImageLightboxOpen = false;
 
     function openModal() {
       modal.classList.add("open");
@@ -2336,6 +2447,7 @@ function excerpt(text, maxChars = 1000) {
       lockScroll();
     }
     function closeModal() {
+      closeImageLightbox();
       setModalTab(null);
       modal.classList.remove("open");
       modal.setAttribute("aria-hidden", "true");
@@ -2351,6 +2463,27 @@ function excerpt(text, maxChars = 1000) {
       modalThumbs.querySelectorAll(".modal-thumb").forEach((t, idx) => {
         t.classList.toggle("active", idx === modalIndex);
       });
+      if (isImageLightboxOpen) renderLightboxImage();
+    }
+    function renderLightboxImage() {
+      if (!modalImages.length || !imageLightboxImg) return;
+      imageLightboxImg.src = modalImages[modalIndex];
+      if (imageLightboxCounter) {
+        imageLightboxCounter.textContent = (modalIndex + 1) + " / " + modalImages.length;
+      }
+    }
+    function openImageLightbox() {
+      if (!modalImages.length || !imageLightbox) return;
+      isImageLightboxOpen = true;
+      imageLightbox.classList.add("open");
+      imageLightbox.setAttribute("aria-hidden", "false");
+      renderLightboxImage();
+    }
+    function closeImageLightbox() {
+      if (!imageLightbox) return;
+      isImageLightboxOpen = false;
+      imageLightbox.classList.remove("open");
+      imageLightbox.setAttribute("aria-hidden", "true");
     }
 
     function setModalThumbs(images) {
@@ -2528,6 +2661,30 @@ function excerpt(text, maxChars = 1000) {
     modalPrev.addEventListener("click", () => showModalImage(modalIndex - 1));
     modalNext.addEventListener("click", () => showModalImage(modalIndex + 1));
     modalClose.addEventListener("click", closeModal);
+    if (modalImg) modalImg.addEventListener("click", openImageLightbox);
+    if (imageLightboxClose) imageLightboxClose.addEventListener("click", closeImageLightbox);
+    if (imageLightboxPrev) imageLightboxPrev.addEventListener("click", () => showModalImage(modalIndex - 1));
+    if (imageLightboxNext) imageLightboxNext.addEventListener("click", () => showModalImage(modalIndex + 1));
+    if (imageLightbox) {
+      imageLightbox.addEventListener("click", (e) => {
+        if (e.target === imageLightbox) closeImageLightbox();
+      });
+    }
+    if (imageLightboxInner) {
+      let x0 = null;
+      imageLightboxInner.addEventListener("touchstart", (e) => {
+        x0 = e.touches[0].clientX;
+      }, { passive: true });
+      imageLightboxInner.addEventListener("touchend", (e) => {
+        if (x0 === null) return;
+        const dx = e.changedTouches[0].clientX - x0;
+        x0 = null;
+        if (Math.abs(dx) > 40) {
+          if (dx > 0) showModalImage(modalIndex - 1);
+          else showModalImage(modalIndex + 1);
+        }
+      }, { passive: true });
+    }
     if (modalBody) modalBody.addEventListener("click", () => {
       if (activeModalTab) setModalTab(null);
     });
@@ -2619,6 +2776,12 @@ function excerpt(text, maxChars = 1000) {
 
       // Post viewer modal
       if (!modal.classList.contains("open")) return;
+      if (isImageLightboxOpen) {
+        if (e.key === "Escape") closeImageLightbox();
+        if (e.key === "ArrowLeft") showModalImage(modalIndex - 1);
+        if (e.key === "ArrowRight") showModalImage(modalIndex + 1);
+        return;
+      }
       if (e.key === "Escape") closeModal();
       if (e.key === "ArrowLeft") showModalImage(modalIndex - 1);
       if (e.key === "ArrowRight") showModalImage(modalIndex + 1);
