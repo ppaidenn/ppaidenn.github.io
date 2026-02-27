@@ -5,7 +5,7 @@
   <link rel="icon" type="image/png" href="/images/favicon.png">
   <link rel="apple-touch-icon" href="/images/favicon.png">
 <meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
 <title>paiden.com</title>
 <meta content="Paiden's blog page - write posts and view them in a pop-up modal." name="description"/>
 <meta name="theme-color" content="#000000"/>
@@ -33,6 +33,7 @@
       --footer-nav-left: 15vw;
       --spacing-small: 0.5vw;
       --spacing-large: 1.5vw;
+      --safe-top: env(safe-area-inset-top, 0px);
 
       /* Blog theme */
       --bg: #0e1116;
@@ -88,7 +89,8 @@
     .slideshow-container {
       position: relative;
       width: 100vw;
-      height: var(--slideshow-height);
+      height: calc(var(--slideshow-height) + var(--safe-top));
+      padding-top: var(--safe-top);
       margin-left: calc(50% - 50vw);
       overflow: hidden;
     }
@@ -98,7 +100,7 @@
       position: absolute;
       top: 0; left: 0;
       width: 100%;
-      height: var(--nav-height);
+      height: calc(var(--nav-height) + var(--safe-top));
       background: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
       z-index: 3;
       display: flex;
@@ -109,6 +111,7 @@
       width: 100%;
       margin-left: var(--side-margin);
       margin-right: var(--side-margin);
+      padding-top: var(--safe-top);
       display: flex;
       align-items: flex-end;
     }
@@ -138,7 +141,7 @@
 
     .slideshow-text {
       position: absolute;
-      top: 65%;
+      top: calc(65% + (var(--safe-top) * 0.35));
       left: var(--side-margin);
       transform: translateY(-50%);
       color: white;

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>paiden.com</title>
   <meta name="description" content="Template for Paiden's website pages.">
   <meta name="theme-color" content="#000000">
@@ -33,6 +33,7 @@
       --footer-nav-left: 15vw;        /* Adjustable left offset for footer navigation links */
       --spacing-small: 0.5vw;         /* Small vertical spacing */
       --spacing-large: 1.5vw;         /* Larger horizontal spacing */
+      --safe-top: env(safe-area-inset-top, 0px);
     }
 
     /* Global box-sizing and reserve scrollbar space */
@@ -55,7 +56,8 @@
     .slideshow-container {
       position: relative;
       width: 100vw;
-      height: var(--slideshow-height);
+      height: calc(var(--slideshow-height) + var(--safe-top));
+      padding-top: var(--safe-top);
       margin-left: calc(50% - 50vw);
       overflow: hidden;
     }
@@ -66,7 +68,7 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: var(--nav-height);
+      height: calc(var(--nav-height) + var(--safe-top));
       background: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
       z-index: 3;
       display: flex;
@@ -78,6 +80,7 @@
       width: 100%;
       margin-left: var(--side-margin);
       margin-right: var(--side-margin);
+      padding-top: var(--safe-top);
       display: flex;
       align-items: flex-end;
     }
@@ -117,7 +120,7 @@
     /* Constant overlay text container with header and sub-header */
     .slideshow-text {
       position: absolute;
-      top: 65%;
+      top: calc(65% + (var(--safe-top) * 0.35));
       left: var(--side-margin);
       transform: translateY(-50%);
       color: white;
