@@ -1,11 +1,11 @@
 (() => {
   const LS_ENABLED = "paiden_notifications_enabled";
-  const LS_LAST_TS = "paiden_notifications_last_post_ts";
-  const POLL_MS = 60000;
   const SUPABASE_URL = "https://irauuqhqqkctcwulqzsw.supabase.co";
   const SUPABASE_KEY = "sb_publishable_93dGo8oZILIYg9NSotz9MQ_T8v22oXR";
+  const PUSH_SUBSCRIBE_FN = "push-subscribe";
+  const PUSH_CONFIG_FN = "push-config";
 
-  let pollTimer = null;
+  let cachedPublicKey = "";
 
   function isEnabled() {
     return localStorage.getItem(LS_ENABLED) === "1";
@@ -15,129 +15,147 @@
     localStorage.setItem(LS_ENABLED, v ? "1" : "0");
   }
 
-  function getLastTs() {
-    return localStorage.getItem(LS_LAST_TS) || "";
+  function urlBase64ToUint8Array(base64String) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+    return outputArray;
   }
 
-  function setLastTs(ts) {
-    if (ts) localStorage.setItem(LS_LAST_TS, ts);
+  async function ensureSw() {
+    if (!("serviceWorker" in navigator)) {
+      throw new Error("Service workers are not supported in this browser.");
+    }
+    await navigator.serviceWorker.register("/notifications-sw.js", { scope: "/" });
+    return navigator.serviceWorker.ready;
   }
 
-  async function getLatestPost() {
-    const url =
-      `${SUPABASE_URL}/rest/v1/posts` +
-      `?select=id,title,created_at&order=created_at.desc&limit=1`;
-    const res = await fetch(url, {
+  async function getVapidPublicKey() {
+    if (cachedPublicKey) return cachedPublicKey;
+
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/${PUSH_CONFIG_FN}`, {
+      method: "GET",
       headers: {
         apikey: SUPABASE_KEY,
         Authorization: `Bearer ${SUPABASE_KEY}`,
       },
       cache: "no-store",
     });
-    if (!res.ok) return null;
-    const rows = await res.json();
-    if (!Array.isArray(rows) || !rows.length) return null;
-    return rows[0];
+
+    if (!res.ok) {
+      const msg = await res.text().catch(() => "");
+      throw new Error(msg || "Could not load push configuration.");
+    }
+
+    const json = await res.json().catch(() => ({}));
+    const key = json && typeof json.publicKey === "string" ? json.publicKey.trim() : "";
+    if (!key) {
+      throw new Error("Push public key is missing on server.");
+    }
+
+    cachedPublicKey = key;
+    return key;
   }
 
-  async function showSiteNotification(title, body, url = "/blog") {
-    if (typeof window === "undefined" || !("Notification" in window)) return;
-    if (Notification.permission !== "granted") return;
-    try {
-      const reg = await navigator.serviceWorker.getRegistration();
-      if (reg && reg.showNotification) {
-        await reg.showNotification(title, {
-          body,
-          icon: "/images/favicon.png",
-          badge: "/images/favicon.png",
-          data: { url },
-        });
-      } else {
-        new Notification(title, { body, icon: "/images/favicon.png" });
-      }
-    } catch (_) {
-      // Ignore notification display failures.
+  async function syncSubscriptionToServer(subscription) {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/${PUSH_SUBSCRIBE_FN}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+      },
+      body: JSON.stringify({ subscription }),
+    });
+
+    if (!res.ok) {
+      const msg = await res.text().catch(() => "");
+      throw new Error(msg || "Could not save push subscription.");
     }
   }
 
-  async function checkOnce({ seedIfEmpty = false } = {}) {
-    try {
-      const latest = await getLatestPost();
-      if (!latest || !latest.created_at) return;
-      const last = getLastTs();
-      if (!last) {
-        if (seedIfEmpty) setLastTs(latest.created_at);
-        return;
-      }
-      if (Date.parse(latest.created_at) > Date.parse(last)) {
-        setLastTs(latest.created_at);
-        await showSiteNotification(
-          "New blog post",
-          latest.title ? String(latest.title) : "A new post was published.",
-          "/blog"
-        );
-      }
-    } catch (_) {
-      // Keep polling even if one fetch fails.
-    }
-  }
-
-  async function startPolling() {
-    if (!isEnabled()) return;
-    if (!("Notification" in window)) return;
-    if (Notification.permission !== "granted") return;
-    if (!pollTimer) {
-      pollTimer = setInterval(() => checkOnce(), POLL_MS);
-    }
-    await checkOnce({ seedIfEmpty: true });
-  }
-
-  function stopPolling() {
-    if (pollTimer) {
-      clearInterval(pollTimer);
-      pollTimer = null;
-    }
-  }
-
-  async function ensureSw() {
-    if (!("serviceWorker" in navigator)) return;
-    try {
-      await navigator.serviceWorker.register("/notifications-sw.js", { scope: "/" });
-    } catch (_) {
-      // Non-fatal.
-    }
+  async function removeSubscriptionFromServer(endpoint) {
+    if (!endpoint) return;
+    await fetch(`${SUPABASE_URL}/functions/v1/${PUSH_SUBSCRIBE_FN}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+      },
+      body: JSON.stringify({ endpoint }),
+    }).catch(() => {
+      // Best-effort cleanup on server.
+    });
   }
 
   async function enableNotifications() {
+    if (!window.isSecureContext) {
+      return { ok: false, message: "Notifications require HTTPS." };
+    }
     if (!("Notification" in window)) {
       return { ok: false, message: "This browser does not support notifications." };
     }
-    await ensureSw();
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      setEnabled(false);
-      stopPolling();
-      return { ok: false, message: "Permission was not granted." };
+    if (!("PushManager" in window)) {
+      return { ok: false, message: "Push notifications are not supported on this device/browser." };
     }
-    setEnabled(true);
-    const latest = await getLatestPost();
-    if (latest && latest.created_at) setLastTs(latest.created_at);
-    await startPolling();
-    return { ok: true, message: "Notifications enabled." };
+
+    try {
+      const reg = await ensureSw();
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setEnabled(false);
+        return { ok: false, message: "Permission was not granted." };
+      }
+
+      let subscription = await reg.pushManager.getSubscription();
+      if (!subscription) {
+        const publicKey = await getVapidPublicKey();
+        subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey),
+        });
+      }
+
+      await syncSubscriptionToServer(subscription.toJSON());
+      setEnabled(true);
+      return { ok: true, message: "Background push notifications enabled." };
+    } catch (err) {
+      console.error("Enable notifications failed:", err);
+      setEnabled(false);
+      return { ok: false, message: "Could not enable push notifications." };
+    }
   }
 
-  function disableNotifications() {
-    setEnabled(false);
-    stopPolling();
-    return { ok: true, message: "Notifications disabled." };
+  async function disableNotifications() {
+    try {
+      const reg = await ensureSw();
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        const endpoint = sub.endpoint;
+        await sub.unsubscribe().catch(() => {
+          // Continue to backend cleanup.
+        });
+        await removeSubscriptionFromServer(endpoint);
+      }
+      setEnabled(false);
+      return { ok: true, message: "Notifications disabled." };
+    } catch (err) {
+      console.error("Disable notifications failed:", err);
+      setEnabled(false);
+      return { ok: false, message: "Could not fully disable notifications." };
+    }
   }
 
   function getStatus() {
-    const permission = ("Notification" in window) ? Notification.permission : "unsupported";
+    const supported = "Notification" in window;
     return {
       enabled: isEnabled(),
-      permission,
-      supported: "Notification" in window,
+      permission: supported ? Notification.permission : "unsupported",
+      supported,
+      pushSupported: "PushManager" in window && "serviceWorker" in navigator,
     };
   }
 
@@ -145,16 +163,11 @@
     enableNotifications,
     disableNotifications,
     getStatus,
-    checkNow: () => checkOnce(),
   };
 
   if ("serviceWorker" in navigator) {
-    ensureSw();
-  }
-  if (document.readyState === "complete" || document.readyState === "interactive") {
-    startPolling();
-  } else {
-    document.addEventListener("DOMContentLoaded", () => startPolling(), { once: true });
+    ensureSw().catch(() => {
+      // Non-fatal.
+    });
   }
 })();
-

@@ -224,7 +224,7 @@
       const s = window.PaidenNotify && window.PaidenNotify.getStatus
         ? window.PaidenNotify.getStatus()
         : { supported: false, permission: "unknown", enabled: false };
-      const base = `Supported: ${s.supported ? "Yes" : "No"} | Permission: ${s.permission} | Enabled: ${s.enabled ? "Yes" : "No"}`;
+      const base = `Supported: ${s.supported ? "Yes" : "No"} | Push: ${s.pushSupported ? "Yes" : "No"} | Permission: ${s.permission} | Enabled: ${s.enabled ? "Yes" : "No"}`;
       statusEl.textContent = message ? `${message}  ${base}` : base;
     }
 
@@ -234,9 +234,9 @@
       refreshStatus(res.message);
     });
 
-    btnDisable.addEventListener("click", () => {
+    btnDisable.addEventListener("click", async () => {
       if (!window.PaidenNotify) return refreshStatus("Notification module not loaded.");
-      const res = window.PaidenNotify.disableNotifications();
+      const res = await window.PaidenNotify.disableNotifications();
       refreshStatus(res.message);
     });
 

@@ -1,4 +1,4 @@
-self.addEventListener("install", (event) => {
+self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
@@ -6,9 +6,35 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+self.addEventListener("push", (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch (_) {
+    payload = {
+      title: "paiden.com",
+      body: event.data ? event.data.text() : "New activity on paiden.com.",
+      url: "/blog",
+    };
+  }
+
+  const title = payload && payload.title ? String(payload.title) : "paiden.com";
+  const options = {
+    body: payload && payload.body ? String(payload.body) : "New activity on paiden.com.",
+    icon: "/images/favicon.png",
+    badge: "/images/favicon.png",
+    data: {
+      url: payload && payload.url ? String(payload.url) : "/blog",
+    },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const targetUrl = (event.notification && event.notification.data && event.notification.data.url) || "/blog";
+
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientsArr) => {
       for (const client of clientsArr) {
@@ -22,4 +48,3 @@ self.addEventListener("notificationclick", (event) => {
     })
   );
 });
-
