@@ -2574,7 +2574,7 @@ function excerpt(text, maxChars = 1000) {
       if (!btnBackToPhotos) return;
       const show = !!activeModalTab || isTextExpanded;
       btnBackToPhotos.hidden = !show;
-      btnBackToPhotos.textContent = isTextExpanded ? "Return to Photo" : "Return";
+      btnBackToPhotos.textContent = "Return";
     }
     function syncModalPanelState() {
       const mobilePanelOpen = isMobileViewport() && (!!activeModalTab || isTextExpanded);
