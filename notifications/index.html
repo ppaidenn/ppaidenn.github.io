@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>paiden.com</title>
+  <meta name="description" content="Notification setup for paiden.com">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="apple-touch-icon" href="/images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+  <style>
+    :root {
+      --side-margin: 10vw;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; }
+    html { scrollbar-gutter: stable; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #e0e0e0;
+      color: #10151c;
+      overflow-x: hidden;
+    }
+    .top-nav {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      background: #000;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+    .top-nav-inner {
+      margin: 0 var(--side-margin);
+      min-height: calc(58px + var(--safe-top));
+      padding-top: var(--safe-top);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: clamp(24px, 2.8vw, 36px);
+      line-height: 1;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: clamp(14px, 1.8vw, 24px);
+    }
+    .nav-links a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: clamp(14px, 1.1vw, 18px);
+    }
+    .nav-links a:hover { text-decoration: underline; }
+    .mobile-fixed-header { display: none; }
+
+    .content-wrap {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      padding: clamp(22px, 4vh, 40px) 0 calc(28px + var(--safe-bottom));
+    }
+    .content-inner {
+      margin: 0 var(--side-margin);
+      background: rgba(255,255,255,0.68);
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 20px;
+      padding: clamp(18px, 2.2vw, 30px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    }
+    .kicker {
+      letter-spacing: 0.18em;
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(16,21,28,0.65);
+      margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1.05;
+      color: #0e1116;
+    }
+    p {
+      margin: 0 0 12px;
+      font-size: clamp(16px, 1.2vw, 20px);
+      line-height: 1.45;
+      color: rgba(16,21,28,0.86);
+    }
+    .steps {
+      margin: 10px 0 22px;
+      padding-left: 20px;
+      color: rgba(16,21,28,0.9);
+    }
+    .steps li {
+      margin-bottom: 8px;
+      line-height: 1.4;
+      font-size: clamp(15px, 1.05vw, 18px);
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .btn {
+      border: 1px solid rgba(0,0,0,0.2);
+      background: #111;
+      color: #fff;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    .btn.secondary {
+      background: #f6f2e9;
+      color: #111;
+    }
+    .status {
+      margin-top: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(16,21,28,0.72);
+      min-height: 20px;
+    }
+    @media (max-width: 768px) {
+      body { padding-top: calc(var(--safe-top) + 58px); }
+      .top-nav { display: none; }
+      .mobile-fixed-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: calc(var(--safe-top) + 58px);
+        padding-top: var(--safe-top);
+        padding-left: 5vw;
+        padding-right: 5vw;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #000;
+        z-index: 10000;
+      }
+      .mobile-fixed-brand {
+        color: #fff;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: clamp(22px, 6.4vw, 30px);
+      }
+      .mobile-fixed-nav {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .mobile-fixed-nav a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 22px;
+        line-height: 1;
+      }
+      .content-inner { border-radius: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top-nav" role="navigation" aria-label="Primary site navigation">
+    <div class="top-nav-inner">
+      <a class="brand" href="/">paiden.com</a>
+      <nav class="nav-links">
+        <a href="/resume">Resume</a>
+        <a href="/photos">Photos</a>
+        <a href="/blog">Blog</a>
+        <a href="/contactme">Contact Me</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation">
+    <a class="mobile-fixed-brand" href="/">paiden.com</a>
+    <div class="mobile-fixed-nav">
+      <a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a>
+      <a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a>
+      <a href="/contactme" aria-label="Contact"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a>
+    </div>
+  </div>
+
+  <main class="content-wrap">
+    <section class="content-inner">
+      <div class="kicker">WEBSITE OVERVIEW</div>
+      <h1>Mobile Setup & Post Alerts</h1>
+      <p>Install the site to your home screen, then enable notifications to get alerted when a new blog post is published.</p>
+      <ol class="steps">
+        <li>Open this site in Safari on iPhone.</li>
+        <li>Tap the Share button, then tap <strong>Add to Home Screen</strong>.</li>
+        <li>Launch the installed app from your home screen.</li>
+        <li>Tap <strong>Enable Post Notifications</strong> below and allow notifications.</li>
+      </ol>
+      <div class="actions">
+        <button class="btn" id="btnEnableNotifications" type="button">Enable Post Notifications</button>
+        <button class="btn secondary" id="btnDisableNotifications" type="button">Disable Notifications</button>
+      </div>
+      <div class="status" id="notifyStatus"></div>
+    </section>
+  </main>
+
+  <script src="/notifications.js"></script>
+  <script>
+    const statusEl = document.getElementById("notifyStatus");
+    const btnEnable = document.getElementById("btnEnableNotifications");
+    const btnDisable = document.getElementById("btnDisableNotifications");
+
+    function refreshStatus(message) {
+      const s = window.PaidenNotify && window.PaidenNotify.getStatus
+        ? window.PaidenNotify.getStatus()
+        : { supported: false, permission: "unknown", enabled: false };
+      const base = `Supported: ${s.supported ? "Yes" : "No"} | Permission: ${s.permission} | Enabled: ${s.enabled ? "Yes" : "No"}`;
+      statusEl.textContent = message ? `${message}  ${base}` : base;
+    }
+
+    btnEnable.addEventListener("click", async () => {
+      if (!window.PaidenNotify) return refreshStatus("Notification module not loaded.");
+      const res = await window.PaidenNotify.enableNotifications();
+      refreshStatus(res.message);
+    });
+
+    btnDisable.addEventListener("click", () => {
+      if (!window.PaidenNotify) return refreshStatus("Notification module not loaded.");
+      const res = window.PaidenNotify.disableNotifications();
+      refreshStatus(res.message);
+    });
+
+    refreshStatus();
+  </script>
+</body>
+</html>
+

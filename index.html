@@ -460,6 +460,20 @@
       color: #111;
       margin-bottom: 1.2vw;
     }
+    .home-notify-cta{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: #111;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(0,0,0,0.18);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 800;
+      font-size: 0.95vw;
+      margin-bottom: 1vw;
+    }
 
     .home-links-full{
       width: 100%;
@@ -526,6 +540,7 @@
       .home-card-link{ font-size: 14px; }
       .home-bottom{ display: block; }
       .home-kicker{ font-size: 12px; margin-bottom: 14px; }
+      .home-notify-cta{ font-size: 13px; padding: 10px 14px; margin-bottom: 12px; }
       .quick-grid{ grid-template-columns: 1fr; gap: 12px; }
       .quick-tile{ min-height: 160px; padding: 16px; border-radius: 16px; }
       .quick-tile i{ font-size: 22px; margin-bottom: 10px; }
@@ -586,6 +601,7 @@
     <div class="main-content home-cream">
       <section class="home-wrap">
         <div class="home-panel">
+        <a class="home-notify-cta" href="/notifications"><i class="fa-solid fa-bell" aria-hidden="true"></i> Notification Setup</a>
         <div class="home-kicker">WEBSITE OVERVIEW</div>
         <div class="home-cards">
           <a class="home-card" href="/resume">
@@ -689,6 +705,7 @@
     </div>
   </footer>
 
+  <script src="/notifications.js"></script>
   <!-- JavaScript to cycle through slides automatically and update footer date -->
   <script>
     // Normalize homepage URL so it stays at "/" instead of "/index.html".
