@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>paiden.com</title>
-  <meta name="description" content="Recent news update for paiden.com app and PWA setup.">
+  <meta name="description" content="Sign in page for paiden.com">
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -12,6 +12,7 @@
   <link rel="icon" type="image/png" href="/images/favicon.png">
   <link rel="apple-touch-icon" href="/images/favicon.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+  <link rel="stylesheet" href="/account-menu.css">
   <style>
     :root {
       --side-margin: 10vw;
@@ -25,7 +26,6 @@
       --footer-nav-left: 15vw;
     }
     * { box-sizing: border-box; }
-    html { scrollbar-gutter: stable; }
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -71,9 +71,7 @@
       font-size: clamp(14px, 1.1vw, 18px);
     }
     .nav-links a:hover { text-decoration: underline; }
-
     .mobile-fixed-header { display: none; }
-
     .content-wrap {
       width: 100vw;
       margin-left: calc(50% - 50vw);
@@ -86,57 +84,37 @@
       border-radius: 22px;
       box-shadow: 0 10px 34px rgba(0,0,0,0.08);
       padding: clamp(18px, 2.2vw, 32px);
+      max-width: 760px;
     }
-    .story-head {
-      background: #000;
+    .kicker {
+      letter-spacing: 0.18em;
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(16,21,28,0.65);
+      margin-bottom: 10px;
+    }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 3.8vw, 48px); }
+    p { margin: 0 0 14px; line-height: 1.5; }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; margin-bottom: 6px; font-weight: 700; }
+    .field input {
+      width: 100%;
+      border: 1px solid rgba(0,0,0,0.2);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 15px;
+      background: #fff;
+    }
+    .btn {
+      border: 1px solid rgba(0,0,0,0.2);
+      background: #111;
       color: #fff;
-      border-radius: 14px;
-      padding: 14px 16px;
-      font-size: clamp(18px, 1.5vw, 24px);
-      font-weight: 800;
-      margin-bottom: 14px;
-    }
-    .story-date {
-      font-size: clamp(13px, 1vw, 16px);
+      border-radius: 12px;
+      padding: 11px 14px;
       font-weight: 700;
-      color: rgba(17,17,17,0.68);
-      margin-bottom: 14px;
+      font-size: 15px;
+      cursor: pointer;
     }
-    .story-body p {
-      margin: 0 0 12px;
-      font-size: clamp(15px, 1.08vw, 19px);
-      line-height: 1.55;
-      color: rgba(17,17,17,0.9);
-    }
-    .story-body h2 {
-      margin: 14px 0 8px;
-      font-size: clamp(17px, 1.22vw, 22px);
-      color: #111;
-    }
-    .story-body ol {
-      margin: 0 0 14px 20px;
-      padding: 0;
-    }
-    .story-body li {
-      margin-bottom: 8px;
-      line-height: 1.45;
-      font-size: clamp(14px, 1.02vw, 18px);
-    }
-    .story-cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-      color: #111;
-      background: rgba(255,255,255,0.82);
-      border: 1px solid rgba(0,0,0,0.16);
-      border-radius: 999px;
-      padding: 10px 14px;
-      font-weight: 800;
-      font-size: clamp(13px, 0.98vw, 16px);
-      margin-top: 4px;
-    }
-
     .footer {
       width: 100vw;
       margin-left: calc(50% - 50vw);
@@ -152,105 +130,34 @@
       justify-content: space-between;
       align-items: flex-start;
     }
-    .footer-left {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    .footer-left .footer-brand {
-      font-size: var(--footer-title-font-size);
-      font-weight: bold;
-      color: white;
-      text-decoration: none;
-      margin-bottom: 0.75vw;
-    }
-    .footer-left .footer-created,
-    .footer-left .footer-updated {
-      font-size: var(--footer-subtitle-font-size);
-      color: white;
-      margin-top: var(--spacing-small);
-    }
-    .footer-nav {
-      position: absolute;
-      top: 50%;
-      left: var(--footer-nav-left);
-      transform: translateY(-45%);
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    .footer-nav a {
-      font-size: var(--footer-nav-font-size);
-      color: white;
-      text-decoration: none;
-      margin-bottom: var(--spacing-small);
-    }
+    .footer-left { display: flex; flex-direction: column; align-items: flex-start; }
+    .footer-left .footer-brand { font-size: var(--footer-title-font-size); font-weight: bold; color: white; text-decoration: none; margin-bottom: 0.75vw; }
+    .footer-left .footer-created, .footer-left .footer-updated { font-size: var(--footer-subtitle-font-size); color: white; margin-top: var(--spacing-small); }
+    .footer-nav { position: absolute; top: 50%; left: var(--footer-nav-left); transform: translateY(-45%); display: flex; flex-direction: column; align-items: flex-start; }
+    .footer-nav a { font-size: var(--footer-nav-font-size); color: white; text-decoration: none; margin-bottom: var(--spacing-small); }
     .footer-nav a:hover { text-decoration: underline; }
-    .footer-social {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      color: white;
-    }
-    .footer-social .follow-text {
-      font-size: var(--footer-nav-font-size);
-      font-weight: bold;
-      margin-bottom: var(--spacing-small);
-    }
-    .social-icons {
-      display: flex;
-      gap: 1vw;
-    }
-    .social-icons a {
-      color: white;
-      font-size: 2vw;
-      transition: transform 0.2s ease;
-      text-decoration: none;
-    }
-    .social-icons a:hover { transform: scale(1.1); }
-
+    .footer-social { display: flex; flex-direction: column; align-items: flex-end; color: white; }
+    .footer-social .follow-text { font-size: var(--footer-nav-font-size); font-weight: bold; margin-bottom: var(--spacing-small); }
+    .social-icons { display: flex; gap: 1vw; }
+    .social-icons a { color: white; font-size: 2vw; text-decoration: none; }
     @media (max-width: 768px) {
       body { padding-top: calc(var(--safe-top) + 58px); }
       .top-nav { display: none; }
       .mobile-fixed-header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
+        position: fixed; top: 0; left: 0; right: 0;
         height: calc(var(--safe-top) + 58px);
         padding-top: var(--safe-top);
-        padding-left: 5vw;
-        padding-right: 5vw;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: #000;
-        z-index: 10000;
+        padding-left: 5vw; padding-right: 5vw;
+        display: flex; align-items: center; justify-content: space-between;
+        background: #000; z-index: 10000;
       }
-      .mobile-fixed-brand {
-        color: #fff;
-        text-decoration: none;
-        font-weight: 800;
-        font-size: clamp(22px, 6.4vw, 30px);
-        line-height: 1;
-      }
-      .mobile-fixed-nav {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-        padding-left: 16px;
-      }
-      .mobile-fixed-nav a {
-        color: #fff;
-        text-decoration: none;
-        font-size: 22px;
-        line-height: 1;
-      }
+      .mobile-fixed-brand { color: #fff; text-decoration: none; font-weight: 800; font-size: clamp(22px, 6.4vw, 30px); line-height: 1; }
+      .mobile-fixed-nav { display: flex; align-items: center; gap: 18px; padding-left: 16px; }
+      .mobile-fixed-nav a { color: #fff; text-decoration: none; font-size: 22px; line-height: 1; }
       .footer { display: none !important; }
       .content-inner { border-radius: 16px; }
     }
   </style>
-  <link rel="stylesheet" href="/account-menu.css">
 </head>
 <body>
   <header class="top-nav" role="navigation" aria-label="Primary site navigation">
@@ -264,7 +171,6 @@
       </nav>
     </div>
   </header>
-
   <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation">
     <a class="mobile-fixed-brand" href="/">paiden.com</a>
     <div class="mobile-fixed-nav">
@@ -273,34 +179,24 @@
       <a href="/contactme" aria-label="Contact"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a>
     </div>
   </div>
-
   <main class="content-wrap">
     <section class="content-inner">
-      <div class="story-head">App + PWA Setup Update</div>
-      <div class="story-date">Created: March 2, 2026</div>
-      <div class="story-body">
-        <p>paiden.com now supports a home-screen PWA experience with push notifications for new blog posts.</p>
-        <h2>Apple (iPhone) Setup</h2>
-        <ol>
-          <li>Open paiden.com in Safari.</li>
-          <li>Tap the Share icon.</li>
-          <li>Tap Add to Home Screen.</li>
-          <li>Launch the installed app from your home screen.</li>
-        </ol>
-        <h2>Android Setup</h2>
-        <ol>
-          <li>Open paiden.com in Chrome.</li>
-          <li>Tap the menu icon in the browser.</li>
-          <li>Tap Install app or Add to Home screen.</li>
-          <li>Launch the installed app from your app drawer or home screen.</li>
-        </ol>
-        <h2>Notification Settings</h2>
-        <p>Use the Notification Setup (Notify Me) button on the homepage to enable or disable post notifications at any time.</p>
-        <a class="story-cta" href="/notifications"><i class="fa-solid fa-bell" aria-hidden="true"></i> Open Notification Setup</a>
-      </div>
+      <div class="kicker">ACCOUNT</div>
+      <h1>Sign In</h1>
+      <p>Sign in to connect your account to blog posts, or continue posting anonymously on the blog page.</p>
+      <form>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="you@example.com">
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="Enter password">
+        </div>
+        <button class="btn" type="button">Sign In</button>
+      </form>
     </section>
   </main>
-
   <footer class="footer">
     <div class="footer-inner">
       <div class="footer-left">
@@ -324,13 +220,10 @@
       </div>
     </div>
   </footer>
-
+  <script src="/account-menu.js"></script>
   <script>
     const lastUpdated = document.getElementById("last-updated");
-    if (lastUpdated) {
-      lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();
-    }
+    if (lastUpdated) lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();
   </script>
-  <script src="/account-menu.js"></script>
 </body>
 </html>
