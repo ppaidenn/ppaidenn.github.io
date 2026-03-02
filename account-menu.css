@@ -1,6 +1,7 @@
 .profile-menu {
   position: relative;
   margin-left: 2px;
+  margin-right: 0;
 }
 
 .profile-menu summary {
@@ -22,7 +23,13 @@
 }
 
 .nav-items .profile-menu {
-  margin-right: var(--spacing-large, 0px);
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.nav-links .profile-menu {
+  margin-right: 0;
+  margin-left: 2px;
 }
 
 .nav-items .profile-menu summary,
@@ -69,5 +76,6 @@
 @media (max-width: 768px) {
   .mobile-fixed-nav .profile-menu {
     margin-left: 2px;
+    margin-right: 0;
   }
 }

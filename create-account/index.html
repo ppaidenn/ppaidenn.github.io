@@ -115,6 +115,13 @@
       font-size: 15px;
       cursor: pointer;
     }
+    .field-note {
+      margin: 0 0 12px;
+      font-size: 13px;
+      color: rgba(17,17,17,0.72);
+      line-height: 1.35;
+      font-weight: 700;
+    }
     .footer {
       width: 100vw;
       margin-left: calc(50% - 50vw);
@@ -186,12 +193,21 @@
       <p>Create an account so new blog posts can be associated with your profile. Anonymous posting will remain available as an option on the blog page.</p>
       <form>
         <div class="field">
-          <label for="name">Display Name</label>
-          <input id="name" type="text" placeholder="Your display name">
+          <label for="username">Username</label>
+          <input id="username" type="text" placeholder="Choose a username">
         </div>
         <div class="field">
           <label for="email">Email</label>
           <input id="email" type="email" placeholder="you@example.com">
+        </div>
+        <div class="field">
+          <label for="security-question">Security Question</label>
+          <input id="security-question" type="text" placeholder="Write your own security question">
+        </div>
+        <p class="field-note">Security question ideas: first pet, favorite color, SSN, best friend name</p>
+        <div class="field">
+          <label for="security-answer">Security Answer</label>
+          <input id="security-answer" type="text" placeholder="Write your security answer">
         </div>
         <div class="field">
           <label for="password">Password</label>
