@@ -48,8 +48,21 @@
 
   async function createAccount({ username, email, password, securityQuestion, securityAnswer }) {
     const client = requireClient();
+    const normalizedUsername = normalizeUsername(username, email);
+    const { data: existingUsername, error: existingUsernameError } = await client
+      .from("profiles")
+      .select("id")
+      .ilike("username", normalizedUsername)
+      .limit(1);
+    if (existingUsernameError) {
+      return { ok: false, error: existingUsernameError.message || "Could not verify username." };
+    }
+    if (Array.isArray(existingUsername) && existingUsername.length > 0) {
+      return { ok: false, error: "That username is already taken." };
+    }
+
     const payload = {
-      username: normalizeUsername(username, email),
+      username: normalizedUsername,
       security_question: String(securityQuestion || "").trim(),
       security_answer: String(securityAnswer || "").trim(),
     };
@@ -58,7 +71,13 @@
       password: String(password || ""),
       options: { data: payload },
     });
-    if (error) return { ok: false, error: error.message || "Could not create account." };
+    if (error) {
+      const msg = String(error.message || "");
+      if (msg.toLowerCase().includes("profiles_username_lower_unique")) {
+        return { ok: false, error: "That username is already taken." };
+      }
+      return { ok: false, error: msg || "Could not create account." };
+    }
 
     const user = data?.user || null;
     const session = data?.session || null;
@@ -69,7 +88,13 @@
         securityQuestion: payload.security_question,
         securityAnswer: payload.security_answer,
       });
-      if (!saved.ok) return saved;
+      if (!saved.ok) {
+        const saveErr = String(saved.error || "");
+        if (saveErr.toLowerCase().includes("profiles_username_lower_unique")) {
+          return { ok: false, error: "That username is already taken." };
+        }
+        return saved;
+      }
       return { ok: true, user, session, requiresEmailConfirmation: false };
     }
 

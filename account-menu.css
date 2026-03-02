@@ -10,7 +10,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: inherit;
   text-decoration: none;
   border: 0;
   background: transparent;
@@ -35,14 +35,21 @@
 
 .nav-items .profile-menu summary,
 .nav-links .profile-menu summary {
-  font-size: clamp(16px, 1.2vw, 20px);
+  font-size: var(--nav-font-size, 1.2vw);
+  font-family: inherit;
+  font-weight: bold;
+  text-decoration: none;
   padding-bottom: var(--spacing-small, 0px);
+  margin: 0;
+  color: inherit;
+  opacity: inherit;
 }
 
 .profile-label {
   font-size: inherit;
-  font-weight: 800;
-  letter-spacing: 0.01em;
+  font-family: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
 }
 
 .profile-icon {
@@ -60,6 +67,10 @@
 
 .mobile-fixed-nav .profile-label {
   display: none;
+}
+
+.mobile-fixed-nav .profile-menu summary {
+  color: #fff;
 }
 
 .profile-dropdown {
