@@ -474,6 +474,57 @@
       font-size: 0.95vw;
       margin-bottom: 1vw;
     }
+    .news-strip{
+      display: flex;
+      gap: 1.2vw;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding: 0.2vw 0 0.8vw;
+      margin-bottom: 1.4vw;
+    }
+    .news-strip::-webkit-scrollbar{
+      height: 8px;
+    }
+    .news-strip::-webkit-scrollbar-thumb{
+      background: rgba(0,0,0,0.28);
+      border-radius: 999px;
+    }
+    .news-card{
+      flex: 0 0 min(38vw, 520px);
+      min-height: 260px;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.12);
+      box-shadow: 0 14px 30px rgba(0,0,0,0.08);
+      background: rgba(255,255,255,0.74);
+      scroll-snap-align: start;
+    }
+    .news-card-head{
+      background: #000;
+      color: #fff;
+      padding: 14px 16px;
+      font-size: 1.05vw;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+    .news-card-body{
+      padding: 14px 16px 16px;
+      color: #1a1a1a;
+    }
+    .news-date{
+      display: block;
+      margin-bottom: 10px;
+      font-size: 0.9vw;
+      font-weight: 700;
+      color: rgba(0,0,0,0.68);
+    }
+    .news-card-body p{
+      margin: 0;
+      font-size: 0.95vw;
+      line-height: 1.55;
+      color: #222;
+    }
 
     .home-links-full{
       width: 100%;
@@ -541,6 +592,12 @@
       .home-bottom{ display: block; }
       .home-kicker{ font-size: 12px; margin-bottom: 14px; }
       .home-notify-cta{ font-size: 13px; padding: 10px 14px; margin-bottom: 12px; }
+      .news-strip{ gap: 12px; margin-bottom: 14px; padding-bottom: 8px; }
+      .news-card{ flex-basis: 86vw; min-height: 250px; border-radius: 16px; }
+      .news-card-head{ font-size: 16px; padding: 12px 14px; }
+      .news-card-body{ padding: 12px 14px 14px; }
+      .news-date{ font-size: 13px; margin-bottom: 8px; }
+      .news-card-body p{ font-size: 14px; }
       .quick-grid{ grid-template-columns: 1fr; gap: 12px; }
       .quick-tile{ min-height: 160px; padding: 16px; border-radius: 16px; }
       .quick-tile i{ font-size: 22px; margin-bottom: 10px; }
@@ -602,6 +659,18 @@
       <section class="home-wrap">
         <div class="home-panel">
         <a class="home-notify-cta" href="/notifications"><i class="fa-solid fa-bell" aria-hidden="true"></i> Notification Setup</a>
+        <div class="home-kicker">RECENT NEWS</div>
+        <div class="news-strip" aria-label="Recent website news">
+          <article class="news-card">
+            <div class="news-card-head">App + PWA Setup Update</div>
+            <div class="news-card-body">
+              <span class="news-date">Created: March 2, 2026</span>
+              <p>
+                paiden.com now supports a home-screen PWA experience. On iPhone, open the site in Safari, tap Share, then tap Add to Home Screen to install it like an app. The app includes post notifications for new blog activity. Notification permissions and on/off settings can be managed any time from the Notification Setup (Notify Me) button above.
+              </p>
+            </div>
+          </article>
+        </div>
         <div class="home-kicker">WEBSITE OVERVIEW</div>
         <div class="home-cards">
           <a class="home-card" href="/resume">
