@@ -500,6 +500,16 @@
       background: rgba(255,255,255,0.74);
       scroll-snap-align: start;
     }
+    .news-card-link{
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .news-card-link:hover{
+      transform: translateY(-0.2vw);
+      box-shadow: 0 18px 36px rgba(0,0,0,0.12);
+    }
     .news-card-head{
       background: #000;
       color: #fff;
@@ -524,6 +534,15 @@
       font-size: 0.95vw;
       line-height: 1.55;
       color: #222;
+    }
+    .news-summary{
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: normal;
+      font-weight: 700;
     }
 
     .home-links-full{
@@ -661,18 +680,15 @@
         <a class="home-notify-cta" href="/notifications"><i class="fa-solid fa-bell" aria-hidden="true"></i> Notification Setup</a>
         <div class="home-kicker">RECENT NEWS</div>
         <div class="news-strip" aria-label="Recent website news">
-          <article class="news-card">
+          <a class="news-card news-card-link" href="/news/pwa-update.html" aria-label="Open App and PWA setup update">
             <div class="news-card-head">App + PWA Setup Update</div>
             <div class="news-card-body">
               <span class="news-date">Created: March 2, 2026</span>
-              <p>
-                paiden.com now supports a home-screen PWA experience.
-                Apple (iPhone): Open in Safari, tap Share, then Add to Home Screen.
-                Android: Open in Chrome, tap the menu, then Install app/Add to Home screen.
-                The app includes post notifications for new blog activity, and notification permissions/on-off settings can be managed any time from the Notification Setup (Notify Me) button above.
+              <p class="news-summary">
+                PWA install steps for Apple/Android plus where to manage notifications in Notification Setup.
               </p>
             </div>
-          </article>
+          </a>
         </div>
         <div class="home-kicker">WEBSITE OVERVIEW</div>
         <div class="home-cards">
