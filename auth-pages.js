@@ -15,6 +15,14 @@
     button.textContent = pending ? "Please wait..." : idleText;
   }
 
+  const createPasswordEl = document.getElementById("password");
+  const createToggleEl = document.getElementById("toggleCreatePassword");
+  if (createPasswordEl && createToggleEl) {
+    createToggleEl.addEventListener("change", () => {
+      createPasswordEl.type = createToggleEl.checked ? "text" : "password";
+    });
+  }
+
   if (createForm) {
     createForm.addEventListener("submit", async (event) => {
       event.preventDefault();

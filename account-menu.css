@@ -16,6 +16,7 @@
   background: transparent;
   padding: 0;
   line-height: 1;
+  gap: 8px;
 }
 
 .profile-menu summary::-webkit-details-marker {
@@ -38,8 +39,27 @@
   padding-bottom: var(--spacing-small, 0px);
 }
 
+.profile-label {
+  font-size: inherit;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.profile-icon {
+  font-size: inherit;
+}
+
 .mobile-fixed-nav .profile-menu summary {
   font-size: 22px;
+}
+
+.nav-items .profile-icon,
+.nav-links .profile-icon {
+  display: none;
+}
+
+.mobile-fixed-nav .profile-label {
+  display: none;
 }
 
 .profile-dropdown {
@@ -69,7 +89,26 @@
   white-space: nowrap;
 }
 
+.profile-dropdown .profile-signout {
+  display: block;
+  width: 100%;
+  border: 0;
+  text-align: left;
+  padding: 10px 12px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: transparent;
+  cursor: pointer;
+}
+
 .profile-dropdown a:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+.profile-dropdown .profile-signout:hover {
   background: rgba(255,255,255,0.12);
 }
 
@@ -77,5 +116,9 @@
   .mobile-fixed-nav .profile-menu {
     margin-left: 2px;
     margin-right: 0;
+  }
+
+  .mobile-fixed-nav .profile-icon {
+    display: inline-block;
   }
 }
