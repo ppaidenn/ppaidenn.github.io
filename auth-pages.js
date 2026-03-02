@@ -1,0 +1,84 @@
+(() => {
+  const createForm = document.getElementById("createAccountForm");
+  const signInForm = document.getElementById("signInForm");
+  const statusEl = document.getElementById("authStatus");
+
+  function setStatus(message, isError = false) {
+    if (!statusEl) return;
+    statusEl.textContent = message || "";
+    statusEl.style.color = isError ? "#a10000" : "rgba(17,17,17,0.8)";
+  }
+
+  function setButtonPending(button, pending, idleText) {
+    if (!button) return;
+    button.disabled = !!pending;
+    button.textContent = pending ? "Please wait..." : idleText;
+  }
+
+  if (createForm) {
+    createForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!window.PaidenAuth) return setStatus("Auth service unavailable.", true);
+
+      const username = (document.getElementById("username")?.value || "").trim();
+      const email = (document.getElementById("email")?.value || "").trim();
+      const password = document.getElementById("password")?.value || "";
+      const securityQuestion = (document.getElementById("security-question")?.value || "").trim();
+      const securityAnswer = (document.getElementById("security-answer")?.value || "").trim();
+      const submitBtn = document.getElementById("createAccountSubmit");
+
+      if (!username || !email || !password || !securityQuestion || !securityAnswer) {
+        return setStatus("Please complete every field.", true);
+      }
+      if (password.length < 8) {
+        return setStatus("Password must be at least 8 characters.", true);
+      }
+
+      setButtonPending(submitBtn, true, "Create Account");
+      setStatus("");
+      const res = await window.PaidenAuth.createAccount({
+        username,
+        email,
+        password,
+        securityQuestion,
+        securityAnswer,
+      });
+      setButtonPending(submitBtn, false, "Create Account");
+
+      if (!res.ok) return setStatus(res.error || "Could not create account.", true);
+      if (res.requiresEmailConfirmation) {
+        return setStatus("Account created. Check your email to verify, then sign in.");
+      }
+      setStatus("Account created and signed in. Redirecting to blog...");
+      window.setTimeout(() => { window.location.href = "/blog"; }, 800);
+    });
+  }
+
+  if (signInForm) {
+    signInForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!window.PaidenAuth) return setStatus("Auth service unavailable.", true);
+
+      const email = (document.getElementById("email")?.value || "").trim();
+      const password = document.getElementById("password")?.value || "";
+      const submitBtn = document.getElementById("signInSubmit");
+
+      if (!email || !password) {
+        return setStatus("Please enter your email and password.", true);
+      }
+
+      setButtonPending(submitBtn, true, "Sign In");
+      setStatus("");
+      const res = await window.PaidenAuth.signIn({ email, password });
+      setButtonPending(submitBtn, false, "Sign In");
+
+      if (!res.ok) return setStatus(res.error || "Could not sign in.", true);
+      setStatus("Signed in. Redirecting to blog...");
+      window.setTimeout(() => { window.location.href = "/blog"; }, 700);
+    });
+  }
+
+  if (!createForm && !signInForm && statusEl) {
+    statusEl.textContent = "";
+  }
+})();

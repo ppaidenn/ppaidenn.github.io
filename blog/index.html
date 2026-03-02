@@ -1894,6 +1894,7 @@ Note: I am notified of all posts and will be moderating content. You do not have
     </div>
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/auth-client.js"></script>
   <script>
     // ===== Header slideshow + footer date =====
     const isMobile = window.matchMedia("(max-width: 768px)").matches;
@@ -1977,6 +1978,19 @@ const titleEl = document.getElementById("postTitle");
       if (!btnPublish) return;
       btnPublish.disabled = !!isSubmitting;
       btnPublish.innerHTML = isSubmitting ? "Publishing..." : PUBLISH_BTN_IDLE_HTML;
+    }
+    async function autofillAuthorFromAccount() {
+      if (!authorEl || !window.PaidenAuth) return;
+      const res = await window.PaidenAuth.getCurrentProfile();
+      if (!res || !res.ok || !res.user) return;
+      const username = (res.profile && res.profile.username)
+        ? String(res.profile.username).trim()
+        : (res.user.user_metadata && res.user.user_metadata.username)
+          ? String(res.user.user_metadata.username).trim()
+          : "";
+      if (!username) return;
+      authorEl.value = username;
+      authorEl.placeholder = username;
     }
 
     let draftImages = []; 
@@ -2933,6 +2947,12 @@ function excerpt(text, maxChars = 1000) {
     // Init
     (async () => {
       ensureOverlayScrollState();
+      await autofillAuthorFromAccount();
+      if (sb && sb.auth && sb.auth.onAuthStateChange) {
+        sb.auth.onAuthStateChange(async () => {
+          await autofillAuthorFromAccount();
+        });
+      }
       hydrateStaticThumbs();
       await renderUserPostsIntoGrid();
       await hydrateAllCommentCountsFromSupabase();

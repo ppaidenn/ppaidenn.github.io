@@ -115,6 +115,13 @@
       font-size: 15px;
       cursor: pointer;
     }
+    .auth-status {
+      margin-top: 12px;
+      min-height: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(17,17,17,0.8);
+    }
     .field-note {
       margin: 0 0 12px;
       font-size: 13px;
@@ -191,7 +198,7 @@
       <div class="kicker">ACCOUNT</div>
       <h1>Create Account</h1>
       <p>Create an account so new blog posts can be associated with your profile. Anonymous posting will remain available as an option on the blog page.</p>
-      <form>
+      <form id="createAccountForm">
         <div class="field">
           <label for="username">Username</label>
           <input id="username" type="text" placeholder="Choose a username">
@@ -213,7 +220,8 @@
           <label for="password">Password</label>
           <input id="password" type="password" placeholder="Create password">
         </div>
-        <button class="btn" type="button">Create Account</button>
+        <button class="btn" id="createAccountSubmit" type="submit">Create Account</button>
+        <div class="auth-status" id="authStatus"></div>
       </form>
     </section>
   </main>
@@ -240,6 +248,9 @@
       </div>
     </div>
   </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/auth-client.js"></script>
+  <script src="/auth-pages.js"></script>
   <script src="/account-menu.js"></script>
   <script>
     const lastUpdated = document.getElementById("last-updated");

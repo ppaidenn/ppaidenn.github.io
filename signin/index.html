@@ -115,6 +115,13 @@
       font-size: 15px;
       cursor: pointer;
     }
+    .auth-status {
+      margin-top: 12px;
+      min-height: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(17,17,17,0.8);
+    }
     .footer {
       width: 100vw;
       margin-left: calc(50% - 50vw);
@@ -184,7 +191,7 @@
       <div class="kicker">ACCOUNT</div>
       <h1>Sign In</h1>
       <p>Sign in to connect your account to blog posts, or continue posting anonymously on the blog page.</p>
-      <form>
+      <form id="signInForm">
         <div class="field">
           <label for="email">Email</label>
           <input id="email" type="email" placeholder="you@example.com">
@@ -193,7 +200,8 @@
           <label for="password">Password</label>
           <input id="password" type="password" placeholder="Enter password">
         </div>
-        <button class="btn" type="button">Sign In</button>
+        <button class="btn" id="signInSubmit" type="submit">Sign In</button>
+        <div class="auth-status" id="authStatus"></div>
       </form>
     </section>
   </main>
@@ -220,6 +228,9 @@
       </div>
     </div>
   </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/auth-client.js"></script>
+  <script src="/auth-pages.js"></script>
   <script src="/account-menu.js"></script>
   <script>
     const lastUpdated = document.getElementById("last-updated");
