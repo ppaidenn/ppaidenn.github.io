@@ -51,11 +51,15 @@ async function sendEmail(html) {
 }
 
 function buildPushPayload(postId, title, author, text) {
+  const safeTitle = String(title || "New blog post").trim();
   const safeAuthor = String(author || "Anonymous").trim();
-  const body = `New Blog Post\nAuthor: ${safeAuthor}`;
+  const excerpt = String(text || "").replace(/\s+/g, " ").trim();
+  const body = excerpt
+    ? `${safeAuthor}: ${excerpt.slice(0, 120)}${excerpt.length > 120 ? "..." : ""}`
+    : `${safeAuthor} published a new post.`;
 
   return JSON.stringify({
-    title: "paiden.com",
+    title: safeTitle,
     body,
     url: postId ? `${BLOG_PUBLIC_URL}?post=${encodeURIComponent(String(postId))}` : BLOG_PUBLIC_URL,
     tag: "new-post",
