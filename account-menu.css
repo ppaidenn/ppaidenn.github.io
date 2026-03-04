@@ -43,6 +43,10 @@
   color: #fff;
   opacity: 1;
 }
+.nav-items .profile-menu > .profile-nav-link,
+.nav-items .profile-menu > .profile-nav-link .profile-label {
+  color: #fff !important;
+}
 
 .nav-links .profile-nav-link {
   font-size: clamp(14px, 1.1vw, 18px);
@@ -52,6 +56,10 @@
   margin: 0;
   color: #fff;
   opacity: 1;
+}
+.nav-links .profile-menu > .profile-nav-link,
+.nav-links .profile-menu > .profile-nav-link .profile-label {
+  color: #fff !important;
 }
 .nav-items .profile-nav-link:hover,
 .nav-links .profile-nav-link:hover {
