@@ -33,16 +33,25 @@
   margin-left: 2px;
 }
 
-.nav-items .profile-nav-link,
-.nav-links .profile-nav-link {
+.nav-items .profile-nav-link {
   font-size: var(--nav-font-size, 1.2vw);
   font-family: inherit;
   font-weight: bold;
   text-decoration: none;
   padding-bottom: var(--spacing-small, 0px);
   margin: 0;
-  color: inherit;
-  opacity: inherit;
+  color: #fff;
+  opacity: 1;
+}
+
+.nav-links .profile-nav-link {
+  font-size: clamp(14px, 1.1vw, 18px);
+  font-family: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  margin: 0;
+  color: #fff;
+  opacity: 1;
 }
 .nav-items .profile-nav-link:hover,
 .nav-links .profile-nav-link:hover {
@@ -94,7 +103,7 @@
   display: none;
 }
 
-.profile-dropdown a {
+.profile-menu .profile-dropdown a {
   display: block;
   padding: 10px 12px;
   color: #fff;
@@ -106,7 +115,7 @@
   white-space: nowrap;
 }
 
-.profile-dropdown .profile-signout {
+.profile-menu .profile-dropdown .profile-signout {
   display: block;
   width: 100%;
   border: 0;
