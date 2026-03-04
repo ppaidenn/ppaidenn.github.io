@@ -140,20 +140,6 @@
       font-size: 16px;
     }
     .label { font-weight: 800; }
-    .silly-card {
-      border-radius: 14px;
-      border: 1px solid rgba(0,0,0,0.12);
-      background: rgba(255,255,255,0.88);
-      padding: 12px;
-      margin-bottom: 12px;
-    }
-    .silly-title {
-      margin: 0 0 6px;
-      font-weight: 800;
-      font-size: 13px;
-      letter-spacing: 0.08em;
-      color: rgba(17,17,17,0.6);
-    }
     .btn {
       border: 1px solid rgba(0,0,0,0.2);
       background: #111;
@@ -210,7 +196,7 @@
       <h1>Profile</h1>
       <div class="profile-top">
         <div class="avatar-wrap">
-          <img id="profileAvatarImg" alt="Profile photo" src="/images/favicon.png">
+          <img id="profileAvatarImg" alt="Profile photo" src="/images/default_pfp.jpg">
           <input id="profileAvatarInput" type="file" accept="image/*">
         </div>
         <div>
@@ -224,14 +210,6 @@
             <textarea id="profileBio" placeholder="Tell people something fun about yourself..."></textarea>
           </div>
         </div>
-      </div>
-      <div class="silly-card">
-        <p class="silly-title">SILLY QUESTION</p>
-        <div class="row" id="profileSillyQuestion">Loading...</div>
-      </div>
-      <div class="field">
-        <label for="profileSillyAnswer">Your Silly Answer</label>
-        <input id="profileSillyAnswer" type="text" placeholder="Write your answer">
       </div>
       <button class="btn" id="profileSaveBtn" type="button">Save Profile</button>
       <div class="status" id="profileStatus"></div>

@@ -1,6 +1,7 @@
 (() => {
   const SUPABASE_URL = "https://irauuqhqqkctcwulqzsw.supabase.co";
   const SUPABASE_KEY = "sb_publishable_93dGo8oZILIYg9NSotz9MQ_T8v22oXR";
+  const DEFAULT_AVATAR_URL = "/images/default_pfp.jpg";
   const SILLY_QUESTION_BANK = [
     "If your socks had names, what are they?",
     "Which snack would survive a zombie apocalypse with you?",
@@ -44,7 +45,7 @@
       id: user?.id,
       username: normalizeUsername(fallback.username || meta.username, email),
       email: email || null,
-      avatar_url: String(fallback.avatarUrl || meta.avatar_url || "").trim() || null,
+      avatar_url: String(fallback.avatarUrl || meta.avatar_url || DEFAULT_AVATAR_URL).trim() || DEFAULT_AVATAR_URL,
       bio: String(fallback.bio || meta.bio || "").trim() || null,
       silly_question: String(fallback.sillyQuestion || meta.silly_question || "").trim() || null,
       silly_answer: String(fallback.sillyAnswer || meta.silly_answer || "").trim() || null,

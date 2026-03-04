@@ -2,12 +2,11 @@
   const usernameEl = document.getElementById("profileUsername");
   const emailEl = document.getElementById("profileEmail");
   const bioEl = document.getElementById("profileBio");
-  const sillyQuestionEl = document.getElementById("profileSillyQuestion");
-  const sillyAnswerEl = document.getElementById("profileSillyAnswer");
   const avatarImgEl = document.getElementById("profileAvatarImg");
   const avatarInputEl = document.getElementById("profileAvatarInput");
   const saveBtn = document.getElementById("profileSaveBtn");
   const statusEl = document.getElementById("profileStatus");
+  const DEFAULT_AVATAR = "/images/default_pfp.jpg";
 
   function setStatus(message, isError = false) {
     if (!statusEl) return;
@@ -62,9 +61,7 @@
     if (usernameEl) usernameEl.value = profile.username || "";
     if (emailEl) emailEl.textContent = res.user.email || "-";
     if (bioEl) bioEl.value = profile.bio || "";
-    if (sillyQuestionEl) sillyQuestionEl.textContent = profile.silly_question || "No silly question assigned yet.";
-    if (sillyAnswerEl) sillyAnswerEl.value = profile.silly_answer || "";
-    if (avatarImgEl) avatarImgEl.src = profile.avatar_url || "/images/favicon.png";
+    if (avatarImgEl) avatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
     setStatus("Profile loaded.");
   }
 
@@ -87,14 +84,13 @@
         const patch = {
           username: usernameEl ? usernameEl.value : "",
           bio: bioEl ? bioEl.value : "",
-          silly_answer: sillyAnswerEl ? sillyAnswerEl.value : "",
         };
         if (avatarDataUrl) patch.avatar_url = avatarDataUrl;
 
         const res = await window.PaidenAuth.updateProfile(patch);
         if (!res.ok) return setStatus(res.error || "Could not save profile.", true);
         const profile = res.profile || {};
-        if (avatarImgEl) avatarImgEl.src = profile.avatar_url || "/images/favicon.png";
+        if (avatarImgEl) avatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
         setStatus("Profile saved.");
         if (avatarInputEl) avatarInputEl.value = "";
       } catch (err) {

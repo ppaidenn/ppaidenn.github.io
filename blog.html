@@ -1986,6 +1986,7 @@ const titleEl = document.getElementById("postTitle");
     const btnPublish = document.getElementById("btnPublish");
     const btnClearDraft = document.getElementById("btnClearDraft");
     const PUBLISH_BTN_IDLE_HTML = '<i class="fa-solid fa-paper-plane"></i> Publish';
+    const DEFAULT_AVATAR_URL = "/images/default_pfp.jpg";
     const publicProfileByUsername = new Map();
     function setPublishSubmitting(isSubmitting) {
       if (!btnPublish) return;
@@ -2002,7 +2003,6 @@ const titleEl = document.getElementById("postTitle");
       const authorWrap = card.querySelector(".post-author");
       if (!authorWrap || !author) return;
       const profile = getPublicProfile(author);
-      if (!profile || !profile.avatar_url) return;
       let avatar = authorWrap.querySelector(".post-author-avatar");
       if (!avatar) {
         avatar = document.createElement("img");
@@ -2010,7 +2010,7 @@ const titleEl = document.getElementById("postTitle");
         avatar.alt = `${author} profile photo`;
         authorWrap.insertBefore(avatar, authorWrap.firstChild);
       }
-      avatar.src = profile.avatar_url;
+      avatar.src = (profile && profile.avatar_url) ? profile.avatar_url : DEFAULT_AVATAR_URL;
     }
     async function hydrateAuthorProfiles(cards) {
       if (!sb || !Array.isArray(cards) || !cards.length) return;

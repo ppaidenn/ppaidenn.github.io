@@ -55,10 +55,11 @@
 
       if (!res.ok) return setStatus(res.error || "Could not create account.", true);
       if (res.requiresEmailConfirmation) {
-        return setStatus("Account created. Check your email to verify, then sign in.");
+        setStatus("Account created. Verify your email if prompted. Redirecting to profile...");
+      } else {
+        setStatus("Account created and signed in. Redirecting to profile...");
       }
-      setStatus("Account created and signed in. Redirecting to blog...");
-      window.setTimeout(() => { window.location.href = "/blog"; }, 800);
+      window.setTimeout(() => { window.location.href = "/profile/?v=20260304"; }, 800);
     });
   }
 

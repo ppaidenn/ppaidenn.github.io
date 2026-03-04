@@ -24,12 +24,12 @@
 }
 
 .nav-items .profile-menu {
-  margin-right: 0;
+  margin-right: var(--spacing-large, 18px);
   margin-left: 0;
 }
 
 .nav-links .profile-menu {
-  margin-right: 0;
+  margin-right: var(--spacing-large, 18px);
   margin-left: 2px;
 }
 
@@ -99,7 +99,9 @@
   padding: 10px 12px;
   color: #fff;
   text-decoration: none;
+  font-family: inherit;
   font-size: 14px;
+  line-height: 1.25;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -112,7 +114,9 @@
   padding: 10px 12px;
   color: #fff;
   text-decoration: none;
+  font-family: inherit;
   font-size: 14px;
+  line-height: 1.25;
   font-weight: 700;
   white-space: nowrap;
   background: transparent;
