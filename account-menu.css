@@ -4,6 +4,14 @@
   margin-right: 0;
 }
 
+/* Keep desktop header links consistently white across pages */
+.nav-items a,
+.nav-links a,
+.brand a {
+  color: #fff !important;
+  opacity: 1 !important;
+}
+
 .profile-menu summary {
   list-style: none;
   cursor: pointer;
