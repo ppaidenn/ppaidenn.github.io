@@ -43,7 +43,7 @@
       : '<span class="profile-label">Profile</span><i class="fa-solid fa-user profile-icon" aria-hidden="true"></i>';
 
     const links = signedIn
-      ? `<a href="/profile">View Profile</a>
+      ? `<a href="/profile/?v=20260304">View Profile</a>
          <button type="button" class="profile-signout">Sign Out</button>`
       : `<a href="/signin">Sign In</a>
          <a href="/create-account">Create Account</a>`;

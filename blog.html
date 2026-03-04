@@ -567,6 +567,18 @@
       font-weight: 700;
       opacity: 0.9;
       font-size: 0.98rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .post-author-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid rgba(0,0,0,0.18);
+      background: rgba(255,255,255,0.8);
+      flex: 0 0 28px;
     }
     .post-topline{
       display:flex;
@@ -1974,10 +1986,52 @@ const titleEl = document.getElementById("postTitle");
     const btnPublish = document.getElementById("btnPublish");
     const btnClearDraft = document.getElementById("btnClearDraft");
     const PUBLISH_BTN_IDLE_HTML = '<i class="fa-solid fa-paper-plane"></i> Publish';
+    const publicProfileByUsername = new Map();
     function setPublishSubmitting(isSubmitting) {
       if (!btnPublish) return;
       btnPublish.disabled = !!isSubmitting;
       btnPublish.innerHTML = isSubmitting ? "Publishing..." : PUBLISH_BTN_IDLE_HTML;
+    }
+    function getPublicProfile(username) {
+      if (!username) return null;
+      return publicProfileByUsername.get(String(username).trim().toLowerCase()) || null;
+    }
+    function applyAuthorProfileToCard(card) {
+      if (!card) return;
+      const author = (card.getAttribute("data-author") || "").trim();
+      const authorWrap = card.querySelector(".post-author");
+      if (!authorWrap || !author) return;
+      const profile = getPublicProfile(author);
+      if (!profile || !profile.avatar_url) return;
+      let avatar = authorWrap.querySelector(".post-author-avatar");
+      if (!avatar) {
+        avatar = document.createElement("img");
+        avatar.className = "post-author-avatar";
+        avatar.alt = `${author} profile photo`;
+        authorWrap.insertBefore(avatar, authorWrap.firstChild);
+      }
+      avatar.src = profile.avatar_url;
+    }
+    async function hydrateAuthorProfiles(cards) {
+      if (!sb || !Array.isArray(cards) || !cards.length) return;
+      const usernames = Array.from(new Set(cards
+        .map((c) => (c && c.getAttribute("data-author") ? String(c.getAttribute("data-author")).trim() : ""))
+        .filter(Boolean)
+        .map((name) => name.toLowerCase())));
+      if (!usernames.length) return;
+
+      const missing = usernames.filter((u) => !publicProfileByUsername.has(u));
+      if (missing.length) {
+        const { data, error } = await sb.rpc("get_public_profiles", { usernames: missing });
+        if (!error && Array.isArray(data)) {
+          data.forEach((p) => {
+            const key = p && p.username ? String(p.username).trim().toLowerCase() : "";
+            if (!key) return;
+            publicProfileByUsername.set(key, p);
+          });
+        }
+      }
+      cards.forEach((card) => applyAuthorProfileToCard(card));
     }
     async function autofillAuthorFromAccount() {
       if (!authorEl || !window.PaidenAuth) return;
@@ -2176,10 +2230,12 @@ function excerpt(text, maxChars = 1000) {
       }
       sortAllPostsByDateDesc();
       await hydrateAllCommentCountsFromSupabase();
+      await hydrateAuthorProfiles(Array.from(blogGrid.querySelectorAll('.post-card[data-source="user"]')));
     }
 
     function hydrateStaticThumbs() {
-      blogGrid.querySelectorAll('.post-card:not([data-source="user"])').forEach(card => {
+      const staticCards = Array.from(blogGrid.querySelectorAll('.post-card:not([data-source="user"])'));
+      staticCards.forEach(card => {
         // Fill visible author line for static cards
         const author = card.getAttribute('data-author') || '';
         const authorSpan = card.querySelector('.post-author-name');
@@ -2202,6 +2258,7 @@ function excerpt(text, maxChars = 1000) {
         const countEl = commentsEl.querySelector(".post-comments-count");
         if (countEl) countEl.textContent = String(commentsCount);
       });
+      hydrateAuthorProfiles(staticCards);
     }
 
     // ===== Preview handling =====

@@ -4,11 +4,20 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   username text not null,
   email text,
+  avatar_url text,
+  bio text,
+  silly_question text,
+  silly_answer text,
   security_question text,
   security_answer text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.profiles add column if not exists avatar_url text;
+alter table public.profiles add column if not exists bio text;
+alter table public.profiles add column if not exists silly_question text;
+alter table public.profiles add column if not exists silly_answer text;
 
 create unique index if not exists profiles_username_lower_unique
   on public.profiles (lower(username));
@@ -52,3 +61,27 @@ for update
 to authenticated
 using (auth.uid() = id)
 with check (auth.uid() = id);
+
+create or replace function public.get_public_profiles(usernames text[])
+returns table (
+  username text,
+  avatar_url text,
+  bio text,
+  silly_question text,
+  silly_answer text
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    p.username,
+    p.avatar_url,
+    p.bio,
+    p.silly_question,
+    p.silly_answer
+  from public.profiles p
+  where lower(p.username) = any(usernames);
+$$;
+
+grant execute on function public.get_public_profiles(text[]) to anon, authenticated;

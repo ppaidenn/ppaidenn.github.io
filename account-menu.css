@@ -41,8 +41,12 @@
   text-decoration: none;
   padding-bottom: var(--spacing-small, 0px);
   margin: 0;
-  color: inherit;
-  opacity: inherit;
+  color: #fff;
+  opacity: 1;
+}
+.nav-items .profile-menu summary:hover,
+.nav-links .profile-menu summary:hover {
+  text-decoration: underline;
 }
 
 .profile-label {

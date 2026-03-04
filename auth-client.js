@@ -1,6 +1,18 @@
 (() => {
   const SUPABASE_URL = "https://irauuqhqqkctcwulqzsw.supabase.co";
   const SUPABASE_KEY = "sb_publishable_93dGo8oZILIYg9NSotz9MQ_T8v22oXR";
+  const SILLY_QUESTION_BANK = [
+    "If your socks had names, what are they?",
+    "Which snack would survive a zombie apocalypse with you?",
+    "What would your pet say in your job interview?",
+    "If your laugh had a ringtone, what would it be called?",
+    "What is your go-to dance move at 2 AM?",
+    "If your fridge had a personality, describe it.",
+    "What useless superpower would you choose?",
+    "What would be the title of your accidental autobiography?",
+    "What food best matches your mood on Mondays?",
+    "If your backpack could talk, what would it complain about?",
+  ];
 
   function requireClient() {
     if (!window.supabase || !window.supabase.createClient) {
@@ -32,6 +44,10 @@
       id: user?.id,
       username: normalizeUsername(fallback.username || meta.username, email),
       email: email || null,
+      avatar_url: String(fallback.avatarUrl || meta.avatar_url || "").trim() || null,
+      bio: String(fallback.bio || meta.bio || "").trim() || null,
+      silly_question: String(fallback.sillyQuestion || meta.silly_question || "").trim() || null,
+      silly_answer: String(fallback.sillyAnswer || meta.silly_answer || "").trim() || null,
       security_question: String(fallback.securityQuestion || meta.security_question || "").trim() || null,
       security_answer: String(fallback.securityAnswer || meta.security_answer || "").trim() || null,
     };
@@ -49,6 +65,7 @@
   async function createAccount({ username, email, password, securityQuestion, securityAnswer }) {
     const client = requireClient();
     const normalizedUsername = normalizeUsername(username, email);
+    const sillyQuestion = SILLY_QUESTION_BANK[Math.floor(Math.random() * SILLY_QUESTION_BANK.length)];
     const { data: existingUsername, error: existingUsernameError } = await client
       .from("profiles")
       .select("id")
@@ -63,6 +80,7 @@
 
     const payload = {
       username: normalizedUsername,
+      silly_question: sillyQuestion,
       security_question: String(securityQuestion || "").trim(),
       security_answer: String(securityAnswer || "").trim(),
     };
@@ -85,6 +103,7 @@
       const saved = await upsertProfileForUser(user, {
         username: payload.username,
         email,
+        sillyQuestion: payload.silly_question,
         securityQuestion: payload.security_question,
         securityAnswer: payload.security_answer,
       });
@@ -130,7 +149,7 @@
 
     let { data: profile, error } = await client
       .from("profiles")
-      .select("id,username,email,security_question,security_answer")
+      .select("id,username,email,avatar_url,bio,silly_question,silly_answer,security_question,security_answer")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -143,6 +162,58 @@
     }
 
     return { ok: true, user, profile };
+  }
+
+  async function updateProfile(patch = {}) {
+    const client = requireClient();
+    const { data: sessionData, error: sessionError } = await client.auth.getSession();
+    if (sessionError) return { ok: false, error: sessionError.message || "Could not load session." };
+    const user = sessionData?.session?.user || null;
+    if (!user) return { ok: false, error: "Not signed in." };
+
+    const update = {};
+    if (Object.prototype.hasOwnProperty.call(patch, "username")) {
+      const normalized = normalizeUsername(patch.username, user.email || "");
+      if (!normalized) return { ok: false, error: "Username is required." };
+      const { data: existingUsername, error: existingUsernameError } = await client
+        .from("profiles")
+        .select("id")
+        .ilike("username", normalized)
+        .neq("id", user.id)
+        .limit(1);
+      if (existingUsernameError) {
+        return { ok: false, error: existingUsernameError.message || "Could not verify username." };
+      }
+      if (Array.isArray(existingUsername) && existingUsername.length > 0) {
+        return { ok: false, error: "That username is already taken." };
+      }
+      update.username = normalized;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "avatar_url")) {
+      update.avatar_url = String(patch.avatar_url || "").trim() || null;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "bio")) {
+      update.bio = String(patch.bio || "").trim() || null;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "silly_answer")) {
+      update.silly_answer = String(patch.silly_answer || "").trim() || null;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "security_question")) {
+      update.security_question = String(patch.security_question || "").trim() || null;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "security_answer")) {
+      update.security_answer = String(patch.security_answer || "").trim() || null;
+    }
+
+    const { error } = await client.from("profiles").update(update).eq("id", user.id);
+    if (error) {
+      const msg = String(error.message || "");
+      if (msg.toLowerCase().includes("profiles_username_lower_unique")) {
+        return { ok: false, error: "That username is already taken." };
+      }
+      return { ok: false, error: msg || "Could not update profile." };
+    }
+    return getCurrentProfile();
   }
 
   async function signOut() {
@@ -158,5 +229,7 @@
     signIn,
     signOut,
     getCurrentProfile,
+    updateProfile,
+    sillyQuestionBank: [...SILLY_QUESTION_BANK],
   };
 })();
