@@ -89,6 +89,7 @@
       height: var(--nav-height);
       background: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
       pointer-events: none;
+      z-index: 0;
     }
 
     /* Inner container for nav buttons, constrained within the responsive side margin */
@@ -98,6 +99,8 @@
       margin-right: var(--side-margin);
       padding-top: var(--safe-top);
       display: flex; align-items: flex-end;
+      position: relative;
+      z-index: 1;
     }
 
     /* Styling for the brand button in nav */

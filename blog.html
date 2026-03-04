@@ -127,6 +127,7 @@
       height: var(--nav-height);
       background: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
       pointer-events: none;
+      z-index: 0;
     }
 
     .nav-inner {
@@ -136,6 +137,8 @@
       padding-top: var(--safe-top);
       display: flex;
       align-items: flex-end;
+      position: relative;
+      z-index: 1;
     }
 
     .brand a {
