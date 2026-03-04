@@ -18,6 +18,9 @@
       --side-margin: 10vw;
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --brand-font-size: 2.5vw;
+      --nav-font-size: 1.2vw;
+      --spacing-large: 1.5vw;
       --footer-padding: 7vh;
       --spacing-small: 0.5vw;
       --footer-title-font-size: 2vw;
@@ -53,23 +56,27 @@
     .brand {
       color: #fff;
       text-decoration: none;
-      font-weight: 800;
-      font-size: clamp(24px, 2.8vw, 36px);
-      line-height: 1;
-      padding-right: 18px;
-      border-right: 2px solid rgba(255,255,255,0.9);
+      font-size: var(--brand-font-size);
+      font-weight: bold;
+      padding-bottom: 0;
+      padding-right: var(--spacing-large);
+      border-right: 0.1vw solid #fff;
+      margin-right: var(--spacing-large);
     }
     .nav-links {
       display: flex;
-      align-items: center;
-      gap: clamp(14px, 1.8vw, 24px);
+      align-items: flex-end;
+      gap: 0;
     }
     .nav-links a {
       color: #fff;
       text-decoration: none;
-      font-weight: 700;
-      font-size: clamp(14px, 1.1vw, 18px);
+      font-size: var(--nav-font-size);
+      font-weight: bold;
+      margin-right: var(--spacing-large);
+      padding-bottom: 0;
     }
+    .nav-links a:last-child { margin-right: 0; }
     .nav-links a:hover { text-decoration: underline; }
     .mobile-fixed-header { display: none; }
     .content-wrap {
