@@ -50,7 +50,7 @@
 
     return `
 <details class="profile-menu">
-  <summary aria-label="Profile">${summaryInner}</summary>
+  <summary class="profile-nav-link" aria-label="Profile">${summaryInner}</summary>
   <div class="profile-dropdown">
     ${links}
   </div>

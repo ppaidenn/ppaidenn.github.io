@@ -8,14 +8,14 @@
   list-style: none;
   cursor: pointer;
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-end;
+  justify-content: flex-start;
   color: inherit;
   text-decoration: none;
   border: 0;
   background: transparent;
   padding: 0;
-  line-height: 1;
+  line-height: normal;
   gap: 8px;
 }
 
@@ -33,19 +33,19 @@
   margin-left: 2px;
 }
 
-.nav-items .profile-menu summary,
-.nav-links .profile-menu summary {
+.nav-items .profile-nav-link,
+.nav-links .profile-nav-link {
   font-size: var(--nav-font-size, 1.2vw);
   font-family: inherit;
   font-weight: bold;
   text-decoration: none;
   padding-bottom: var(--spacing-small, 0px);
   margin: 0;
-  color: #fff;
-  opacity: 1;
+  color: inherit;
+  opacity: inherit;
 }
-.nav-items .profile-menu summary:hover,
-.nav-links .profile-menu summary:hover {
+.nav-items .profile-nav-link:hover,
+.nav-links .profile-nav-link:hover {
   text-decoration: underline;
 }
 
