@@ -61,7 +61,7 @@
   font-family: inherit;
   font-weight: bold;
   text-decoration: none;
-  padding-bottom: calc(var(--spacing-small, 0.5vw) + 0.14vw);
+  padding-bottom: calc(var(--spacing-small, 0.5vw) + 0.22vw);
   line-height: 1;
   margin: 0;
   color: #fff;
@@ -196,7 +196,7 @@
     font-weight: bold !important;
     line-height: 1 !important;
     margin-right: var(--spacing-large, 1.5vw) !important;
-    padding-bottom: calc(var(--spacing-small, 0.5vw) + 0.14vw) !important;
+    padding-bottom: calc(var(--spacing-small, 0.5vw) + 0.22vw) !important;
     opacity: 1 !important;
   }
 
