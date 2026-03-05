@@ -33,9 +33,9 @@
 
   function normalizeUsername(username, email = "") {
     const raw = String(username || "").trim();
-    if (raw) return raw.slice(0, 40);
+    if (raw) return raw.slice(0, 80);
     const emailPrefix = String(email || "").split("@")[0].trim();
-    return (emailPrefix || "User").slice(0, 40);
+    return (emailPrefix || "User").slice(0, 80);
   }
 
   function profileFromUser(user, fallback = {}) {
