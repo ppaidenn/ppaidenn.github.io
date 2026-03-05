@@ -22,6 +22,11 @@
       --nav-font-size: 1.2vw;
       --spacing-small: 0.5vw;
       --spacing-large: 1.5vw;
+      --footer-padding: 7vh;
+      --footer-title-font-size: 2vw;
+      --footer-subtitle-font-size: 1vw;
+      --footer-nav-font-size: 1vw;
+      --footer-nav-left: 15vw;
     }
     * { box-sizing: border-box; }
     body {
@@ -156,7 +161,31 @@
       cursor: pointer;
     }
     .status { margin-top: 12px; min-height: 20px; font-weight: 700; }
-    .footer { display: none; }
+    .footer {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      background-color: #000;
+      padding: var(--footer-padding) 0;
+      position: relative;
+    }
+    .footer-inner {
+      margin: 0 var(--side-margin);
+      text-align: left;
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .footer-left { display: flex; flex-direction: column; align-items: flex-start; }
+    .footer-left .footer-brand { font-size: var(--footer-title-font-size); font-weight: bold; color: white; text-decoration: none; margin-bottom: 0.75vw; }
+    .footer-left .footer-created, .footer-left .footer-updated { font-size: var(--footer-subtitle-font-size); color: white; margin-top: var(--spacing-small); }
+    .footer-nav { position: absolute; top: 50%; left: var(--footer-nav-left); transform: translateY(-45%); display: flex; flex-direction: column; align-items: flex-start; }
+    .footer-nav a { font-size: var(--footer-nav-font-size); color: white; text-decoration: none; margin-bottom: var(--spacing-small); }
+    .footer-nav a:hover { text-decoration: underline; }
+    .footer-social { display: flex; flex-direction: column; align-items: flex-end; color: white; }
+    .footer-social .follow-text { font-size: var(--footer-nav-font-size); font-weight: bold; margin-bottom: var(--spacing-small); }
+    .social-icons { display: flex; gap: 1vw; }
+    .social-icons a { color: white; font-size: 2vw; text-decoration: none; }
     @media (max-width: 768px) {
       body { padding-top: calc(var(--safe-top) + 58px); }
       .top-nav { display: none; }
@@ -172,6 +201,7 @@
       .mobile-fixed-nav { display: flex; align-items: center; gap: 18px; padding-left: 16px; }
       .mobile-fixed-nav a { color: #fff; text-decoration: none; font-size: 22px; line-height: 1; }
       .profile-top { grid-template-columns: 1fr; }
+      .footer { display: none !important; }
     }
   </style>
 </head>
@@ -220,9 +250,36 @@
       <div class="status" id="profileStatus"></div>
     </section>
   </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <a class="footer-brand" href="/">paiden.com</a>
+        <div class="footer-created">Created by Paiden Nicks</div>
+        <div class="footer-updated" id="last-updated"></div>
+      </div>
+      <div class="footer-nav">
+        <a href="/resume">Resume</a>
+        <a href="/photos">Photos</a>
+        <a href="/blog">Blog</a>
+        <a href="/contactme">Contact Me</a>
+      </div>
+      <div class="footer-social">
+        <span class="follow-text">Follow Me</span>
+        <div class="social-icons">
+          <a href="https://www.linkedin.com/in/paiden" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i></a>
+          <a href="https://www.instagram.com/paiden_26" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
+          <a href="https://snapchat.com/t/m04JWymy" target="_blank" rel="noopener"><i class="fab fa-snapchat"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="/auth-client.js"></script>
   <script src="/account-menu.js"></script>
   <script src="/profile-page.js"></script>
+  <script>
+    const lastUpdated = document.getElementById("last-updated");
+    if (lastUpdated) lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();
+  </script>
 </body>
 </html>

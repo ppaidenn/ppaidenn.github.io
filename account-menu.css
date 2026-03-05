@@ -189,7 +189,7 @@
     gap: 0 !important;
   }
 
-  .top-nav .nav-links a {
+  .top-nav .nav-links > a {
     color: #fff !important;
     text-decoration: none !important;
     font-size: var(--nav-font-size, 1.2vw) !important;
@@ -200,7 +200,7 @@
     opacity: 1 !important;
   }
 
-  .top-nav .nav-links a:last-child {
+  .top-nav .nav-links > a:last-child {
     margin-right: 0 !important;
   }
 
