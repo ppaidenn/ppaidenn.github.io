@@ -57,10 +57,12 @@
 }
 
 .nav-links .profile-nav-link {
-  font-size: clamp(14px, 1.1vw, 18px);
+  font-size: var(--nav-font-size, 1.2vw);
   font-family: inherit;
-  font-weight: 700;
+  font-weight: bold;
   text-decoration: none;
+  padding-bottom: var(--spacing-small, 0.5vw);
+  line-height: 1;
   margin: 0;
   color: #fff;
   opacity: 1;
@@ -154,6 +156,58 @@
 
 .profile-dropdown .profile-signout:hover {
   background: rgba(255,255,255,0.12);
+}
+
+/* Desktop-only normalization for no-slideshow black headers */
+@media (min-width: 769px) {
+  .top-nav .top-nav-inner {
+    min-height: calc(70px + var(--safe-top, 0px)) !important;
+    margin: 0 var(--side-margin, 10vw) !important;
+    padding-top: var(--safe-top, 0px) !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: flex-start !important;
+  }
+
+  .top-nav .brand {
+    color: #fff !important;
+    text-decoration: none !important;
+    font-size: var(--brand-font-size, 2.5vw) !important;
+    font-weight: bold !important;
+    line-height: 1 !important;
+    padding-bottom: var(--spacing-small, 0.5vw) !important;
+    padding-right: var(--spacing-large, 1.5vw) !important;
+    border-right: 0.1vw solid #fff !important;
+    margin-right: var(--spacing-large, 1.5vw) !important;
+    display: inline-flex !important;
+    align-items: flex-end !important;
+  }
+
+  .top-nav .nav-links {
+    display: flex !important;
+    align-items: flex-end !important;
+    gap: 0 !important;
+  }
+
+  .top-nav .nav-links a {
+    color: #fff !important;
+    text-decoration: none !important;
+    font-size: var(--nav-font-size, 1.2vw) !important;
+    font-weight: bold !important;
+    line-height: 1 !important;
+    margin-right: var(--spacing-large, 1.5vw) !important;
+    padding-bottom: var(--spacing-small, 0.5vw) !important;
+    opacity: 1 !important;
+  }
+
+  .top-nav .nav-links a:last-child {
+    margin-right: 0 !important;
+  }
+
+  .top-nav .nav-links .profile-menu {
+    margin-left: 0 !important;
+    margin-right: var(--spacing-large, 1.5vw) !important;
+  }
 }
 
 @media (max-width: 768px) {
