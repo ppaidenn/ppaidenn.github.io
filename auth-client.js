@@ -68,15 +68,13 @@
     const normalizedEmail = String(email || "").trim().toLowerCase();
     const normalizedUsername = normalizeUsername(username, normalizedEmail);
     const sillyQuestion = SILLY_QUESTION_BANK[Math.floor(Math.random() * SILLY_QUESTION_BANK.length)];
-    const { data: existingUsername, error: existingUsernameError } = await client
-      .from("profiles")
-      .select("id")
-      .ilike("username", normalizedUsername)
-      .limit(1);
-    if (existingUsernameError) {
-      return { ok: false, error: existingUsernameError.message || "Could not verify username." };
+    const { data: usernameTaken, error: usernameTakenError } = await client.rpc("is_signup_username_taken", {
+      target_username: normalizedUsername,
+    });
+    if (usernameTakenError) {
+      return { ok: false, error: usernameTakenError.message || "Could not verify username." };
     }
-    if (Array.isArray(existingUsername) && existingUsername.length > 0) {
+    if (usernameTaken === true) {
       return { ok: false, error: "That username is already taken." };
     }
 
@@ -134,7 +132,7 @@
       user,
       session,
       requiresEmailConfirmation: true,
-      message: "Account created. Please verify your email, then sign in.",
+      message: "Account created. Check your email for the confirmation link, then sign in.",
     };
   }
 

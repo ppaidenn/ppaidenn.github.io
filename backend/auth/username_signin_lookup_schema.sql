@@ -5,9 +5,14 @@ security definer
 set search_path = public, auth
 as $$
   select lower(trim(u.email))
-  from public.profiles p
-  join auth.users u on u.id = p.id
-  where lower(p.username) = lower(trim(coalesce(target_username, '')))
+  from auth.users u
+  left join public.profiles p on p.id = u.id
+  where lower(
+    coalesce(
+      nullif(trim(p.username), ''),
+      nullif(trim(u.raw_user_meta_data ->> 'username'), '')
+    )
+  ) = lower(trim(coalesce(target_username, '')))
   limit 1;
 $$;
 
