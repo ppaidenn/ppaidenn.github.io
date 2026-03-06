@@ -134,14 +134,11 @@
 
     let resolvedEmail = rawIdentifier;
     if (!rawIdentifier.includes("@")) {
-      const { data: profileRow, error: profileError } = await client
-        .from("profiles")
-        .select("email")
-        .ilike("username", rawIdentifier)
-        .limit(1)
-        .maybeSingle();
-      if (profileError) return { ok: false, error: profileError.message || "Could not resolve username." };
-      resolvedEmail = String(profileRow?.email || "").trim();
+      const { data: rpcEmail, error: rpcError } = await client.rpc("get_signin_email_by_username", {
+        target_username: rawIdentifier,
+      });
+      if (rpcError) return { ok: false, error: rpcError.message || "Could not resolve username." };
+      resolvedEmail = String(rpcEmail || "").trim();
       if (!resolvedEmail) return { ok: false, error: "Username not found." };
     }
 
