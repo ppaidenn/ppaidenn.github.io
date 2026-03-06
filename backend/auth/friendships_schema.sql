@@ -53,3 +53,37 @@ as $$
 $$;
 
 grant execute on function public.get_my_friends() to authenticated;
+
+create or replace function public.add_friend_by_username(target_username text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  me uuid := auth.uid();
+  friend_target uuid;
+begin
+  if me is null then
+    return false;
+  end if;
+
+  select p.id
+    into friend_target
+  from public.profiles p
+  where lower(p.username) = lower(trim(coalesce(target_username, '')))
+  limit 1;
+
+  if friend_target is null or friend_target = me then
+    return false;
+  end if;
+
+  insert into public.friendships (user_id, friend_id)
+  values (me, friend_target)
+  on conflict (user_id, friend_id) do nothing;
+
+  return true;
+end;
+$$;
+
+grant execute on function public.add_friend_by_username(text) to authenticated;

@@ -303,7 +303,8 @@
     const accountsSummary = document.getElementById("accountsSummary");
     const accountsStatus = document.getElementById("accountsStatus");
     let currentUserId = "";
-    let friendIds = new Set();
+    let currentUsernameLower = "";
+    let friendUsernames = new Set();
 
     function escapeHTML(str) {
       return String(str || "").replace(/[&<>"']/g, (s) => ({
@@ -329,16 +330,17 @@
       }
       const authRes = await window.PaidenAuth.getCurrentProfile();
       currentUserId = authRes && authRes.ok && authRes.user && authRes.user.id ? String(authRes.user.id) : "";
+      currentUsernameLower = authRes && authRes.ok && authRes.profile && authRes.profile.username
+        ? String(authRes.profile.username).trim().toLowerCase()
+        : "";
 
       const client = window.PaidenAuth.getClient();
-      friendIds = new Set();
+      friendUsernames = new Set();
       if (currentUserId) {
-        const { data: friendsData } = await client
-          .from("friendships")
-          .select("friend_id")
-          .eq("user_id", currentUserId);
+        const { data: friendsData } = await client.rpc("get_my_friends");
         (Array.isArray(friendsData) ? friendsData : []).forEach((row) => {
-          if (row && row.friend_id) friendIds.add(String(row.friend_id));
+          const key = row && row.username ? String(row.username).trim().toLowerCase() : "";
+          if (key) friendUsernames.add(key);
         });
       }
 
@@ -365,13 +367,13 @@
 
       if (accountsGrid) {
         accountsGrid.innerHTML = rows.map((row) => {
-          const accountId = String(row.id || "").trim();
           const username = String(row.username || "").trim();
           const avatar = String(row.avatar_url || "").trim() || DEFAULT_AVATAR;
           let actionHtml = "";
-          if (currentUserId && accountId && accountId !== currentUserId) {
-            const alreadyFriend = friendIds.has(accountId);
-            actionHtml = `<button class="add-friend-btn" data-add-friend="${escapeHTML(accountId)}" ${alreadyFriend ? "disabled" : ""}>${alreadyFriend ? "Friends" : "Add Friend"}</button>`;
+          const usernameKey = username.toLowerCase();
+          if (currentUserId && usernameKey && usernameKey !== currentUsernameLower) {
+            const alreadyFriend = friendUsernames.has(usernameKey);
+            actionHtml = `<button class="add-friend-btn" data-add-friend-username="${escapeHTML(username)}" ${alreadyFriend ? "disabled" : ""}>${alreadyFriend ? "Friends" : "Add Friend"}</button>`;
           }
           return `
             <article class="account-card">
@@ -386,7 +388,7 @@
     }
 
     document.addEventListener("click", async (event) => {
-      const btn = event.target.closest("[data-add-friend]");
+      const btn = event.target.closest("[data-add-friend-username]");
       if (!btn) return;
       event.preventDefault();
 
@@ -395,19 +397,19 @@
         setStatus("Sign in to add friends.", true);
         return;
       }
-      const friendId = String(btn.getAttribute("data-add-friend") || "").trim();
-      if (!friendId || friendId === currentUserId) return;
+      const friendUsername = String(btn.getAttribute("data-add-friend-username") || "").trim();
+      if (!friendUsername || friendUsername.toLowerCase() === currentUsernameLower) return;
       btn.disabled = true;
       btn.textContent = "Adding...";
       const client = window.PaidenAuth.getClient();
-      const { error } = await client.from("friendships").insert({ user_id: currentUserId, friend_id: friendId });
-      if (error && error.code !== "23505") {
+      const { data, error } = await client.rpc("add_friend_by_username", { target_username: friendUsername });
+      if (error || data === false) {
         btn.disabled = false;
         btn.textContent = "Add Friend";
-        setStatus(error.message || "Could not add friend.", true);
+        setStatus((error && error.message) || "Could not add friend.", true);
         return;
       }
-      friendIds.add(friendId);
+      friendUsernames.add(friendUsername.toLowerCase());
       btn.textContent = "Friends";
       setStatus("Friend added.", false);
     });
