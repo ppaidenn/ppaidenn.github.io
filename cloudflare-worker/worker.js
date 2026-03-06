@@ -1,5 +1,6 @@
 export default {
   async fetch(request) {
+    // Username route rewriter for paiden.com
     const url = new URL(request.url);
 
     if (request.method !== "GET" && request.method !== "HEAD") {
