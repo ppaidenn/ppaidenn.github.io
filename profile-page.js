@@ -20,8 +20,12 @@
   const calendarWeekdays = document.getElementById("calendarWeekdays");
   const calendarGrid = document.getElementById("calendarGrid");
   const calendarEventsList = document.getElementById("calendarEventsList");
+  const calendarNewEventBtn = document.getElementById("calendarNewEventBtn");
 
   const eventCreateForm = document.getElementById("eventCreateForm");
+  const eventModalOverlay = document.getElementById("eventModalOverlay");
+  const eventModalCloseBtn = document.getElementById("eventModalCloseBtn");
+  const eventModalCancelBtn = document.getElementById("eventModalCancelBtn");
   const eventTitleInput = document.getElementById("eventTitleInput");
   const eventStartInput = document.getElementById("eventStartInput");
   const eventEndInput = document.getElementById("eventEndInput");
@@ -29,6 +33,8 @@
   const eventDescriptionInput = document.getElementById("eventDescriptionInput");
   const eventInviteFriendsBox = document.getElementById("eventInviteFriendsBox");
   const eventCreateBtn = document.getElementById("eventCreateBtn");
+  const eventContextMenu = document.getElementById("eventContextMenu");
+  const eventContextMenuCreate = document.getElementById("eventContextMenuCreate");
 
   const eventInvitesCounterText = document.getElementById("eventInvitesCounterText");
   const eventInvitesList = document.getElementById("eventInvitesList");
@@ -40,6 +46,7 @@
   let calendarMonthDate = new Date();
   calendarMonthDate = new Date(calendarMonthDate.getFullYear(), calendarMonthDate.getMonth(), 1);
   let selectedDayKey = toDateKey(new Date());
+  let contextMenuDayKey = "";
   let calendarEvents = [];
 
   function setStatus(message, isError = false) {
@@ -113,17 +120,59 @@
     return { start, end };
   }
 
+  function isDayCurrentOrFuture(dayKey) {
+    const compareToday = new Date();
+    compareToday.setHours(0, 0, 0, 0);
+    const day = new Date(`${dayKey}T00:00:00`);
+    return day.getTime() >= compareToday.getTime();
+  }
+
+  function openEventModal() {
+    if (!eventModalOverlay) return;
+    eventModalOverlay.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeEventModal() {
+    if (!eventModalOverlay) return;
+    eventModalOverlay.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  function hideEventContextMenu() {
+    if (!eventContextMenu) return;
+    eventContextMenu.classList.remove("open");
+  }
+
+  function showEventContextMenu(x, y, dayKey) {
+    if (!eventContextMenu) return;
+    contextMenuDayKey = dayKey;
+    eventContextMenu.classList.add("open");
+    const menuWidth = 170;
+    const menuHeight = 46;
+    const left = Math.max(8, Math.min(x, window.innerWidth - menuWidth - 8));
+    const top = Math.max(8, Math.min(y, window.innerHeight - menuHeight - 8));
+    eventContextMenu.style.left = `${left}px`;
+    eventContextMenu.style.top = `${top}px`;
+  }
+
   function beginEventDraftForDay(dayKey) {
     if (!eventStartInput || !eventEndInput) return;
     const { start, end } = defaultEventRangeForDay(dayKey);
     eventStartInput.value = toLocalDateTimeValue(start);
     eventEndInput.value = toLocalDateTimeValue(end);
+    if (eventTitleInput) eventTitleInput.value = "";
+    if (eventLocationInput) eventLocationInput.value = "";
+    if (eventDescriptionInput) eventDescriptionInput.value = "";
+    if (eventInviteFriendsBox) {
+      eventInviteFriendsBox.querySelectorAll("input[data-invite-username]").forEach((el) => {
+        el.checked = false;
+      });
+    }
+    openEventModal();
     if (eventTitleInput) {
       eventTitleInput.focus();
       eventTitleInput.select();
-    }
-    if (eventCreateForm && typeof eventCreateForm.scrollIntoView === "function") {
-      eventCreateForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
     setStatus(`Draft started for ${dayKey}.`);
   }
@@ -555,6 +604,7 @@
     calendarGrid.addEventListener("click", (event) => {
       const btn = event.target.closest("[data-day-key]");
       if (!btn) return;
+      hideEventContextMenu();
       selectedDayKey = String(btn.getAttribute("data-day-key") || "");
       renderCalendarGrid();
     });
@@ -562,9 +612,14 @@
     calendarGrid.addEventListener("dblclick", (event) => {
       const btn = event.target.closest("[data-day-key]");
       if (!btn) return;
+      hideEventContextMenu();
       selectedDayKey = String(btn.getAttribute("data-day-key") || "");
       renderCalendarGrid();
-      beginEventDraftForDay(selectedDayKey);
+      if (isDayCurrentOrFuture(selectedDayKey)) {
+        beginEventDraftForDay(selectedDayKey);
+      } else {
+        setStatus("Cannot create events on past dates.", true);
+      }
     });
 
     calendarGrid.addEventListener("contextmenu", (event) => {
@@ -573,7 +628,50 @@
       event.preventDefault();
       selectedDayKey = String(btn.getAttribute("data-day-key") || "");
       renderCalendarGrid();
-      beginEventDraftForDay(selectedDayKey);
+      if (!isDayCurrentOrFuture(selectedDayKey)) {
+        setStatus("Cannot create events on past dates.", true);
+        hideEventContextMenu();
+        return;
+      }
+      showEventContextMenu(event.clientX, event.clientY, selectedDayKey);
+    });
+  }
+
+  if (calendarNewEventBtn) {
+    calendarNewEventBtn.addEventListener("click", () => {
+      hideEventContextMenu();
+      const todayKey = toDateKey(new Date());
+      selectedDayKey = todayKey;
+      renderCalendarGrid();
+      beginEventDraftForDay(todayKey);
+    });
+  }
+
+  if (eventContextMenuCreate) {
+    eventContextMenuCreate.addEventListener("click", () => {
+      const draftDay = contextMenuDayKey || selectedDayKey || toDateKey(new Date());
+      hideEventContextMenu();
+      beginEventDraftForDay(draftDay);
+    });
+  }
+
+  if (eventModalCloseBtn) {
+    eventModalCloseBtn.addEventListener("click", () => {
+      closeEventModal();
+    });
+  }
+
+  if (eventModalCancelBtn) {
+    eventModalCancelBtn.addEventListener("click", () => {
+      closeEventModal();
+    });
+  }
+
+  if (eventModalOverlay) {
+    eventModalOverlay.addEventListener("click", (event) => {
+      if (event.target === eventModalOverlay) {
+        closeEventModal();
+      }
     });
   }
 
@@ -621,6 +719,7 @@
         }
 
         eventCreateForm.reset();
+        closeEventModal();
         await loadCalendarEventsForMonth();
         await loadPendingEventInvites();
         setStatus("Event created.");
@@ -634,6 +733,10 @@
   }
 
   document.addEventListener("click", async (event) => {
+    if (!event.target.closest("#eventContextMenu") && !event.target.closest("[data-day-key]")) {
+      hideEventContextMenu();
+    }
+
     const friendReqBtn = event.target.closest("[data-request-action][data-request-id]");
     if (friendReqBtn) {
       event.preventDefault();
@@ -683,6 +786,15 @@
       setStatus(acceptInvite ? "Event invite accepted." : "Event invite declined.");
     }
   });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      hideEventContextMenu();
+      closeEventModal();
+    }
+  });
+  window.addEventListener("resize", hideEventContextMenu);
+  window.addEventListener("scroll", hideEventContextMenu, { passive: true });
 
   loadProfile();
 })();

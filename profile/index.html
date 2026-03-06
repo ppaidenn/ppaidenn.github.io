@@ -88,7 +88,17 @@
       border-radius: 22px;
       box-shadow: 0 10px 34px rgba(0,0,0,0.08);
       padding: clamp(18px, 2.2vw, 32px);
-      max-width: 920px;
+      max-width: none;
+    }
+    .profile-main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+    .profile-left-col,
+    .profile-right-col {
+      min-width: 0;
     }
     .kicker {
       letter-spacing: 0.18em;
@@ -319,10 +329,32 @@
       gap: 10px;
       margin-bottom: 10px;
     }
+    .calendar-head-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .calendar-head-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     .calendar-month {
       font-size: 16px;
       font-weight: 800;
       color: #f0fbf4;
+    }
+    .calendar-add-btn {
+      border: 1px solid rgba(193, 231, 208, 0.38);
+      background: rgba(246, 255, 250, 0.16);
+      color: #f5fff8;
+      border-radius: 9px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
     }
     .calendar-nav-btn {
       border: 1px solid rgba(193, 231, 208, 0.35);
@@ -408,20 +440,13 @@
       border-color: rgba(145,108,21,0.35);
       background: rgba(255,248,224,0.95);
     }
-    .event-form {
-      margin-top: 12px;
-      border-top: 1px solid rgba(187, 224, 203, 0.28);
-      padding-top: 12px;
-      display: grid;
-      gap: 8px;
-    }
     .event-form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
     }
-    .event-form input,
-    .event-form textarea {
+    .event-modal-form input,
+    .event-modal-form textarea {
       width: 100%;
       border: 1px solid rgba(15, 61, 42, 0.22);
       border-radius: 10px;
@@ -430,7 +455,7 @@
       background: rgba(255,255,255,0.97);
       font-family: inherit;
     }
-    .event-form textarea {
+    .event-modal-form textarea {
       min-height: 70px;
       resize: vertical;
     }
@@ -485,6 +510,101 @@
     .event-invite-row:last-child {
       margin-bottom: 0;
     }
+    .event-context-menu {
+      position: fixed;
+      z-index: 12000;
+      min-width: 160px;
+      border: 1px solid rgba(0,0,0,0.16);
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.18);
+      padding: 6px;
+      display: none;
+    }
+    .event-context-menu.open {
+      display: block;
+    }
+    .event-context-action {
+      width: 100%;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #111;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 9px 10px;
+      cursor: pointer;
+    }
+    .event-context-action:hover {
+      background: rgba(17,17,17,0.08);
+    }
+    .event-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 11000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(5, 10, 8, 0.55);
+    }
+    .event-modal-overlay.open {
+      display: flex;
+    }
+    .event-modal {
+      width: min(760px, calc(100vw - 28px));
+      max-height: min(84vh, 820px);
+      overflow: auto;
+      border: 1px solid rgba(0,0,0,0.14);
+      border-radius: 18px;
+      background: #f4f7f4;
+      box-shadow: 0 20px 48px rgba(0,0,0,0.3);
+      padding: 16px;
+      color: #111;
+    }
+    .event-modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .event-modal-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin: 0;
+    }
+    .event-modal-close {
+      border: 1px solid rgba(0,0,0,0.2);
+      background: #fff;
+      color: #111;
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .event-modal-form {
+      display: grid;
+      gap: 8px;
+    }
+    .event-modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .btn-secondary {
+      border: 1px solid rgba(0,0,0,0.2);
+      background: #fff;
+      color: #111;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+    }
     .status { margin-top: 12px; min-height: 20px; font-weight: 700; }
     .footer {
       width: 100vw;
@@ -525,8 +645,16 @@
       .mobile-fixed-brand { color: #fff; text-decoration: none; font-weight: 800; font-size: clamp(22px, 6.4vw, 30px); line-height: 1; }
       .mobile-fixed-nav { display: flex; align-items: center; gap: 18px; padding-left: 16px; }
       .mobile-fixed-nav a { color: #fff; text-decoration: none; font-size: 22px; line-height: 1; }
+      .profile-main { grid-template-columns: 1fr; }
       .profile-top { grid-template-columns: 1fr; }
       .footer { display: none !important; }
+      .event-modal-overlay { padding: 10px; }
+      .event-modal {
+        width: calc(100vw - 16px);
+        max-height: calc(100vh - 18px);
+        border-radius: 14px;
+      }
+      .event-form-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -554,69 +682,92 @@
     <section class="content-inner">
       <div class="kicker">ACCOUNT</div>
       <h1>Profile</h1>
-      <div class="profile-top">
-        <div class="avatar-wrap">
-          <img id="profileAvatarImg" alt="Profile photo" src="/images/default_pfp.jpg">
-          <label for="profileAvatarInput" class="avatar-file-btn">Choose Photo</label>
-          <input id="profileAvatarInput" type="file" accept="image/*">
-        </div>
-        <div>
-          <div class="field">
-            <label for="profileUsername">Username</label>
-            <input id="profileUsername" type="text" maxlength="80" placeholder="Username">
+      <div class="profile-main">
+        <div class="profile-left-col">
+          <div class="profile-top">
+            <div class="avatar-wrap">
+              <img id="profileAvatarImg" alt="Profile photo" src="/images/default_pfp.jpg">
+              <label for="profileAvatarInput" class="avatar-file-btn">Choose Photo</label>
+              <input id="profileAvatarInput" type="file" accept="image/*">
+            </div>
+            <div>
+              <div class="field">
+                <label for="profileUsername">Username</label>
+                <input id="profileUsername" type="text" maxlength="80" placeholder="Username">
+              </div>
+              <div class="row"><span class="label">Email:</span> <span id="profileEmail">Loading...</span></div>
+              <div class="field">
+                <label for="profileBio">Bio</label>
+                <textarea id="profileBio" placeholder="Tell people something fun about yourself..."></textarea>
+              </div>
+            </div>
           </div>
-          <div class="row"><span class="label">Email:</span> <span id="profileEmail">Loading...</span></div>
-          <div class="field">
-            <label for="profileBio">Bio</label>
-            <textarea id="profileBio" placeholder="Tell people something fun about yourself..."></textarea>
+          <button class="btn" id="profileSaveBtn" type="button">Save Profile</button>
+          <div class="friends-wrap">
+            <button class="friends-toggle" id="friendsToggleBtn" type="button" aria-expanded="false">
+              <span id="friendsCounterText">Friends: 0</span>
+              <i class="fa-solid fa-caret-down" aria-hidden="true"></i>
+            </button>
+            <div class="friends-dropdown" id="friendsDropdown"></div>
+          </div>
+          <div class="requests-wrap">
+            <div class="requests-title">Friend Requests: <span id="friendRequestsCounterText">0</span></div>
+            <div class="requests-list" id="friendRequestsList"></div>
           </div>
         </div>
-      </div>
-      <button class="btn" id="profileSaveBtn" type="button">Save Profile</button>
-      <div class="friends-wrap">
-        <button class="friends-toggle" id="friendsToggleBtn" type="button" aria-expanded="false">
-          <span id="friendsCounterText">Friends: 0</span>
-          <i class="fa-solid fa-caret-down" aria-hidden="true"></i>
-        </button>
-        <div class="friends-dropdown" id="friendsDropdown"></div>
-      </div>
-      <div class="requests-wrap">
-        <div class="requests-title">Friend Requests: <span id="friendRequestsCounterText">0</span></div>
-        <div class="requests-list" id="friendRequestsList"></div>
-      </div>
-      <div class="calendar-wrap">
-        <div class="calendar-head">
-          <button class="calendar-nav-btn" id="calendarPrevMonthBtn" type="button"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
-          <div class="calendar-month" id="calendarMonthLabel">Calendar</div>
-          <button class="calendar-nav-btn" id="calendarNextMonthBtn" type="button"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
-        </div>
-        <div class="calendar-weekdays" id="calendarWeekdays"></div>
-        <div class="calendar-grid" id="calendarGrid"></div>
-        <div class="calendar-hint">Tip: Right-click or double-click a day to start a new event draft.</div>
-        <div class="calendar-events-list" id="calendarEventsList"></div>
+        <div class="profile-right-col">
+          <div class="calendar-wrap">
+            <div class="calendar-head">
+              <div class="calendar-head-left">
+                <button class="calendar-add-btn" id="calendarNewEventBtn" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> New Event</button>
+                <div class="calendar-month" id="calendarMonthLabel">Calendar</div>
+              </div>
+              <div class="calendar-head-right">
+                <button class="calendar-nav-btn" id="calendarPrevMonthBtn" type="button"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+                <button class="calendar-nav-btn" id="calendarNextMonthBtn" type="button"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+              </div>
+            </div>
+            <div class="calendar-weekdays" id="calendarWeekdays"></div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+            <div class="calendar-hint">Tip: Right-click a current/future day for quick event create.</div>
+            <div class="calendar-events-list" id="calendarEventsList"></div>
 
-        <form class="event-form" id="eventCreateForm">
-          <div class="row"><span class="label">Create Event</span></div>
-          <input id="eventTitleInput" type="text" maxlength="140" placeholder="Event title" required>
-          <div class="event-form-row">
-            <input id="eventStartInput" type="datetime-local" required>
-            <input id="eventEndInput" type="datetime-local" required>
+            <div class="event-invites-wrap">
+              <div class="requests-title">Event Invites: <span id="eventInvitesCounterText">0</span></div>
+              <div class="event-invites-list" id="eventInvitesList"></div>
+            </div>
           </div>
-          <input id="eventLocationInput" type="text" maxlength="240" placeholder="Location (optional)">
-          <textarea id="eventDescriptionInput" maxlength="2000" placeholder="Description (optional)"></textarea>
-          <div class="row"><span class="label">Invite Friends</span></div>
-          <div class="invite-friends-box" id="eventInviteFriendsBox"></div>
-          <button class="btn" id="eventCreateBtn" type="submit">Create Event</button>
-        </form>
-
-        <div class="event-invites-wrap">
-          <div class="requests-title">Event Invites: <span id="eventInvitesCounterText">0</span></div>
-          <div class="event-invites-list" id="eventInvitesList"></div>
         </div>
       </div>
       <div class="status" id="profileStatus"></div>
     </section>
   </main>
+  <div class="event-context-menu" id="eventContextMenu">
+    <button class="event-context-action" id="eventContextMenuCreate" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> New Event</button>
+  </div>
+  <div class="event-modal-overlay" id="eventModalOverlay">
+    <section class="event-modal" role="dialog" aria-modal="true" aria-labelledby="eventModalTitle">
+      <div class="event-modal-head">
+        <h2 class="event-modal-title" id="eventModalTitle">Create Event</h2>
+        <button class="event-modal-close" id="eventModalCloseBtn" type="button"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Close</button>
+      </div>
+      <form class="event-modal-form" id="eventCreateForm">
+        <input id="eventTitleInput" type="text" maxlength="140" placeholder="Event title" required>
+        <div class="event-form-row">
+          <input id="eventStartInput" type="datetime-local" required>
+          <input id="eventEndInput" type="datetime-local" required>
+        </div>
+        <input id="eventLocationInput" type="text" maxlength="240" placeholder="Location (optional)">
+        <textarea id="eventDescriptionInput" maxlength="2000" placeholder="Description (optional)"></textarea>
+        <div class="row"><span class="label">Invite Friends</span></div>
+        <div class="invite-friends-box" id="eventInviteFriendsBox"></div>
+        <div class="event-modal-actions">
+          <button class="btn-secondary" id="eventModalCancelBtn" type="button">Cancel</button>
+          <button class="btn" id="eventCreateBtn" type="submit">Create Event</button>
+        </div>
+      </form>
+    </section>
+  </div>
   <footer class="footer">
     <div class="footer-inner">
       <div class="footer-left">
