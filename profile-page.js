@@ -15,6 +15,8 @@
   const friendRequestsList = document.getElementById("friendRequestsList");
 
   const calendarMonthLabel = document.getElementById("calendarMonthLabel");
+  const calendarMonthSelect = document.getElementById("calendarMonthSelect");
+  const calendarYearSelect = document.getElementById("calendarYearSelect");
   const calendarPrevMonthBtn = document.getElementById("calendarPrevMonthBtn");
   const calendarNextMonthBtn = document.getElementById("calendarNextMonthBtn");
   const calendarWeekdays = document.getElementById("calendarWeekdays");
@@ -32,6 +34,9 @@
   const eventLocationInput = document.getElementById("eventLocationInput");
   const eventDescriptionInput = document.getElementById("eventDescriptionInput");
   const eventInviteFriendsBox = document.getElementById("eventInviteFriendsBox");
+  const eventInviteSelected = document.getElementById("eventInviteSelected");
+  const eventInviteSearchInput = document.getElementById("eventInviteSearchInput");
+  const eventInviteDropdown = document.getElementById("eventInviteDropdown");
   const eventCreateBtn = document.getElementById("eventCreateBtn");
   const eventContextMenu = document.getElementById("eventContextMenu");
   const eventContextMenuCreate = document.getElementById("eventContextMenuCreate");
@@ -48,6 +53,7 @@
   let selectedDayKey = toDateKey(new Date());
   let contextMenuDayKey = "";
   let calendarEvents = [];
+  let selectedInviteSet = new Set();
 
   function setStatus(message, isError = false) {
     if (!statusEl) return;
@@ -83,6 +89,17 @@
     return `${y}-${m}-${day}T${h}:${min}`;
   }
 
+  function roundUpToQuarterHour(dateLike) {
+    const d = new Date(dateLike);
+    d.setSeconds(0, 0);
+    const min = d.getMinutes();
+    const remainder = min % 15;
+    if (remainder !== 0) {
+      d.setMinutes(min + (15 - remainder));
+    }
+    return d;
+  }
+
   function defaultEventRangeForDay(dayKey) {
     const selectedDay = new Date(`${dayKey}T00:00:00`);
     const today = new Date();
@@ -97,9 +114,7 @@
         end.setHours(end.getHours() + 1);
         return { start, end };
       }
-      const start = new Date(today);
-      start.setMinutes(0, 0, 0);
-      start.setHours(start.getHours() + 1);
+      const start = roundUpToQuarterHour(today);
       const end = new Date(start);
       end.setHours(end.getHours() + 1);
       return { start, end };
@@ -118,6 +133,21 @@
     const end = new Date(start);
     end.setHours(end.getHours() + 1);
     return { start, end };
+  }
+
+  function renderCalendarSelectors() {
+    if (calendarMonthSelect) {
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      calendarMonthSelect.innerHTML = monthNames.map((m, i) => `<option value="${i}">${m}</option>`).join("");
+      calendarMonthSelect.value = String(calendarMonthDate.getMonth());
+    }
+    if (calendarYearSelect) {
+      const currentYear = new Date().getFullYear();
+      const years = [];
+      for (let y = currentYear - 8; y <= currentYear + 8; y += 1) years.push(y);
+      calendarYearSelect.innerHTML = years.map((y) => `<option value="${y}">${y}</option>`).join("");
+      calendarYearSelect.value = String(calendarMonthDate.getFullYear());
+    }
   }
 
   function isDayCurrentOrFuture(dayKey) {
@@ -164,11 +194,9 @@
     if (eventTitleInput) eventTitleInput.value = "";
     if (eventLocationInput) eventLocationInput.value = "";
     if (eventDescriptionInput) eventDescriptionInput.value = "";
-    if (eventInviteFriendsBox) {
-      eventInviteFriendsBox.querySelectorAll("input[data-invite-username]").forEach((el) => {
-        el.checked = false;
-      });
-    }
+    selectedInviteSet = new Set();
+    if (eventInviteSearchInput) eventInviteSearchInput.value = "";
+    renderInviteFriendOptions();
     openEventModal();
     if (eventTitleInput) {
       eventTitleInput.focus();
@@ -266,21 +294,48 @@
     friendsCounterText.textContent = `Friends: ${total}`;
   }
 
-  function renderInviteFriendOptions() {
-    if (!eventInviteFriendsBox) return;
-    if (!friendsCache.length) {
-      eventInviteFriendsBox.innerHTML = '<div class="request-empty">No friends to invite yet.</div>';
+  function renderInviteSelectedChips() {
+    if (!eventInviteSelected) return;
+    const names = Array.from(selectedInviteSet);
+    if (!names.length) {
+      eventInviteSelected.innerHTML = '<span class="request-empty" style="padding:0;font-size:12px;">No friends selected.</span>';
       return;
     }
-    eventInviteFriendsBox.innerHTML = friendsCache.map((f) => {
+    eventInviteSelected.innerHTML = names.map((name) => `
+      <span class="invite-chip">
+        ${escapeHTML(name)}
+        <button class="invite-chip-remove" type="button" data-remove-invite-name="${escapeHTML(name)}" aria-label="Remove ${escapeHTML(name)}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      </span>
+    `).join("");
+  }
+
+  function renderInviteDropdown() {
+    if (!eventInviteDropdown) return;
+    if (!friendsCache.length) {
+      eventInviteDropdown.innerHTML = '<div class="request-empty">No friends to invite yet.</div>';
+      return;
+    }
+    const query = String(eventInviteSearchInput?.value || "").trim().toLowerCase();
+    const filtered = friendsCache.filter((f) => String(f.username || "").toLowerCase().includes(query));
+    if (!filtered.length) {
+      eventInviteDropdown.innerHTML = '<div class="request-empty">No matches found.</div>';
+      return;
+    }
+    eventInviteDropdown.innerHTML = filtered.map((f) => {
       const username = String(f.username || "").trim();
+      const isSelected = selectedInviteSet.has(username);
       return `
-        <label class="invite-option">
-          <input type="checkbox" data-invite-username="${escapeHTML(username)}">
+        <button class="invite-option ${isSelected ? "selected" : ""}" type="button" data-invite-option="${escapeHTML(username)}">
           <span>${escapeHTML(username)}</span>
-        </label>
+          <span class="invite-check"><i class="fa-solid fa-check" aria-hidden="true"></i></span>
+        </button>
       `;
     }).join("");
+  }
+
+  function renderInviteFriendOptions() {
+    renderInviteSelectedChips();
+    renderInviteDropdown();
   }
 
   async function loadFriends() {
@@ -298,6 +353,10 @@
       .filter((row) => row && String(row.username || "").trim())
       .sort((a, b) => String(a.username || "").localeCompare(String(b.username || ""), undefined, { sensitivity: "base" }));
     friendsCache = rows;
+    const friendNameSet = new Set(rows.map((r) => String(r.username || "").trim()).filter(Boolean));
+    selectedInviteSet.forEach((name) => {
+      if (!friendNameSet.has(name)) selectedInviteSet.delete(name);
+    });
     setFriendsCount(rows.length);
     renderFriendsDropdown(rows);
     renderInviteFriendOptions();
@@ -382,9 +441,10 @@
   function renderCalendarGrid() {
     if (!calendarGrid || !calendarMonthLabel) return;
     const monthStart = new Date(calendarMonthDate.getFullYear(), calendarMonthDate.getMonth(), 1);
-    const monthEnd = new Date(calendarMonthDate.getFullYear(), calendarMonthDate.getMonth() + 1, 0);
 
     calendarMonthLabel.textContent = monthStart.toLocaleDateString([], { month: "long", year: "numeric" });
+    if (calendarMonthSelect) calendarMonthSelect.value = String(monthStart.getMonth());
+    if (calendarYearSelect) calendarYearSelect.value = String(monthStart.getFullYear());
 
     const gridStart = new Date(monthStart);
     gridStart.setDate(gridStart.getDate() - gridStart.getDay());
@@ -484,13 +544,7 @@
   }
 
   function selectedInviteUsernames() {
-    if (!eventInviteFriendsBox) return [];
-    const names = [];
-    eventInviteFriendsBox.querySelectorAll("input[data-invite-username]:checked").forEach((el) => {
-      const username = String(el.getAttribute("data-invite-username") || "").trim();
-      if (username) names.push(username);
-    });
-    return names;
+    return Array.from(selectedInviteSet);
   }
 
   async function loadProfile() {
@@ -510,6 +564,7 @@
     if (bioEl) bioEl.value = profile.bio || "";
     if (avatarImgEl) avatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
 
+    renderCalendarSelectors();
     renderWeekdays();
     await loadFriends();
     await loadFriendRequests();
@@ -600,6 +655,26 @@
     });
   }
 
+  if (calendarMonthSelect) {
+    calendarMonthSelect.addEventListener("change", async () => {
+      const month = Number(calendarMonthSelect.value);
+      if (!Number.isFinite(month)) return;
+      calendarMonthDate = new Date(calendarMonthDate.getFullYear(), month, 1);
+      selectedDayKey = toDateKey(calendarMonthDate);
+      await loadCalendarEventsForMonth();
+    });
+  }
+
+  if (calendarYearSelect) {
+    calendarYearSelect.addEventListener("change", async () => {
+      const year = Number(calendarYearSelect.value);
+      if (!Number.isFinite(year)) return;
+      calendarMonthDate = new Date(year, calendarMonthDate.getMonth(), 1);
+      selectedDayKey = toDateKey(calendarMonthDate);
+      await loadCalendarEventsForMonth();
+    });
+  }
+
   if (calendarGrid) {
     calendarGrid.addEventListener("click", (event) => {
       const btn = event.target.closest("[data-day-key]");
@@ -675,6 +750,12 @@
     });
   }
 
+  if (eventInviteSearchInput) {
+    eventInviteSearchInput.addEventListener("input", () => {
+      renderInviteDropdown();
+    });
+  }
+
   if (eventCreateForm) {
     eventCreateForm.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -735,6 +816,27 @@
   document.addEventListener("click", async (event) => {
     if (!event.target.closest("#eventContextMenu") && !event.target.closest("[data-day-key]")) {
       hideEventContextMenu();
+    }
+
+    const inviteOptionBtn = event.target.closest("[data-invite-option]");
+    if (inviteOptionBtn) {
+      const username = String(inviteOptionBtn.getAttribute("data-invite-option") || "").trim();
+      if (username) {
+        if (selectedInviteSet.has(username)) selectedInviteSet.delete(username);
+        else selectedInviteSet.add(username);
+        renderInviteFriendOptions();
+      }
+      return;
+    }
+
+    const removeInviteBtn = event.target.closest("[data-remove-invite-name]");
+    if (removeInviteBtn) {
+      const username = String(removeInviteBtn.getAttribute("data-remove-invite-name") || "").trim();
+      if (username && selectedInviteSet.has(username)) {
+        selectedInviteSet.delete(username);
+        renderInviteFriendOptions();
+      }
+      return;
     }
 
     const friendReqBtn = event.target.closest("[data-request-action][data-request-id]");
