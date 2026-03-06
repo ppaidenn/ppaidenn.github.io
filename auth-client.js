@@ -65,7 +65,8 @@
 
   async function createAccount({ username, email, password, securityQuestion, securityAnswer }) {
     const client = requireClient();
-    const normalizedUsername = normalizeUsername(username, email);
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const normalizedUsername = normalizeUsername(username, normalizedEmail);
     const sillyQuestion = SILLY_QUESTION_BANK[Math.floor(Math.random() * SILLY_QUESTION_BANK.length)];
     const { data: existingUsername, error: existingUsernameError } = await client
       .from("profiles")
@@ -79,6 +80,16 @@
       return { ok: false, error: "That username is already taken." };
     }
 
+    const { data: emailTaken, error: emailTakenError } = await client.rpc("is_signup_email_taken", {
+      target_email: normalizedEmail,
+    });
+    if (emailTakenError) {
+      return { ok: false, error: emailTakenError.message || "Could not verify email." };
+    }
+    if (emailTaken === true) {
+      return { ok: false, error: "That email is already linked to an account." };
+    }
+
     const payload = {
       username: normalizedUsername,
       silly_question: sillyQuestion,
@@ -86,7 +97,7 @@
       security_answer: String(securityAnswer || "").trim(),
     };
     const { data, error } = await client.auth.signUp({
-      email: String(email || "").trim(),
+      email: normalizedEmail,
       password: String(password || ""),
       options: { data: payload },
     });

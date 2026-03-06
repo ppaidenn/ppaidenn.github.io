@@ -25,6 +25,8 @@ This folder is split by feature so SQL changes are easier to maintain.
   - `get_my_outgoing_friend_requests`
   - `respond_to_friend_request`
   - `get_friend_public_profile`
+- `email_signup_lookup_schema.sql`: signup helper RPC:
+  - `is_signup_email_taken`
 - `username_signin_lookup_schema.sql`: login helper RPC:
   - `get_signin_email_by_username`
 
@@ -51,6 +53,7 @@ This folder is split by feature so SQL changes are easier to maintain.
 7. `backend/auth/public_profiles_directory_schema.sql`
 8. `backend/auth/posts_account_link_schema.sql`
 9. `backend/auth/friendships_schema.sql`
-10. `backend/auth/username_signin_lookup_schema.sql`
-11. `backend/push/push_subscriptions_schema.sql`
-12. `backend/calendar/events_schema.sql`
+10. `backend/auth/email_signup_lookup_schema.sql`
+11. `backend/auth/username_signin_lookup_schema.sql`
+12. `backend/push/push_subscriptions_schema.sql`
+13. `backend/calendar/events_schema.sql`
