@@ -1,0 +1,36 @@
+# Schema Layout
+
+This folder is split by feature so SQL changes are easier to maintain.
+
+## `backend/blog`
+- `posts_schema.sql`: `posts` table + public read policy.
+- `post_rate_limits_schema.sql`: `post_rate_limits` table.
+- `comments_schema.sql`: `comments` table + read policy.
+- `comment_rate_limits_schema.sql`: `comment_rate_limits` table.
+- `blocked_hashes_schema.sql`: `blocked_ip_hashes` table.
+
+## `backend/auth`
+- `profiles_schema.sql`: `profiles` table, indexes, trigger, RLS, and profile RPCs:
+  - `get_public_profiles`
+  - `get_public_profiles_by_ids`
+- `public_profiles_directory_schema.sql`: public directory RPC:
+  - `get_all_public_profiles` (drops/recreates function to avoid return-type conflicts)
+- `posts_account_link_schema.sql`: adds `posts.user_id`.
+- `friendships_schema.sql`: `friendships` table + RLS + RPCs:
+  - `get_my_friends`
+  - `add_friend_by_username`
+
+## `backend/push`
+- `push_subscriptions_schema.sql`: `push_subscriptions` table + trigger.
+
+## Suggested Run Order (fresh setup)
+1. `backend/blog/posts_schema.sql`
+2. `backend/blog/post_rate_limits_schema.sql`
+3. `backend/blog/comments_schema.sql`
+4. `backend/blog/comment_rate_limits_schema.sql`
+5. `backend/blog/blocked_hashes_schema.sql`
+6. `backend/auth/profiles_schema.sql`
+7. `backend/auth/public_profiles_directory_schema.sql`
+8. `backend/auth/posts_account_link_schema.sql`
+9. `backend/auth/friendships_schema.sql`
+10. `backend/push/push_subscriptions_schema.sql`

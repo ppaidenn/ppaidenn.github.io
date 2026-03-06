@@ -1,3 +1,5 @@
+drop function if exists public.get_all_public_profiles();
+
 create or replace function public.get_all_public_profiles()
 returns table (
   id uuid,
