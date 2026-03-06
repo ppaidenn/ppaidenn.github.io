@@ -13,6 +13,7 @@ This folder is split by feature so SQL changes are easier to maintain.
 - `profiles_schema.sql`: `profiles` table, indexes, trigger, RLS, and profile RPCs:
   - `get_public_profiles`
   - `get_public_profiles_by_ids`
+  - `get_public_profile_by_username`
 - `public_profiles_directory_schema.sql`: public directory RPC:
   - `get_all_public_profiles` (drops/recreates function to avoid return-type conflicts)
 - `posts_account_link_schema.sql`: adds `posts.user_id`.

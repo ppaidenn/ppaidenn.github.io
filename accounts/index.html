@@ -391,8 +391,8 @@
           const username = String(row.username || "").trim();
           const avatar = String(row.avatar_url || "").trim() || DEFAULT_AVATAR;
           let actionHtml = "";
-          let avatarHtml = `<img src="${escapeHTML(avatar)}" alt="${escapeHTML(username)} profile picture">`;
-          let nameHtml = `<div class="account-name">${escapeHTML(username)}</div>`;
+          const avatarHtml = `<a class="account-link-avatar" href="/profile-view?username=${encodeURIComponent(username)}"><img src="${escapeHTML(avatar)}" alt="${escapeHTML(username)} profile picture"></a>`;
+          const nameHtml = `<a class="account-name-link" href="/profile-view?username=${encodeURIComponent(username)}"><div class="account-name">${escapeHTML(username)}</div></a>`;
           const usernameKey = username.toLowerCase();
           if (currentUserId && usernameKey && usernameKey !== currentUsernameLower) {
             const alreadyFriend = friendUsernames.has(usernameKey);
@@ -400,10 +400,6 @@
             const label = alreadyFriend ? "Friends" : alreadyRequested ? "Requested" : "Add Friend";
             const isDisabled = alreadyFriend || alreadyRequested;
             actionHtml = `<button class="add-friend-btn" data-add-friend-username="${escapeHTML(username)}" ${isDisabled ? "disabled" : ""}>${label}</button>`;
-            if (alreadyFriend) {
-              avatarHtml = `<a class="account-link-avatar" href="/profile-view?username=${encodeURIComponent(username)}">${avatarHtml}</a>`;
-              nameHtml = `<a class="account-name-link" href="/profile-view?username=${encodeURIComponent(username)}"><div class="account-name">${escapeHTML(username)}</div></a>`;
-            }
           }
           return `
             <article class="account-card">

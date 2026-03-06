@@ -105,3 +105,26 @@ as $$
 $$;
 
 grant execute on function public.get_public_profiles_by_ids(uuid[]) to anon, authenticated;
+
+create or replace function public.get_public_profile_by_username(target_username text)
+returns table (
+  id uuid,
+  username text,
+  avatar_url text,
+  bio text
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    p.id,
+    p.username,
+    p.avatar_url,
+    p.bio
+  from public.profiles p
+  where lower(p.username) = lower(trim(coalesce(target_username, '')))
+  limit 1;
+$$;
+
+grant execute on function public.get_public_profile_by_username(text) to anon, authenticated;

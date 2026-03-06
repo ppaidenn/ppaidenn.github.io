@@ -136,6 +136,16 @@
       white-space: pre-wrap;
       word-break: break-word;
     }
+    .btn {
+      border: 1px solid rgba(0,0,0,0.2);
+      background: #111;
+      color: #fff;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+    }
     .status { margin-top: 12px; min-height: 20px; font-weight: 700; }
     .footer {
       width: 100vw;
@@ -204,7 +214,7 @@
   <main class="content-wrap">
     <section class="content-inner">
       <div class="kicker">ACCOUNT</div>
-      <h1>Friend Profile</h1>
+      <h1>Account Profile</h1>
       <div class="profile-top">
         <div class="avatar-wrap">
           <img id="friendAvatarImg" alt="Friend profile photo" src="/images/default_pfp.jpg">
@@ -215,6 +225,7 @@
           <div class="readonly-box" id="friendBio">Loading...</div>
         </div>
       </div>
+      <button class="btn" id="friendActionBtn" type="button">Add Friend</button>
       <div class="status" id="friendProfileStatus"></div>
     </section>
   </main>
@@ -249,7 +260,11 @@
     const usernameEl = document.getElementById("friendUsername");
     const bioEl = document.getElementById("friendBio");
     const statusEl = document.getElementById("friendProfileStatus");
+    const friendActionBtn = document.getElementById("friendActionBtn");
     const DEFAULT_AVATAR = "/images/default_pfp.jpg";
+    let viewedUsername = "";
+    let viewedUserId = "";
+    let actionMode = "signin";
 
     function setStatus(message, isError) {
       if (!statusEl) return;
@@ -263,40 +278,120 @@
         return;
       }
 
-      const auth = await window.PaidenAuth.getCurrentProfile();
-      if (!auth || !auth.ok || !auth.user) {
-        setStatus("Sign in required. Redirecting...");
-        window.setTimeout(() => { window.location.href = "/signin"; }, 900);
-        return;
-      }
-
       const params = new URLSearchParams(window.location.search || "");
       const username = String(params.get("username") || "").trim();
       if (!username) {
-        setStatus("Missing friend username.", true);
+        setStatus("Missing account username.", true);
         return;
       }
+      viewedUsername = username;
 
       const client = window.PaidenAuth.getClient();
-      const { data, error } = await client.rpc("get_friend_public_profile", { target_username: username });
+      const { data, error } = await client.rpc("get_public_profile_by_username", { target_username: username });
       if (error) {
-        setStatus(error.message || "Could not load friend profile.", true);
+        setStatus(error.message || "Could not load profile.", true);
         return;
       }
 
       const profile = Array.isArray(data) ? data[0] : null;
       if (!profile) {
-        setStatus("You can only view profiles for your friends.", true);
+        setStatus("Account not found.", true);
         if (usernameEl) usernameEl.textContent = "-";
         if (bioEl) bioEl.textContent = "-";
         if (avatarEl) avatarEl.src = DEFAULT_AVATAR;
+        if (friendActionBtn) friendActionBtn.style.display = "none";
         return;
       }
 
+      viewedUserId = String(profile.id || "");
       if (usernameEl) usernameEl.textContent = String(profile.username || "-");
       if (bioEl) bioEl.textContent = String(profile.bio || "No bio set.");
       if (avatarEl) avatarEl.src = String(profile.avatar_url || "").trim() || DEFAULT_AVATAR;
+      await loadFriendActionState();
+    }
+
+    async function loadFriendActionState() {
+      if (!friendActionBtn) return;
+      if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return;
+      const auth = await window.PaidenAuth.getCurrentProfile();
+      if (!auth || !auth.ok || !auth.user) {
+        actionMode = "signin";
+        friendActionBtn.disabled = false;
+        friendActionBtn.textContent = "Sign In to Add Friend";
+        setStatus("Sign in to send a friend request.");
+        return;
+      }
+
+      const myId = String(auth.user.id || "");
+      const myUsername = auth.profile && auth.profile.username ? String(auth.profile.username).trim().toLowerCase() : "";
+      if (viewedUserId && myId && viewedUserId === myId || (viewedUsername && viewedUsername.toLowerCase() === myUsername)) {
+        actionMode = "self";
+        friendActionBtn.disabled = false;
+        friendActionBtn.textContent = "View My Profile";
+        setStatus("");
+        return;
+      }
+
+      const client = window.PaidenAuth.getClient();
+      const { data: friendsData } = await client.rpc("get_my_friends");
+      const isFriend = (Array.isArray(friendsData) ? friendsData : []).some((row) => {
+        const key = row && row.username ? String(row.username).trim().toLowerCase() : "";
+        return key === viewedUsername.toLowerCase();
+      });
+      if (isFriend) {
+        actionMode = "friends";
+        friendActionBtn.disabled = true;
+        friendActionBtn.textContent = "Friends";
+        setStatus("");
+        return;
+      }
+
+      const { data: outgoingData } = await client.rpc("get_my_outgoing_friend_requests");
+      const isRequested = (Array.isArray(outgoingData) ? outgoingData : []).some((row) => {
+        const key = row && row.username ? String(row.username).trim().toLowerCase() : "";
+        return key === viewedUsername.toLowerCase();
+      });
+      if (isRequested) {
+        actionMode = "requested";
+        friendActionBtn.disabled = true;
+        friendActionBtn.textContent = "Requested";
+        setStatus("");
+        return;
+      }
+
+      actionMode = "add";
+      friendActionBtn.disabled = false;
+      friendActionBtn.textContent = "Add Friend";
       setStatus("");
+    }
+
+    if (friendActionBtn) {
+      friendActionBtn.addEventListener("click", async () => {
+        if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return;
+        if (actionMode === "self") {
+          window.location.href = "/profile";
+          return;
+        }
+        if (actionMode === "signin") {
+          window.location.href = `/signin?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+          return;
+        }
+        if (actionMode !== "add") return;
+        friendActionBtn.disabled = true;
+        friendActionBtn.textContent = "Sending...";
+        const client = window.PaidenAuth.getClient();
+        const { data, error } = await client.rpc("add_friend_by_username", { target_username: viewedUsername });
+        if (error || data === false) {
+          friendActionBtn.disabled = false;
+          friendActionBtn.textContent = "Add Friend";
+          setStatus((error && error.message) || "Could not send friend request.", true);
+          return;
+        }
+        actionMode = "requested";
+        friendActionBtn.disabled = true;
+        friendActionBtn.textContent = "Requested";
+        setStatus("Friend request sent.");
+      });
     }
 
     const lastUpdated = document.getElementById("last-updated");
