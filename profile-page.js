@@ -6,7 +6,11 @@
   const avatarInputEl = document.getElementById("profileAvatarInput");
   const saveBtn = document.getElementById("profileSaveBtn");
   const statusEl = document.getElementById("profileStatus");
+  const friendsToggleBtn = document.getElementById("friendsToggleBtn");
+  const friendsCounterText = document.getElementById("friendsCounterText");
+  const friendsDropdown = document.getElementById("friendsDropdown");
   const DEFAULT_AVATAR = "/images/default_pfp.jpg";
+  let friendsDropdownOpen = false;
 
   function setStatus(message, isError = false) {
     if (!statusEl) return;
@@ -46,6 +50,57 @@
     return canvas.toDataURL("image/jpeg", quality);
   }
 
+  function escapeHTML(str) {
+    return String(str || "").replace(/[&<>"']/g, (s) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    }[s] || s));
+  }
+
+  function renderFriendsDropdown(rows) {
+    if (!friendsDropdown) return;
+    const list = Array.isArray(rows) ? rows : [];
+    if (!list.length) {
+      friendsDropdown.innerHTML = '<div class="friend-row"><div class="friend-row-name">No friends yet.</div></div>';
+      return;
+    }
+    friendsDropdown.innerHTML = list.map((row) => {
+      const username = String(row.username || "").trim() || "User";
+      const avatar = String(row.avatar_url || "").trim() || DEFAULT_AVATAR;
+      return `
+        <div class="friend-row">
+          <img src="${escapeHTML(avatar)}" alt="${escapeHTML(username)} profile picture">
+          <div class="friend-row-name">${escapeHTML(username)}</div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function setFriendsCount(count) {
+    if (!friendsCounterText) return;
+    const total = Number.isFinite(count) && count > 0 ? count : 0;
+    friendsCounterText.textContent = `Friends: ${total}`;
+  }
+
+  async function loadFriends() {
+    if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return;
+    const client = window.PaidenAuth.getClient();
+    const { data, error } = await client.rpc("get_my_friends");
+    if (error) {
+      setFriendsCount(0);
+      renderFriendsDropdown([]);
+      return;
+    }
+    const rows = (Array.isArray(data) ? data : [])
+      .filter((row) => row && String(row.username || "").trim())
+      .sort((a, b) => String(a.username || "").localeCompare(String(b.username || ""), undefined, { sensitivity: "base" }));
+    setFriendsCount(rows.length);
+    renderFriendsDropdown(rows);
+  }
+
   async function loadProfile() {
     if (!window.PaidenAuth) {
       setStatus("Auth service unavailable.", true);
@@ -62,6 +117,7 @@
     if (emailEl) emailEl.textContent = res.user.email || "-";
     if (bioEl) bioEl.value = profile.bio || "";
     if (avatarImgEl) avatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
+    await loadFriends();
     setStatus("Profile loaded.");
   }
 
@@ -91,6 +147,7 @@
         if (!res.ok) return setStatus(res.error || "Could not save profile.", true);
         const profile = res.profile || {};
         if (avatarImgEl) avatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
+        await loadFriends();
         setStatus("Profile saved.");
         if (avatarInputEl) avatarInputEl.value = "";
       } catch (err) {
@@ -113,6 +170,14 @@
       } catch (_) {
         setStatus("Could not preview selected image.", true);
       }
+    });
+  }
+
+  if (friendsToggleBtn && friendsDropdown) {
+    friendsToggleBtn.addEventListener("click", () => {
+      friendsDropdownOpen = !friendsDropdownOpen;
+      friendsDropdown.classList.toggle("open", friendsDropdownOpen);
+      friendsToggleBtn.setAttribute("aria-expanded", friendsDropdownOpen ? "true" : "false");
     });
   }
 

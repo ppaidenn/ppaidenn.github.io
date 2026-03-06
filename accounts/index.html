@@ -120,9 +120,10 @@
       gap: 12px;
     }
     .account-card {
-      display: flex;
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
       align-items: center;
-      gap: 10px;
+      column-gap: 10px;
       padding: 10px 12px;
       border: 1px solid rgba(0,0,0,0.12);
       border-radius: 12px;
@@ -144,6 +145,21 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+    .add-friend-btn {
+      border: 1px solid rgba(0,0,0,0.2);
+      background: #111;
+      color: #fff;
+      border-radius: 10px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .add-friend-btn:disabled {
+      opacity: 0.6;
+      cursor: default;
     }
     .status {
       margin-top: 8px;
@@ -286,6 +302,8 @@
     const accountsGrid = document.getElementById("accountsGrid");
     const accountsSummary = document.getElementById("accountsSummary");
     const accountsStatus = document.getElementById("accountsStatus");
+    let currentUserId = "";
+    let friendIds = new Set();
 
     function escapeHTML(str) {
       return String(str || "").replace(/[&<>"']/g, (s) => ({
@@ -309,7 +327,21 @@
         setStatus("Could not initialize account service.", true);
         return;
       }
+      const authRes = await window.PaidenAuth.getCurrentProfile();
+      currentUserId = authRes && authRes.ok && authRes.user && authRes.user.id ? String(authRes.user.id) : "";
+
       const client = window.PaidenAuth.getClient();
+      friendIds = new Set();
+      if (currentUserId) {
+        const { data: friendsData } = await client
+          .from("friendships")
+          .select("friend_id")
+          .eq("user_id", currentUserId);
+        (Array.isArray(friendsData) ? friendsData : []).forEach((row) => {
+          if (row && row.friend_id) friendIds.add(String(row.friend_id));
+        });
+      }
+
       const { data, error } = await client.rpc("get_all_public_profiles");
       if (error) {
         if (accountsSummary) accountsSummary.textContent = "Unable to load accounts.";
@@ -333,18 +365,52 @@
 
       if (accountsGrid) {
         accountsGrid.innerHTML = rows.map((row) => {
+          const accountId = String(row.id || "").trim();
           const username = String(row.username || "").trim();
           const avatar = String(row.avatar_url || "").trim() || DEFAULT_AVATAR;
+          let actionHtml = "";
+          if (currentUserId && accountId && accountId !== currentUserId) {
+            const alreadyFriend = friendIds.has(accountId);
+            actionHtml = `<button class="add-friend-btn" data-add-friend="${escapeHTML(accountId)}" ${alreadyFriend ? "disabled" : ""}>${alreadyFriend ? "Friends" : "Add Friend"}</button>`;
+          }
           return `
             <article class="account-card">
               <img src="${escapeHTML(avatar)}" alt="${escapeHTML(username)} profile picture">
               <div class="account-name">${escapeHTML(username)}</div>
+              ${actionHtml}
             </article>
           `;
         }).join("");
       }
       setStatus("", false);
     }
+
+    document.addEventListener("click", async (event) => {
+      const btn = event.target.closest("[data-add-friend]");
+      if (!btn) return;
+      event.preventDefault();
+
+      if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return;
+      if (!currentUserId) {
+        setStatus("Sign in to add friends.", true);
+        return;
+      }
+      const friendId = String(btn.getAttribute("data-add-friend") || "").trim();
+      if (!friendId || friendId === currentUserId) return;
+      btn.disabled = true;
+      btn.textContent = "Adding...";
+      const client = window.PaidenAuth.getClient();
+      const { error } = await client.from("friendships").insert({ user_id: currentUserId, friend_id: friendId });
+      if (error && error.code !== "23505") {
+        btn.disabled = false;
+        btn.textContent = "Add Friend";
+        setStatus(error.message || "Could not add friend.", true);
+        return;
+      }
+      friendIds.add(friendId);
+      btn.textContent = "Friends";
+      setStatus("Friend added.", false);
+    });
 
     const lastUpdated = document.getElementById("last-updated");
     if (lastUpdated) lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();

@@ -1,5 +1,6 @@
 create or replace function public.get_all_public_profiles()
 returns table (
+  id uuid,
   username text,
   avatar_url text
 )
@@ -8,6 +9,7 @@ security definer
 set search_path = public
 as $$
   select
+    p.id,
     p.username,
     p.avatar_url
   from public.profiles p
