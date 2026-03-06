@@ -127,10 +127,26 @@
     };
   }
 
-  async function signIn({ email, password }) {
+  async function signIn({ email, username, password }) {
     const client = requireClient();
+    const rawIdentifier = String(username || email || "").trim();
+    if (!rawIdentifier) return { ok: false, error: "Username is required." };
+
+    let resolvedEmail = rawIdentifier;
+    if (!rawIdentifier.includes("@")) {
+      const { data: profileRow, error: profileError } = await client
+        .from("profiles")
+        .select("email")
+        .ilike("username", rawIdentifier)
+        .limit(1)
+        .maybeSingle();
+      if (profileError) return { ok: false, error: profileError.message || "Could not resolve username." };
+      resolvedEmail = String(profileRow?.email || "").trim();
+      if (!resolvedEmail) return { ok: false, error: "Username not found." };
+    }
+
     const { data, error } = await client.auth.signInWithPassword({
-      email: String(email || "").trim(),
+      email: resolvedEmail,
       password: String(password || ""),
     });
     if (error) return { ok: false, error: error.message || "Could not sign in." };
