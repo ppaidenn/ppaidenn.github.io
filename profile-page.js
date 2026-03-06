@@ -113,7 +113,7 @@
     if (!friendRequestsList) return;
     const list = Array.isArray(rows) ? rows : [];
     if (!list.length) {
-      friendRequestsList.innerHTML = '<div class="request-row"><div class="request-name">No pending requests.</div></div>';
+      friendRequestsList.innerHTML = '<div class="request-empty">No pending requests.</div>';
       return;
     }
     friendRequestsList.innerHTML = list.map((row) => {
