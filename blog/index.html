@@ -562,14 +562,21 @@
       height: 89%;
     }
 
-    .post-author {
+    .post-meta{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
       margin-top: 10px;
+    }
+    .post-author {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       font-weight: 700;
       opacity: 0.9;
       font-size: 0.98rem;
+      margin: 0;
     }
     .post-author-avatar {
       width: 28px;
@@ -609,8 +616,9 @@
       display: inline-block;
       font-size: 0.98rem;
       opacity: 0.9;
-      margin-top: 4px;
+      margin: 0;
       font-weight: 700;
+      line-height: 1.2;
     }
 
     .post-excerpt {
@@ -1717,7 +1725,9 @@
               <span class="post-date">Dec 16, 2025</span>
             </div>
             
-            <div class="post-author">By <span class="post-author-name"></span></div>
+            <div class="post-meta">
+              <div class="post-author">By <span class="post-author-name"></span></div>
+            </div>
             <div class="post-content-row">
               <div class="post-content-left">
                 <p class="post-excerpt">Short preview text...</p>
@@ -1734,8 +1744,10 @@ Note: I am notified of all posts and will be moderating content. You do not have
 <div class="post-inner">
   <div class="post-left">
     <h4 class="post-title">Welcome to the blog</h4>
-    <div class="post-author">By <span class="post-author-name"></span></div>
-    <div class="post-date">Dec 16, 2025</div>
+    <div class="post-meta">
+      <div class="post-author">By <span class="post-author-name"></span></div>
+      <div class="post-date">Dec 16, 2025</div>
+    </div>
     <p class="post-excerpt">This is a public forum that anyone may use to spread their message. 
       Click any post to open it in a popup. You can also create new posts with photos using the form above.
       <br><br>
@@ -2215,14 +2227,15 @@ function excerpt(text, maxChars = 1000) {
               <div class="post-left">
                 <h4 class="post-title">${escapeHTML(p.title || "Untitled")}</h4>
 
-                <div class="post-author">
-                  By <span class="post-author-name">
-                    ${escapeHTML(p.author || "Anonymous")}
-                  </span>
-                </div>
-
-                <div class="post-date">
-                  ${escapeHTML(formatDateShort(p.created_at))}
+                <div class="post-meta">
+                  <div class="post-author">
+                    By <span class="post-author-name">
+                      ${escapeHTML(p.author || "Anonymous")}
+                    </span>
+                  </div>
+                  <div class="post-date">
+                    ${escapeHTML(formatDateShort(p.created_at))}
+                  </div>
                 </div>
 
                 <p class="post-excerpt">
