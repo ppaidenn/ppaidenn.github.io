@@ -44,8 +44,10 @@
 
     const links = signedIn
       ? `<a href="/profile/?v=20260304">View Profile</a>
+         <a href="/accounts">All Accounts</a>
          <button type="button" class="profile-signout">Sign Out</button>`
       : `<a href="/signin">Sign In</a>
+         <a href="/accounts">All Accounts</a>
          <a href="/create-account">Create Account</a>`;
 
     return `

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>paiden.com</title>
+  <meta name="description" content="Browse paiden.com accounts in alphabetical order.">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="apple-touch-icon" href="/images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+  <link rel="stylesheet" href="/account-menu.css">
+  <style>
+    :root {
+      --side-margin: 10vw;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --brand-font-size: 2.5vw;
+      --nav-font-size: 1.2vw;
+      --spacing-small: 0.5vw;
+      --spacing-large: 1.5vw;
+      --footer-padding: 7vh;
+      --footer-title-font-size: 2vw;
+      --footer-subtitle-font-size: 1vw;
+      --footer-nav-font-size: 1vw;
+      --footer-nav-left: 15vw;
+    }
+    * { box-sizing: border-box; }
+    html {
+      scrollbar-gutter: stable;
+      min-height: 100%;
+      background: #e0e0e0;
+    }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #e0e0e0;
+      color: #10151c;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .top-nav {
+      width: 100%;
+      background: #000;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+    .top-nav-inner {
+      margin: 0 var(--side-margin);
+      min-height: calc(64px + var(--safe-top));
+      padding-top: var(--safe-top);
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-start;
+    }
+    .brand {
+      color: #fff;
+      text-decoration: none;
+      font-size: var(--brand-font-size);
+      font-weight: bold;
+      padding-bottom: var(--spacing-small);
+      padding-right: var(--spacing-large);
+      border-right: 0.1vw solid #fff;
+      margin-right: var(--spacing-large);
+    }
+    .nav-links { display: flex; align-items: flex-end; gap: 0; }
+    .nav-links a {
+      color: #fff;
+      text-decoration: none;
+      font-size: var(--nav-font-size);
+      font-weight: bold;
+      margin-right: var(--spacing-large);
+      padding-bottom: var(--spacing-small);
+      opacity: 1;
+    }
+    .nav-links a:last-child { margin-right: 0; }
+    .mobile-fixed-header { display: none; }
+
+    .content-wrap {
+      width: 100%;
+      padding: clamp(22px, 4vh, 40px) 0 calc(28px + var(--safe-bottom));
+      flex: 1 0 auto;
+    }
+    .content-inner {
+      margin: 0 var(--side-margin);
+      background: rgba(255,255,255,0.68);
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 20px;
+      padding: clamp(18px, 2.2vw, 30px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    }
+    .kicker {
+      letter-spacing: 0.18em;
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(16,21,28,0.65);
+      margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1.05;
+      color: #0e1116;
+    }
+    .summary {
+      margin: 0 0 16px;
+      font-size: clamp(15px, 1.05vw, 18px);
+      color: rgba(16,21,28,0.8);
+    }
+    .accounts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .account-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.82);
+    }
+    .account-card img {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid rgba(0,0,0,0.15);
+      flex: 0 0 42px;
+      background: #fff;
+    }
+    .account-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .status {
+      margin-top: 8px;
+      min-height: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(16,21,28,0.72);
+    }
+
+    .footer {
+      width: 100%;
+      background-color: #000;
+      padding: var(--footer-padding) 0;
+      position: relative;
+      margin-top: auto;
+      flex-shrink: 0;
+    }
+    .footer-inner {
+      margin: 0 var(--side-margin);
+      text-align: left;
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .footer-left { display: flex; flex-direction: column; align-items: flex-start; }
+    .footer-left .footer-brand { font-size: var(--footer-title-font-size); font-weight: bold; color: white; text-decoration: none; margin-bottom: 0.75vw; }
+    .footer-left .footer-created, .footer-left .footer-updated { font-size: var(--footer-subtitle-font-size); color: white; margin-top: var(--spacing-small); }
+    .footer-nav { position: absolute; top: 50%; left: var(--footer-nav-left); transform: translateY(-45%); display: flex; flex-direction: column; align-items: flex-start; }
+    .footer-nav a { font-size: var(--footer-nav-font-size); color: white; text-decoration: none; margin-bottom: var(--spacing-small); }
+    .footer-social { display: flex; flex-direction: column; align-items: flex-end; color: white; }
+    .footer-social .follow-text { font-size: var(--footer-nav-font-size); font-weight: bold; margin-bottom: var(--spacing-small); }
+    .social-icons { display: flex; gap: 1vw; }
+    .social-icons a { color: white; font-size: 2vw; text-decoration: none; }
+
+    @media (max-width: 768px) {
+      body { padding-top: calc(var(--safe-top) + 58px); }
+      .top-nav { display: none; }
+      .mobile-fixed-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: calc(var(--safe-top) + 58px);
+        padding-top: var(--safe-top);
+        padding-left: 5vw;
+        padding-right: 5vw;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #000;
+        z-index: 10000;
+      }
+      .mobile-fixed-brand {
+        color: #fff;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: clamp(22px, 6.4vw, 30px);
+        line-height: 1;
+      }
+      .mobile-fixed-nav {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding-left: 16px;
+      }
+      .mobile-fixed-nav a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 22px;
+        line-height: 1;
+      }
+      .footer { display: none !important; }
+      .content-inner { border-radius: 16px; }
+      .accounts-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top-nav" role="navigation" aria-label="Primary site navigation">
+    <div class="top-nav-inner">
+      <a class="brand" href="/">paiden.com</a>
+      <nav class="nav-links">
+        <a href="/resume">Resume</a>
+        <a href="/photos">Photos</a>
+        <a href="/blog">Blog</a>
+        <a href="/contactme">Contact Me</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation">
+    <a class="mobile-fixed-brand" href="/">paiden.com</a>
+    <div class="mobile-fixed-nav">
+      <a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a>
+      <a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a>
+      <a href="/contactme" aria-label="Contact"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a>
+    </div>
+  </div>
+
+  <main class="content-wrap">
+    <section class="content-inner">
+      <div class="kicker">COMMUNITY</div>
+      <h1>All Accounts</h1>
+      <p class="summary" id="accountsSummary">Loading accounts...</p>
+      <div class="accounts-grid" id="accountsGrid"></div>
+      <div class="status" id="accountsStatus"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <a class="footer-brand" href="/">paiden.com</a>
+        <div class="footer-created">Created by Paiden Nicks</div>
+        <div class="footer-updated" id="last-updated"></div>
+      </div>
+      <div class="footer-nav">
+        <a href="/resume">Resume</a>
+        <a href="/photos">Photos</a>
+        <a href="/blog">Blog</a>
+        <a href="/contactme">Contact Me</a>
+      </div>
+      <div class="footer-social">
+        <span class="follow-text">Follow Me</span>
+        <div class="social-icons">
+          <a href="https://www.linkedin.com/in/paiden" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i></a>
+          <a href="https://www.instagram.com/paiden_26" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
+          <a href="https://snapchat.com/t/m04JWymy" target="_blank" rel="noopener"><i class="fab fa-snapchat"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/auth-client.js"></script>
+  <script src="/account-menu.js"></script>
+  <script>
+    const DEFAULT_AVATAR = "/images/default_pfp.jpg";
+    const accountsGrid = document.getElementById("accountsGrid");
+    const accountsSummary = document.getElementById("accountsSummary");
+    const accountsStatus = document.getElementById("accountsStatus");
+
+    function escapeHTML(str) {
+      return String(str || "").replace(/[&<>"']/g, (s) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;",
+      }[s] || s));
+    }
+
+    function setStatus(message, isError) {
+      if (!accountsStatus) return;
+      accountsStatus.textContent = message || "";
+      accountsStatus.style.color = isError ? "#a10000" : "rgba(16,21,28,0.72)";
+    }
+
+    async function loadAccounts() {
+      if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") {
+        if (accountsSummary) accountsSummary.textContent = "Account service unavailable.";
+        setStatus("Could not initialize account service.", true);
+        return;
+      }
+      const client = window.PaidenAuth.getClient();
+      const { data, error } = await client.rpc("get_all_public_profiles");
+      if (error) {
+        if (accountsSummary) accountsSummary.textContent = "Unable to load accounts.";
+        setStatus(error.message || "Could not load accounts.", true);
+        return;
+      }
+
+      const rows = (Array.isArray(data) ? data : [])
+        .filter((r) => r && String(r.username || "").trim())
+        .sort((a, b) => String(a.username || "").localeCompare(String(b.username || ""), undefined, { sensitivity: "base" }));
+
+      if (accountsSummary) {
+        const count = rows.length;
+        accountsSummary.textContent = `${count} account${count === 1 ? "" : "s"} on paiden.com.`;
+      }
+      if (!rows.length) {
+        if (accountsGrid) accountsGrid.innerHTML = "";
+        setStatus("No accounts found yet.", false);
+        return;
+      }
+
+      if (accountsGrid) {
+        accountsGrid.innerHTML = rows.map((row) => {
+          const username = String(row.username || "").trim();
+          const avatar = String(row.avatar_url || "").trim() || DEFAULT_AVATAR;
+          return `
+            <article class="account-card">
+              <img src="${escapeHTML(avatar)}" alt="${escapeHTML(username)} profile picture">
+              <div class="account-name">${escapeHTML(username)}</div>
+            </article>
+          `;
+        }).join("");
+      }
+      setStatus("", false);
+    }
+
+    const lastUpdated = document.getElementById("last-updated");
+    if (lastUpdated) lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();
+    loadAccounts();
+  </script>
+</body>
+</html>
