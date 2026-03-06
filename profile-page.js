@@ -66,6 +66,68 @@
     return `${y}-${m}-${day}`;
   }
 
+  function toLocalDateTimeValue(dateLike) {
+    const d = new Date(dateLike);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const h = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    return `${y}-${m}-${day}T${h}:${min}`;
+  }
+
+  function defaultEventRangeForDay(dayKey) {
+    const selectedDay = new Date(`${dayKey}T00:00:00`);
+    const today = new Date();
+    const todayKey = toDateKey(today);
+
+    if (dayKey === todayKey) {
+      if (today.getHours() === 23) {
+        const start = new Date(today);
+        start.setDate(start.getDate() + 1);
+        start.setHours(12, 0, 0, 0);
+        const end = new Date(start);
+        end.setHours(end.getHours() + 1);
+        return { start, end };
+      }
+      const start = new Date(today);
+      start.setMinutes(0, 0, 0);
+      start.setHours(start.getHours() + 1);
+      const end = new Date(start);
+      end.setHours(end.getHours() + 1);
+      return { start, end };
+    }
+
+    if (selectedDay.getTime() > new Date(`${todayKey}T00:00:00`).getTime()) {
+      const start = new Date(selectedDay);
+      start.setHours(12, 0, 0, 0);
+      const end = new Date(start);
+      end.setHours(end.getHours() + 1);
+      return { start, end };
+    }
+
+    const start = new Date(selectedDay);
+    start.setHours(12, 0, 0, 0);
+    const end = new Date(start);
+    end.setHours(end.getHours() + 1);
+    return { start, end };
+  }
+
+  function beginEventDraftForDay(dayKey) {
+    if (!eventStartInput || !eventEndInput) return;
+    const { start, end } = defaultEventRangeForDay(dayKey);
+    eventStartInput.value = toLocalDateTimeValue(start);
+    eventEndInput.value = toLocalDateTimeValue(end);
+    if (eventTitleInput) {
+      eventTitleInput.focus();
+      eventTitleInput.select();
+    }
+    if (eventCreateForm && typeof eventCreateForm.scrollIntoView === "function") {
+      eventCreateForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    setStatus(`Draft started for ${dayKey}.`);
+  }
+
   function monthRange(monthStart) {
     const start = new Date(monthStart.getFullYear(), monthStart.getMonth(), 1, 0, 0, 0, 0);
     const end = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1, 0, 0, 0, 0);
@@ -495,6 +557,23 @@
       if (!btn) return;
       selectedDayKey = String(btn.getAttribute("data-day-key") || "");
       renderCalendarGrid();
+    });
+
+    calendarGrid.addEventListener("dblclick", (event) => {
+      const btn = event.target.closest("[data-day-key]");
+      if (!btn) return;
+      selectedDayKey = String(btn.getAttribute("data-day-key") || "");
+      renderCalendarGrid();
+      beginEventDraftForDay(selectedDayKey);
+    });
+
+    calendarGrid.addEventListener("contextmenu", (event) => {
+      const btn = event.target.closest("[data-day-key]");
+      if (!btn) return;
+      event.preventDefault();
+      selectedDayKey = String(btn.getAttribute("data-day-key") || "");
+      renderCalendarGrid();
+      beginEventDraftForDay(selectedDayKey);
     });
   }
 
