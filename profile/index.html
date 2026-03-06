@@ -125,6 +125,22 @@
       width: 100%;
       font-size: 12px;
     }
+    .avatar-wrap input[type="file"] {
+      display: none;
+    }
+    .avatar-file-btn {
+      margin-top: 10px;
+      display: inline-block;
+      border: 1px solid rgba(0,0,0,0.2);
+      background: #111;
+      color: #fff;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+    }
     .field { margin-bottom: 12px; }
     .field label {
       display: block;
@@ -233,6 +249,7 @@
       <div class="profile-top">
         <div class="avatar-wrap">
           <img id="profileAvatarImg" alt="Profile photo" src="/images/default_pfp.jpg">
+          <label for="profileAvatarInput" class="avatar-file-btn">Choose Photo</label>
           <input id="profileAvatarInput" type="file" accept="image/*">
         </div>
         <div>
