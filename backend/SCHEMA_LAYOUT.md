@@ -23,6 +23,7 @@ This folder is split by feature so SQL changes are easier to maintain.
   - `get_my_friend_requests`
   - `get_my_outgoing_friend_requests`
   - `respond_to_friend_request`
+  - `get_friend_public_profile`
 
 ## `backend/push`
 - `push_subscriptions_schema.sql`: `push_subscriptions` table + trigger.

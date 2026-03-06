@@ -237,3 +237,32 @@ end;
 $$;
 
 grant execute on function public.add_friend_by_username(text) to authenticated;
+
+create or replace function public.get_friend_public_profile(target_username text)
+returns table (
+  id uuid,
+  username text,
+  avatar_url text,
+  bio text
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    p.id,
+    p.username,
+    p.avatar_url,
+    p.bio
+  from public.profiles p
+  where lower(p.username) = lower(trim(coalesce(target_username, '')))
+    and exists (
+      select 1
+      from public.friendships f
+      where (f.user_id = auth.uid() and f.friend_id = p.id)
+         or (f.friend_id = auth.uid() and f.user_id = p.id)
+    )
+  limit 1;
+$$;
+
+grant execute on function public.get_friend_public_profile(text) to authenticated;

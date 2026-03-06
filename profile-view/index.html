@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>paiden.com</title>
+  <meta name="description" content="View a friend's profile on paiden.com">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="apple-touch-icon" href="/images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+  <link rel="stylesheet" href="/account-menu.css">
+  <style>
+    :root {
+      --side-margin: 10vw;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --brand-font-size: 2.5vw;
+      --nav-font-size: 1.2vw;
+      --spacing-small: 0.5vw;
+      --spacing-large: 1.5vw;
+      --footer-padding: 7vh;
+      --footer-title-font-size: 2vw;
+      --footer-subtitle-font-size: 1vw;
+      --footer-nav-font-size: 1vw;
+      --footer-nav-left: 15vw;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #e0e0e0;
+      color: #111;
+      overflow-x: hidden;
+    }
+    .top-nav {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      background: #000;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+    .top-nav-inner {
+      margin: 0 var(--side-margin);
+      min-height: calc(64px + var(--safe-top));
+      padding-top: var(--safe-top);
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-start;
+    }
+    .brand {
+      color: #fff;
+      text-decoration: none;
+      font-size: var(--brand-font-size);
+      font-weight: bold;
+      padding-bottom: var(--spacing-small);
+      padding-right: var(--spacing-large);
+      border-right: 0.1vw solid #fff;
+      margin-right: var(--spacing-large);
+    }
+    .nav-links { display: flex; align-items: flex-end; gap: 0; }
+    .nav-links a {
+      color: #fff;
+      text-decoration: none;
+      font-size: var(--nav-font-size);
+      font-weight: bold;
+      margin-right: var(--spacing-large);
+      padding-bottom: var(--spacing-small);
+      opacity: 1;
+    }
+    .nav-links a:last-child { margin-right: 0; }
+    .mobile-fixed-header { display: none; }
+    .content-wrap {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      padding: clamp(24px, 4.5vh, 42px) 0 calc(30px + var(--safe-bottom));
+      min-height: calc(100vh - 320px);
+    }
+    .content-inner {
+      margin: 0 var(--side-margin);
+      background: rgba(255,255,255,0.75);
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 22px;
+      box-shadow: 0 10px 34px rgba(0,0,0,0.08);
+      padding: clamp(18px, 2.2vw, 32px);
+      max-width: 920px;
+    }
+    .kicker {
+      letter-spacing: 0.18em;
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(16,21,28,0.65);
+      margin-bottom: 10px;
+    }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 3.8vw, 48px); }
+    .profile-top {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      gap: 18px;
+      margin-bottom: 16px;
+      align-items: start;
+    }
+    .avatar-wrap {
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    .avatar-wrap img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.12);
+      display: block;
+    }
+    .row {
+      margin: 0 0 10px;
+      font-size: 15px;
+    }
+    .label { font-weight: 800; }
+    .readonly-box {
+      width: 100%;
+      border: 1px solid rgba(0,0,0,0.2);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 15px;
+      background: rgba(255,255,255,0.8);
+      min-height: 110px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .status { margin-top: 12px; min-height: 20px; font-weight: 700; }
+    .footer {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      background-color: #000;
+      padding: var(--footer-padding) 0;
+      position: relative;
+    }
+    .footer-inner {
+      margin: 0 var(--side-margin);
+      text-align: left;
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .footer-left { display: flex; flex-direction: column; align-items: flex-start; }
+    .footer-left .footer-brand { font-size: var(--footer-title-font-size); font-weight: bold; color: white; text-decoration: none; margin-bottom: 0.75vw; }
+    .footer-left .footer-created, .footer-left .footer-updated { font-size: var(--footer-subtitle-font-size); color: white; margin-top: var(--spacing-small); }
+    .footer-nav { position: absolute; top: 50%; left: var(--footer-nav-left); transform: translateY(-45%); display: flex; flex-direction: column; align-items: flex-start; }
+    .footer-nav a { font-size: var(--footer-nav-font-size); color: white; text-decoration: none; margin-bottom: var(--spacing-small); }
+    .footer-nav a:hover { text-decoration: underline; }
+    .footer-social { display: flex; flex-direction: column; align-items: flex-end; color: white; }
+    .footer-social .follow-text { font-size: var(--footer-nav-font-size); font-weight: bold; margin-bottom: var(--spacing-small); }
+    .social-icons { display: flex; gap: 1vw; }
+    .social-icons a { color: white; font-size: 2vw; text-decoration: none; }
+    @media (max-width: 768px) {
+      body { padding-top: calc(var(--safe-top) + 58px); }
+      .top-nav { display: none; }
+      .mobile-fixed-header {
+        position: fixed; top: 0; left: 0; right: 0;
+        height: calc(var(--safe-top) + 58px);
+        padding-top: var(--safe-top);
+        padding-left: 5vw; padding-right: 5vw;
+        display: flex; align-items: center; justify-content: space-between;
+        background: #000; z-index: 10000;
+      }
+      .mobile-fixed-brand { color: #fff; text-decoration: none; font-weight: 800; font-size: clamp(22px, 6.4vw, 30px); line-height: 1; }
+      .mobile-fixed-nav { display: flex; align-items: center; gap: 18px; padding-left: 16px; }
+      .mobile-fixed-nav a { color: #fff; text-decoration: none; font-size: 22px; line-height: 1; }
+      .profile-top { grid-template-columns: 1fr; }
+      .footer { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top-nav" role="navigation" aria-label="Primary site navigation">
+    <div class="top-nav-inner">
+      <a class="brand" href="/">paiden.com</a>
+      <nav class="nav-links">
+        <a href="/resume">Resume</a>
+        <a href="/photos">Photos</a>
+        <a href="/blog">Blog</a>
+        <a href="/contactme">Contact Me</a>
+      </nav>
+    </div>
+  </header>
+  <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation">
+    <a class="mobile-fixed-brand" href="/">paiden.com</a>
+    <div class="mobile-fixed-nav">
+      <a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a>
+      <a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a>
+      <a href="/contactme" aria-label="Contact"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a>
+    </div>
+  </div>
+  <main class="content-wrap">
+    <section class="content-inner">
+      <div class="kicker">ACCOUNT</div>
+      <h1>Friend Profile</h1>
+      <div class="profile-top">
+        <div class="avatar-wrap">
+          <img id="friendAvatarImg" alt="Friend profile photo" src="/images/default_pfp.jpg">
+        </div>
+        <div>
+          <div class="row"><span class="label">Username:</span> <span id="friendUsername">Loading...</span></div>
+          <div class="row"><span class="label">Bio:</span></div>
+          <div class="readonly-box" id="friendBio">Loading...</div>
+        </div>
+      </div>
+      <div class="status" id="friendProfileStatus"></div>
+    </section>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <a class="footer-brand" href="/">paiden.com</a>
+        <div class="footer-created">Created by Paiden Nicks</div>
+        <div class="footer-updated" id="last-updated"></div>
+      </div>
+      <div class="footer-nav">
+        <a href="/resume">Resume</a>
+        <a href="/photos">Photos</a>
+        <a href="/blog">Blog</a>
+        <a href="/contactme">Contact Me</a>
+      </div>
+      <div class="footer-social">
+        <span class="follow-text">Follow Me</span>
+        <div class="social-icons">
+          <a href="https://www.linkedin.com/in/paiden" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i></a>
+          <a href="https://www.instagram.com/paiden_26" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
+          <a href="https://snapchat.com/t/m04JWymy" target="_blank" rel="noopener"><i class="fab fa-snapchat"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/auth-client.js"></script>
+  <script src="/account-menu.js"></script>
+  <script>
+    const avatarEl = document.getElementById("friendAvatarImg");
+    const usernameEl = document.getElementById("friendUsername");
+    const bioEl = document.getElementById("friendBio");
+    const statusEl = document.getElementById("friendProfileStatus");
+    const DEFAULT_AVATAR = "/images/default_pfp.jpg";
+
+    function setStatus(message, isError) {
+      if (!statusEl) return;
+      statusEl.textContent = message || "";
+      statusEl.style.color = isError ? "#a10000" : "rgba(17,17,17,0.78)";
+    }
+
+    async function loadFriendProfile() {
+      if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") {
+        setStatus("Auth service unavailable.", true);
+        return;
+      }
+
+      const auth = await window.PaidenAuth.getCurrentProfile();
+      if (!auth || !auth.ok || !auth.user) {
+        setStatus("Sign in required. Redirecting...");
+        window.setTimeout(() => { window.location.href = "/signin"; }, 900);
+        return;
+      }
+
+      const params = new URLSearchParams(window.location.search || "");
+      const username = String(params.get("username") || "").trim();
+      if (!username) {
+        setStatus("Missing friend username.", true);
+        return;
+      }
+
+      const client = window.PaidenAuth.getClient();
+      const { data, error } = await client.rpc("get_friend_public_profile", { target_username: username });
+      if (error) {
+        setStatus(error.message || "Could not load friend profile.", true);
+        return;
+      }
+
+      const profile = Array.isArray(data) ? data[0] : null;
+      if (!profile) {
+        setStatus("You can only view profiles for your friends.", true);
+        if (usernameEl) usernameEl.textContent = "-";
+        if (bioEl) bioEl.textContent = "-";
+        if (avatarEl) avatarEl.src = DEFAULT_AVATAR;
+        return;
+      }
+
+      if (usernameEl) usernameEl.textContent = String(profile.username || "-");
+      if (bioEl) bioEl.textContent = String(profile.bio || "No bio set.");
+      if (avatarEl) avatarEl.src = String(profile.avatar_url || "").trim() || DEFAULT_AVATAR;
+      setStatus("");
+    }
+
+    const lastUpdated = document.getElementById("last-updated");
+    if (lastUpdated) lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();
+    loadFriendProfile();
+  </script>
+</body>
+</html>
