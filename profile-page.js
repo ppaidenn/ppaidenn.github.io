@@ -102,5 +102,19 @@
     });
   }
 
+  if (avatarInputEl && avatarImgEl) {
+    avatarInputEl.addEventListener("change", async () => {
+      const file = avatarInputEl.files && avatarInputEl.files[0] ? avatarInputEl.files[0] : null;
+      if (!file) return;
+      try {
+        const previewDataUrl = await downscaleImageToJpegDataUrl(file);
+        avatarImgEl.src = previewDataUrl || DEFAULT_AVATAR;
+        setStatus("Preview updated. Save profile to keep this photo.");
+      } catch (_) {
+        setStatus("Could not preview selected image.", true);
+      }
+    });
+  }
+
   loadProfile();
 })();

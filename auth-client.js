@@ -136,8 +136,8 @@
     if (error) return { ok: false, error: error.message || "Could not sign in." };
     const user = data?.user || null;
     const session = data?.session || null;
-    const saved = await upsertProfileForUser(user, { email });
-    if (!saved.ok) return saved;
+    // Avoid overwriting existing profile fields (e.g., avatar_url) on every sign-in.
+    // Missing profiles are created lazily in getCurrentProfile().
     return { ok: true, user, session };
   }
 
