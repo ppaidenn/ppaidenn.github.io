@@ -301,6 +301,176 @@
       background: #fff;
       color: #111;
     }
+    .calendar-wrap {
+      margin-top: 18px;
+      border: 1px solid rgba(0,0,0,0.14);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.88);
+      padding: 12px;
+    }
+    .calendar-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .calendar-month {
+      font-size: 16px;
+      font-weight: 800;
+      color: #111;
+    }
+    .calendar-nav-btn {
+      border: 1px solid rgba(0,0,0,0.2);
+      background: #111;
+      color: #fff;
+      border-radius: 9px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .calendar-weekdays,
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .calendar-weekday {
+      font-size: 11px;
+      font-weight: 800;
+      color: rgba(17,17,17,0.65);
+      text-align: center;
+      padding: 2px 0;
+    }
+    .calendar-day {
+      border: 1px solid rgba(0,0,0,0.13);
+      border-radius: 10px;
+      min-height: 64px;
+      background: #fff;
+      padding: 6px;
+      text-align: left;
+      cursor: pointer;
+      position: relative;
+    }
+    .calendar-day.muted {
+      opacity: 0.42;
+    }
+    .calendar-day.selected {
+      border-color: #111;
+      box-shadow: 0 0 0 1px #111 inset;
+    }
+    .calendar-day-num {
+      font-size: 12px;
+      font-weight: 800;
+      color: #111;
+    }
+    .calendar-day-dots {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .calendar-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #111;
+    }
+    .calendar-events-list {
+      margin-top: 10px;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.92);
+      max-height: 180px;
+      overflow-y: auto;
+      padding: 6px;
+    }
+    .calendar-event-row {
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.35;
+      border: 1px solid rgba(0,0,0,0.08);
+      background: #fff;
+      margin-bottom: 6px;
+    }
+    .calendar-event-row:last-child {
+      margin-bottom: 0;
+    }
+    .calendar-event-row.pending {
+      border-color: rgba(145,108,21,0.35);
+      background: rgba(255,248,224,0.95);
+    }
+    .event-form {
+      margin-top: 12px;
+      border-top: 1px solid rgba(0,0,0,0.12);
+      padding-top: 12px;
+      display: grid;
+      gap: 8px;
+    }
+    .event-form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .event-form input,
+    .event-form textarea {
+      width: 100%;
+      border: 1px solid rgba(0,0,0,0.2);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 14px;
+      background: #fff;
+      font-family: inherit;
+    }
+    .event-form textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+    .invite-friends-box {
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 10px;
+      max-height: 110px;
+      overflow-y: auto;
+      padding: 6px;
+      background: rgba(255,255,255,0.94);
+    }
+    .invite-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .event-invites-wrap {
+      margin-top: 12px;
+      border-top: 1px solid rgba(0,0,0,0.12);
+      padding-top: 12px;
+    }
+    .event-invites-list {
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.92);
+      max-height: 170px;
+      overflow-y: auto;
+      padding: 6px;
+    }
+    .event-invite-row {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(0,0,0,0.08);
+      background: #fff;
+      margin-bottom: 6px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 6px;
+      align-items: center;
+      font-size: 13px;
+    }
+    .event-invite-row:last-child {
+      margin-bottom: 0;
+    }
     .status { margin-top: 12px; min-height: 20px; font-weight: 700; }
     .footer {
       width: 100vw;
@@ -399,6 +569,35 @@
       <div class="requests-wrap">
         <div class="requests-title">Friend Requests: <span id="friendRequestsCounterText">0</span></div>
         <div class="requests-list" id="friendRequestsList"></div>
+      </div>
+      <div class="calendar-wrap">
+        <div class="calendar-head">
+          <button class="calendar-nav-btn" id="calendarPrevMonthBtn" type="button"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+          <div class="calendar-month" id="calendarMonthLabel">Calendar</div>
+          <button class="calendar-nav-btn" id="calendarNextMonthBtn" type="button"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+        </div>
+        <div class="calendar-weekdays" id="calendarWeekdays"></div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+        <div class="calendar-events-list" id="calendarEventsList"></div>
+
+        <form class="event-form" id="eventCreateForm">
+          <div class="row"><span class="label">Create Event</span></div>
+          <input id="eventTitleInput" type="text" maxlength="140" placeholder="Event title" required>
+          <div class="event-form-row">
+            <input id="eventStartInput" type="datetime-local" required>
+            <input id="eventEndInput" type="datetime-local" required>
+          </div>
+          <input id="eventLocationInput" type="text" maxlength="240" placeholder="Location (optional)">
+          <textarea id="eventDescriptionInput" maxlength="2000" placeholder="Description (optional)"></textarea>
+          <div class="row"><span class="label">Invite Friends</span></div>
+          <div class="invite-friends-box" id="eventInviteFriendsBox"></div>
+          <button class="btn" id="eventCreateBtn" type="submit">Create Event</button>
+        </form>
+
+        <div class="event-invites-wrap">
+          <div class="requests-title">Event Invites: <span id="eventInvitesCounterText">0</span></div>
+          <div class="event-invites-list" id="eventInvitesList"></div>
+        </div>
       </div>
       <div class="status" id="profileStatus"></div>
     </section>

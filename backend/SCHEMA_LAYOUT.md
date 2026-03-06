@@ -29,6 +29,16 @@ This folder is split by feature so SQL changes are easier to maintain.
 ## `backend/push`
 - `push_subscriptions_schema.sql`: `push_subscriptions` table + trigger.
 
+## `backend/calendar`
+- `events_schema.sql`: calendar + invites:
+  - `calendar_events` table
+  - `event_invites` table
+  - `create_event_with_invites`
+  - `get_my_calendar_events`
+  - `get_my_pending_event_invites`
+  - `respond_to_event_invite`
+  - `get_friend_calendar_events`
+
 ## Suggested Run Order (fresh setup)
 1. `backend/blog/posts_schema.sql`
 2. `backend/blog/post_rate_limits_schema.sql`
@@ -40,3 +50,4 @@ This folder is split by feature so SQL changes are easier to maintain.
 8. `backend/auth/posts_account_link_schema.sql`
 9. `backend/auth/friendships_schema.sql`
 10. `backend/push/push_subscriptions_schema.sql`
+11. `backend/calendar/events_schema.sql`

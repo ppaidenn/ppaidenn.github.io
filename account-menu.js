@@ -77,14 +77,18 @@
     const res = await window.PaidenAuth.getCurrentProfile();
     if (!res || !res.ok || !res.user) return { signedIn: false, profile: null, pendingCount: 0 };
     let pendingCount = 0;
+    let pendingEventInvites = 0;
     try {
       const client = window.PaidenAuth.getClient();
       const { data } = await client.rpc("get_my_pending_request_count");
       pendingCount = Number.isFinite(Number(data)) ? Number(data) : 0;
+      const { data: inviteData } = await client.rpc("get_my_pending_event_invites");
+      pendingEventInvites = Array.isArray(inviteData) ? inviteData.length : 0;
     } catch (_) {
       pendingCount = 0;
+      pendingEventInvites = 0;
     }
-    return { signedIn: true, profile: res.profile || null, pendingCount };
+    return { signedIn: true, profile: res.profile || null, pendingCount: pendingCount + pendingEventInvites };
   }
 
   async function handleSignOut() {
