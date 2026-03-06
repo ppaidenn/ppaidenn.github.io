@@ -19,26 +19,33 @@
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --brand-font-size: 2.5vw;
       --nav-font-size: 1.2vw;
+      --spacing-small: 0.5vw;
       --spacing-large: 1.5vw;
       --footer-padding: 7vh;
-      --spacing-small: 0.5vw;
       --footer-title-font-size: 2vw;
       --footer-subtitle-font-size: 1vw;
       --footer-nav-font-size: 1vw;
       --footer-nav-left: 15vw;
     }
     * { box-sizing: border-box; }
-    html { scrollbar-gutter: stable; }
+    html {
+      scrollbar-gutter: stable;
+      min-height: 100%;
+      background: #e0e0e0;
+    }
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: #e0e0e0;
-      color: #111;
+      color: #10151c;
       overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
     .top-nav {
-      width: 100vw;
-      margin-left: calc(50% - 50vw);
+      width: 100%;
+      margin-left: 0;
       background: #000;
       color: #fff;
       position: sticky;
@@ -79,52 +86,53 @@
     .mobile-fixed-header { display: none; }
 
     .content-wrap {
-      width: 100vw;
-      margin-left: calc(50% - 50vw);
-      padding: clamp(24px, 4.5vh, 42px) 0 calc(30px + var(--safe-bottom));
+      width: 100%;
+      margin-left: 0;
+      padding: clamp(22px, 4vh, 40px) 0 calc(28px + var(--safe-bottom));
+      flex: 1 0 auto;
     }
     .content-inner {
       margin: 0 var(--side-margin);
-      background: rgba(255,255,255,0.75);
+      background: rgba(255,255,255,0.68);
       border: 1px solid rgba(0,0,0,0.1);
-      border-radius: 22px;
-      box-shadow: 0 10px 34px rgba(0,0,0,0.08);
-      padding: clamp(18px, 2.2vw, 32px);
+      border-radius: 20px;
+      padding: clamp(18px, 2.2vw, 30px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
     }
     .story-head {
-      background: #000;
-      color: #fff;
-      border-radius: 14px;
-      padding: 14px 16px;
-      font-size: clamp(18px, 1.5vw, 24px);
+      margin: 0 0 14px;
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1.05;
+      color: #0e1116;
       font-weight: 800;
-      margin-bottom: 14px;
     }
     .story-date {
-      font-size: clamp(13px, 1vw, 16px);
+      font-size: clamp(14px, 1vw, 16px);
       font-weight: 700;
-      color: rgba(17,17,17,0.68);
+      color: rgba(16,21,28,0.72);
       margin-bottom: 14px;
     }
     .story-body p {
       margin: 0 0 12px;
-      font-size: clamp(15px, 1.08vw, 19px);
-      line-height: 1.55;
-      color: rgba(17,17,17,0.9);
+      font-size: clamp(16px, 1.2vw, 20px);
+      line-height: 1.45;
+      color: rgba(16,21,28,0.86);
     }
     .story-body h2 {
       margin: 14px 0 8px;
-      font-size: clamp(17px, 1.22vw, 22px);
-      color: #111;
+      font-size: clamp(17px, 1.22vw, 24px);
+      color: #0e1116;
+      line-height: 1.2;
     }
     .story-body ol {
-      margin: 0 0 14px 20px;
-      padding: 0;
+      margin: 10px 0 22px;
+      padding-left: 20px;
+      color: rgba(16,21,28,0.9);
     }
     .story-body li {
       margin-bottom: 8px;
-      line-height: 1.45;
-      font-size: clamp(14px, 1.02vw, 18px);
+      line-height: 1.4;
+      font-size: clamp(15px, 1.05vw, 18px);
     }
     .story-cta {
       display: inline-flex;
@@ -132,21 +140,23 @@
       gap: 8px;
       text-decoration: none;
       color: #111;
-      background: rgba(255,255,255,0.82);
-      border: 1px solid rgba(0,0,0,0.16);
+      background: rgba(246,242,233,0.95);
+      border: 1px solid rgba(0,0,0,0.2);
       border-radius: 999px;
       padding: 10px 14px;
-      font-weight: 800;
-      font-size: clamp(13px, 0.98vw, 16px);
-      margin-top: 4px;
+      font-weight: 700;
+      font-size: 15px;
+      margin-top: 10px;
     }
 
     .footer {
-      width: 100vw;
-      margin-left: calc(50% - 50vw);
+      width: 100%;
+      margin-left: 0;
       background-color: #000;
       padding: var(--footer-padding) 0;
       position: relative;
+      margin-top: auto;
+      flex-shrink: 0;
     }
     .footer-inner {
       margin: 0 var(--side-margin);
@@ -338,3 +348,5 @@
   <script src="/account-menu.js"></script>
 </body>
 </html>
+
+
