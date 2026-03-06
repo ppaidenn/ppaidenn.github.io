@@ -85,3 +85,23 @@ as $$
 $$;
 
 grant execute on function public.get_public_profiles(text[]) to anon, authenticated;
+
+create or replace function public.get_public_profiles_by_ids(user_ids uuid[])
+returns table (
+  id uuid,
+  username text,
+  avatar_url text
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    p.id,
+    p.username,
+    p.avatar_url
+  from public.profiles p
+  where p.id = any(user_ids);
+$$;
+
+grant execute on function public.get_public_profiles_by_ids(uuid[]) to anon, authenticated;

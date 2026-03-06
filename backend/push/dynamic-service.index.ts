@@ -23,6 +23,13 @@ const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") || (NOTIFY_EMAIL ? `mailto:$
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
+function extractBearerToken(authorizationHeader: string) {
+  if (!authorizationHeader) return "";
+  const trimmed = String(authorizationHeader).trim();
+  if (!trimmed.toLowerCase().startsWith("bearer ")) return "";
+  return trimmed.slice(7).trim();
+}
+
 async function hashValue(value) {
   const data = new TextEncoder().encode(value);
   const hash = await crypto.subtle.digest("SHA-256", data);
@@ -166,6 +173,17 @@ serve(async (req) => {
 
   const body = await req.json();
   const { title, author, body: text, images, turnstile_token, fingerprint } = body || {};
+  const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+  const bearerToken = extractBearerToken(authHeader);
+  let accountUserId = "";
+  if (bearerToken) {
+    const { data: userData, error: userError } = await admin.auth.getUser(bearerToken);
+    if (!userError && userData?.user?.id) {
+      accountUserId = userData.user.id;
+    } else {
+      console.warn("Auth token present but invalid for post link:", userError?.message || "Unknown auth error");
+    }
+  }
   const ip =
     req.headers.get("cf-connecting-ip") ||
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -264,6 +282,7 @@ serve(async (req) => {
       author,
       body: text,
       images: Array.isArray(images) ? images : [],
+      user_id: accountUserId || null,
     }])
     .select("id")
     .single();

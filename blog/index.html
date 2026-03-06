@@ -1985,48 +1985,59 @@ const titleEl = document.getElementById("postTitle");
     const btnPublish = document.getElementById("btnPublish");
     const btnClearDraft = document.getElementById("btnClearDraft");
     const PUBLISH_BTN_IDLE_HTML = '<i class="fa-solid fa-paper-plane"></i> Publish';
-    const DEFAULT_AVATAR_URL = "/images/default_pfp.jpg";
-    const publicProfileByUsername = new Map();
+    const publicProfileByUserId = new Map();
     function setPublishSubmitting(isSubmitting) {
       if (!btnPublish) return;
       btnPublish.disabled = !!isSubmitting;
       btnPublish.innerHTML = isSubmitting ? "Publishing..." : PUBLISH_BTN_IDLE_HTML;
     }
-    function getPublicProfile(username) {
-      if (!username) return null;
-      return publicProfileByUsername.get(String(username).trim().toLowerCase()) || null;
+    function getPublicProfile(userId) {
+      if (!userId) return null;
+      return publicProfileByUserId.get(String(userId).trim().toLowerCase()) || null;
     }
     function applyAuthorProfileToCard(card) {
       if (!card) return;
+      const userId = (card.getAttribute("data-account-user-id") || "").trim();
       const author = (card.getAttribute("data-author") || "").trim();
       const authorWrap = card.querySelector(".post-author");
-      if (!authorWrap || !author) return;
-      const profile = getPublicProfile(author);
+      if (!authorWrap) return;
       let avatar = authorWrap.querySelector(".post-author-avatar");
+      if (!userId) {
+        if (avatar) avatar.remove();
+        return;
+      }
+      const profile = getPublicProfile(userId);
+      if (!profile || !profile.avatar_url) {
+        if (avatar) avatar.remove();
+        return;
+      }
       if (!avatar) {
         avatar = document.createElement("img");
         avatar.className = "post-author-avatar";
-        avatar.alt = `${author} profile photo`;
+        avatar.alt = `${author || "User"} profile photo`;
         authorWrap.insertBefore(avatar, authorWrap.firstChild);
       }
-      avatar.src = (profile && profile.avatar_url) ? profile.avatar_url : DEFAULT_AVATAR_URL;
+      avatar.src = profile.avatar_url;
     }
     async function hydrateAuthorProfiles(cards) {
       if (!sb || !Array.isArray(cards) || !cards.length) return;
-      const usernames = Array.from(new Set(cards
-        .map((c) => (c && c.getAttribute("data-author") ? String(c.getAttribute("data-author")).trim() : ""))
+      const userIds = Array.from(new Set(cards
+        .map((c) => (c && c.getAttribute("data-account-user-id") ? String(c.getAttribute("data-account-user-id")).trim() : ""))
         .filter(Boolean)
-        .map((name) => name.toLowerCase())));
-      if (!usernames.length) return;
+        .map((id) => id.toLowerCase())));
+      if (!userIds.length) {
+        cards.forEach((card) => applyAuthorProfileToCard(card));
+        return;
+      }
 
-      const missing = usernames.filter((u) => !publicProfileByUsername.has(u));
+      const missing = userIds.filter((u) => !publicProfileByUserId.has(u));
       if (missing.length) {
-        const { data, error } = await sb.rpc("get_public_profiles", { usernames: missing });
+        const { data, error } = await sb.rpc("get_public_profiles_by_ids", { user_ids: missing });
         if (!error && Array.isArray(data)) {
           data.forEach((p) => {
-            const key = p && p.username ? String(p.username).trim().toLowerCase() : "";
+            const key = p && p.id ? String(p.id).trim().toLowerCase() : "";
             if (!key) return;
-            publicProfileByUsername.set(key, p);
+            publicProfileByUserId.set(key, p);
           });
         }
       }
@@ -2118,7 +2129,7 @@ const titleEl = document.getElementById("postTitle");
       }
       const { data, error } = await sb
         .from("posts")
-        .select("id,title,author,body,images,created_at")
+        .select("id,title,author,body,images,created_at,user_id")
         .order("created_at", { ascending: false });
       if (error) {
         console.error("Failed to load posts:", error);
@@ -2192,6 +2203,7 @@ function excerpt(text, maxChars = 1000) {
         card.setAttribute("data-post-id", p.id || "");
         card.setAttribute("data-title", p.title || "");
         card.setAttribute("data-author", p.author || "");
+        card.setAttribute("data-account-user-id", p.user_id || "");
         card.setAttribute("data-created", p.created_at || "");
         card.setAttribute("data-body", p.body || "");
         card.setAttribute("data-images", (p.images || []).join("||"));
@@ -2474,9 +2486,21 @@ function excerpt(text, maxChars = 1000) {
       console.log("turnstile token length", turnstileToken ? turnstileToken.length : 0);
       setPublishSubmitting(true);
       try {
+        let accessToken = "";
+        if (window.PaidenAuth && typeof window.PaidenAuth.getClient === "function") {
+          try {
+            const client = window.PaidenAuth.getClient();
+            const { data: sessionData } = await client.auth.getSession();
+            accessToken = sessionData?.session?.access_token || "";
+          } catch (sessionErr) {
+            console.warn("Could not read auth session for post link:", sessionErr);
+          }
+        }
+        const headers = { "Content-Type": "application/json" };
+        if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
         const resp = await fetch(`${SUPABASE_URL}/functions/v1/dynamic-service`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify(payload)
         });
         if (!resp.ok) {
