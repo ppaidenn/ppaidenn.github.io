@@ -235,6 +235,66 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    .requests-wrap {
+      margin-top: 14px;
+      max-width: 420px;
+    }
+    .requests-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #111;
+      margin-bottom: 8px;
+    }
+    .requests-list {
+      border: 1px solid rgba(0,0,0,0.14);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.9);
+      max-height: 260px;
+      overflow-y: auto;
+      padding: 6px;
+    }
+    .request-row {
+      display: grid;
+      grid-template-columns: 30px 1fr auto auto;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 9px;
+    }
+    .request-row + .request-row {
+      border-top: 1px solid rgba(0,0,0,0.08);
+    }
+    .request-row img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid rgba(0,0,0,0.15);
+      background: #fff;
+      flex: 0 0 30px;
+    }
+    .request-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #111;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .request-action {
+      border: 1px solid rgba(0,0,0,0.2);
+      border-radius: 8px;
+      background: #111;
+      color: #fff;
+      padding: 6px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .request-action.reject {
+      background: #fff;
+      color: #111;
+    }
     .status { margin-top: 12px; min-height: 20px; font-weight: 700; }
     .footer {
       width: 100vw;
@@ -329,6 +389,10 @@
           <i class="fa-solid fa-caret-down" aria-hidden="true"></i>
         </button>
         <div class="friends-dropdown" id="friendsDropdown"></div>
+      </div>
+      <div class="requests-wrap">
+        <div class="requests-title">Friend Requests: <span id="friendRequestsCounterText">0</span></div>
+        <div class="requests-list" id="friendRequestsList"></div>
       </div>
       <div class="status" id="profileStatus"></div>
     </section>

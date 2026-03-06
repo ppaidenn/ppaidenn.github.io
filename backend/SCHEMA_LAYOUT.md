@@ -19,6 +19,10 @@ This folder is split by feature so SQL changes are easier to maintain.
 - `friendships_schema.sql`: `friendships` table + RLS + RPCs:
   - `get_my_friends`
   - `add_friend_by_username`
+  - `get_my_pending_request_count`
+  - `get_my_friend_requests`
+  - `get_my_outgoing_friend_requests`
+  - `respond_to_friend_request`
 
 ## `backend/push`
 - `push_subscriptions_schema.sql`: `push_subscriptions` table + trigger.

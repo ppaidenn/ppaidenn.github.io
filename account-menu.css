@@ -87,6 +87,26 @@
   font-size: inherit;
 }
 
+.profile-request-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #cf2f2f;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.profile-request-badge.in-link {
+  margin-left: 6px;
+  transform: translateY(-1px);
+}
+
 .mobile-fixed-nav .profile-menu summary {
   font-size: 22px;
 }

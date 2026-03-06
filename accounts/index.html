@@ -305,6 +305,7 @@
     let currentUserId = "";
     let currentUsernameLower = "";
     let friendUsernames = new Set();
+    let pendingOutgoingUsernames = new Set();
 
     function escapeHTML(str) {
       return String(str || "").replace(/[&<>"']/g, (s) => ({
@@ -336,11 +337,17 @@
 
       const client = window.PaidenAuth.getClient();
       friendUsernames = new Set();
+      pendingOutgoingUsernames = new Set();
       if (currentUserId) {
         const { data: friendsData } = await client.rpc("get_my_friends");
         (Array.isArray(friendsData) ? friendsData : []).forEach((row) => {
           const key = row && row.username ? String(row.username).trim().toLowerCase() : "";
           if (key) friendUsernames.add(key);
+        });
+        const { data: outgoingData } = await client.rpc("get_my_outgoing_friend_requests");
+        (Array.isArray(outgoingData) ? outgoingData : []).forEach((row) => {
+          const key = row && row.username ? String(row.username).trim().toLowerCase() : "";
+          if (key) pendingOutgoingUsernames.add(key);
         });
       }
 
@@ -373,7 +380,10 @@
           const usernameKey = username.toLowerCase();
           if (currentUserId && usernameKey && usernameKey !== currentUsernameLower) {
             const alreadyFriend = friendUsernames.has(usernameKey);
-            actionHtml = `<button class="add-friend-btn" data-add-friend-username="${escapeHTML(username)}" ${alreadyFriend ? "disabled" : ""}>${alreadyFriend ? "Friends" : "Add Friend"}</button>`;
+            const alreadyRequested = pendingOutgoingUsernames.has(usernameKey);
+            const label = alreadyFriend ? "Friends" : alreadyRequested ? "Requested" : "Add Friend";
+            const isDisabled = alreadyFriend || alreadyRequested;
+            actionHtml = `<button class="add-friend-btn" data-add-friend-username="${escapeHTML(username)}" ${isDisabled ? "disabled" : ""}>${label}</button>`;
           }
           return `
             <article class="account-card">
@@ -409,9 +419,9 @@
         setStatus((error && error.message) || "Could not add friend.", true);
         return;
       }
-      friendUsernames.add(friendUsername.toLowerCase());
-      btn.textContent = "Friends";
-      setStatus("Friend added.", false);
+      pendingOutgoingUsernames.add(friendUsername.toLowerCase());
+      btn.textContent = "Requested";
+      setStatus("Friend request sent.", false);
     });
 
     const lastUpdated = document.getElementById("last-updated");

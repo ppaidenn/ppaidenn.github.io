@@ -9,6 +9,8 @@
   const friendsToggleBtn = document.getElementById("friendsToggleBtn");
   const friendsCounterText = document.getElementById("friendsCounterText");
   const friendsDropdown = document.getElementById("friendsDropdown");
+  const friendRequestsCounterText = document.getElementById("friendRequestsCounterText");
+  const friendRequestsList = document.getElementById("friendRequestsList");
   const DEFAULT_AVATAR = "/images/default_pfp.jpg";
   let friendsDropdownOpen = false;
 
@@ -101,6 +103,48 @@
     renderFriendsDropdown(rows);
   }
 
+  function setFriendRequestsCount(count) {
+    if (!friendRequestsCounterText) return;
+    const total = Number.isFinite(count) && count > 0 ? count : 0;
+    friendRequestsCounterText.textContent = String(total);
+  }
+
+  function renderFriendRequests(rows) {
+    if (!friendRequestsList) return;
+    const list = Array.isArray(rows) ? rows : [];
+    if (!list.length) {
+      friendRequestsList.innerHTML = '<div class="request-row"><div class="request-name">No pending requests.</div></div>';
+      return;
+    }
+    friendRequestsList.innerHTML = list.map((row) => {
+      const username = String(row.username || "").trim() || "User";
+      const avatar = String(row.avatar_url || "").trim() || DEFAULT_AVATAR;
+      const requestId = String(row.request_id || "").trim();
+      return `
+        <div class="request-row">
+          <img src="${escapeHTML(avatar)}" alt="${escapeHTML(username)} profile picture">
+          <div class="request-name">${escapeHTML(username)}</div>
+          <button class="request-action accept" data-request-action="accept" data-request-id="${escapeHTML(requestId)}" type="button">Accept</button>
+          <button class="request-action reject" data-request-action="reject" data-request-id="${escapeHTML(requestId)}" type="button">Reject</button>
+        </div>
+      `;
+    }).join("");
+  }
+
+  async function loadFriendRequests() {
+    if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return;
+    const client = window.PaidenAuth.getClient();
+    const { data, error } = await client.rpc("get_my_friend_requests");
+    if (error) {
+      setFriendRequestsCount(0);
+      renderFriendRequests([]);
+      return;
+    }
+    const rows = Array.isArray(data) ? data : [];
+    setFriendRequestsCount(rows.length);
+    renderFriendRequests(rows);
+  }
+
   async function loadProfile() {
     if (!window.PaidenAuth) {
       setStatus("Auth service unavailable.", true);
@@ -118,6 +162,7 @@
     if (bioEl) bioEl.value = profile.bio || "";
     if (avatarImgEl) avatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
     await loadFriends();
+    await loadFriendRequests();
     setStatus("Profile loaded.");
   }
 
@@ -148,6 +193,7 @@
         const profile = res.profile || {};
         if (avatarImgEl) avatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
         await loadFriends();
+        await loadFriendRequests();
         setStatus("Profile saved.");
         if (avatarInputEl) avatarInputEl.value = "";
       } catch (err) {
@@ -180,6 +226,31 @@
       friendsToggleBtn.setAttribute("aria-expanded", friendsDropdownOpen ? "true" : "false");
     });
   }
+
+  document.addEventListener("click", async (event) => {
+    const btn = event.target.closest("[data-request-action][data-request-id]");
+    if (!btn) return;
+    event.preventDefault();
+    if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return;
+    const requestId = String(btn.getAttribute("data-request-id") || "").trim();
+    const action = String(btn.getAttribute("data-request-action") || "").trim();
+    if (!requestId || !action) return;
+    const acceptRequest = action === "accept";
+    btn.disabled = true;
+    const client = window.PaidenAuth.getClient();
+    const { data, error } = await client.rpc("respond_to_friend_request", {
+      request_id: requestId,
+      accept_request: acceptRequest,
+    });
+    if (error || data === false) {
+      btn.disabled = false;
+      setStatus((error && error.message) || "Could not process friend request.", true);
+      return;
+    }
+    await loadFriends();
+    await loadFriendRequests();
+    setStatus(acceptRequest ? "Friend request accepted." : "Friend request rejected.");
+  });
 
   loadProfile();
 })();
