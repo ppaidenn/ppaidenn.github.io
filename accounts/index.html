@@ -121,9 +121,13 @@
     }
     .account-card {
       display: grid;
-      grid-template-columns: 42px 1fr auto;
-      align-items: center;
+      grid-template-columns: 42px minmax(0, 1fr);
+      grid-template-areas:
+        "avatar meta"
+        "avatar action";
+      align-items: start;
       column-gap: 10px;
+      row-gap: 8px;
       padding: 10px 12px;
       border: 1px solid rgba(0,0,0,0.12);
       border-radius: 12px;
@@ -162,10 +166,13 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      grid-area: avatar;
     }
     .account-name-link {
       text-decoration: none;
       color: inherit;
+      grid-area: meta;
+      min-width: 0;
     }
     .account-name-link .account-name,
     .account-name-link.account-name {
@@ -173,6 +180,9 @@
       text-underline-offset: 2px;
     }
     .add-friend-btn {
+      grid-area: action;
+      justify-self: start;
+      max-width: 100%;
       border: 1px solid rgba(0,0,0,0.2);
       background: #111;
       color: #fff;
@@ -181,7 +191,8 @@
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: anywhere;
     }
     .add-friend-btn:disabled {
       opacity: 0.6;

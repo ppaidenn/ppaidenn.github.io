@@ -135,6 +135,10 @@
       width: 100%;
       font-size: 12px;
     }
+    .avatar-wrap .btn {
+      width: 100%;
+      margin-top: 10px;
+    }
     .avatar-wrap input[type="file"] {
       display: none;
     }
@@ -770,6 +774,7 @@
               <img id="profileAvatarImg" alt="Profile photo" src="/images/default_pfp.jpg">
               <label for="profileAvatarInput" class="avatar-file-btn">Choose Photo</label>
               <input id="profileAvatarInput" type="file" accept="image/*">
+              <button class="btn" id="profileSaveBtn" type="button">Save Profile</button>
             </div>
             <div>
               <div class="field">
@@ -787,7 +792,6 @@
               </div>
             </div>
           </div>
-          <button class="btn" id="profileSaveBtn" type="button">Save Profile</button>
           <div class="friends-wrap">
             <button class="friends-toggle" id="friendsToggleBtn" type="button" aria-expanded="false">
               <span id="friendsCounterText">Friends: 0</span>
