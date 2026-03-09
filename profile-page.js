@@ -5,7 +5,6 @@
   const bioEl = document.getElementById("profileBio");
   const avatarImgEl = document.getElementById("profileAvatarImg");
   const avatarInputEl = document.getElementById("profileAvatarInput");
-  const saveBtn = document.getElementById("profileSaveBtn");
   const statusEl = document.getElementById("profileStatus");
 
   const friendsToggleBtn = document.getElementById("friendsToggleBtn");
@@ -55,11 +54,75 @@
   let contextMenuDayKey = "";
   let calendarEvents = [];
   let selectedInviteSet = new Set();
+  let profileSaveTimer = null;
+  let profileSaveInFlight = false;
+  let queuedProfileSave = false;
+  let isHydratingProfile = true;
 
   function setStatus(message, isError = false) {
     if (!statusEl) return;
     statusEl.textContent = message || "";
     statusEl.style.color = isError ? "#a10000" : "rgba(17,17,17,0.78)";
+  }
+
+  function buildProfilePatch(avatarDataUrl = null) {
+    const patch = {
+      full_name: fullNameEl ? fullNameEl.value : "",
+      username: usernameEl ? usernameEl.value : "",
+      bio: bioEl ? bioEl.value : "",
+    };
+    if (avatarDataUrl) patch.avatar_url = avatarDataUrl;
+    return patch;
+  }
+
+  async function saveProfileNow(avatarDataUrl = null) {
+    if (!window.PaidenAuth) {
+      setStatus("Auth service unavailable.", true);
+      return false;
+    }
+    if (profileSaveInFlight) {
+      queuedProfileSave = true;
+      return true;
+    }
+
+    profileSaveInFlight = true;
+    setStatus("Saving...");
+    try {
+      const res = await window.PaidenAuth.updateProfile(buildProfilePatch(avatarDataUrl));
+      if (!res.ok) {
+        setStatus(res.error || "Could not save profile.", true);
+        return false;
+      }
+      const profile = res.profile || {};
+      if (fullNameEl) fullNameEl.value = profile.full_name || "";
+      if (usernameEl) usernameEl.value = profile.username || "";
+      if (bioEl) bioEl.value = profile.bio || "";
+      if (avatarImgEl) avatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
+      if (avatarInputEl) avatarInputEl.value = "";
+      setStatus("Profile saved.");
+      await loadFriends();
+      await loadFriendRequests();
+      return true;
+    } catch (_) {
+      setStatus("Could not save profile.", true);
+      return false;
+    } finally {
+      profileSaveInFlight = false;
+      if (queuedProfileSave) {
+        queuedProfileSave = false;
+        window.setTimeout(() => { saveProfileNow(); }, 0);
+      }
+    }
+  }
+
+  function scheduleProfileSave(delay = 700) {
+    if (isHydratingProfile) return;
+    if (profileSaveTimer) window.clearTimeout(profileSaveTimer);
+    setStatus("Saving soon...");
+    profileSaveTimer = window.setTimeout(() => {
+      profileSaveTimer = null;
+      saveProfileNow();
+    }, delay);
   }
 
   function escapeHTML(str) {
@@ -577,47 +640,8 @@
       Notification.requestPermission().catch(() => {});
     }
 
+    isHydratingProfile = false;
     setStatus("Profile loaded.");
-  }
-
-  if (saveBtn) {
-    saveBtn.addEventListener("click", async () => {
-      if (!window.PaidenAuth) return setStatus("Auth service unavailable.", true);
-      saveBtn.disabled = true;
-      saveBtn.textContent = "Saving...";
-      try {
-        let avatarDataUrl = null;
-        const file = avatarInputEl && avatarInputEl.files && avatarInputEl.files[0] ? avatarInputEl.files[0] : null;
-        if (file) {
-          avatarDataUrl = await downscaleImageToJpegDataUrl(file);
-          if (avatarDataUrl.length > 1024 * 1024 * 1.2) {
-            saveBtn.disabled = false;
-            saveBtn.textContent = "Save Profile";
-            return setStatus("Profile image is too large after compression.", true);
-          }
-        }
-        const patch = {
-          full_name: fullNameEl ? fullNameEl.value : "",
-          username: usernameEl ? usernameEl.value : "",
-          bio: bioEl ? bioEl.value : "",
-        };
-        if (avatarDataUrl) patch.avatar_url = avatarDataUrl;
-
-        const res = await window.PaidenAuth.updateProfile(patch);
-        if (!res.ok) return setStatus(res.error || "Could not save profile.", true);
-        const profile = res.profile || {};
-        if (avatarImgEl) avatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
-        await loadFriends();
-        await loadFriendRequests();
-        setStatus("Profile saved.");
-        if (avatarInputEl) avatarInputEl.value = "";
-      } catch (_) {
-        setStatus("Could not save profile.", true);
-      } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = "Save Profile";
-      }
-    });
   }
 
   if (avatarInputEl && avatarImgEl) {
@@ -626,13 +650,23 @@
       if (!file) return;
       try {
         const previewDataUrl = await downscaleImageToJpegDataUrl(file);
+        if (previewDataUrl.length > 1024 * 1024 * 1.2) {
+          return setStatus("Profile image is too large after compression.", true);
+        }
         avatarImgEl.src = previewDataUrl || DEFAULT_AVATAR;
-        setStatus("Preview updated. Save profile to keep this photo.");
+        await saveProfileNow(previewDataUrl);
       } catch (_) {
         setStatus("Could not preview selected image.", true);
       }
     });
   }
+
+  [fullNameEl, usernameEl, bioEl].forEach((field) => {
+    if (!field) return;
+    field.addEventListener("input", () => scheduleProfileSave());
+    field.addEventListener("change", () => scheduleProfileSave(250));
+    field.addEventListener("blur", () => scheduleProfileSave(100));
+  });
 
   if (friendsToggleBtn && friendsDropdown) {
     friendsToggleBtn.addEventListener("click", () => {
