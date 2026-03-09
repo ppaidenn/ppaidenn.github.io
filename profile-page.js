@@ -1,11 +1,19 @@
 (() => {
+  const profileDisplayNameEl = document.getElementById("profileDisplayName");
+  const profileDisplayUsernameEl = document.getElementById("profileDisplayUsername");
+  const profileBioDisplayEl = document.getElementById("profileBioDisplay");
   const fullNameEl = document.getElementById("profileFullName");
   const usernameEl = document.getElementById("profileUsername");
   const emailEl = document.getElementById("profileEmail");
+  const profileModalEmailEl = document.getElementById("profileModalEmail");
   const bioEl = document.getElementById("profileBio");
   const avatarImgEl = document.getElementById("profileAvatarImg");
   const avatarInputEl = document.getElementById("profileAvatarInput");
   const statusEl = document.getElementById("profileStatus");
+  const profileEditBtn = document.getElementById("profileEditBtn");
+  const profileModalOverlay = document.getElementById("profileModalOverlay");
+  const profileModalCloseBtn = document.getElementById("profileModalCloseBtn");
+  const profileModalDoneBtn = document.getElementById("profileModalDoneBtn");
 
   const friendsToggleBtn = document.getElementById("friendsToggleBtn");
   const friendsCounterText = document.getElementById("friendsCounterText");
@@ -65,6 +73,27 @@
     statusEl.style.color = isError ? "#a10000" : "rgba(17,17,17,0.78)";
   }
 
+  function renderProfileDisplay(profile = {}, userEmail = "") {
+    if (profileDisplayNameEl) profileDisplayNameEl.textContent = profile.full_name || profile.username || "Profile";
+    if (profileDisplayUsernameEl) profileDisplayUsernameEl.textContent = `@${profile.username || "-"}`;
+    if (emailEl) emailEl.textContent = userEmail || "-";
+    if (profileModalEmailEl) profileModalEmailEl.textContent = userEmail || "-";
+    if (profileBioDisplayEl) profileBioDisplayEl.textContent = profile.bio || "No bio set.";
+    if (avatarImgEl) avatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
+  }
+
+  function openProfileModal() {
+    if (!profileModalOverlay) return;
+    profileModalOverlay.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeProfileModal() {
+    if (!profileModalOverlay) return;
+    profileModalOverlay.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
   function buildProfilePatch(avatarDataUrl = null) {
     const patch = {
       full_name: fullNameEl ? fullNameEl.value : "",
@@ -97,7 +126,7 @@
       if (fullNameEl) fullNameEl.value = profile.full_name || "";
       if (usernameEl) usernameEl.value = profile.username || "";
       if (bioEl) bioEl.value = profile.bio || "";
-      if (avatarImgEl) avatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
+      renderProfileDisplay(profile, res.user.email || "");
       if (avatarInputEl) avatarInputEl.value = "";
       setStatus("Profile saved.");
       await loadFriends();
@@ -625,9 +654,8 @@
     const profile = res.profile || {};
     if (fullNameEl) fullNameEl.value = profile.full_name || "";
     if (usernameEl) usernameEl.value = profile.username || "";
-    if (emailEl) emailEl.textContent = res.user.email || "-";
     if (bioEl) bioEl.value = profile.bio || "";
-    if (avatarImgEl) avatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
+    renderProfileDisplay(profile, res.user.email || "");
 
     renderCalendarSelectors();
     renderWeekdays();
@@ -667,6 +695,27 @@
     field.addEventListener("change", () => scheduleProfileSave(250));
     field.addEventListener("blur", () => scheduleProfileSave(100));
   });
+
+  if (profileEditBtn) {
+    profileEditBtn.addEventListener("click", () => {
+      openProfileModal();
+      if (fullNameEl) fullNameEl.focus();
+    });
+  }
+
+  if (profileModalCloseBtn) {
+    profileModalCloseBtn.addEventListener("click", () => closeProfileModal());
+  }
+
+  if (profileModalDoneBtn) {
+    profileModalDoneBtn.addEventListener("click", () => closeProfileModal());
+  }
+
+  if (profileModalOverlay) {
+    profileModalOverlay.addEventListener("click", (event) => {
+      if (event.target === profileModalOverlay) closeProfileModal();
+    });
+  }
 
   if (friendsToggleBtn && friendsDropdown) {
     friendsToggleBtn.addEventListener("click", () => {

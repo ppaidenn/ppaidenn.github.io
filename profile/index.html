@@ -177,6 +177,30 @@
       font-size: 15px;
     }
     .label { font-weight: 800; }
+    .profile-display-name {
+      margin: 0 0 4px;
+      font-size: clamp(28px, 3.6vw, 42px);
+      line-height: 1.04;
+      font-weight: 800;
+      color: #111;
+    }
+    .profile-display-username {
+      margin: 0 0 14px;
+      font-size: 15px;
+      font-weight: 700;
+      color: rgba(17,17,17,0.68);
+    }
+    .profile-readonly-box {
+      width: 100%;
+      border: 1px solid rgba(0,0,0,0.14);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 15px;
+      background: rgba(255,255,255,0.82);
+      min-height: 110px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
     .btn {
       border: 1px solid rgba(0,0,0,0.2);
       background: #111;
@@ -186,6 +210,9 @@
       font-weight: 700;
       font-size: 15px;
       cursor: pointer;
+    }
+    .edit-profile-btn {
+      margin-bottom: 14px;
     }
     .friends-wrap {
       margin-top: 12px;
@@ -676,6 +703,12 @@
       gap: 8px;
       margin-top: 8px;
     }
+    .modal-note {
+      margin: -4px 0 2px;
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(17,17,17,0.68);
+    }
     .btn-secondary {
       border: 1px solid rgba(0,0,0,0.2);
       background: #fff;
@@ -765,26 +798,17 @@
         <div class="profile-left-col">
           <div class="kicker">ACCOUNT</div>
           <h1>Profile</h1>
+          <button class="btn edit-profile-btn" id="profileEditBtn" type="button"><i class="fa-solid fa-pen" aria-hidden="true"></i> Edit Profile</button>
           <div class="profile-top">
             <div class="avatar-wrap">
               <img id="profileAvatarImg" alt="Profile photo" src="/images/default_pfp.jpg">
-              <label for="profileAvatarInput" class="avatar-file-btn">Choose Photo</label>
-              <input id="profileAvatarInput" type="file" accept="image/*">
             </div>
             <div>
-              <div class="field">
-                <label for="profileFullName">Full Name</label>
-                <input id="profileFullName" type="text" maxlength="120" placeholder="Full name">
-              </div>
-              <div class="field">
-                <label for="profileUsername">Username</label>
-                <input id="profileUsername" type="text" maxlength="80" placeholder="Username">
-              </div>
+              <div class="profile-display-name" id="profileDisplayName">Loading...</div>
+              <div class="profile-display-username" id="profileDisplayUsername">@loading</div>
               <div class="row"><span class="label">Email:</span> <span id="profileEmail">Loading...</span></div>
-              <div class="field">
-                <label for="profileBio">Bio</label>
-                <textarea id="profileBio" placeholder="Tell people something fun about yourself..."></textarea>
-              </div>
+              <div class="row"><span class="label">Bio:</span></div>
+              <div class="profile-readonly-box" id="profileBioDisplay">Loading...</div>
             </div>
           </div>
           <div class="friends-wrap">
@@ -830,6 +854,38 @@
   </main>
   <div class="event-context-menu" id="eventContextMenu">
     <button class="event-context-action" id="eventContextMenuCreate" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> New Event</button>
+  </div>
+  <div class="event-modal-overlay" id="profileModalOverlay">
+    <section class="event-modal" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+      <div class="event-modal-head">
+        <h2 class="event-modal-title" id="profileModalTitle">Edit Profile</h2>
+        <button class="event-modal-close" id="profileModalCloseBtn" type="button"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Close</button>
+      </div>
+      <form class="event-modal-form" id="profileEditForm">
+        <div class="modal-note">Changes save automatically.</div>
+        <div class="field">
+          <label for="profileFullName">Full Name</label>
+          <input id="profileFullName" type="text" maxlength="120" placeholder="Full name">
+        </div>
+        <div class="field">
+          <label for="profileUsername">Username</label>
+          <input id="profileUsername" type="text" maxlength="80" placeholder="Username">
+        </div>
+        <div class="row"><span class="label">Email:</span> <span id="profileModalEmail">Loading...</span></div>
+        <div class="field">
+          <label for="profileBio">Bio</label>
+          <textarea id="profileBio" placeholder="Tell people something fun about yourself..."></textarea>
+        </div>
+        <div class="field">
+          <label for="profileAvatarInput">Profile Photo</label>
+          <label for="profileAvatarInput" class="avatar-file-btn">Choose Photo</label>
+          <input id="profileAvatarInput" type="file" accept="image/*">
+        </div>
+        <div class="event-modal-actions">
+          <button class="btn-secondary" id="profileModalDoneBtn" type="button">Done</button>
+        </div>
+      </form>
+    </section>
   </div>
   <div class="event-modal-overlay" id="eventModalOverlay">
     <section class="event-modal" role="dialog" aria-modal="true" aria-labelledby="eventModalTitle">
