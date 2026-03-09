@@ -862,10 +862,10 @@
         <button class="event-modal-close" id="profileModalCloseBtn" type="button"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Close</button>
       </div>
       <form class="event-modal-form" id="profileEditForm">
-        <div class="modal-note">Changes save automatically.</div>
+        <div class="modal-note">Save changes when you are ready.</div>
         <div class="field">
-          <label for="profileFullName">Full Name</label>
-          <input id="profileFullName" type="text" maxlength="120" placeholder="Full name">
+          <label for="profileFullName">Display Name</label>
+          <input id="profileFullName" type="text" maxlength="120" placeholder="Display name">
         </div>
         <div class="field">
           <label for="profileUsername">Username</label>
@@ -881,8 +881,10 @@
           <label for="profileAvatarInput" class="avatar-file-btn">Choose Photo</label>
           <input id="profileAvatarInput" type="file" accept="image/*">
         </div>
+        <div class="status" id="profileModalStatus"></div>
         <div class="event-modal-actions">
-          <button class="btn-secondary" id="profileModalDoneBtn" type="button">Done</button>
+          <button class="btn-secondary" id="profileModalDoneBtn" type="button">Cancel</button>
+          <button class="btn" id="profileModalSaveBtn" type="submit">Save Changes</button>
         </div>
       </form>
     </section>

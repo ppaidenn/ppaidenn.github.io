@@ -14,6 +14,8 @@
   const profileModalOverlay = document.getElementById("profileModalOverlay");
   const profileModalCloseBtn = document.getElementById("profileModalCloseBtn");
   const profileModalDoneBtn = document.getElementById("profileModalDoneBtn");
+  const profileModalSaveBtn = document.getElementById("profileModalSaveBtn");
+  const profileModalStatusEl = document.getElementById("profileModalStatus");
 
   const friendsToggleBtn = document.getElementById("friendsToggleBtn");
   const friendsCounterText = document.getElementById("friendsCounterText");
@@ -62,10 +64,14 @@
   let contextMenuDayKey = "";
   let calendarEvents = [];
   let selectedInviteSet = new Set();
-  let profileSaveTimer = null;
   let profileSaveInFlight = false;
-  let queuedProfileSave = false;
-  let isHydratingProfile = true;
+  let currentUserEmail = "";
+
+  function setProfileModalStatus(message, isError = false) {
+    if (!profileModalStatusEl) return;
+    profileModalStatusEl.textContent = message || "";
+    profileModalStatusEl.style.color = isError ? "#a10000" : "rgba(17,17,17,0.78)";
+  }
 
   function setStatus(message, isError = false) {
     if (!statusEl) return;
@@ -86,6 +92,7 @@
     if (!profileModalOverlay) return;
     profileModalOverlay.classList.add("open");
     document.body.style.overflow = "hidden";
+    setProfileModalStatus("");
   }
 
   function closeProfileModal() {
@@ -106,52 +113,44 @@
 
   async function saveProfileNow(avatarDataUrl = null) {
     if (!window.PaidenAuth) {
-      setStatus("Auth service unavailable.", true);
+      setProfileModalStatus("Auth service unavailable.", true);
       return false;
     }
-    if (profileSaveInFlight) {
-      queuedProfileSave = true;
-      return true;
-    }
+    if (profileSaveInFlight) return false;
 
     profileSaveInFlight = true;
-    setStatus("Saving...");
+    if (profileModalSaveBtn) {
+      profileModalSaveBtn.disabled = true;
+      profileModalSaveBtn.textContent = "Saving...";
+    }
+    setProfileModalStatus("Saving...");
     try {
       const res = await window.PaidenAuth.updateProfile(buildProfilePatch(avatarDataUrl));
       if (!res.ok) {
-        setStatus(res.error || "Could not save profile.", true);
+        setProfileModalStatus(res.error || "Could not save profile.", true);
         return false;
       }
       const profile = res.profile || {};
       if (fullNameEl) fullNameEl.value = profile.full_name || "";
       if (usernameEl) usernameEl.value = profile.username || "";
       if (bioEl) bioEl.value = profile.bio || "";
-      renderProfileDisplay(profile, res.user.email || "");
+      renderProfileDisplay(profile, currentUserEmail);
       if (avatarInputEl) avatarInputEl.value = "";
+      setProfileModalStatus("Profile saved.");
       setStatus("Profile saved.");
       await loadFriends();
       await loadFriendRequests();
       return true;
     } catch (_) {
-      setStatus("Could not save profile.", true);
+      setProfileModalStatus("Could not save profile.", true);
       return false;
     } finally {
       profileSaveInFlight = false;
-      if (queuedProfileSave) {
-        queuedProfileSave = false;
-        window.setTimeout(() => { saveProfileNow(); }, 0);
+      if (profileModalSaveBtn) {
+        profileModalSaveBtn.disabled = false;
+        profileModalSaveBtn.textContent = "Save Changes";
       }
     }
-  }
-
-  function scheduleProfileSave(delay = 700) {
-    if (isHydratingProfile) return;
-    if (profileSaveTimer) window.clearTimeout(profileSaveTimer);
-    setStatus("Saving soon...");
-    profileSaveTimer = window.setTimeout(() => {
-      profileSaveTimer = null;
-      saveProfileNow();
-    }, delay);
   }
 
   function escapeHTML(str) {
@@ -652,10 +651,11 @@
       return;
     }
     const profile = res.profile || {};
+    currentUserEmail = res.user.email || "";
     if (fullNameEl) fullNameEl.value = profile.full_name || "";
     if (usernameEl) usernameEl.value = profile.username || "";
     if (bioEl) bioEl.value = profile.bio || "";
-    renderProfileDisplay(profile, res.user.email || "");
+    renderProfileDisplay(profile, currentUserEmail);
 
     renderCalendarSelectors();
     renderWeekdays();
@@ -668,7 +668,6 @@
       Notification.requestPermission().catch(() => {});
     }
 
-    isHydratingProfile = false;
     setStatus("Profile loaded.");
   }
 
@@ -679,22 +678,15 @@
       try {
         const previewDataUrl = await downscaleImageToJpegDataUrl(file);
         if (previewDataUrl.length > 1024 * 1024 * 1.2) {
-          return setStatus("Profile image is too large after compression.", true);
+          return setProfileModalStatus("Profile image is too large after compression.", true);
         }
         avatarImgEl.src = previewDataUrl || DEFAULT_AVATAR;
-        await saveProfileNow(previewDataUrl);
+        setProfileModalStatus("Photo ready to save.");
       } catch (_) {
-        setStatus("Could not preview selected image.", true);
+        setProfileModalStatus("Could not preview selected image.", true);
       }
     });
   }
-
-  [fullNameEl, usernameEl, bioEl].forEach((field) => {
-    if (!field) return;
-    field.addEventListener("input", () => scheduleProfileSave());
-    field.addEventListener("change", () => scheduleProfileSave(250));
-    field.addEventListener("blur", () => scheduleProfileSave(100));
-  });
 
   if (profileEditBtn) {
     profileEditBtn.addEventListener("click", () => {
@@ -709,6 +701,22 @@
 
   if (profileModalDoneBtn) {
     profileModalDoneBtn.addEventListener("click", () => closeProfileModal());
+  }
+
+  if (profileModalSaveBtn) {
+    profileModalSaveBtn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      let avatarDataUrl = null;
+      const file = avatarInputEl && avatarInputEl.files && avatarInputEl.files[0] ? avatarInputEl.files[0] : null;
+      if (file) {
+        avatarDataUrl = await downscaleImageToJpegDataUrl(file);
+        if (avatarDataUrl.length > 1024 * 1024 * 1.2) {
+          return setProfileModalStatus("Profile image is too large after compression.", true);
+        }
+      }
+      const ok = await saveProfileNow(avatarDataUrl);
+      if (ok) closeProfileModal();
+    });
   }
 
   if (profileModalOverlay) {
