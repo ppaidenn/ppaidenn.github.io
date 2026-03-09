@@ -697,6 +697,42 @@
       display: grid;
       gap: 8px;
     }
+    .profile-photo-edit-row {
+      display: grid;
+      grid-template-columns: 124px minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .profile-photo-preview {
+      border: 1px solid rgba(0,0,0,0.14);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.9);
+      padding: 10px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+    .profile-photo-preview img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      display: block;
+      border-radius: 10px;
+      border: 1px solid rgba(0,0,0,0.12);
+      background: #fff;
+    }
+    .profile-photo-controls {
+      display: grid;
+      gap: 8px;
+      justify-items: start;
+      align-content: start;
+    }
+    .profile-photo-controls .avatar-file-btn {
+      margin: 0;
+    }
+    .profile-photo-note {
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(17,17,17,0.64);
+    }
     .event-modal-actions {
       display: flex;
       justify-content: flex-end;
@@ -768,6 +804,7 @@
         max-height: calc(100vh - 18px);
         border-radius: 14px;
       }
+      .profile-photo-edit-row { grid-template-columns: 1fr; }
       .event-form-row { grid-template-columns: 1fr; }
     }
   </style>
@@ -878,8 +915,16 @@
         </div>
         <div class="field">
           <label for="profileAvatarInput">Profile Photo</label>
-          <label for="profileAvatarInput" class="avatar-file-btn">Choose Photo</label>
-          <input id="profileAvatarInput" type="file" accept="image/*">
+          <div class="profile-photo-edit-row">
+            <div class="profile-photo-preview">
+              <img id="profileModalAvatarImg" alt="Profile photo preview" src="/images/default_pfp.jpg">
+            </div>
+            <div class="profile-photo-controls">
+              <label for="profileAvatarInput" class="avatar-file-btn">Choose Photo</label>
+              <div class="profile-photo-note">Select a square or portrait image for the cleanest crop.</div>
+              <input id="profileAvatarInput" type="file" accept="image/*">
+            </div>
+          </div>
         </div>
         <div class="status" id="profileModalStatus"></div>
         <div class="event-modal-actions">

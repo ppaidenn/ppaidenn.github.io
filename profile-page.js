@@ -8,10 +8,12 @@
   const profileModalEmailEl = document.getElementById("profileModalEmail");
   const bioEl = document.getElementById("profileBio");
   const avatarImgEl = document.getElementById("profileAvatarImg");
+  const profileModalAvatarImgEl = document.getElementById("profileModalAvatarImg");
   const avatarInputEl = document.getElementById("profileAvatarInput");
   const statusEl = document.getElementById("profileStatus");
   const profileEditBtn = document.getElementById("profileEditBtn");
   const profileModalOverlay = document.getElementById("profileModalOverlay");
+  const profileModalEl = profileModalOverlay ? profileModalOverlay.querySelector(".event-modal") : null;
   const profileModalCloseBtn = document.getElementById("profileModalCloseBtn");
   const profileModalDoneBtn = document.getElementById("profileModalDoneBtn");
   const profileModalSaveBtn = document.getElementById("profileModalSaveBtn");
@@ -66,6 +68,7 @@
   let selectedInviteSet = new Set();
   let profileSaveInFlight = false;
   let currentUserEmail = "";
+  let profileOverlayPointerDown = false;
 
   function setProfileModalStatus(message, isError = false) {
     if (!profileModalStatusEl) return;
@@ -86,6 +89,7 @@
     if (profileModalEmailEl) profileModalEmailEl.textContent = userEmail || "-";
     if (profileBioDisplayEl) profileBioDisplayEl.textContent = profile.bio || "No bio set.";
     if (avatarImgEl) avatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
+    if (profileModalAvatarImgEl) profileModalAvatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
   }
 
   function openProfileModal() {
@@ -681,6 +685,7 @@
           return setProfileModalStatus("Profile image is too large after compression.", true);
         }
         avatarImgEl.src = previewDataUrl || DEFAULT_AVATAR;
+        if (profileModalAvatarImgEl) profileModalAvatarImgEl.src = previewDataUrl || DEFAULT_AVATAR;
         setProfileModalStatus("Photo ready to save.");
       } catch (_) {
         setProfileModalStatus("Could not preview selected image.", true);
@@ -720,10 +725,25 @@
   }
 
   if (profileModalOverlay) {
+    profileModalOverlay.addEventListener("pointerdown", (event) => {
+      profileOverlayPointerDown = event.target === profileModalOverlay;
+    });
     profileModalOverlay.addEventListener("click", (event) => {
-      if (event.target === profileModalOverlay) closeProfileModal();
+      if (profileOverlayPointerDown && event.target === profileModalOverlay) closeProfileModal();
+      profileOverlayPointerDown = false;
     });
   }
+
+  if (profileModalEl) {
+    profileModalEl.addEventListener("click", (event) => event.stopPropagation());
+    profileModalEl.addEventListener("pointerdown", (event) => event.stopPropagation());
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && profileModalOverlay && profileModalOverlay.classList.contains("open")) {
+      closeProfileModal();
+    }
+  });
 
   if (friendsToggleBtn && friendsDropdown) {
     friendsToggleBtn.addEventListener("click", () => {
