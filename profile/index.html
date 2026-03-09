@@ -115,6 +115,11 @@
       margin-bottom: 16px;
       align-items: start;
     }
+    .profile-avatar-col {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
     .avatar-wrap {
       background: rgba(255,255,255,0.9);
       border: 1px solid rgba(0,0,0,0.12);
@@ -212,7 +217,7 @@
       cursor: pointer;
     }
     .edit-profile-btn {
-      margin-bottom: 14px;
+      width: 100%;
     }
     .friends-wrap {
       margin-top: 12px;
@@ -835,10 +840,12 @@
         <div class="profile-left-col">
           <div class="kicker">ACCOUNT</div>
           <h1>Profile</h1>
-          <button class="btn edit-profile-btn" id="profileEditBtn" type="button"><i class="fa-solid fa-pen" aria-hidden="true"></i> Edit Profile</button>
           <div class="profile-top">
-            <div class="avatar-wrap">
-              <img id="profileAvatarImg" alt="Profile photo" src="/images/default_pfp.jpg">
+            <div class="profile-avatar-col">
+              <div class="avatar-wrap">
+                <img id="profileAvatarImg" alt="Profile photo" src="/images/default_pfp.jpg">
+              </div>
+              <button class="btn edit-profile-btn" id="profileEditBtn" type="button"><i class="fa-solid fa-pen" aria-hidden="true"></i> Edit Profile</button>
             </div>
             <div>
               <div class="profile-display-name" id="profileDisplayName">Loading...</div>
