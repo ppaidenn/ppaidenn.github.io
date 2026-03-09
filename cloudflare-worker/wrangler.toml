@@ -1,3 +1,8 @@
 name = "paiden-username-router"
 main = "worker.js"
 compatibility_date = "2026-03-06"
+
+routes = [
+  { pattern = "paiden.com/*", zone_name = "paiden.com" },
+  { pattern = "www.paiden.com/*", zone_name = "paiden.com" },
+]
