@@ -15,6 +15,7 @@ This folder is split by feature so SQL changes are easier to maintain.
   - `get_public_profiles_by_ids`
   - `get_public_profile_by_username`
 - `profiles_on_auth_signup_schema.sql`: auth trigger that auto-creates/updates `profiles` rows from `auth.users` signup metadata.
+- `profiles_backfill_from_auth_schema.sql`: one-time backfill for existing `auth.users` records missing `profiles` rows.
 - `public_profiles_directory_schema.sql`: public directory RPC:
   - `get_all_public_profiles` (drops/recreates function to avoid return-type conflicts)
 - `posts_account_link_schema.sql`: adds `posts.user_id`.
@@ -54,11 +55,12 @@ This folder is split by feature so SQL changes are easier to maintain.
 5. `backend/blog/blocked_hashes_schema.sql`
 6. `backend/auth/profiles_schema.sql`
 7. `backend/auth/profiles_on_auth_signup_schema.sql`
-8. `backend/auth/public_profiles_directory_schema.sql`
-9. `backend/auth/posts_account_link_schema.sql`
-10. `backend/auth/friendships_schema.sql`
-11. `backend/auth/email_signup_lookup_schema.sql`
-12. `backend/auth/username_signup_lookup_schema.sql`
-13. `backend/auth/username_signin_lookup_schema.sql`
-14. `backend/push/push_subscriptions_schema.sql`
-15. `backend/calendar/events_schema.sql`
+8. `backend/auth/profiles_backfill_from_auth_schema.sql`
+9. `backend/auth/public_profiles_directory_schema.sql`
+10. `backend/auth/posts_account_link_schema.sql`
+11. `backend/auth/friendships_schema.sql`
+12. `backend/auth/email_signup_lookup_schema.sql`
+13. `backend/auth/username_signup_lookup_schema.sql`
+14. `backend/auth/username_signin_lookup_schema.sql`
+15. `backend/push/push_subscriptions_schema.sql`
+16. `backend/calendar/events_schema.sql`
