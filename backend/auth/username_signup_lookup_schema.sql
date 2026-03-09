@@ -4,7 +4,30 @@ language sql
 security definer
 set search_path = public, auth
 as $$
-  select exists (
+  select
+    lower(trim(coalesce(target_username, ''))) in (
+      'resume',
+      'photos',
+      'blog',
+      'contactme',
+      'contact_me',
+      'profile',
+      'profile-view',
+      'accounts',
+      'signin',
+      'create-account',
+      'notifications',
+      'news',
+      'images',
+      'backend',
+      'calendar',
+      'cdn-cgi',
+      'robots.txt',
+      'sitemap.xml',
+      'favicon.ico',
+      'manifest.webmanifest'
+    )
+    or exists (
     select 1
     from auth.users u
     left join public.profiles p on p.id = u.id

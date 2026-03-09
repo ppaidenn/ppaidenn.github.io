@@ -2,6 +2,7 @@ create extension if not exists pgcrypto;
 
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
+  full_name text,
   username text not null,
   email text,
   avatar_url text,
@@ -16,6 +17,7 @@ create table if not exists public.profiles (
 
 alter table public.profiles add column if not exists avatar_url text;
 alter table public.profiles add column if not exists bio text;
+alter table public.profiles add column if not exists full_name text;
 alter table public.profiles add column if not exists silly_question text;
 alter table public.profiles add column if not exists silly_answer text;
 
@@ -62,8 +64,10 @@ to authenticated
 using (auth.uid() = id)
 with check (auth.uid() = id);
 
+drop function if exists public.get_public_profiles(text[]);
 create or replace function public.get_public_profiles(usernames text[])
 returns table (
+  full_name text,
   username text,
   avatar_url text,
   bio text,
@@ -75,6 +79,7 @@ security definer
 set search_path = public
 as $$
   select
+    p.full_name,
     p.username,
     p.avatar_url,
     p.bio,
@@ -86,9 +91,11 @@ $$;
 
 grant execute on function public.get_public_profiles(text[]) to anon, authenticated;
 
+drop function if exists public.get_public_profiles_by_ids(uuid[]);
 create or replace function public.get_public_profiles_by_ids(user_ids uuid[])
 returns table (
   id uuid,
+  full_name text,
   username text,
   avatar_url text
 )
@@ -98,6 +105,7 @@ set search_path = public
 as $$
   select
     p.id,
+    p.full_name,
     p.username,
     p.avatar_url
   from public.profiles p
@@ -106,9 +114,11 @@ $$;
 
 grant execute on function public.get_public_profiles_by_ids(uuid[]) to anon, authenticated;
 
+drop function if exists public.get_public_profile_by_username(text);
 create or replace function public.get_public_profile_by_username(target_username text)
 returns table (
   id uuid,
+  full_name text,
   username text,
   avatar_url text,
   bio text
@@ -119,6 +129,7 @@ set search_path = public
 as $$
   select
     p.id,
+    p.full_name,
     p.username,
     p.avatar_url,
     p.bio

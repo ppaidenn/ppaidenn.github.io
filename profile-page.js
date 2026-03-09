@@ -1,4 +1,5 @@
 (() => {
+  const fullNameEl = document.getElementById("profileFullName");
   const usernameEl = document.getElementById("profileUsername");
   const emailEl = document.getElementById("profileEmail");
   const bioEl = document.getElementById("profileBio");
@@ -559,6 +560,7 @@
       return;
     }
     const profile = res.profile || {};
+    if (fullNameEl) fullNameEl.value = profile.full_name || "";
     if (usernameEl) usernameEl.value = profile.username || "";
     if (emailEl) emailEl.textContent = res.user.email || "-";
     if (bioEl) bioEl.value = profile.bio || "";
@@ -595,6 +597,7 @@
           }
         }
         const patch = {
+          full_name: fullNameEl ? fullNameEl.value : "",
           username: usernameEl ? usernameEl.value : "",
           bio: bioEl ? bioEl.value : "",
         };

@@ -98,6 +98,19 @@
       margin-bottom: 10px;
     }
     h1 { margin: 0 0 12px; font-size: clamp(30px, 3.8vw, 48px); }
+    .profile-name-main {
+      margin: 0 0 6px;
+      font-size: clamp(30px, 3.8vw, 48px);
+      line-height: 1.04;
+      font-weight: 800;
+      color: #111;
+    }
+    .profile-name-sub {
+      margin: 0 0 14px;
+      font-size: 15px;
+      font-weight: 700;
+      color: rgba(17,17,17,0.68);
+    }
     .profile-top {
       display: grid;
       grid-template-columns: 170px 1fr;
@@ -319,13 +332,13 @@
   <main class="content-wrap">
     <section class="content-inner">
       <div class="kicker">ACCOUNT</div>
-      <h1>Account Profile</h1>
+      <div class="profile-name-main" id="friendFullName">Account Profile</div>
+      <div class="profile-name-sub" id="friendUsernameHandle">@loading</div>
       <div class="profile-top">
         <div class="avatar-wrap">
           <img id="friendAvatarImg" alt="Friend profile photo" src="/images/default_pfp.jpg">
         </div>
         <div>
-          <div class="row"><span class="label">Username:</span> <span id="friendUsername">Loading...</span></div>
           <div class="row"><span class="label">Bio:</span></div>
           <div class="readonly-box" id="friendBio">Loading...</div>
         </div>
@@ -373,7 +386,8 @@
   <script src="/account-menu.js"></script>
   <script>
     const avatarEl = document.getElementById("friendAvatarImg");
-    const usernameEl = document.getElementById("friendUsername");
+    const fullNameEl = document.getElementById("friendFullName");
+    const usernameHandleEl = document.getElementById("friendUsernameHandle");
     const bioEl = document.getElementById("friendBio");
     const statusEl = document.getElementById("friendProfileStatus");
     const friendActionBtn = document.getElementById("friendActionBtn");
@@ -551,7 +565,8 @@
       const profile = Array.isArray(data) ? data[0] : null;
       if (!profile) {
         setStatus("Account not found.", true);
-        if (usernameEl) usernameEl.textContent = "-";
+        if (fullNameEl) fullNameEl.textContent = "Account Profile";
+        if (usernameHandleEl) usernameHandleEl.textContent = "@unknown";
         if (bioEl) bioEl.textContent = "-";
         if (avatarEl) avatarEl.src = DEFAULT_AVATAR;
         if (friendActionBtn) friendActionBtn.style.display = "none";
@@ -559,9 +574,14 @@
       }
 
       viewedUserId = String(profile.id || "");
-      if (usernameEl) usernameEl.textContent = String(profile.username || "-");
+      if (fullNameEl) fullNameEl.textContent = String(profile.full_name || profile.username || "Account Profile");
+      if (usernameHandleEl) usernameHandleEl.textContent = `@${String(profile.username || "-")}`;
       if (bioEl) bioEl.textContent = String(profile.bio || "No bio set.");
       if (avatarEl) avatarEl.src = String(profile.avatar_url || "").trim() || DEFAULT_AVATAR;
+      const resolvedUsername = String(profile.username || "").trim();
+      if (resolvedUsername && (window.location.pathname === "/profile-view" || window.location.pathname === "/profile-view/")) {
+        window.history.replaceState({}, "", `/${encodeURIComponent(resolvedUsername)}`);
+      }
       await loadFriendActionState();
       await loadFriendCalendarEvents();
     }

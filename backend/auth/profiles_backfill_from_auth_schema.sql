@@ -1,5 +1,6 @@
 insert into public.profiles (
   id,
+  full_name,
   username,
   email,
   avatar_url,
@@ -11,12 +12,16 @@ insert into public.profiles (
 )
 select
   u.id,
+  coalesce(
+    nullif(trim(p.full_name), ''),
+    nullif(trim(u.raw_user_meta_data ->> 'full_name'), '')
+  ) as full_name,
   left(
     coalesce(
-      nullif(trim(p.username), ''),
-      nullif(trim(u.raw_user_meta_data ->> 'username'), ''),
-      split_part(coalesce(u.email, ''), '@', 1),
-      'User'
+      nullif(regexp_replace(lower(trim(p.username)), '[^a-z0-9_-]+', '', 'g'), ''),
+      nullif(regexp_replace(lower(trim(u.raw_user_meta_data ->> 'username')), '[^a-z0-9_-]+', '', 'g'), ''),
+      nullif(regexp_replace(lower(split_part(coalesce(u.email, ''), '@', 1)), '[^a-z0-9_-]+', '', 'g'), ''),
+      'user'
     ),
     80
   ) as username,

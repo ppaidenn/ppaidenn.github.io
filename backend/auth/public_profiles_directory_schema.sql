@@ -3,6 +3,7 @@ drop function if exists public.get_all_public_profiles();
 create or replace function public.get_all_public_profiles()
 returns table (
   id uuid,
+  full_name text,
   username text,
   avatar_url text
 )
@@ -12,11 +13,12 @@ set search_path = public
 as $$
   select
     p.id,
+    p.full_name,
     p.username,
     p.avatar_url
   from public.profiles p
   where coalesce(trim(p.username), '') <> ''
-  order by lower(p.username), p.username;
+  order by lower(coalesce(nullif(trim(p.full_name), ''), p.username)), coalesce(nullif(trim(p.full_name), ''), p.username), lower(p.username), p.username;
 $$;
 
 grant execute on function public.get_all_public_profiles() to anon, authenticated;

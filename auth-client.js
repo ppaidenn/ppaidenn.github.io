@@ -2,6 +2,28 @@
   const SUPABASE_URL = "https://irauuqhqqkctcwulqzsw.supabase.co";
   const SUPABASE_KEY = "sb_publishable_93dGo8oZILIYg9NSotz9MQ_T8v22oXR";
   const DEFAULT_AVATAR_URL = "/images/default_pfp.jpg";
+  const RESERVED_PROFILE_ROUTES = new Set([
+    "resume",
+    "photos",
+    "blog",
+    "contactme",
+    "contact_me",
+    "profile",
+    "profile-view",
+    "accounts",
+    "signin",
+    "create-account",
+    "notifications",
+    "news",
+    "images",
+    "backend",
+    "calendar",
+    "manifest.webmanifest",
+    "favicon.ico",
+    "robots.txt",
+    "sitemap.xml",
+    "cdn-cgi",
+  ]);
   const SILLY_QUESTION_BANK = [
     "If your socks had names, what are they?",
     "Which snack would survive a zombie apocalypse with you?",
@@ -31,11 +53,43 @@
     return window.__paidenAuthClient;
   }
 
-  function normalizeUsername(username, email = "") {
-    const raw = String(username || "").trim();
-    if (raw) return raw.slice(0, 80);
+  function sanitizeUsernameCandidate(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "")
+      .replace(/[^a-z0-9_-]+/g, "")
+      .slice(0, 80);
+  }
+
+  function makeFallbackUsername(email = "") {
     const emailPrefix = String(email || "").split("@")[0].trim();
-    return (emailPrefix || "User").slice(0, 80);
+    let candidate = sanitizeUsernameCandidate(emailPrefix) || "user";
+    if (candidate.length < 3) candidate = `${candidate}user`.slice(0, 80);
+    if (RESERVED_PROFILE_ROUTES.has(candidate)) candidate = `${candidate}_user`.slice(0, 80);
+    return candidate;
+  }
+
+  function normalizeUsername(username, email = "") {
+    const normalized = sanitizeUsernameCandidate(username);
+    return normalized || makeFallbackUsername(email);
+  }
+
+  function validateUsername(username, email = "") {
+    const raw = String(username || "").trim();
+    if (!raw) return { ok: false, error: "Username is required." };
+    if (/\s/.test(raw)) {
+      return { ok: false, error: "Username cannot contain spaces." };
+    }
+    const normalized = normalizeUsername(raw, email);
+    if (!normalized) return { ok: false, error: "Username is required." };
+    if (!/^[a-z0-9_-]{3,80}$/.test(normalized)) {
+      return { ok: false, error: "Username must be 3-80 characters using letters, numbers, hyphens, or underscores." };
+    }
+    if (RESERVED_PROFILE_ROUTES.has(normalized)) {
+      return { ok: false, error: "That username is reserved by the site." };
+    }
+    return { ok: true, normalized };
   }
 
   function profileFromUser(user, fallback = {}) {
@@ -43,6 +97,7 @@
     const email = String((fallback.email || user?.email || "")).trim();
     return {
       id: user?.id,
+      full_name: String(fallback.fullName || meta.full_name || "").trim() || null,
       username: normalizeUsername(fallback.username || meta.username, email),
       email: email || null,
       avatar_url: String(fallback.avatarUrl || meta.avatar_url || DEFAULT_AVATAR_URL).trim() || DEFAULT_AVATAR_URL,
@@ -63,10 +118,13 @@
     return { ok: true, profile };
   }
 
-  async function createAccount({ username, email, password, securityQuestion, securityAnswer }) {
+  async function createAccount({ fullName, username, email, password, securityQuestion, securityAnswer }) {
     const client = requireClient();
     const normalizedEmail = String(email || "").trim().toLowerCase();
-    const normalizedUsername = normalizeUsername(username, normalizedEmail);
+    const fullNameValue = String(fullName || "").trim();
+    const usernameValidation = validateUsername(username, normalizedEmail);
+    if (!usernameValidation.ok) return { ok: false, error: usernameValidation.error };
+    const normalizedUsername = usernameValidation.normalized;
     const sillyQuestion = SILLY_QUESTION_BANK[Math.floor(Math.random() * SILLY_QUESTION_BANK.length)];
     const { data: usernameTaken, error: usernameTakenError } = await client.rpc("is_signup_username_taken", {
       target_username: normalizedUsername,
@@ -89,6 +147,7 @@
     }
 
     const payload = {
+      full_name: fullNameValue || null,
       username: normalizedUsername,
       silly_question: sillyQuestion,
       security_question: String(securityQuestion || "").trim(),
@@ -112,6 +171,7 @@
     if (user && session) {
       const saved = await upsertProfileForUser(user, {
         username: payload.username,
+        fullName: payload.full_name,
         email,
         sillyQuestion: payload.silly_question,
         securityQuestion: payload.security_question,
@@ -172,7 +232,7 @@
 
     let { data: profile, error } = await client
       .from("profiles")
-      .select("id,username,email,avatar_url,bio,silly_question,silly_answer,security_question,security_answer")
+      .select("id,full_name,username,email,avatar_url,bio,silly_question,silly_answer,security_question,security_answer")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -195,9 +255,13 @@
     if (!user) return { ok: false, error: "Not signed in." };
 
     const update = {};
+    if (Object.prototype.hasOwnProperty.call(patch, "full_name")) {
+      update.full_name = String(patch.full_name || "").trim() || null;
+    }
     if (Object.prototype.hasOwnProperty.call(patch, "username")) {
-      const normalized = normalizeUsername(patch.username, user.email || "");
-      if (!normalized) return { ok: false, error: "Username is required." };
+      const usernameValidation = validateUsername(patch.username, user.email || "");
+      if (!usernameValidation.ok) return { ok: false, error: usernameValidation.error };
+      const normalized = usernameValidation.normalized;
       const { data: existingUsername, error: existingUsernameError } = await client
         .from("profiles")
         .select("id")
@@ -253,6 +317,7 @@
     signOut,
     getCurrentProfile,
     updateProfile,
+    reservedProfileRoutes: [...RESERVED_PROFILE_ROUTES],
     sillyQuestionBank: [...SILLY_QUESTION_BANK],
   };
 })();

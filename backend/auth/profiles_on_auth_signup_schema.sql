@@ -7,6 +7,7 @@ as $$
 begin
   insert into public.profiles (
     id,
+    full_name,
     username,
     email,
     avatar_url,
@@ -18,11 +19,12 @@ begin
   )
   values (
     new.id,
+    nullif(trim(new.raw_user_meta_data ->> 'full_name'), ''),
     left(
       coalesce(
-        nullif(trim(new.raw_user_meta_data ->> 'username'), ''),
-        split_part(coalesce(new.email, ''), '@', 1),
-        'User'
+        nullif(regexp_replace(lower(trim(new.raw_user_meta_data ->> 'username')), '[^a-z0-9_-]+', '', 'g'), ''),
+        nullif(regexp_replace(lower(split_part(coalesce(new.email, ''), '@', 1)), '[^a-z0-9_-]+', '', 'g'), ''),
+        'user'
       ),
       80
     ),
@@ -36,6 +38,7 @@ begin
   )
   on conflict (id) do update
   set
+    full_name = coalesce(public.profiles.full_name, excluded.full_name),
     username = excluded.username,
     email = excluded.email,
     avatar_url = coalesce(public.profiles.avatar_url, excluded.avatar_url),

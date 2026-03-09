@@ -28,6 +28,7 @@
       event.preventDefault();
       if (!window.PaidenAuth) return setStatus("Auth service unavailable.", true);
 
+      const fullName = (document.getElementById("full-name")?.value || "").trim();
       const username = (document.getElementById("username")?.value || "").trim();
       const email = (document.getElementById("email")?.value || "").trim();
       const password = document.getElementById("password")?.value || "";
@@ -35,7 +36,7 @@
       const securityAnswer = (document.getElementById("security-answer")?.value || "").trim();
       const submitBtn = document.getElementById("createAccountSubmit");
 
-      if (!username || !email || !password || !securityQuestion || !securityAnswer) {
+      if (!fullName || !username || !email || !password || !securityQuestion || !securityAnswer) {
         return setStatus("Please complete every field.", true);
       }
       if (password.length < 8) {
@@ -45,6 +46,7 @@
       setButtonPending(submitBtn, true, "Create Account");
       setStatus("");
       const res = await window.PaidenAuth.createAccount({
+        fullName,
         username,
         email,
         password,
