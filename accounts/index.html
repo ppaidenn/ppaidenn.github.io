@@ -116,22 +116,19 @@
     }
     .accounts-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
     }
     .account-card {
       display: grid;
-      grid-template-columns: 42px minmax(0, 1fr);
-      grid-template-areas:
-        "avatar meta"
-        "avatar action";
-      align-items: start;
-      column-gap: 10px;
-      row-gap: 8px;
-      padding: 10px 12px;
+      grid-template-columns: 42px minmax(0, 1fr) auto;
+      align-items: center;
+      column-gap: 12px;
+      padding: 14px 16px;
       border: 1px solid rgba(0,0,0,0.12);
-      border-radius: 12px;
-      background: rgba(255,255,255,0.82);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.88);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.04);
     }
     .account-card img {
       width: 42px;
@@ -144,9 +141,12 @@
     }
     .account-name-wrap {
       min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     .account-name {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 700;
       color: #111;
       overflow: hidden;
@@ -156,7 +156,7 @@
     .account-username {
       margin-top: 2px;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 600;
       color: rgba(16,21,28,0.68);
       overflow: hidden;
       text-overflow: ellipsis;
@@ -180,22 +180,32 @@
       text-underline-offset: 2px;
     }
     .add-friend-btn {
-      grid-area: action;
-      justify-self: start;
-      max-width: 100%;
-      border: 1px solid rgba(0,0,0,0.2);
+      justify-self: end;
+      align-self: center;
+      border: 1px solid rgba(0,0,0,0.12);
       background: #111;
       color: #fff;
-      border-radius: 10px;
-      padding: 7px 10px;
-      font-size: 12px;
+      border-radius: 999px;
+      padding: 7px 12px;
+      min-height: 34px;
+      font-size: 11px;
       font-weight: 700;
       cursor: pointer;
-      white-space: normal;
-      overflow-wrap: anywhere;
+      white-space: nowrap;
+      letter-spacing: 0.02em;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+    .add-friend-btn.is-friend {
+      background: rgba(16,21,28,0.08);
+      color: rgba(16,21,28,0.72);
+      border-color: rgba(16,21,28,0.12);
+    }
+    .add-friend-btn.is-requested {
+      background: rgba(16,21,28,0.12);
+      color: #111;
+      border-color: rgba(16,21,28,0.14);
     }
     .add-friend-btn:disabled {
-      opacity: 0.6;
       cursor: default;
     }
     .status {
@@ -272,6 +282,21 @@
       .footer { display: none !important; }
       .content-inner { border-radius: 16px; }
       .accounts-grid { grid-template-columns: 1fr; }
+      .account-card {
+        grid-template-columns: 42px minmax(0, 1fr);
+        grid-template-areas:
+          "avatar meta"
+          "avatar action";
+        align-items: start;
+        row-gap: 8px;
+      }
+      .account-name-link {
+        grid-area: meta;
+      }
+      .add-friend-btn {
+        grid-area: action;
+        justify-self: start;
+      }
     }
   </style>
 </head>
@@ -428,7 +453,8 @@
             const alreadyRequested = pendingOutgoingUsernames.has(usernameKey);
             const label = alreadyFriend ? "Friends" : alreadyRequested ? "Requested" : "Add Friend";
             const isDisabled = alreadyFriend || alreadyRequested;
-            actionHtml = `<button class="add-friend-btn" data-add-friend-username="${escapeHTML(username)}" ${isDisabled ? "disabled" : ""}>${label}</button>`;
+            const stateClass = alreadyFriend ? " is-friend" : alreadyRequested ? " is-requested" : "";
+            actionHtml = `<button class="add-friend-btn${stateClass}" data-add-friend-username="${escapeHTML(username)}" ${isDisabled ? "disabled" : ""}>${label}</button>`;
           }
           return `
             <article class="account-card">
