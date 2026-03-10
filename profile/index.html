@@ -764,6 +764,48 @@
       font-weight: 700;
       color: rgba(17,17,17,0.64);
     }
+    .notification-pref-box {
+      border: 1px solid rgba(15, 61, 42, 0.18);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255,255,255,0.92);
+      display: grid;
+      gap: 10px;
+    }
+    .notification-pref-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #133b2a;
+    }
+    .notification-pref-card {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+      padding: 10px 12px;
+      border: 1px solid rgba(15, 61, 42, 0.14);
+      border-radius: 12px;
+      background: rgba(245,255,250,0.92);
+      cursor: pointer;
+    }
+    .notification-pref-card input {
+      margin-top: 3px;
+      width: 16px;
+      height: 16px;
+      accent-color: #1c6a49;
+    }
+    .notification-pref-card strong {
+      display: block;
+      font-size: 14px;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+    .notification-pref-card div div {
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(17,17,17,0.68);
+      line-height: 1.4;
+    }
     .event-modal-actions {
       display: flex;
       justify-content: flex-end;
@@ -872,6 +914,7 @@
                 <img id="profileAvatarImg" alt="Profile photo" src="/images/default_pfp.jpg">
               </div>
               <button class="btn edit-profile-btn" id="profileEditBtn" type="button"><i class="fa-solid fa-pen" aria-hidden="true"></i> Edit Profile</button>
+              <button class="btn-secondary edit-profile-btn" id="notificationSettingsBtn" type="button"><i class="fa-solid fa-bell" aria-hidden="true"></i> Customize Notifications</button>
             </div>
             <div>
               <div class="profile-display-name" id="profileDisplayName">Loading...</div>
@@ -996,6 +1039,79 @@
       </form>
     </section>
   </div>
+  <div class="event-modal-overlay" id="notificationModalOverlay">
+    <section class="event-modal" role="dialog" aria-modal="true" aria-labelledby="notificationModalTitle">
+      <div class="event-modal-head">
+        <h2 class="event-modal-title" id="notificationModalTitle">Customize Notifications</h2>
+        <button class="event-modal-close" id="notificationModalCloseBtn" type="button"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Close</button>
+      </div>
+      <form class="event-modal-form" id="notificationSettingsForm">
+        <div class="notification-pref-box">
+          <div class="notification-pref-title">Blog Posts</div>
+          <label class="notification-pref-card">
+            <input type="radio" name="blogPostMode" value="all">
+            <div>
+              <strong>All Blog Posts</strong>
+              <div>Push notify for every new blog post.</div>
+            </div>
+          </label>
+          <label class="notification-pref-card">
+            <input type="radio" name="blogPostMode" value="friends">
+            <div>
+              <strong>Friends' Blog Posts</strong>
+              <div>Push notify only when a friend publishes a post.</div>
+            </div>
+          </label>
+          <label class="notification-pref-card">
+            <input type="radio" name="blogPostMode" value="none">
+            <div>
+              <strong>No Blog Post Push</strong>
+              <div>Do not send push notifications for blog posts.</div>
+            </div>
+          </label>
+        </div>
+        <div class="notification-pref-box">
+          <div class="notification-pref-title">Friends</div>
+          <label class="notification-pref-card">
+            <input id="notifyFriendRequestInput" type="checkbox">
+            <div>
+              <strong>New Friend Requests</strong>
+              <div>Notify me when someone sends me a friend request.</div>
+            </div>
+          </label>
+          <label class="notification-pref-card">
+            <input id="notifyFriendRemovedInput" type="checkbox">
+            <div>
+              <strong>Friend Removed</strong>
+              <div>Notify me when someone removes me as a friend.</div>
+            </div>
+          </label>
+        </div>
+        <div class="notification-pref-box">
+          <div class="notification-pref-title">Events</div>
+          <label class="notification-pref-card">
+            <input id="notifyEventInviteInput" type="checkbox">
+            <div>
+              <strong>Event Invites</strong>
+              <div>Notify me when someone invites me to an event.</div>
+            </div>
+          </label>
+          <label class="notification-pref-card">
+            <input id="notifyEventOneHourInput" type="checkbox">
+            <div>
+              <strong>1 Hour Reminder</strong>
+              <div>Notify me when an event is one hour away, only if it started more than one hour away.</div>
+            </div>
+          </label>
+        </div>
+        <div class="status" id="notificationModalStatus"></div>
+        <div class="event-modal-actions">
+          <button class="btn-secondary" id="notificationModalCancelBtn" type="button">Cancel</button>
+          <button class="btn" id="notificationModalSaveBtn" type="submit">Save Preferences</button>
+        </div>
+      </form>
+    </section>
+  </div>
   <footer class="footer">
     <div class="footer-inner">
       <div class="footer-left">
@@ -1023,7 +1139,7 @@
   <script src="/auth-client.js?v=20260309c"></script>
   <script src="/notifications.js?v=20260309e"></script>
   <script src="/account-menu.js?v=20260309c"></script>
-  <script src="/profile-page.js?v=20260309c"></script>
+  <script src="/profile-page.js?v=20260309f"></script>
   <script>
     const lastUpdated = document.getElementById("last-updated");
     if (lastUpdated) lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();

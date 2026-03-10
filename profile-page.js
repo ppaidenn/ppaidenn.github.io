@@ -18,6 +18,19 @@
   const profileModalDoneBtn = document.getElementById("profileModalDoneBtn");
   const profileModalSaveBtn = document.getElementById("profileModalSaveBtn");
   const profileModalStatusEl = document.getElementById("profileModalStatus");
+  const notificationSettingsBtn = document.getElementById("notificationSettingsBtn");
+  const notificationModalOverlay = document.getElementById("notificationModalOverlay");
+  const notificationModalEl = notificationModalOverlay ? notificationModalOverlay.querySelector(".event-modal") : null;
+  const notificationModalCloseBtn = document.getElementById("notificationModalCloseBtn");
+  const notificationModalCancelBtn = document.getElementById("notificationModalCancelBtn");
+  const notificationModalSaveBtn = document.getElementById("notificationModalSaveBtn");
+  const notificationModalStatusEl = document.getElementById("notificationModalStatus");
+  const notificationSettingsForm = document.getElementById("notificationSettingsForm");
+  const notifyFriendRequestInput = document.getElementById("notifyFriendRequestInput");
+  const notifyFriendRemovedInput = document.getElementById("notifyFriendRemovedInput");
+  const notifyEventInviteInput = document.getElementById("notifyEventInviteInput");
+  const notifyEventOneHourInput = document.getElementById("notifyEventOneHourInput");
+  const blogPostModeInputs = Array.from(document.querySelectorAll('input[name="blogPostMode"]'));
 
   const friendsToggleBtn = document.getElementById("friendsToggleBtn");
   const friendsCounterText = document.getElementById("friendsCounterText");
@@ -73,6 +86,14 @@
   let currentUserEmail = "";
   let profileOverlayPointerDown = false;
   let editingEventId = "";
+  let notificationPreferences = {
+    blog_post_mode: "all",
+    notify_friend_request: true,
+    notify_friend_removed: true,
+    notify_event_invite: true,
+    notify_event_one_hour: true,
+  };
+  const eventReminderTimers = new Map();
 
   function setProfileModalStatus(message, isError = false) {
     if (!profileModalStatusEl) return;
@@ -90,6 +111,12 @@
     if (!eventModalStatusEl) return;
     eventModalStatusEl.textContent = message || "";
     eventModalStatusEl.style.color = isError ? "#a10000" : "rgba(17,17,17,0.78)";
+  }
+
+  function setNotificationModalStatus(message, isError = false) {
+    if (!notificationModalStatusEl) return;
+    notificationModalStatusEl.textContent = message || "";
+    notificationModalStatusEl.style.color = isError ? "#a10000" : "rgba(17,17,17,0.78)";
   }
 
   function renderProfileDisplay(profile = {}, userEmail = "") {
@@ -113,6 +140,31 @@
     if (!profileModalOverlay) return;
     profileModalOverlay.classList.remove("open");
     document.body.style.overflow = "";
+  }
+
+  function renderNotificationPreferences() {
+    blogPostModeInputs.forEach((input) => {
+      input.checked = input.value === notificationPreferences.blog_post_mode;
+    });
+    if (notifyFriendRequestInput) notifyFriendRequestInput.checked = notificationPreferences.notify_friend_request !== false;
+    if (notifyFriendRemovedInput) notifyFriendRemovedInput.checked = notificationPreferences.notify_friend_removed !== false;
+    if (notifyEventInviteInput) notifyEventInviteInput.checked = notificationPreferences.notify_event_invite !== false;
+    if (notifyEventOneHourInput) notifyEventOneHourInput.checked = notificationPreferences.notify_event_one_hour !== false;
+  }
+
+  function openNotificationModal() {
+    if (!notificationModalOverlay) return;
+    renderNotificationPreferences();
+    setNotificationModalStatus("");
+    notificationModalOverlay.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeNotificationModal() {
+    if (!notificationModalOverlay) return;
+    notificationModalOverlay.classList.remove("open");
+    document.body.style.overflow = "";
+    setNotificationModalStatus("");
   }
 
   function buildProfilePatch(avatarDataUrl = null) {
@@ -378,6 +430,36 @@
     }
   }
 
+  function clearEventReminderTimers() {
+    eventReminderTimers.forEach((timerId) => {
+      window.clearTimeout(timerId);
+    });
+    eventReminderTimers.clear();
+  }
+
+  function scheduleEventReminderNotifications() {
+    clearEventReminderTimers();
+    if (!notificationPreferences.notify_event_one_hour) return;
+    const now = Date.now();
+    calendarEvents.forEach((e) => {
+      const eventId = String(e.event_id || "").trim();
+      if (!eventId) return;
+      const startAt = new Date(e.starts_at).getTime();
+      const msUntilStart = startAt - now;
+      if (msUntilStart <= 60 * 60 * 1000) return;
+      const fireInMs = msUntilStart - (60 * 60 * 1000);
+      const timerId = window.setTimeout(() => {
+        notifyOnce(
+          `event-one-hour-${eventId}`,
+          "Event Reminder",
+          `${e.title || "Your event"} starts at ${formatEventTime(e.starts_at)}.`
+        );
+        eventReminderTimers.delete(eventId);
+      }, fireInMs);
+      eventReminderTimers.set(eventId, timerId);
+    });
+  }
+
   async function fileToDataUrl(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -545,6 +627,72 @@
     renderFriendRequests(rows);
   }
 
+  async function loadNotificationPreferences() {
+    if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return;
+    const client = window.PaidenAuth.getClient();
+    const { data, error } = await client.rpc("get_my_notification_preferences");
+    if (error) {
+      renderNotificationPreferences();
+      return;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    if (row) {
+      notificationPreferences = {
+        blog_post_mode: String(row.blog_post_mode || "all"),
+        notify_friend_request: row.notify_friend_request !== false,
+        notify_friend_removed: row.notify_friend_removed !== false,
+        notify_event_invite: row.notify_event_invite !== false,
+        notify_event_one_hour: row.notify_event_one_hour !== false,
+      };
+    }
+    renderNotificationPreferences();
+  }
+
+  async function saveNotificationPreferences() {
+    if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return false;
+    const selectedModeInput = blogPostModeInputs.find((input) => input.checked);
+    const nextPrefs = {
+      blog_post_mode: selectedModeInput ? selectedModeInput.value : "all",
+      notify_friend_request: Boolean(notifyFriendRequestInput?.checked),
+      notify_friend_removed: Boolean(notifyFriendRemovedInput?.checked),
+      notify_event_invite: Boolean(notifyEventInviteInput?.checked),
+      notify_event_one_hour: Boolean(notifyEventOneHourInput?.checked),
+    };
+    if (notificationModalSaveBtn) {
+      notificationModalSaveBtn.disabled = true;
+      notificationModalSaveBtn.textContent = "Saving...";
+    }
+    setNotificationModalStatus("Saving...");
+    try {
+      const client = window.PaidenAuth.getClient();
+      const { data, error } = await client.rpc("save_my_notification_preferences", {
+        p_blog_post_mode: nextPrefs.blog_post_mode,
+        p_notify_friend_request: nextPrefs.notify_friend_request,
+        p_notify_friend_removed: nextPrefs.notify_friend_removed,
+        p_notify_event_invite: nextPrefs.notify_event_invite,
+        p_notify_event_one_hour: nextPrefs.notify_event_one_hour,
+      });
+      if (error) {
+        setNotificationModalStatus(error.message || "Could not save preferences.", true);
+        return false;
+      }
+      notificationPreferences = { ...nextPrefs };
+      renderNotificationPreferences();
+      scheduleEventReminderNotifications();
+      setNotificationModalStatus("Preferences saved.");
+      setStatus("Notification preferences saved.");
+      return true;
+    } catch (_) {
+      setNotificationModalStatus("Could not save preferences.", true);
+      return false;
+    } finally {
+      if (notificationModalSaveBtn) {
+        notificationModalSaveBtn.disabled = false;
+        notificationModalSaveBtn.textContent = "Save Preferences";
+      }
+    }
+  }
+
   function renderWeekdays() {
     if (!calendarWeekdays) return;
     if (calendarWeekdays.dataset.ready === "1") return;
@@ -630,16 +778,7 @@
       return;
     }
     calendarEvents = Array.isArray(data) ? data : [];
-
-    const now = Date.now();
-    calendarEvents.forEach((e) => {
-      const startAt = new Date(e.starts_at).getTime();
-      const hoursAway = (startAt - now) / (1000 * 60 * 60);
-      if (hoursAway > 0 && hoursAway <= 24) {
-        notifyOnce(`event-upcoming-${e.event_id}`, "Upcoming Event", `${e.title} starts at ${formatEventTime(e.starts_at)}.`);
-      }
-    });
-
+    scheduleEventReminderNotifications();
     renderCalendarGrid();
   }
 
@@ -712,6 +851,7 @@
     renderWeekdays();
     await loadFriends();
     await loadFriendRequests();
+    await loadNotificationPreferences();
     await loadCalendarEventsForMonth();
     await loadPendingEventInvites();
 
@@ -744,6 +884,12 @@
     profileEditBtn.addEventListener("click", () => {
       openProfileModal();
       if (fullNameEl) fullNameEl.focus();
+    });
+  }
+
+  if (notificationSettingsBtn) {
+    notificationSettingsBtn.addEventListener("click", () => {
+      openNotificationModal();
     });
   }
 
@@ -786,9 +932,38 @@
     profileModalEl.addEventListener("pointerdown", (event) => event.stopPropagation());
   }
 
+  if (notificationModalCloseBtn) {
+    notificationModalCloseBtn.addEventListener("click", () => closeNotificationModal());
+  }
+
+  if (notificationModalCancelBtn) {
+    notificationModalCancelBtn.addEventListener("click", () => closeNotificationModal());
+  }
+
+  if (notificationSettingsForm) {
+    notificationSettingsForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const ok = await saveNotificationPreferences();
+      if (ok) closeNotificationModal();
+    });
+  }
+
+  if (notificationModalOverlay) {
+    notificationModalOverlay.addEventListener("click", (event) => {
+      if (event.target === notificationModalOverlay) closeNotificationModal();
+    });
+  }
+
+  if (notificationModalEl) {
+    notificationModalEl.addEventListener("click", (event) => event.stopPropagation());
+  }
+
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && profileModalOverlay && profileModalOverlay.classList.contains("open")) {
       closeProfileModal();
+    }
+    if (event.key === "Escape" && notificationModalOverlay && notificationModalOverlay.classList.contains("open")) {
+      closeNotificationModal();
     }
   });
 
@@ -1120,6 +1295,7 @@
   });
   window.addEventListener("resize", hideEventContextMenu);
   window.addEventListener("scroll", hideEventContextMenu, { passive: true });
+  window.addEventListener("beforeunload", clearEventReminderTimers);
 
   loadProfile();
 })();

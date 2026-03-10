@@ -73,7 +73,7 @@ function buildPushPayload(postId, title, author, text) {
   });
 }
 
-async function sendPostPushNotifications(postId, title, author, text) {
+async function sendPostPushNotifications(postId, title, author, text, authorUserId = "") {
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
     console.warn("Push skipped: missing VAPID_PUBLIC_KEY or VAPID_PRIVATE_KEY.");
     return;
@@ -83,7 +83,7 @@ async function sendPostPushNotifications(postId, title, author, text) {
 
   const { data: subscriptions, error } = await admin
     .from("push_subscriptions")
-    .select("id,endpoint,p256dh,auth")
+    .select("id,endpoint,p256dh,auth,user_id")
     .eq("is_active", true);
 
   if (error) {
@@ -93,10 +93,40 @@ async function sendPostPushNotifications(postId, title, author, text) {
 
   if (!Array.isArray(subscriptions) || !subscriptions.length) return;
 
+  const subscriptionUserIds = subscriptions.map((sub) => String(sub.user_id || "")).filter(Boolean);
+  let allowedUserIdSet = new Set(subscriptionUserIds);
+  if (subscriptionUserIds.length) {
+    const { data: preferenceRows } = await admin
+      .from("notification_preferences")
+      .select("user_id, blog_post_mode")
+      .in("user_id", subscriptionUserIds);
+
+    const prefMap = new Map(
+      (Array.isArray(preferenceRows) ? preferenceRows : []).map((row) => [String(row.user_id), String(row.blog_post_mode || "all")]),
+    );
+
+    let friendUserIdSet = new Set<string>();
+    if (authorUserId) {
+      const { data: friendshipRows } = await admin
+        .from("friendships")
+        .select("user_id")
+        .eq("friend_id", authorUserId);
+      friendUserIdSet = new Set((Array.isArray(friendshipRows) ? friendshipRows : []).map((row) => String(row.user_id || "")).filter(Boolean));
+    }
+
+    allowedUserIdSet = new Set(subscriptionUserIds.filter((userId) => {
+      const mode = prefMap.get(userId) || "all";
+      if (mode === "none") return false;
+      if (mode === "friends") return Boolean(authorUserId) && friendUserIdSet.has(userId);
+      return true;
+    }));
+  }
+
   const payload = buildPushPayload(postId, title, author, text);
   const staleIds = [];
 
   for (const sub of subscriptions) {
+    if (sub.user_id && !allowedUserIdSet.has(String(sub.user_id))) continue;
     const subscription = {
       endpoint: sub.endpoint,
       keys: {
@@ -310,7 +340,7 @@ serve(async (req) => {
        ${(postUrl || blockIpLink || blockFingerprintLink) ? `</p>` : ""}`,
   );
 
-  await sendPostPushNotifications(insertedPost?.id, title, author, text);
+  await sendPostPushNotifications(insertedPost?.id, title, author, text, accountUserId);
 
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,

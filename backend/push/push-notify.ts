@@ -47,6 +47,15 @@ function buildPayload(type: string, actorUsername: string, body: any) {
     };
   }
 
+  if (type === "friend_removed") {
+    return {
+      title: "paiden.com",
+      body: `${safeActor} removed you as a friend.`,
+      url: `${SITE_URL}/profile`,
+      tag: "friend-removed",
+    };
+  }
+
   return {
     title: "paiden.com",
     body: "New activity on paiden.com.",
@@ -107,6 +116,32 @@ async function sendPushToUserIds(userIds: string[], payload: Record<string, stri
       .update({ is_active: false, updated_at: new Date().toISOString() })
       .in("id", staleIds);
   }
+}
+
+async function filterRecipientUserIdsByPreference(type: string, userIds: string[]) {
+  if (!Array.isArray(userIds) || !userIds.length) return [];
+  const { data, error } = await admin
+    .from("notification_preferences")
+    .select("user_id, notify_friend_request, notify_friend_removed, notify_event_invite")
+    .in("user_id", userIds);
+
+  if (error) {
+    console.error("Failed to load notification preferences:", error);
+    return userIds;
+  }
+
+  const prefMap = new Map(
+    (Array.isArray(data) ? data : []).map((row) => [String(row.user_id), row]),
+  );
+
+  return userIds.filter((userId) => {
+    const pref = prefMap.get(String(userId));
+    if (!pref) return true;
+    if (type === "friend_request") return pref.notify_friend_request !== false;
+    if (type === "friend_removed") return pref.notify_friend_removed !== false;
+    if (type === "event_invite") return pref.notify_event_invite !== false;
+    return true;
+  });
 }
 
 async function resolveRecipientUserIds(type: string, body: any) {
@@ -196,14 +231,16 @@ serve(async (req) => {
   }
 
   const recipientUserIds = await resolveRecipientUserIds(type, body);
+  const filteredRecipientUserIds = await filterRecipientUserIdsByPreference(type, recipientUserIds);
   console.log("push-notify resolved recipients", {
     type,
     actorUserId: userData.user.id,
     targetUsername: body?.target_username || null,
     targetUsernames: Array.isArray(body?.target_usernames) ? body.target_usernames : [],
     recipientUserIds,
+    filteredRecipientUserIds,
   });
-  if (!recipientUserIds.length) {
+  if (!filteredRecipientUserIds.length) {
     return new Response(JSON.stringify({ ok: true, skipped: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -211,9 +248,9 @@ serve(async (req) => {
   }
 
   const payload = buildPayload(type, String(actorProfile?.username || userData.user.email || "Someone"), body);
-  await sendPushToUserIds(recipientUserIds, payload);
+  await sendPushToUserIds(filteredRecipientUserIds, payload);
 
-  return new Response(JSON.stringify({ ok: true, sent_to: recipientUserIds.length }), {
+  return new Response(JSON.stringify({ ok: true, sent_to: filteredRecipientUserIds.length }), {
     status: 200,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
