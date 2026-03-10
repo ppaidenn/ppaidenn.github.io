@@ -16,6 +16,7 @@
   const profileEditBtn = document.getElementById("profileEditBtn");
   const profileModalOverlay = document.getElementById("profileModalOverlay");
   const profileModalEl = profileModalOverlay ? profileModalOverlay.querySelector(".event-modal") : null;
+  const profileEditForm = document.getElementById("profileEditForm");
   const profileModalCloseBtn = document.getElementById("profileModalCloseBtn");
   const profileModalDoneBtn = document.getElementById("profileModalDoneBtn");
   const profileModalSaveBtn = document.getElementById("profileModalSaveBtn");
@@ -965,8 +966,8 @@
     profileModalDoneBtn.addEventListener("click", () => closeProfileModal());
   }
 
-  if (profileModalSaveBtn) {
-    profileModalSaveBtn.addEventListener("click", async (event) => {
+  if (profileEditForm) {
+    profileEditForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       let avatarDataUrl = null;
       const file = avatarInputEl && avatarInputEl.files && avatarInputEl.files[0] ? avatarInputEl.files[0] : null;
