@@ -206,6 +206,40 @@
       white-space: pre-wrap;
       word-break: break-word;
     }
+    .profile-links-box {
+      width: 100%;
+      border: 1px solid rgba(0,0,0,0.14);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.82);
+    }
+    .profile-links-list {
+      display: grid;
+      gap: 8px;
+    }
+    .profile-link-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      max-width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(17,17,17,0.06);
+      color: #111;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+    }
+    .profile-link-item:hover {
+      background: rgba(17,17,17,0.12);
+    }
+    .profile-links-empty {
+      color: rgba(17,17,17,0.68);
+      font-size: 14px;
+      font-weight: 700;
+    }
     .btn {
       border: 1px solid rgba(0,0,0,0.2);
       background: #111;
@@ -933,6 +967,10 @@
               <div class="row"><span class="label">Email:</span> <span id="profileEmail">Loading...</span></div>
               <div class="row"><span class="label">Bio:</span></div>
               <div class="profile-readonly-box" id="profileBioDisplay">Loading...</div>
+              <div class="row" style="margin-top:12px;"><span class="label">Links:</span></div>
+              <div class="profile-links-box">
+                <div class="profile-links-list" id="profileLinksDisplay"></div>
+              </div>
             </div>
           </div>
           <div class="friends-wrap">
@@ -999,6 +1037,10 @@
         <div class="field">
           <label for="profileBio">Bio</label>
           <textarea id="profileBio" placeholder="Tell people something fun about yourself..."></textarea>
+        </div>
+        <div class="field">
+          <label for="profileLinksInput">Personal Site Links</label>
+          <textarea id="profileLinksInput" placeholder="One link per line&#10;https://example.com&#10;portfolio.example.com"></textarea>
         </div>
         <div class="field">
           <label for="profileAvatarInput">Profile Photo</label>

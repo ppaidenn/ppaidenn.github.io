@@ -2,11 +2,13 @@
   const profileDisplayNameEl = document.getElementById("profileDisplayName");
   const profileDisplayUsernameEl = document.getElementById("profileDisplayUsername");
   const profileBioDisplayEl = document.getElementById("profileBioDisplay");
+  const profileLinksDisplayEl = document.getElementById("profileLinksDisplay");
   const fullNameEl = document.getElementById("profileFullName");
   const usernameEl = document.getElementById("profileUsername");
   const emailEl = document.getElementById("profileEmail");
   const profileModalEmailEl = document.getElementById("profileModalEmail");
   const bioEl = document.getElementById("profileBio");
+  const profileLinksInputEl = document.getElementById("profileLinksInput");
   const avatarImgEl = document.getElementById("profileAvatarImg");
   const profileModalAvatarImgEl = document.getElementById("profileModalAvatarImg");
   const avatarInputEl = document.getElementById("profileAvatarInput");
@@ -135,12 +137,33 @@
     passwordModalStatusEl.style.color = isError ? "#a10000" : "rgba(17,17,17,0.78)";
   }
 
+  function normalizeLinkUrl(value) {
+    const trimmed = String(value || "").trim();
+    if (!trimmed) return "";
+    return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  }
+
+  function renderProfileLinks(links = []) {
+    if (!profileLinksDisplayEl) return;
+    const items = Array.isArray(links) ? links.map((link) => normalizeLinkUrl(link)).filter(Boolean) : [];
+    if (!items.length) {
+      profileLinksDisplayEl.innerHTML = '<div class="profile-links-empty">No links added.</div>';
+      return;
+    }
+    profileLinksDisplayEl.innerHTML = items.map((link) => {
+      const safeHref = escapeHTML(link);
+      const safeLabel = escapeHTML(link.replace(/^https?:\/\//i, ""));
+      return `<a class="profile-link-item" href="${safeHref}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i><span>${safeLabel}</span></a>`;
+    }).join("");
+  }
+
   function renderProfileDisplay(profile = {}, userEmail = "") {
     if (profileDisplayNameEl) profileDisplayNameEl.textContent = profile.full_name || profile.username || "Profile";
     if (profileDisplayUsernameEl) profileDisplayUsernameEl.textContent = `@${profile.username || "-"}`;
     if (emailEl) emailEl.textContent = userEmail || "-";
     if (profileModalEmailEl) profileModalEmailEl.textContent = userEmail || "-";
     if (profileBioDisplayEl) profileBioDisplayEl.textContent = profile.bio || "No bio set.";
+    renderProfileLinks(profile.personal_links);
     if (avatarImgEl) avatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
     if (profileModalAvatarImgEl) profileModalAvatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
   }
@@ -203,6 +226,7 @@
       full_name: fullNameEl ? fullNameEl.value : "",
       username: usernameEl ? usernameEl.value : "",
       bio: bioEl ? bioEl.value : "",
+      personal_links: profileLinksInputEl ? profileLinksInputEl.value.split(/\r?\n/) : [],
     };
     if (avatarDataUrl) patch.avatar_url = avatarDataUrl;
     return patch;
@@ -231,6 +255,7 @@
       if (fullNameEl) fullNameEl.value = profile.full_name || "";
       if (usernameEl) usernameEl.value = profile.username || "";
       if (bioEl) bioEl.value = profile.bio || "";
+      if (profileLinksInputEl) profileLinksInputEl.value = Array.isArray(profile.personal_links) ? profile.personal_links.join("\n") : "";
       renderProfileDisplay(profile, currentUserEmail);
       if (avatarInputEl) avatarInputEl.value = "";
       setProfileModalStatus("Profile saved.");
@@ -876,6 +901,7 @@
     if (fullNameEl) fullNameEl.value = profile.full_name || "";
     if (usernameEl) usernameEl.value = profile.username || "";
     if (bioEl) bioEl.value = profile.bio || "";
+    if (profileLinksInputEl) profileLinksInputEl.value = Array.isArray(profile.personal_links) ? profile.personal_links.join("\n") : "";
     renderProfileDisplay(profile, currentUserEmail);
 
     renderCalendarSelectors();

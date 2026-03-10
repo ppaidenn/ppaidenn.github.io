@@ -191,11 +191,25 @@
       email: email || null,
       avatar_url: String(fallback.avatarUrl || meta.avatar_url || DEFAULT_AVATAR_URL).trim() || DEFAULT_AVATAR_URL,
       bio: String(fallback.bio || meta.bio || "").trim() || null,
+      personal_links: normalizePersonalLinks(fallback.personalLinks ?? meta.personal_links ?? []),
       silly_question: String(fallback.sillyQuestion || meta.silly_question || "").trim() || null,
       silly_answer: String(fallback.sillyAnswer || meta.silly_answer || "").trim() || null,
       security_question: String(fallback.securityQuestion || meta.security_question || "").trim() || null,
       security_answer: String(fallback.securityAnswer || meta.security_answer || "").trim() || null,
     };
+  }
+
+  function normalizePersonalLinks(input) {
+    const source = Array.isArray(input) ? input : String(input || "").split(/\r?\n/);
+    const unique = [];
+    source.forEach((entry) => {
+      const trimmed = String(entry || "").trim();
+      if (!trimmed) return;
+      const normalized = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+      if (!/^https?:\/\/\S+$/i.test(normalized)) return;
+      if (!unique.includes(normalized)) unique.push(normalized);
+    });
+    return unique.slice(0, 8);
   }
 
   async function upsertProfileForUser(user, fallback = {}) {
@@ -343,7 +357,7 @@
 
     let { data: profile, error } = await client
       .from("profiles")
-      .select("id,full_name,username,email,avatar_url,bio,silly_question,silly_answer,security_question,security_answer")
+      .select("id,full_name,username,email,avatar_url,bio,personal_links,silly_question,silly_answer,security_question,security_answer")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -392,6 +406,10 @@
     }
     if (Object.prototype.hasOwnProperty.call(patch, "bio")) {
       update.bio = String(patch.bio || "").trim() || null;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "personal_links")) {
+      const normalizedLinks = normalizePersonalLinks(patch.personal_links);
+      update.personal_links = normalizedLinks.length ? normalizedLinks : null;
     }
     if (Object.prototype.hasOwnProperty.call(patch, "silly_answer")) {
       update.silly_answer = String(patch.silly_answer || "").trim() || null;

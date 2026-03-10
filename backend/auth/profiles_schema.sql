@@ -7,6 +7,7 @@ create table if not exists public.profiles (
   email text,
   avatar_url text,
   bio text,
+  personal_links text[],
   silly_question text,
   silly_answer text,
   security_question text,
@@ -18,6 +19,7 @@ create table if not exists public.profiles (
 alter table public.profiles add column if not exists avatar_url text;
 alter table public.profiles add column if not exists bio text;
 alter table public.profiles add column if not exists full_name text;
+alter table public.profiles add column if not exists personal_links text[];
 alter table public.profiles add column if not exists silly_question text;
 alter table public.profiles add column if not exists silly_answer text;
 
@@ -71,6 +73,7 @@ returns table (
   username text,
   avatar_url text,
   bio text,
+  personal_links text[],
   silly_question text,
   silly_answer text
 )
@@ -83,6 +86,7 @@ as $$
     p.username,
     p.avatar_url,
     p.bio,
+    p.personal_links,
     p.silly_question,
     p.silly_answer
   from public.profiles p
@@ -97,7 +101,8 @@ returns table (
   id uuid,
   full_name text,
   username text,
-  avatar_url text
+  avatar_url text,
+  personal_links text[]
 )
 language sql
 security definer
@@ -107,7 +112,8 @@ as $$
     p.id,
     p.full_name,
     p.username,
-    p.avatar_url
+    p.avatar_url,
+    p.personal_links
   from public.profiles p
   where p.id = any(user_ids);
 $$;
@@ -121,7 +127,8 @@ returns table (
   full_name text,
   username text,
   avatar_url text,
-  bio text
+  bio text,
+  personal_links text[]
 )
 language sql
 security definer
@@ -132,7 +139,8 @@ as $$
     p.full_name,
     p.username,
     p.avatar_url,
-    p.bio
+    p.bio,
+    p.personal_links
   from public.profiles p
   where lower(p.username) = lower(trim(coalesce(target_username, '')))
   limit 1;

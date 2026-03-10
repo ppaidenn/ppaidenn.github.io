@@ -149,6 +149,41 @@
       white-space: pre-wrap;
       word-break: break-word;
     }
+    .profile-links-box {
+      margin-top: 12px;
+      width: 100%;
+      border: 1px solid rgba(0,0,0,0.2);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.8);
+    }
+    .profile-links-list {
+      display: grid;
+      gap: 8px;
+    }
+    .profile-link-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      max-width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(17,17,17,0.06);
+      color: #111;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+    }
+    .profile-link-item:hover {
+      background: rgba(17,17,17,0.12);
+    }
+    .profile-links-empty {
+      color: rgba(17,17,17,0.68);
+      font-size: 14px;
+      font-weight: 700;
+    }
     .btn {
       border: 1px solid rgba(0,0,0,0.2);
       background: #111;
@@ -341,6 +376,10 @@
         <div>
           <div class="row"><span class="label">Bio:</span></div>
           <div class="readonly-box" id="friendBio">Loading...</div>
+          <div class="row" style="margin-top:12px;"><span class="label">Links:</span></div>
+          <div class="profile-links-box">
+            <div class="profile-links-list" id="friendLinks"></div>
+          </div>
         </div>
       </div>
       <button class="btn" id="friendActionBtn" type="button">Add Friend</button>
@@ -389,6 +428,7 @@
     const fullNameEl = document.getElementById("friendFullName");
     const usernameHandleEl = document.getElementById("friendUsernameHandle");
     const bioEl = document.getElementById("friendBio");
+    const linksEl = document.getElementById("friendLinks");
     const statusEl = document.getElementById("friendProfileStatus");
     const friendActionBtn = document.getElementById("friendActionBtn");
     const friendCalendarMonthLabel = document.getElementById("friendCalendarMonthLabel");
@@ -448,6 +488,26 @@
         '"': "&quot;",
         "'": "&#039;",
       }[s] || s));
+    }
+
+    function normalizeLinkUrl(url) {
+      const trimmed = String(url || "").trim();
+      if (!trimmed) return "";
+      return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    }
+
+    function renderProfileLinks(links) {
+      if (!linksEl) return;
+      const items = Array.isArray(links) ? links.map((link) => normalizeLinkUrl(link)).filter(Boolean) : [];
+      if (!items.length) {
+        linksEl.innerHTML = '<div class="profile-links-empty">No links added.</div>';
+        return;
+      }
+      linksEl.innerHTML = items.map((link) => {
+        const safeLabel = escapeHTML(link.replace(/^https?:\/\//i, ""));
+        const safeHref = escapeHTML(link);
+        return `<a class="profile-link-item" href="${safeHref}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i><span>${safeLabel}</span></a>`;
+      }).join("");
     }
 
     function renderFriendCalendarWeekdays() {
@@ -568,6 +628,7 @@
         if (fullNameEl) fullNameEl.textContent = "Account Profile";
         if (usernameHandleEl) usernameHandleEl.textContent = "@unknown";
         if (bioEl) bioEl.textContent = "-";
+        renderProfileLinks([]);
         if (avatarEl) avatarEl.src = DEFAULT_AVATAR;
         if (friendActionBtn) friendActionBtn.style.display = "none";
         return;
@@ -577,6 +638,7 @@
       if (fullNameEl) fullNameEl.textContent = String(profile.full_name || profile.username || "Account Profile");
       if (usernameHandleEl) usernameHandleEl.textContent = `@${String(profile.username || "-")}`;
       if (bioEl) bioEl.textContent = String(profile.bio || "No bio set.");
+      renderProfileLinks(profile.personal_links);
       if (avatarEl) avatarEl.src = String(profile.avatar_url || "").trim() || DEFAULT_AVATAR;
       const resolvedUsername = String(profile.username || "").trim();
       if (resolvedUsername && (window.location.pathname === "/profile-view" || window.location.pathname === "/profile-view/")) {
