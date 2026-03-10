@@ -941,7 +941,6 @@
   if (profileEditBtn) {
     profileEditBtn.addEventListener("click", () => {
       openProfileModal();
-      if (fullNameEl) fullNameEl.focus();
     });
   }
 

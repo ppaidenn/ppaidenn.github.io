@@ -911,16 +911,19 @@
       .footer { display: none !important; }
       .event-modal-overlay {
         align-items: flex-start;
-        padding: calc(var(--safe-top) + 8px) 8px 8px;
+        padding: calc(var(--safe-top) + 16px) 12px calc(var(--safe-bottom) + 16px);
       }
       .event-modal {
         width: 100%;
         max-width: 100%;
-        max-height: calc(100dvh - var(--safe-top) - 16px);
+        max-height: calc(100dvh - var(--safe-top) - var(--safe-bottom) - 44px);
         min-height: 0;
         border-radius: 14px;
-        padding: 14px;
+        padding: 12px;
       }
+      .event-modal-head { margin-bottom: 8px; }
+      .event-modal-form { gap: 7px; }
+      .event-modal-actions { margin-top: 6px; }
       .profile-photo-edit-row { grid-template-columns: 1fr; }
       .event-form-row { grid-template-columns: 1fr; }
     }
