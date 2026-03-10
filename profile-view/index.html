@@ -615,9 +615,9 @@
         return key === viewedUsername.toLowerCase();
       });
       if (isFriend) {
-        actionMode = "friends";
-        friendActionBtn.disabled = true;
-        friendActionBtn.textContent = "Friends";
+        actionMode = "remove";
+        friendActionBtn.disabled = false;
+        friendActionBtn.textContent = "Remove Friend";
         setStatus("");
         return;
       }
@@ -644,6 +644,7 @@
     if (friendActionBtn) {
       friendActionBtn.addEventListener("click", async () => {
         if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return;
+        const client = window.PaidenAuth.getClient();
         if (actionMode === "self") {
           window.location.href = "/profile";
           return;
@@ -652,10 +653,27 @@
           window.location.href = `/signin?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
           return;
         }
+        if (actionMode === "remove") {
+          if (!window.confirm(`Remove @${viewedUsername} from your friends?`)) return;
+          friendActionBtn.disabled = true;
+          friendActionBtn.textContent = "Removing...";
+          const { data, error } = await client.rpc("remove_friend_by_username", { target_username: viewedUsername });
+          if (error || data === false) {
+            friendActionBtn.disabled = false;
+            friendActionBtn.textContent = "Remove Friend";
+            setStatus((error && error.message) || "Could not remove friend.", true);
+            return;
+          }
+          actionMode = "add";
+          friendActionBtn.disabled = false;
+          friendActionBtn.textContent = "Add Friend";
+          setStatus("Friend removed.");
+          await loadFriendCalendarEvents();
+          return;
+        }
         if (actionMode !== "add") return;
         friendActionBtn.disabled = true;
         friendActionBtn.textContent = "Sending...";
-        const client = window.PaidenAuth.getClient();
         const { data, error } = await client.rpc("add_friend_by_username", { target_username: viewedUsername });
         if (error || data === false) {
           friendActionBtn.disabled = false;

@@ -225,6 +225,29 @@ $$;
 
 grant execute on function public.update_event_with_invites(uuid, text, text, text, timestamptz, timestamptz, text[]) to authenticated;
 
+create or replace function public.delete_event(target_event_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  me uuid := auth.uid();
+begin
+  if me is null then
+    return false;
+  end if;
+
+  delete from public.calendar_events
+  where id = target_event_id
+    and owner_id = me;
+
+  return found;
+end;
+$$;
+
+grant execute on function public.delete_event(uuid) to authenticated;
+
 create or replace function public.get_my_calendar_events(start_at timestamptz, end_at timestamptz)
 returns table (
   event_id uuid,

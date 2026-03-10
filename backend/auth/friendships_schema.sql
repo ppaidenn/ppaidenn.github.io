@@ -238,6 +238,45 @@ $$;
 
 grant execute on function public.add_friend_by_username(text) to authenticated;
 
+create or replace function public.remove_friend_by_username(target_username text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  me uuid := auth.uid();
+  friend_target uuid;
+begin
+  if me is null then
+    return false;
+  end if;
+
+  select p.id
+    into friend_target
+  from public.profiles p
+  where lower(p.username) = lower(trim(coalesce(target_username, '')))
+  limit 1;
+
+  if friend_target is null or friend_target = me then
+    return false;
+  end if;
+
+  delete from public.friendships
+  where (user_id = me and friend_id = friend_target)
+     or (user_id = friend_target and friend_id = me);
+
+  delete from public.friend_requests
+  where ((requester_id = me and receiver_id = friend_target)
+      or (requester_id = friend_target and receiver_id = me))
+    and status in ('pending', 'accepted');
+
+  return true;
+end;
+$$;
+
+grant execute on function public.remove_friend_by_username(text) to authenticated;
+
 create or replace function public.get_friend_public_profile(target_username text)
 returns table (
   id uuid,

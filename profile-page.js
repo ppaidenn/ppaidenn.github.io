@@ -52,6 +52,7 @@
   const eventCreateBtn = document.getElementById("eventCreateBtn");
   const eventModalTitle = document.getElementById("eventModalTitle");
   const eventModalStatusEl = document.getElementById("eventModalStatus");
+  const eventDeleteBtn = document.getElementById("eventDeleteBtn");
   const eventContextMenu = document.getElementById("eventContextMenu");
   const eventContextMenuCreate = document.getElementById("eventContextMenuCreate");
 
@@ -276,6 +277,7 @@
     editingEventId = "";
     if (eventModalTitle) eventModalTitle.textContent = "Create Event";
     if (eventCreateBtn) eventCreateBtn.textContent = "Create Event";
+    if (eventDeleteBtn) eventDeleteBtn.style.display = "none";
     setEventModalStatus("");
   }
 
@@ -302,6 +304,7 @@
     editingEventId = "";
     if (eventModalTitle) eventModalTitle.textContent = "Create Event";
     if (eventCreateBtn) eventCreateBtn.textContent = "Create Event";
+    if (eventDeleteBtn) eventDeleteBtn.style.display = "none";
     eventStartInput.value = toLocalDateTimeValue(start);
     eventEndInput.value = toLocalDateTimeValue(end);
     if (eventTitleInput) eventTitleInput.value = "";
@@ -324,6 +327,7 @@
     if (!editingEventId) return;
     if (eventModalTitle) eventModalTitle.textContent = "Edit Event";
     if (eventCreateBtn) eventCreateBtn.textContent = "Save Event";
+    if (eventDeleteBtn) eventDeleteBtn.style.display = "inline-flex";
     if (eventTitleInput) eventTitleInput.value = String(eventRow.title || "");
     if (eventLocationInput) eventLocationInput.value = String(eventRow.location || "");
     if (eventDescriptionInput) eventDescriptionInput.value = String(eventRow.description || "");
@@ -539,11 +543,6 @@
     const rows = Array.isArray(data) ? data : [];
     setFriendRequestsCount(rows.length);
     renderFriendRequests(rows);
-    rows.forEach((r) => {
-      const id = String(r.request_id || "");
-      const from = String(r.username || "Someone");
-      if (id) notifyOnce(`friend-request-${id}`, "New Friend Request", `${from} sent you a friend request.`);
-    });
   }
 
   function renderWeekdays() {
@@ -685,10 +684,6 @@
     const rows = Array.isArray(data) ? data : [];
     setEventInvitesCount(rows.length);
     renderEventInvites(rows);
-    rows.forEach((r) => {
-      const key = String(r.event_id || "");
-      if (key) notifyOnce(`event-invite-${key}`, "Event Invite", `${r.inviter_username} invited you to ${r.title}.`);
-    });
   }
 
   function selectedInviteUsernames() {
@@ -908,6 +903,32 @@
     });
   }
 
+  if (eventDeleteBtn) {
+    eventDeleteBtn.addEventListener("click", async () => {
+      if (!editingEventId) return;
+      if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return;
+      if (!window.confirm("Delete this event?")) return;
+      eventDeleteBtn.disabled = true;
+      setEventModalStatus("Deleting...");
+      try {
+        const client = window.PaidenAuth.getClient();
+        const { data, error } = await client.rpc("delete_event", {
+          target_event_id: editingEventId,
+        });
+        if (error || data === false) {
+          setEventModalStatus((error && error.message) || "Could not delete event.", true);
+          return;
+        }
+        closeEventModal();
+        await loadCalendarEventsForMonth();
+        await loadPendingEventInvites();
+        setStatus("Event deleted.");
+      } finally {
+        eventDeleteBtn.disabled = false;
+      }
+    });
+  }
+
   if (eventModalOverlay) {
     eventModalOverlay.addEventListener("click", (event) => {
       if (event.target === eventModalOverlay) {
@@ -1000,7 +1021,7 @@
       } finally {
         if (eventCreateBtn) {
           eventCreateBtn.disabled = false;
-          eventCreateBtn.textContent = "Create Event";
+          eventCreateBtn.textContent = isEditingEvent ? "Save Event" : "Create Event";
         }
       }
     });
