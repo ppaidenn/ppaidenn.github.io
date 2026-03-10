@@ -18,6 +18,7 @@ as $$
       'create-account',
       'forgot-password',
       'reset-password',
+      'tomi-p-shrine',
       'notifications',
       'news',
       'images',
