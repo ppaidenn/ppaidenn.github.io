@@ -3,6 +3,7 @@ create extension if not exists pgcrypto;
 create table if not exists public.push_subscriptions (
   id uuid primary key default gen_random_uuid(),
   endpoint text not null unique,
+  user_id uuid references auth.users(id) on delete cascade,
   p256dh text not null,
   auth text not null,
   user_agent text,
@@ -12,8 +13,14 @@ create table if not exists public.push_subscriptions (
   last_seen_at timestamptz not null default now()
 );
 
+alter table public.push_subscriptions
+  add column if not exists user_id uuid references auth.users(id) on delete cascade;
+
 create index if not exists push_subscriptions_active_idx
   on public.push_subscriptions (is_active);
+
+create index if not exists push_subscriptions_user_active_idx
+  on public.push_subscriptions (user_id, is_active);
 
 create or replace function public.set_push_subscriptions_updated_at()
 returns trigger

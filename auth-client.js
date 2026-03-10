@@ -2,6 +2,9 @@
   const SUPABASE_URL = "https://irauuqhqqkctcwulqzsw.supabase.co";
   const SUPABASE_KEY = "sb_publishable_93dGo8oZILIYg9NSotz9MQ_T8v22oXR";
   const DEFAULT_AVATAR_URL = "/images/default_pfp.jpg";
+  const AUTH_LAST_SEEN_KEY = "paiden_auth_last_seen_at";
+  let authLifecycleBound = false;
+  let authRefreshInFlight = null;
   const RESERVED_PROFILE_ROUTES = new Set([
     "resume",
     "photos",
@@ -50,7 +53,90 @@
         },
       });
     }
+    bindAuthLifecycle(window.__paidenAuthClient);
     return window.__paidenAuthClient;
+  }
+
+  function markSessionSeen(session) {
+    try {
+      if (session && session.user && session.user.id) {
+        localStorage.setItem(AUTH_LAST_SEEN_KEY, String(Date.now()));
+      } else {
+        localStorage.removeItem(AUTH_LAST_SEEN_KEY);
+      }
+    } catch (_) {
+      // Non-fatal storage issue.
+    }
+  }
+
+  function bindAuthLifecycle(client) {
+    if (!client || authLifecycleBound) return;
+    authLifecycleBound = true;
+
+    client.auth.onAuthStateChange((_event, session) => {
+      markSessionSeen(session || null);
+    });
+
+    const refreshIfPossible = async () => {
+      if (authRefreshInFlight) return authRefreshInFlight;
+      authRefreshInFlight = (async () => {
+        try {
+          const { data } = await client.auth.getSession();
+          if (data?.session) {
+            await client.auth.refreshSession().catch(() => {});
+          }
+        } finally {
+          authRefreshInFlight = null;
+        }
+      })();
+      return authRefreshInFlight;
+    };
+
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          refreshIfPossible().catch(() => {});
+        }
+      });
+    }
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("focus", () => {
+        refreshIfPossible().catch(() => {});
+      });
+    }
+  }
+
+  async function getRecoveredSession() {
+    const client = requireClient();
+    let { data, error } = await client.auth.getSession();
+    if (error) return { ok: false, error: error.message || "Could not load session.", session: null, user: null };
+    if (data?.session?.user) {
+      markSessionSeen(data.session);
+      return { ok: true, session: data.session, user: data.session.user };
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 180));
+    ({ data, error } = await client.auth.getSession());
+    if (error) return { ok: false, error: error.message || "Could not load session.", session: null, user: null };
+    if (data?.session?.user) {
+      markSessionSeen(data.session);
+      return { ok: true, session: data.session, user: data.session.user };
+    }
+
+    try {
+      const refresh = await client.auth.refreshSession();
+      const session = refresh?.data?.session || null;
+      if (session?.user) {
+        markSessionSeen(session);
+        return { ok: true, session, user: session.user };
+      }
+    } catch (_) {
+      // No recoverable session.
+    }
+
+    markSessionSeen(null);
+    return { ok: true, session: null, user: null };
   }
 
   function sanitizeUsernameCandidate(value) {
@@ -116,6 +202,16 @@
     const { error } = await client.from("profiles").upsert(profile, { onConflict: "id" });
     if (error) return { ok: false, error: error.message || "Could not save profile." };
     return { ok: true, profile };
+  }
+
+  function triggerNotificationSubscriptionSync() {
+    try {
+      if (window.PaidenNotify && typeof window.PaidenNotify.syncCurrentSubscription === "function") {
+        window.PaidenNotify.syncCurrentSubscription().catch(() => {});
+      }
+    } catch (_) {
+      // Non-fatal.
+    }
   }
 
   async function createAccount({ fullName, username, email, password, securityQuestion, securityAnswer }) {
@@ -184,6 +280,7 @@
         }
         return saved;
       }
+      triggerNotificationSubscriptionSync();
       return { ok: true, user, session, requiresEmailConfirmation: false };
     }
 
@@ -220,14 +317,15 @@
     const session = data?.session || null;
     // Avoid overwriting existing profile fields (e.g., avatar_url) on every sign-in.
     // Missing profiles are created lazily in getCurrentProfile().
+    if (session?.user) triggerNotificationSubscriptionSync();
     return { ok: true, user, session };
   }
 
   async function getCurrentProfile() {
     const client = requireClient();
-    const { data: sessionData, error: sessionError } = await client.auth.getSession();
-    if (sessionError) return { ok: false, error: sessionError.message || "Could not load session." };
-    const user = sessionData?.session?.user || null;
+    const sessionResult = await getRecoveredSession();
+    if (!sessionResult.ok) return { ok: false, error: sessionResult.error || "Could not load session." };
+    const user = sessionResult.user || null;
     if (!user) return { ok: true, user: null, profile: null };
 
     let { data: profile, error } = await client
@@ -249,9 +347,9 @@
 
   async function updateProfile(patch = {}) {
     const client = requireClient();
-    const { data: sessionData, error: sessionError } = await client.auth.getSession();
-    if (sessionError) return { ok: false, error: sessionError.message || "Could not load session." };
-    const user = sessionData?.session?.user || null;
+    const sessionResult = await getRecoveredSession();
+    if (!sessionResult.ok) return { ok: false, error: sessionResult.error || "Could not load session." };
+    const user = sessionResult.user || null;
     if (!user) return { ok: false, error: "Not signed in." };
 
     const update = {};
@@ -307,7 +405,40 @@
     const client = requireClient();
     const { error } = await client.auth.signOut();
     if (error) return { ok: false, error: error.message || "Could not sign out." };
+    markSessionSeen(null);
     return { ok: true };
+  }
+
+  async function getAccessToken() {
+    const sessionResult = await getRecoveredSession();
+    if (!sessionResult.ok) return "";
+    return sessionResult.session?.access_token || "";
+  }
+
+  async function invokeEdgeFunction(name, payload = {}) {
+    const client = requireClient();
+    const token = await getAccessToken();
+    const headers = {
+      "Content-Type": "application/json",
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${token || SUPABASE_KEY}`,
+    };
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload || {}),
+    });
+    const text = await res.text().catch(() => "");
+    let json = {};
+    try {
+      json = text ? JSON.parse(text) : {};
+    } catch (_) {
+      json = {};
+    }
+    if (!res.ok) {
+      return { ok: false, error: json?.error || text || `Could not call ${name}.` };
+    }
+    return { ok: true, data: json };
   }
 
   window.PaidenAuth = {
@@ -315,6 +446,8 @@
     createAccount,
     signIn,
     signOut,
+    getAccessToken,
+    invokeEdgeFunction,
     getCurrentProfile,
     updateProfile,
     reservedProfileRoutes: [...RESERVED_PROFILE_ROUTES],

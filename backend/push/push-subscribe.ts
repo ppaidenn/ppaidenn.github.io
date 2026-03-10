@@ -12,6 +12,13 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
+function extractBearerToken(authorizationHeader: string) {
+  if (!authorizationHeader) return "";
+  const trimmed = String(authorizationHeader).trim();
+  if (!trimmed.toLowerCase().startsWith("bearer ")) return "";
+  return trimmed.slice(7).trim();
+}
+
 function normalizeSubscription(input: any) {
   const endpoint = input && typeof input.endpoint === "string" ? input.endpoint.trim() : "";
   const p256dh = input && input.keys && typeof input.keys.p256dh === "string"
@@ -47,8 +54,19 @@ serve(async (req) => {
       });
     }
 
+    const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+    const bearerToken = extractBearerToken(authHeader);
+    let authUserId = null;
+    if (bearerToken && bearerToken !== SERVICE_ROLE_KEY) {
+      const { data: userData, error: userError } = await admin.auth.getUser(bearerToken);
+      if (!userError && userData?.user?.id) {
+        authUserId = userData.user.id;
+      }
+    }
+
     const { error } = await admin.from("push_subscriptions").upsert({
       endpoint: subscription.endpoint,
+      user_id: authUserId,
       p256dh: subscription.p256dh,
       auth: subscription.auth,
       user_agent: req.headers.get("user-agent") || null,

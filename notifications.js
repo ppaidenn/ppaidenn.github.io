@@ -7,6 +7,18 @@
 
   let cachedPublicKey = "";
 
+  async function getAuthBearer() {
+    try {
+      if (window.PaidenAuth && typeof window.PaidenAuth.getAccessToken === "function") {
+        const token = await window.PaidenAuth.getAccessToken();
+        if (token) return token;
+      }
+    } catch (_) {
+      // Fall back to anon key.
+    }
+    return SUPABASE_KEY;
+  }
+
   function isEnabled() {
     return localStorage.getItem(LS_ENABLED) === "1";
   }
@@ -60,12 +72,13 @@
   }
 
   async function syncSubscriptionToServer(subscription) {
+    const bearer = await getAuthBearer();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/${PUSH_SUBSCRIBE_FN}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
+        Authorization: `Bearer ${bearer}`,
       },
       body: JSON.stringify({ subscription }),
     });
@@ -78,12 +91,13 @@
 
   async function removeSubscriptionFromServer(endpoint) {
     if (!endpoint) return;
+    const bearer = await getAuthBearer();
     await fetch(`${SUPABASE_URL}/functions/v1/${PUSH_SUBSCRIBE_FN}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
         apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
+        Authorization: `Bearer ${bearer}`,
       },
       body: JSON.stringify({ endpoint }),
     }).catch(() => {
@@ -149,6 +163,19 @@
     }
   }
 
+  async function syncCurrentSubscription() {
+    try {
+      const reg = await ensureSw();
+      const subscription = await reg.pushManager.getSubscription();
+      if (!subscription) return { ok: false, message: "No active subscription to sync." };
+      await syncSubscriptionToServer(subscription.toJSON());
+      return { ok: true, message: "Push subscription synced." };
+    } catch (err) {
+      console.error("Sync subscription failed:", err);
+      return { ok: false, message: "Could not sync push subscription." };
+    }
+  }
+
   function getStatus() {
     const supported = "Notification" in window;
     return {
@@ -162,6 +189,7 @@
   window.PaidenNotify = {
     enableNotifications,
     disableNotifications,
+    syncCurrentSubscription,
     getStatus,
   };
 
@@ -170,4 +198,10 @@
       // Non-fatal.
     });
   }
+
+  window.addEventListener("focus", () => {
+    if (isEnabled()) {
+      syncCurrentSubscription().catch(() => {});
+    }
+  });
 })();

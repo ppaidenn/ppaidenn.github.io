@@ -984,6 +984,15 @@
         closeEventModal();
         await loadCalendarEventsForMonth();
         await loadPendingEventInvites();
+        if (inviteNames.length && window.PaidenAuth && typeof window.PaidenAuth.invokeEdgeFunction === "function") {
+          window.PaidenAuth.invokeEdgeFunction("push-notify", {
+            type: "event_invite",
+            target_usernames: inviteNames,
+            event_title: title,
+            event_starts_at: startsAt.toISOString(),
+            is_update: isEditingEvent,
+          }).catch(() => {});
+        }
         setStatus(isEditingEvent ? "Event updated." : "Event created.");
       } finally {
         if (eventCreateBtn) {
