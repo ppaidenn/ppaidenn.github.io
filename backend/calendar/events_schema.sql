@@ -134,6 +134,97 @@ $$;
 
 grant execute on function public.create_event_with_invites(text, text, text, timestamptz, timestamptz, text[]) to authenticated;
 
+create or replace function public.update_event_with_invites(
+  target_event_id uuid,
+  event_title text,
+  event_description text,
+  event_location text,
+  event_starts_at timestamptz,
+  event_ends_at timestamptz,
+  invite_usernames text[]
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  me uuid := auth.uid();
+begin
+  if me is null then
+    return false;
+  end if;
+
+  update public.calendar_events
+  set
+    title = trim(coalesce(event_title, '')),
+    description = nullif(trim(coalesce(event_description, '')), ''),
+    location = nullif(trim(coalesce(event_location, '')), ''),
+    starts_at = event_starts_at,
+    ends_at = event_ends_at
+  where id = target_event_id
+    and owner_id = me;
+
+  if not found then
+    return false;
+  end if;
+
+  with desired_invitees as (
+    select distinct p.id
+    from public.profiles p
+    where invite_usernames is not null
+      and lower(p.username) = any(
+        select lower(trim(u))
+        from unnest(invite_usernames) as u
+        where trim(coalesce(u, '')) <> ''
+      )
+      and p.id <> me
+      and exists (
+        select 1
+        from public.friendships f
+        where f.user_id = me
+          and f.friend_id = p.id
+      )
+  )
+  delete from public.event_invites i
+  where i.event_id = target_event_id
+    and not exists (
+      select 1
+      from desired_invitees d
+      where d.id = i.invitee_id
+    );
+
+  insert into public.event_invites (event_id, invitee_id, inviter_id, status)
+  select
+    target_event_id,
+    d.id,
+    me,
+    'pending'
+  from (
+    select distinct p.id
+    from public.profiles p
+    where invite_usernames is not null
+      and lower(p.username) = any(
+        select lower(trim(u))
+        from unnest(invite_usernames) as u
+        where trim(coalesce(u, '')) <> ''
+      )
+      and p.id <> me
+      and exists (
+        select 1
+        from public.friendships f
+        where f.user_id = me
+          and f.friend_id = p.id
+      )
+  ) d
+  on conflict (event_id, invitee_id) do nothing;
+
+  return true;
+end;
+$$;
+
+grant execute on function public.update_event_with_invites(uuid, text, text, text, timestamptz, timestamptz, text[]) to authenticated;
+
 create or replace function public.get_my_calendar_events(start_at timestamptz, end_at timestamptz)
 returns table (
   event_id uuid,
@@ -193,6 +284,79 @@ as $$
 $$;
 
 grant execute on function public.get_my_calendar_events(timestamptz, timestamptz) to authenticated;
+
+create or replace function public.get_my_calendar_events_detail(start_at timestamptz, end_at timestamptz)
+returns table (
+  event_id uuid,
+  owner_id uuid,
+  owner_username text,
+  title text,
+  description text,
+  location text,
+  starts_at timestamptz,
+  ends_at timestamptz,
+  invite_status text,
+  invite_usernames text[],
+  can_edit boolean
+)
+language sql
+security definer
+set search_path = public
+as $$
+  with owned as (
+    select
+      e.id as event_id,
+      e.owner_id,
+      p.username as owner_username,
+      e.title,
+      e.description,
+      e.location,
+      e.starts_at,
+      e.ends_at,
+      'owner'::text as invite_status,
+      coalesce(
+        array_agg(inv_p.username order by lower(inv_p.username), inv_p.username)
+          filter (where inv_p.username is not null),
+        '{}'::text[]
+      ) as invite_usernames,
+      true as can_edit
+    from public.calendar_events e
+    join public.profiles p on p.id = e.owner_id
+    left join public.event_invites i on i.event_id = e.id
+    left join public.profiles inv_p on inv_p.id = i.invitee_id
+    where e.owner_id = auth.uid()
+      and e.starts_at >= start_at
+      and e.starts_at < end_at
+    group by e.id, e.owner_id, p.username, e.title, e.description, e.location, e.starts_at, e.ends_at
+  ),
+  invited as (
+    select
+      e.id as event_id,
+      e.owner_id,
+      p.username as owner_username,
+      e.title,
+      e.description,
+      e.location,
+      e.starts_at,
+      e.ends_at,
+      i.status::text as invite_status,
+      '{}'::text[] as invite_usernames,
+      false as can_edit
+    from public.event_invites i
+    join public.calendar_events e on e.id = i.event_id
+    join public.profiles p on p.id = e.owner_id
+    where i.invitee_id = auth.uid()
+      and i.status in ('pending', 'accepted')
+      and e.starts_at >= start_at
+      and e.starts_at < end_at
+  )
+  select * from owned
+  union all
+  select * from invited
+  order by starts_at, event_id;
+$$;
+
+grant execute on function public.get_my_calendar_events_detail(timestamptz, timestamptz) to authenticated;
 
 create or replace function public.get_my_pending_event_invites()
 returns table (

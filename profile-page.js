@@ -50,6 +50,8 @@
   const eventInviteSearchInput = document.getElementById("eventInviteSearchInput");
   const eventInviteDropdown = document.getElementById("eventInviteDropdown");
   const eventCreateBtn = document.getElementById("eventCreateBtn");
+  const eventModalTitle = document.getElementById("eventModalTitle");
+  const eventModalStatusEl = document.getElementById("eventModalStatus");
   const eventContextMenu = document.getElementById("eventContextMenu");
   const eventContextMenuCreate = document.getElementById("eventContextMenuCreate");
 
@@ -69,6 +71,7 @@
   let profileSaveInFlight = false;
   let currentUserEmail = "";
   let profileOverlayPointerDown = false;
+  let editingEventId = "";
 
   function setProfileModalStatus(message, isError = false) {
     if (!profileModalStatusEl) return;
@@ -80,6 +83,12 @@
     if (!statusEl) return;
     statusEl.textContent = message || "";
     statusEl.style.color = isError ? "#a10000" : "rgba(17,17,17,0.78)";
+  }
+
+  function setEventModalStatus(message, isError = false) {
+    if (!eventModalStatusEl) return;
+    eventModalStatusEl.textContent = message || "";
+    eventModalStatusEl.style.color = isError ? "#a10000" : "rgba(17,17,17,0.78)";
   }
 
   function renderProfileDisplay(profile = {}, userEmail = "") {
@@ -257,12 +266,17 @@
     if (!eventModalOverlay) return;
     eventModalOverlay.classList.add("open");
     document.body.style.overflow = "hidden";
+    setEventModalStatus("");
   }
 
   function closeEventModal() {
     if (!eventModalOverlay) return;
     eventModalOverlay.classList.remove("open");
     document.body.style.overflow = "";
+    editingEventId = "";
+    if (eventModalTitle) eventModalTitle.textContent = "Create Event";
+    if (eventCreateBtn) eventCreateBtn.textContent = "Create Event";
+    setEventModalStatus("");
   }
 
   function hideEventContextMenu() {
@@ -285,6 +299,9 @@
   function beginEventDraftForDay(dayKey) {
     if (!eventStartInput || !eventEndInput) return;
     const { start, end } = defaultEventRangeForDay(dayKey);
+    editingEventId = "";
+    if (eventModalTitle) eventModalTitle.textContent = "Create Event";
+    if (eventCreateBtn) eventCreateBtn.textContent = "Create Event";
     eventStartInput.value = toLocalDateTimeValue(start);
     eventEndInput.value = toLocalDateTimeValue(end);
     if (eventTitleInput) eventTitleInput.value = "";
@@ -299,6 +316,30 @@
       eventTitleInput.select();
     }
     setStatus(`Draft started for ${dayKey}.`);
+  }
+
+  function beginEventEdit(eventRow) {
+    if (!eventRow || !eventStartInput || !eventEndInput) return;
+    editingEventId = String(eventRow.event_id || "").trim();
+    if (!editingEventId) return;
+    if (eventModalTitle) eventModalTitle.textContent = "Edit Event";
+    if (eventCreateBtn) eventCreateBtn.textContent = "Save Event";
+    if (eventTitleInput) eventTitleInput.value = String(eventRow.title || "");
+    if (eventLocationInput) eventLocationInput.value = String(eventRow.location || "");
+    if (eventDescriptionInput) eventDescriptionInput.value = String(eventRow.description || "");
+    eventStartInput.value = toLocalDateTimeValue(eventRow.starts_at);
+    eventEndInput.value = toLocalDateTimeValue(eventRow.ends_at);
+    selectedInviteSet = new Set(Array.isArray(eventRow.invite_usernames) ? eventRow.invite_usernames.map((name) => String(name || "").trim()).filter(Boolean) : []);
+    if (eventInviteSearchInput) eventInviteSearchInput.value = "";
+    selectedDayKey = toDateKey(eventRow.starts_at);
+    renderInviteFriendOptions();
+    renderCalendarGrid();
+    openEventModal();
+    if (eventTitleInput) {
+      eventTitleInput.focus();
+      eventTitleInput.select();
+    }
+    setStatus(`Editing ${String(eventRow.title || "event")}.`);
   }
 
   function monthRange(monthStart) {
@@ -530,7 +571,18 @@
       const where = e.location ? `<br>${escapeHTML(e.location)}` : "";
       const status = e.invite_status === "pending" ? " (Invite Pending)" : "";
       const rowClass = e.invite_status === "pending" ? "calendar-event-row pending" : "calendar-event-row";
-      return `<div class="${rowClass}"><strong>${escapeHTML(e.title || "Untitled")}</strong>${status}<br>${owner}${escapeHTML(when)}${where}</div>`;
+      const editButton = e.can_edit
+        ? `<button class="calendar-event-edit-btn" data-edit-event-id="${escapeHTML(String(e.event_id || ""))}" type="button">Edit</button>`
+        : "";
+      return `
+        <div class="${rowClass}">
+          <div class="calendar-event-row-head">
+            <strong>${escapeHTML(e.title || "Untitled")}</strong>
+            ${editButton}
+          </div>
+          <div class="calendar-event-row-body">${status ? `<div>${status.trim()}</div>` : ""}<div>${owner}${escapeHTML(when)}</div>${e.location ? `<div>${escapeHTML(e.location)}</div>` : ""}</div>
+        </div>
+      `;
     }).join("");
   }
 
@@ -569,7 +621,7 @@
     if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return;
     const client = window.PaidenAuth.getClient();
     const { start, end } = monthRange(calendarMonthDate);
-    const { data, error } = await client.rpc("get_my_calendar_events", {
+    const { data, error } = await client.rpc("get_my_calendar_events_detail", {
       start_at: start.toISOString(),
       end_at: end.toISOString(),
     });
@@ -882,34 +934,49 @@
       const description = String(eventDescriptionInput?.value || "").trim();
 
       if (!title || !startsLocal || !endsLocal) {
-        setStatus("Event title, start, and end are required.", true);
+        setEventModalStatus("Event title, start, and end are required.", true);
         return;
       }
 
       const startsAt = new Date(startsLocal);
       const endsAt = new Date(endsLocal);
       if (!(startsAt instanceof Date) || Number.isNaN(startsAt.getTime()) || !(endsAt instanceof Date) || Number.isNaN(endsAt.getTime()) || endsAt <= startsAt) {
-        setStatus("Event date/time is invalid.", true);
+        setEventModalStatus("Event date/time is invalid.", true);
         return;
       }
 
       const inviteNames = selectedInviteUsernames();
+      const isEditingEvent = Boolean(editingEventId);
       if (eventCreateBtn) {
         eventCreateBtn.disabled = true;
-        eventCreateBtn.textContent = "Creating...";
+        eventCreateBtn.textContent = isEditingEvent ? "Saving..." : "Creating...";
       }
       try {
         const client = window.PaidenAuth.getClient();
-        const { data, error } = await client.rpc("create_event_with_invites", {
-          event_title: title,
-          event_description: description || null,
-          event_location: location || null,
-          event_starts_at: startsAt.toISOString(),
-          event_ends_at: endsAt.toISOString(),
-          invite_usernames: inviteNames,
-        });
+        let data;
+        let error;
+        if (isEditingEvent) {
+          ({ data, error } = await client.rpc("update_event_with_invites", {
+            target_event_id: editingEventId,
+            event_title: title,
+            event_description: description || null,
+            event_location: location || null,
+            event_starts_at: startsAt.toISOString(),
+            event_ends_at: endsAt.toISOString(),
+            invite_usernames: inviteNames,
+          }));
+        } else {
+          ({ data, error } = await client.rpc("create_event_with_invites", {
+            event_title: title,
+            event_description: description || null,
+            event_location: location || null,
+            event_starts_at: startsAt.toISOString(),
+            event_ends_at: endsAt.toISOString(),
+            invite_usernames: inviteNames,
+          }));
+        }
         if (error || !data) {
-          setStatus((error && error.message) || "Could not create event.", true);
+          setEventModalStatus((error && error.message) || `Could not ${isEditingEvent ? "save" : "create"} event.`, true);
           return;
         }
 
@@ -917,7 +984,7 @@
         closeEventModal();
         await loadCalendarEventsForMonth();
         await loadPendingEventInvites();
-        setStatus("Event created.");
+        setStatus(isEditingEvent ? "Event updated." : "Event created.");
       } finally {
         if (eventCreateBtn) {
           eventCreateBtn.disabled = false;
@@ -975,6 +1042,15 @@
       await loadFriends();
       await loadFriendRequests();
       setStatus(acceptRequest ? "Friend request accepted." : "Friend request rejected.");
+      return;
+    }
+
+    const editEventBtn = event.target.closest("[data-edit-event-id]");
+    if (editEventBtn) {
+      const eventId = String(editEventBtn.getAttribute("data-edit-event-id") || "").trim();
+      if (!eventId) return;
+      const eventRow = calendarEvents.find((row) => String(row.event_id || "") === eventId && row.can_edit);
+      if (eventRow) beginEventEdit(eventRow);
       return;
     }
 
