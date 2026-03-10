@@ -106,7 +106,6 @@
     notify_event_invite: true,
     notify_event_one_hour: true,
   };
-  const eventReminderTimers = new Map();
 
   function setProfileModalStatus(message, isError = false) {
     if (!profileModalStatusEl) return;
@@ -487,36 +486,6 @@
     }
   }
 
-  function clearEventReminderTimers() {
-    eventReminderTimers.forEach((timerId) => {
-      window.clearTimeout(timerId);
-    });
-    eventReminderTimers.clear();
-  }
-
-  function scheduleEventReminderNotifications() {
-    clearEventReminderTimers();
-    if (!notificationPreferences.notify_event_one_hour) return;
-    const now = Date.now();
-    calendarEvents.forEach((e) => {
-      const eventId = String(e.event_id || "").trim();
-      if (!eventId) return;
-      const startAt = new Date(e.starts_at).getTime();
-      const msUntilStart = startAt - now;
-      if (msUntilStart <= 60 * 60 * 1000) return;
-      const fireInMs = msUntilStart - (60 * 60 * 1000);
-      const timerId = window.setTimeout(() => {
-        notifyOnce(
-          `event-one-hour-${eventId}`,
-          "Event Reminder",
-          `${e.title || "Your event"} starts at ${formatEventTime(e.starts_at)}.`
-        );
-        eventReminderTimers.delete(eventId);
-      }, fireInMs);
-      eventReminderTimers.set(eventId, timerId);
-    });
-  }
-
   async function fileToDataUrl(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -735,7 +704,6 @@
       }
       notificationPreferences = { ...nextPrefs };
       renderNotificationPreferences();
-      scheduleEventReminderNotifications();
       setNotificationModalStatus("Preferences saved.");
       setStatus("Notification preferences saved.");
       return true;
@@ -835,7 +803,6 @@
       return;
     }
     calendarEvents = Array.isArray(data) ? data : [];
-    scheduleEventReminderNotifications();
     renderCalendarGrid();
   }
 

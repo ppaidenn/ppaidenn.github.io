@@ -56,6 +56,19 @@ function buildPayload(type: string, actorUsername: string, body: any) {
     };
   }
 
+  if (type === "event_reminder") {
+    const eventTitle = String(body?.event_title || "an event").trim() || "an event";
+    const startLabel = String(body?.starts_at_label || "").trim();
+    return {
+      title: "paiden.com",
+      body: startLabel
+        ? `1-Hour Reminder\n${eventTitle} starts at ${startLabel}.`
+        : `1-Hour Reminder\n${eventTitle} starts in one hour.`,
+      url: `${SITE_URL}/profile`,
+      tag: `event-reminder-${eventTitle}`,
+    };
+  }
+
   return {
     title: "paiden.com",
     body: "New activity on paiden.com.",
@@ -122,7 +135,7 @@ async function filterRecipientUserIdsByPreference(type: string, userIds: string[
   if (!Array.isArray(userIds) || !userIds.length) return [];
   const { data, error } = await admin
     .from("notification_preferences")
-    .select("user_id, notify_friend_request, notify_friend_removed, notify_event_invite")
+    .select("user_id, notify_friend_request, notify_friend_removed, notify_event_invite, notify_event_one_hour")
     .in("user_id", userIds);
 
   if (error) {
@@ -140,6 +153,7 @@ async function filterRecipientUserIdsByPreference(type: string, userIds: string[
     if (type === "friend_request") return pref.notify_friend_request !== false;
     if (type === "friend_removed") return pref.notify_friend_removed !== false;
     if (type === "event_invite") return pref.notify_event_invite !== false;
+    if (type === "event_reminder") return pref.notify_event_one_hour !== false;
     return true;
   });
 }

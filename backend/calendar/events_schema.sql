@@ -33,6 +33,19 @@ create table if not exists public.event_invites (
 create index if not exists event_invites_invitee_status_idx
   on public.event_invites (invitee_id, status, created_at desc);
 
+create table if not exists public.event_reminder_deliveries (
+  event_id uuid not null references public.calendar_events(id) on delete cascade,
+  recipient_id uuid not null references auth.users(id) on delete cascade,
+  reminder_type text not null check (reminder_type in ('one_hour')),
+  scheduled_for timestamptz not null,
+  sent_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  primary key (event_id, recipient_id, reminder_type)
+);
+
+create index if not exists event_reminder_deliveries_schedule_idx
+  on public.event_reminder_deliveries (scheduled_for, sent_at desc);
+
 alter table public.calendar_events enable row level security;
 alter table public.event_invites enable row level security;
 
@@ -218,6 +231,9 @@ begin
       )
   ) d
   on conflict (event_id, invitee_id) do nothing;
+
+  delete from public.event_reminder_deliveries
+  where event_id = target_event_id;
 
   return true;
 end;
@@ -411,6 +427,98 @@ $$;
 
 grant execute on function public.get_my_pending_event_invites() to authenticated;
 
+create or replace function public.claim_due_event_one_hour_reminders(run_at timestamptz default now())
+returns table (
+  event_id uuid,
+  recipient_id uuid,
+  owner_username text,
+  title text,
+  location text,
+  starts_at timestamptz
+)
+language sql
+security definer
+set search_path = public
+as $$
+  with owner_targets as (
+    select
+      e.id as event_id,
+      e.owner_id as recipient_id,
+      owner_profile.username as owner_username,
+      e.title,
+      e.location,
+      e.starts_at,
+      (e.starts_at - interval '1 hour') as scheduled_for,
+      greatest(e.created_at, e.updated_at) as schedule_origin_at
+    from public.calendar_events e
+    join public.profiles owner_profile on owner_profile.id = e.owner_id
+    left join public.notification_preferences np on np.user_id = e.owner_id
+    where e.starts_at > run_at
+      and (e.starts_at - interval '1 hour') <= run_at
+      and (e.starts_at - interval '1 hour') > (run_at - interval '30 minutes')
+      and greatest(e.created_at, e.updated_at) <= (e.starts_at - interval '1 hour')
+      and coalesce(np.notify_event_one_hour, true)
+  ),
+  invite_targets as (
+    select
+      e.id as event_id,
+      i.invitee_id as recipient_id,
+      owner_profile.username as owner_username,
+      e.title,
+      e.location,
+      e.starts_at,
+      (e.starts_at - interval '1 hour') as scheduled_for,
+      greatest(e.created_at, e.updated_at, i.created_at, coalesce(i.responded_at, i.created_at)) as schedule_origin_at
+    from public.calendar_events e
+    join public.event_invites i
+      on i.event_id = e.id
+     and i.status = 'accepted'
+    join public.profiles owner_profile on owner_profile.id = e.owner_id
+    left join public.notification_preferences np on np.user_id = i.invitee_id
+    where e.starts_at > run_at
+      and (e.starts_at - interval '1 hour') <= run_at
+      and (e.starts_at - interval '1 hour') > (run_at - interval '30 minutes')
+      and greatest(e.created_at, e.updated_at, i.created_at, coalesce(i.responded_at, i.created_at)) <= (e.starts_at - interval '1 hour')
+      and coalesce(np.notify_event_one_hour, true)
+  ),
+  candidates as (
+    select * from owner_targets
+    union all
+    select * from invite_targets
+  ),
+  inserted as (
+    insert into public.event_reminder_deliveries (
+      event_id,
+      recipient_id,
+      reminder_type,
+      scheduled_for,
+      sent_at
+    )
+    select
+      c.event_id,
+      c.recipient_id,
+      'one_hour',
+      c.scheduled_for,
+      run_at
+    from candidates c
+    on conflict (event_id, recipient_id, reminder_type) do nothing
+    returning event_id, recipient_id
+  )
+  select
+    c.event_id,
+    c.recipient_id,
+    c.owner_username,
+    c.title,
+    c.location,
+    c.starts_at
+  from candidates c
+  join inserted i
+    on i.event_id = c.event_id
+   and i.recipient_id = c.recipient_id;
+$$;
+
+grant execute on function public.claim_due_event_one_hour_reminders(timestamptz) to service_role;
+
 create or replace function public.respond_to_event_invite(event_id uuid, accept_invite boolean)
 returns boolean
 language plpgsql
@@ -432,7 +540,14 @@ begin
     and event_invites.invitee_id = me
     and event_invites.status = 'pending';
 
-  return found;
+  if found then
+    delete from public.event_reminder_deliveries
+    where event_reminder_deliveries.event_id = respond_to_event_invite.event_id
+      and event_reminder_deliveries.recipient_id = me;
+    return true;
+  end if;
+
+  return false;
 end;
 $$;
 
