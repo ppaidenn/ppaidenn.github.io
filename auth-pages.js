@@ -59,7 +59,7 @@
 
       if (!res.ok) return setStatus(res.error || "Could not create account.", true);
       if (res.requiresEmailConfirmation) {
-        setStatus("Account created. Check your email for the confirmation link, then sign in.");
+        setStatus("Account created. Check your email for the confirmation link, then sign in. If you do not see it, check spam or junk.");
         window.setTimeout(() => { window.location.href = "/signin"; }, 1200);
       } else {
         setStatus("Account created and signed in. Redirecting to profile...");
@@ -112,7 +112,7 @@
       setButtonPending(submitBtn, false, "Send Reset Email");
 
       if (!res.ok) return setStatus(res.error || "Could not send password reset email.", true);
-      setStatus("Reset email sent. Check your inbox for the recovery link.");
+      setStatus("Reset email sent. Check your inbox for the recovery link. If you do not see it, check spam or junk.");
     });
   }
 
