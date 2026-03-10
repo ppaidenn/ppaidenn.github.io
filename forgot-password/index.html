@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>paiden.com</title>
-  <meta name="description" content="Sign in page for paiden.com">
+  <meta name="description" content="Request a password reset for paiden.com">
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -14,186 +14,47 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
   <link rel="stylesheet" href="/account-menu.css">
   <style>
-    :root {
-      --side-margin: 10vw;
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --brand-font-size: 2.5vw;
-      --nav-font-size: 1.2vw;
-      --spacing-large: 1.5vw;
-      --footer-padding: 7vh;
-      --spacing-small: 0.5vw;
-      --footer-title-font-size: 2vw;
-      --footer-subtitle-font-size: 1vw;
-      --footer-nav-font-size: 1vw;
-      --footer-nav-left: 15vw;
-    }
+    :root { --side-margin: 10vw; --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); --brand-font-size: 2.5vw; --nav-font-size: 1.2vw; --spacing-large: 1.5vw; --footer-padding: 7vh; --spacing-small: 0.5vw; --footer-title-font-size: 2vw; --footer-subtitle-font-size: 1vw; --footer-nav-font-size: 1vw; --footer-nav-left: 15vw; }
     * { box-sizing: border-box; }
-    html {
-      min-height: 100%;
-      background: #e0e0e0;
-    }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #e0e0e0;
-      color: #111;
-      overflow-x: hidden;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    .top-nav {
-      width: 100vw;
-      margin-left: calc(50% - 50vw);
-      background: #000;
-      color: #fff;
-      position: sticky;
-      top: 0;
-      z-index: 40;
-    }
-    .top-nav-inner {
-      margin: 0 var(--side-margin);
-      min-height: calc(64px + var(--safe-top));
-      padding-top: var(--safe-top);
-      display: flex;
-      align-items: flex-end;
-      justify-content: flex-start;
-    }
-    .brand {
-      color: #fff;
-      text-decoration: none;
-      font-size: var(--brand-font-size);
-      font-weight: bold;
-      padding-bottom: var(--spacing-small);
-      padding-right: var(--spacing-large);
-      border-right: 0.1vw solid #fff;
-      margin-right: var(--spacing-large);
-    }
-    .nav-links {
-      display: flex;
-      align-items: flex-end;
-      gap: 0;
-    }
-    .nav-links a {
-      color: #fff;
-      text-decoration: none;
-      font-size: var(--nav-font-size);
-      font-weight: bold;
-      margin-right: var(--spacing-large);
-      padding-bottom: var(--spacing-small);
-      opacity: 1;
-    }
-    .nav-links a:last-child { margin-right: 0; }
-    .nav-links a:hover { text-decoration: underline; }
+    html { min-height: 100%; background: #e0e0e0; }
+    body { margin: 0; font-family: Arial, sans-serif; background: #e0e0e0; color: #111; overflow-x: hidden; min-height: 100vh; display: flex; flex-direction: column; }
+    .top-nav { width: 100vw; margin-left: calc(50% - 50vw); background: #000; color: #fff; position: sticky; top: 0; z-index: 40; }
+    .top-nav-inner { margin: 0 var(--side-margin); min-height: calc(64px + var(--safe-top)); padding-top: var(--safe-top); display: flex; align-items: flex-end; justify-content: flex-start; }
+    .brand { color: #fff; text-decoration: none; font-size: var(--brand-font-size); font-weight: bold; padding-bottom: var(--spacing-small); padding-right: var(--spacing-large); border-right: 0.1vw solid #fff; margin-right: var(--spacing-large); }
+    .nav-links { display: flex; align-items: flex-end; gap: 0; }
+    .nav-links a { color: #fff; text-decoration: none; font-size: var(--nav-font-size); font-weight: bold; margin-right: var(--spacing-large); padding-bottom: var(--spacing-small); opacity: 1; }
     .mobile-fixed-header { display: none; }
-    .content-wrap {
-      width: 100vw;
-      margin-left: calc(50% - 50vw);
-      padding: clamp(24px, 4.5vh, 42px) 0 calc(30px + var(--safe-bottom));
-      flex: 1 0 auto;
-    }
-    .content-inner {
-      margin: 0 var(--side-margin);
-      background: rgba(255,255,255,0.75);
-      border: 1px solid rgba(0,0,0,0.1);
-      border-radius: 22px;
-      box-shadow: 0 10px 34px rgba(0,0,0,0.08);
-      padding: clamp(18px, 2.2vw, 32px);
-      max-width: 760px;
-    }
-    .kicker {
-      letter-spacing: 0.18em;
-      font-size: 12px;
-      font-weight: 800;
-      color: rgba(16,21,28,0.65);
-      margin-bottom: 10px;
-    }
+    .content-wrap { width: 100vw; margin-left: calc(50% - 50vw); padding: clamp(24px, 4.5vh, 42px) 0 calc(30px + var(--safe-bottom)); flex: 1 0 auto; }
+    .content-inner { margin: 0 var(--side-margin); background: rgba(255,255,255,0.75); border: 1px solid rgba(0,0,0,0.1); border-radius: 22px; box-shadow: 0 10px 34px rgba(0,0,0,0.08); padding: clamp(18px, 2.2vw, 32px); max-width: 760px; }
+    .kicker { letter-spacing: 0.18em; font-size: 12px; font-weight: 800; color: rgba(16,21,28,0.65); margin-bottom: 10px; }
     h1 { margin: 0 0 12px; font-size: clamp(30px, 3.8vw, 48px); }
     p { margin: 0 0 14px; line-height: 1.5; }
     .field { margin-bottom: 12px; }
     .field label { display: block; margin-bottom: 6px; font-weight: 700; }
-    .field input {
-      width: 100%;
-      border: 1px solid rgba(0,0,0,0.2);
-      border-radius: 12px;
-      padding: 12px;
-      font-size: 15px;
-      background: #fff;
-    }
-    .btn {
-      border: 1px solid rgba(0,0,0,0.2);
-      background: #111;
-      color: #fff;
-      border-radius: 12px;
-      padding: 11px 14px;
-      font-weight: 700;
-      font-size: 15px;
-      cursor: pointer;
-    }
-    .auth-status {
-      margin-top: 12px;
-      min-height: 20px;
-      font-size: 14px;
-      font-weight: 700;
-      color: rgba(17,17,17,0.8);
-    }
-    .auth-link-row {
-      margin-top: 12px;
-      display: flex;
-      justify-content: flex-start;
-    }
-    .auth-link-row a {
-      color: #0f4d33;
-      font-size: 14px;
-      font-weight: 700;
-      text-decoration: none;
-    }
-    .auth-link-row a:hover {
-      text-decoration: underline;
-    }
-    .footer {
-      width: 100vw;
-      margin-left: calc(50% - 50vw);
-      background-color: #000;
-      padding: var(--footer-padding) 0;
-      position: relative;
-      margin-top: auto;
-      flex-shrink: 0;
-    }
-    .footer-inner {
-      margin: 0 var(--side-margin);
-      text-align: left;
-      position: relative;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
+    .field input { width: 100%; border: 1px solid rgba(0,0,0,0.2); border-radius: 12px; padding: 12px; font-size: 15px; background: #fff; }
+    .btn { border: 1px solid rgba(0,0,0,0.2); background: #111; color: #fff; border-radius: 12px; padding: 11px 14px; font-weight: 700; font-size: 15px; cursor: pointer; }
+    .auth-status { margin-top: 12px; min-height: 20px; font-size: 14px; font-weight: 700; color: rgba(17,17,17,0.8); }
+    .auth-link-row { margin-top: 12px; display: flex; justify-content: flex-start; }
+    .auth-link-row a { color: #0f4d33; font-size: 14px; font-weight: 700; text-decoration: none; }
+    .auth-link-row a:hover { text-decoration: underline; }
+    .footer { width: 100vw; margin-left: calc(50% - 50vw); background-color: #000; padding: var(--footer-padding) 0; position: relative; margin-top: auto; flex-shrink: 0; }
+    .footer-inner { margin: 0 var(--side-margin); text-align: left; position: relative; display: flex; justify-content: space-between; align-items: flex-start; }
     .footer-left { display: flex; flex-direction: column; align-items: flex-start; }
     .footer-left .footer-brand { font-size: var(--footer-title-font-size); font-weight: bold; color: white; text-decoration: none; margin-bottom: 0.75vw; }
     .footer-left .footer-created, .footer-left .footer-updated { font-size: var(--footer-subtitle-font-size); color: white; margin-top: var(--spacing-small); }
     .footer-nav { position: absolute; top: 50%; left: var(--footer-nav-left); transform: translateY(-45%); display: flex; flex-direction: column; align-items: flex-start; }
     .footer-nav a { font-size: var(--footer-nav-font-size); color: white; text-decoration: none; margin-bottom: var(--spacing-small); }
-    .footer-nav a:hover { text-decoration: underline; }
     .footer-social { display: flex; flex-direction: column; align-items: flex-end; color: white; }
     .footer-social .follow-text { font-size: var(--footer-nav-font-size); font-weight: bold; margin-bottom: var(--spacing-small); }
     .social-icons { display: flex; gap: 1vw; }
     .social-icons a { color: white; font-size: 2vw; text-decoration: none; }
     @media (max-width: 768px) {
       body { padding-top: calc(var(--safe-top) + 58px); }
-      .top-nav { display: none; }
-      .mobile-fixed-header {
-        position: fixed; top: 0; left: 0; right: 0;
-        height: calc(var(--safe-top) + 58px);
-        padding-top: var(--safe-top);
-        padding-left: 5vw; padding-right: 5vw;
-        display: flex; align-items: center; justify-content: space-between;
-        background: #000; z-index: 10000;
-      }
+      .top-nav, .footer { display: none !important; }
+      .mobile-fixed-header { position: fixed; top: 0; left: 0; right: 0; height: calc(var(--safe-top) + 58px); padding-top: var(--safe-top); padding-left: 5vw; padding-right: 5vw; display: flex; align-items: center; justify-content: space-between; background: #000; z-index: 10000; }
       .mobile-fixed-brand { color: #fff; text-decoration: none; font-weight: 800; font-size: clamp(22px, 6.4vw, 30px); line-height: 1; }
       .mobile-fixed-nav { display: flex; align-items: center; gap: 18px; padding-left: 16px; }
       .mobile-fixed-nav a { color: #fff; text-decoration: none; font-size: 22px; line-height: 1; }
-      .footer { display: none !important; }
       .content-inner { border-radius: 16px; }
     }
   </style>
@@ -221,19 +82,15 @@
   <main class="content-wrap">
     <section class="content-inner">
       <div class="kicker">ACCOUNT</div>
-      <h1>Sign In</h1>
-      <p>Sign in to connect your account to blog posts, or continue posting anonymously on the blog page.</p>
-      <form id="signInForm">
+      <h1>Forgot Password</h1>
+      <p>Enter your username or email and paiden.com will send you a recovery link through Supabase Authentication.</p>
+      <form id="forgotPasswordForm">
         <div class="field">
-          <label for="signin-username">Username</label>
-          <input id="signin-username" type="text" placeholder="Your username">
+          <label for="reset-identifier">Username or Email</label>
+          <input id="reset-identifier" type="text" placeholder="Your username or email">
         </div>
-        <div class="field">
-          <label for="password">Password</label>
-          <input id="password" type="password" placeholder="Enter password">
-        </div>
-        <button class="btn" id="signInSubmit" type="submit">Sign In</button>
-        <div class="auth-link-row"><a href="/forgot-password">Forgot Password?</a></div>
+        <button class="btn" id="forgotPasswordSubmit" type="submit">Send Reset Email</button>
+        <div class="auth-link-row"><a href="/signin">Back to Sign In</a></div>
         <div class="auth-status" id="authStatus"></div>
       </form>
     </section>

@@ -1,6 +1,8 @@
 (() => {
   const createForm = document.getElementById("createAccountForm");
   const signInForm = document.getElementById("signInForm");
+  const forgotPasswordForm = document.getElementById("forgotPasswordForm");
+  const resetPasswordForm = document.getElementById("resetPasswordForm");
   const statusEl = document.getElementById("authStatus");
 
   function setStatus(message, isError = false) {
@@ -90,7 +92,61 @@
     });
   }
 
-  if (!createForm && !signInForm && statusEl) {
+  if (forgotPasswordForm) {
+    forgotPasswordForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!window.PaidenAuth) return setStatus("Auth service unavailable.", true);
+
+      const identifier = (document.getElementById("reset-identifier")?.value || "").trim();
+      const submitBtn = document.getElementById("forgotPasswordSubmit");
+      if (!identifier) {
+        return setStatus("Please enter your username or email.", true);
+      }
+
+      setButtonPending(submitBtn, true, "Send Reset Email");
+      setStatus("");
+      const res = await window.PaidenAuth.requestPasswordReset({
+        identifier,
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      setButtonPending(submitBtn, false, "Send Reset Email");
+
+      if (!res.ok) return setStatus(res.error || "Could not send password reset email.", true);
+      setStatus("Reset email sent. Check your inbox for the recovery link.");
+    });
+  }
+
+  if (resetPasswordForm) {
+    resetPasswordForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!window.PaidenAuth) return setStatus("Auth service unavailable.", true);
+
+      const password = document.getElementById("reset-password")?.value || "";
+      const confirmPassword = document.getElementById("reset-password-confirm")?.value || "";
+      const submitBtn = document.getElementById("resetPasswordSubmit");
+
+      if (!password || !confirmPassword) {
+        return setStatus("Please complete both password fields.", true);
+      }
+      if (password !== confirmPassword) {
+        return setStatus("Passwords do not match.", true);
+      }
+      if (password.length < 8) {
+        return setStatus("Password must be at least 8 characters.", true);
+      }
+
+      setButtonPending(submitBtn, true, "Save New Password");
+      setStatus("");
+      const res = await window.PaidenAuth.updatePassword(password);
+      setButtonPending(submitBtn, false, "Save New Password");
+
+      if (!res.ok) return setStatus(res.error || "Could not update password.", true);
+      setStatus("Password updated. Redirecting to sign in...");
+      window.setTimeout(() => { window.location.href = "/signin"; }, 1000);
+    });
+  }
+
+  if (!createForm && !signInForm && !forgotPasswordForm && !resetPasswordForm && statusEl) {
     statusEl.textContent = "";
   }
 })();

@@ -914,6 +914,7 @@
                 <img id="profileAvatarImg" alt="Profile photo" src="/images/default_pfp.jpg">
               </div>
               <button class="btn edit-profile-btn" id="profileEditBtn" type="button"><i class="fa-solid fa-pen" aria-hidden="true"></i> Edit Profile</button>
+              <button class="btn-secondary edit-profile-btn" id="changePasswordBtn" type="button"><i class="fa-solid fa-key" aria-hidden="true"></i> Change Password</button>
               <button class="btn-secondary edit-profile-btn" id="notificationSettingsBtn" type="button"><i class="fa-solid fa-bell" aria-hidden="true"></i> Customize Notifications</button>
             </div>
             <div>
@@ -1112,6 +1113,30 @@
       </form>
     </section>
   </div>
+  <div class="event-modal-overlay" id="passwordModalOverlay">
+    <section class="event-modal" role="dialog" aria-modal="true" aria-labelledby="passwordModalTitle">
+      <div class="event-modal-head">
+        <h2 class="event-modal-title" id="passwordModalTitle">Change Password</h2>
+        <button class="event-modal-close" id="passwordModalCloseBtn" type="button"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Close</button>
+      </div>
+      <form class="event-modal-form" id="passwordChangeForm">
+        <div class="modal-note">Use a password with at least 8 characters.</div>
+        <div class="field">
+          <label for="profileNewPassword">New Password</label>
+          <input id="profileNewPassword" type="password" minlength="8" placeholder="New password">
+        </div>
+        <div class="field">
+          <label for="profileConfirmPassword">Confirm Password</label>
+          <input id="profileConfirmPassword" type="password" minlength="8" placeholder="Confirm new password">
+        </div>
+        <div class="status" id="passwordModalStatus"></div>
+        <div class="event-modal-actions">
+          <button class="btn-secondary" id="passwordModalCancelBtn" type="button">Cancel</button>
+          <button class="btn" id="passwordModalSaveBtn" type="submit">Save Password</button>
+        </div>
+      </form>
+    </section>
+  </div>
   <footer class="footer">
     <div class="footer-inner">
       <div class="footer-left">
@@ -1136,10 +1161,10 @@
     </div>
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="/auth-client.js?v=20260309c"></script>
+  <script src="/auth-client.js?v=20260310a"></script>
   <script src="/notifications.js?v=20260309e"></script>
   <script src="/account-menu.js?v=20260309c"></script>
-  <script src="/profile-page.js?v=20260309f"></script>
+  <script src="/profile-page.js?v=20260310a"></script>
   <script>
     const lastUpdated = document.getElementById("last-updated");
     if (lastUpdated) lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();

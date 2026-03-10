@@ -35,6 +35,8 @@ export default {
       "accounts",
       "signin",
       "create-account",
+      "forgot-password",
+      "reset-password",
       "notifications",
       "news",
       "images",

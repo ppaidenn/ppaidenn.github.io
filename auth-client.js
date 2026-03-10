@@ -16,6 +16,8 @@
     "accounts",
     "signin",
     "create-account",
+    "forgot-password",
+    "reset-password",
     "notifications",
     "news",
     "images",
@@ -298,15 +300,9 @@
     const rawIdentifier = String(username || email || "").trim();
     if (!rawIdentifier) return { ok: false, error: "Username is required." };
 
-    let resolvedEmail = rawIdentifier;
-    if (!rawIdentifier.includes("@")) {
-      const { data: rpcEmail, error: rpcError } = await client.rpc("get_signin_email_by_username", {
-        target_username: rawIdentifier,
-      });
-      if (rpcError) return { ok: false, error: rpcError.message || "Could not resolve username." };
-      resolvedEmail = String(rpcEmail || "").trim();
-      if (!resolvedEmail) return { ok: false, error: "Username not found." };
-    }
+    const emailResult = await resolveEmailForIdentifier(rawIdentifier);
+    if (!emailResult.ok) return emailResult;
+    const resolvedEmail = emailResult.email;
 
     const { data, error } = await client.auth.signInWithPassword({
       email: resolvedEmail,
@@ -319,6 +315,22 @@
     // Missing profiles are created lazily in getCurrentProfile().
     if (session?.user) triggerNotificationSubscriptionSync();
     return { ok: true, user, session };
+  }
+
+  async function resolveEmailForIdentifier(rawIdentifier) {
+    const client = requireClient();
+    const identifier = String(rawIdentifier || "").trim();
+    if (!identifier) return { ok: false, error: "Username or email is required." };
+    if (identifier.includes("@")) {
+      return { ok: true, email: identifier.toLowerCase() };
+    }
+    const { data: rpcEmail, error: rpcError } = await client.rpc("get_signin_email_by_username", {
+      target_username: identifier,
+    });
+    if (rpcError) return { ok: false, error: rpcError.message || "Could not resolve username." };
+    const resolvedEmail = String(rpcEmail || "").trim().toLowerCase();
+    if (!resolvedEmail) return { ok: false, error: "Username not found." };
+    return { ok: true, email: resolvedEmail };
   }
 
   async function getCurrentProfile() {
@@ -409,6 +421,28 @@
     return { ok: true };
   }
 
+  async function requestPasswordReset({ identifier, redirectTo }) {
+    const client = requireClient();
+    const emailResult = await resolveEmailForIdentifier(identifier);
+    if (!emailResult.ok) return emailResult;
+    const { error } = await client.auth.resetPasswordForEmail(emailResult.email, {
+      redirectTo: String(redirectTo || `${window.location.origin}/reset-password`).trim(),
+    });
+    if (error) return { ok: false, error: error.message || "Could not send password reset email." };
+    return { ok: true };
+  }
+
+  async function updatePassword(newPassword) {
+    const client = requireClient();
+    const password = String(newPassword || "");
+    if (password.length < 8) {
+      return { ok: false, error: "Password must be at least 8 characters." };
+    }
+    const { data, error } = await client.auth.updateUser({ password });
+    if (error) return { ok: false, error: error.message || "Could not update password." };
+    return { ok: true, data };
+  }
+
   async function getAccessToken() {
     const sessionResult = await getRecoveredSession();
     if (!sessionResult.ok) return "";
@@ -446,6 +480,8 @@
     createAccount,
     signIn,
     signOut,
+    requestPasswordReset,
+    updatePassword,
     getAccessToken,
     invokeEdgeFunction,
     getCurrentProfile,

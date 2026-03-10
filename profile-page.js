@@ -18,6 +18,16 @@
   const profileModalDoneBtn = document.getElementById("profileModalDoneBtn");
   const profileModalSaveBtn = document.getElementById("profileModalSaveBtn");
   const profileModalStatusEl = document.getElementById("profileModalStatus");
+  const changePasswordBtn = document.getElementById("changePasswordBtn");
+  const passwordModalOverlay = document.getElementById("passwordModalOverlay");
+  const passwordModalEl = passwordModalOverlay ? passwordModalOverlay.querySelector(".event-modal") : null;
+  const passwordModalCloseBtn = document.getElementById("passwordModalCloseBtn");
+  const passwordModalCancelBtn = document.getElementById("passwordModalCancelBtn");
+  const passwordModalSaveBtn = document.getElementById("passwordModalSaveBtn");
+  const passwordModalStatusEl = document.getElementById("passwordModalStatus");
+  const passwordChangeForm = document.getElementById("passwordChangeForm");
+  const profileNewPasswordInput = document.getElementById("profileNewPassword");
+  const profileConfirmPasswordInput = document.getElementById("profileConfirmPassword");
   const notificationSettingsBtn = document.getElementById("notificationSettingsBtn");
   const notificationModalOverlay = document.getElementById("notificationModalOverlay");
   const notificationModalEl = notificationModalOverlay ? notificationModalOverlay.querySelector(".event-modal") : null;
@@ -119,6 +129,12 @@
     notificationModalStatusEl.style.color = isError ? "#a10000" : "rgba(17,17,17,0.78)";
   }
 
+  function setPasswordModalStatus(message, isError = false) {
+    if (!passwordModalStatusEl) return;
+    passwordModalStatusEl.textContent = message || "";
+    passwordModalStatusEl.style.color = isError ? "#a10000" : "rgba(17,17,17,0.78)";
+  }
+
   function renderProfileDisplay(profile = {}, userEmail = "") {
     if (profileDisplayNameEl) profileDisplayNameEl.textContent = profile.full_name || profile.username || "Profile";
     if (profileDisplayUsernameEl) profileDisplayUsernameEl.textContent = `@${profile.username || "-"}`;
@@ -165,6 +181,21 @@
     notificationModalOverlay.classList.remove("open");
     document.body.style.overflow = "";
     setNotificationModalStatus("");
+  }
+
+  function openPasswordModal() {
+    if (!passwordModalOverlay) return;
+    if (passwordChangeForm) passwordChangeForm.reset();
+    setPasswordModalStatus("");
+    passwordModalOverlay.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closePasswordModal() {
+    if (!passwordModalOverlay) return;
+    passwordModalOverlay.classList.remove("open");
+    document.body.style.overflow = "";
+    setPasswordModalStatus("");
   }
 
   function buildProfilePatch(avatarDataUrl = null) {
@@ -893,6 +924,13 @@
     });
   }
 
+  if (changePasswordBtn) {
+    changePasswordBtn.addEventListener("click", () => {
+      openPasswordModal();
+      if (profileNewPasswordInput) profileNewPasswordInput.focus();
+    });
+  }
+
   if (profileModalCloseBtn) {
     profileModalCloseBtn.addEventListener("click", () => closeProfileModal());
   }
@@ -958,12 +996,71 @@
     notificationModalEl.addEventListener("click", (event) => event.stopPropagation());
   }
 
+  if (passwordModalCloseBtn) {
+    passwordModalCloseBtn.addEventListener("click", () => closePasswordModal());
+  }
+
+  if (passwordModalCancelBtn) {
+    passwordModalCancelBtn.addEventListener("click", () => closePasswordModal());
+  }
+
+  if (passwordChangeForm) {
+    passwordChangeForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!window.PaidenAuth) return setPasswordModalStatus("Auth service unavailable.", true);
+      const password = String(profileNewPasswordInput?.value || "");
+      const confirmPassword = String(profileConfirmPasswordInput?.value || "");
+      if (!password || !confirmPassword) {
+        return setPasswordModalStatus("Please complete both password fields.", true);
+      }
+      if (password !== confirmPassword) {
+        return setPasswordModalStatus("Passwords do not match.", true);
+      }
+      if (password.length < 8) {
+        return setPasswordModalStatus("Password must be at least 8 characters.", true);
+      }
+      if (passwordModalSaveBtn) {
+        passwordModalSaveBtn.disabled = true;
+        passwordModalSaveBtn.textContent = "Saving...";
+      }
+      setPasswordModalStatus("Saving...");
+      try {
+        const res = await window.PaidenAuth.updatePassword(password);
+        if (!res.ok) {
+          setPasswordModalStatus(res.error || "Could not update password.", true);
+          return;
+        }
+        setPasswordModalStatus("Password updated.");
+        setStatus("Password updated.");
+        window.setTimeout(() => closePasswordModal(), 600);
+      } finally {
+        if (passwordModalSaveBtn) {
+          passwordModalSaveBtn.disabled = false;
+          passwordModalSaveBtn.textContent = "Save Password";
+        }
+      }
+    });
+  }
+
+  if (passwordModalOverlay) {
+    passwordModalOverlay.addEventListener("click", (event) => {
+      if (event.target === passwordModalOverlay) closePasswordModal();
+    });
+  }
+
+  if (passwordModalEl) {
+    passwordModalEl.addEventListener("click", (event) => event.stopPropagation());
+  }
+
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && profileModalOverlay && profileModalOverlay.classList.contains("open")) {
       closeProfileModal();
     }
     if (event.key === "Escape" && notificationModalOverlay && notificationModalOverlay.classList.contains("open")) {
       closeNotificationModal();
+    }
+    if (event.key === "Escape" && passwordModalOverlay && passwordModalOverlay.classList.contains("open")) {
+      closePasswordModal();
     }
   });
 
