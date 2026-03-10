@@ -118,6 +118,11 @@
       margin-bottom: 16px;
       align-items: start;
     }
+    .profile-avatar-col {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
     .avatar-wrap {
       background: rgba(255,255,255,0.9);
       border: 1px solid rgba(0,0,0,0.12);
@@ -193,6 +198,9 @@
       font-weight: 700;
       font-size: 15px;
       cursor: pointer;
+    }
+    .profile-action-btn {
+      width: 100%;
     }
     .status { margin-top: 12px; min-height: 20px; font-weight: 700; }
     .calendar-wrap {
@@ -370,8 +378,11 @@
       <div class="profile-name-main" id="friendFullName">Account Profile</div>
       <div class="profile-name-sub" id="friendUsernameHandle">@loading</div>
       <div class="profile-top">
-        <div class="avatar-wrap">
-          <img id="friendAvatarImg" alt="Friend profile photo" src="/images/default_pfp.jpg">
+        <div class="profile-avatar-col">
+          <div class="avatar-wrap">
+            <img id="friendAvatarImg" alt="Friend profile photo" src="/images/default_pfp.jpg">
+          </div>
+          <button class="btn profile-action-btn" id="friendActionBtn" type="button">Add Friend</button>
         </div>
         <div>
           <div class="row"><span class="label">Bio:</span></div>
@@ -382,7 +393,6 @@
           </div>
         </div>
       </div>
-      <button class="btn" id="friendActionBtn" type="button">Add Friend</button>
       <div class="status" id="friendProfileStatus"></div>
       <div class="calendar-wrap">
         <div class="calendar-head">
@@ -679,7 +689,7 @@
       if (isFriend) {
         actionMode = "remove";
         friendActionBtn.disabled = false;
-        friendActionBtn.textContent = "Remove Friend";
+        friendActionBtn.textContent = "Friends";
         setStatus("");
         return;
       }
@@ -718,11 +728,11 @@
         if (actionMode === "remove") {
           if (!window.confirm(`Remove @${viewedUsername} from your friends?`)) return;
           friendActionBtn.disabled = true;
-          friendActionBtn.textContent = "Removing...";
+          friendActionBtn.textContent = "Updating...";
           const { data, error } = await client.rpc("remove_friend_by_username", { target_username: viewedUsername });
           if (error || data === false) {
             friendActionBtn.disabled = false;
-            friendActionBtn.textContent = "Remove Friend";
+            friendActionBtn.textContent = "Friends";
             setStatus((error && error.message) || "Could not remove friend.", true);
             return;
           }
