@@ -199,8 +199,20 @@
     });
   }
 
+  window.addEventListener("load", () => {
+    if (isEnabled()) {
+      syncCurrentSubscription().catch(() => {});
+    }
+  });
+
   window.addEventListener("focus", () => {
     if (isEnabled()) {
+      syncCurrentSubscription().catch(() => {});
+    }
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && isEnabled()) {
       syncCurrentSubscription().catch(() => {});
     }
   });

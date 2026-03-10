@@ -75,6 +75,11 @@ async function sendPushToUserIds(userIds: string[], payload: Record<string, stri
     return;
   }
 
+  console.log("push-notify targeted subscriptions", {
+    requestedUserIds: userIds,
+    matchedSubscriptions: Array.isArray(subscriptions) ? subscriptions.length : 0,
+  });
+
   if (!Array.isArray(subscriptions) || !subscriptions.length) return;
 
   const staleIds: string[] = [];
@@ -120,11 +125,20 @@ async function resolveRecipientUserIds(type: string, body: any) {
     const usernames = Array.isArray(body?.target_usernames) ? body.target_usernames : [];
     const cleanUsernames = usernames.map((name: unknown) => String(name || "").trim()).filter(Boolean);
     if (!cleanUsernames.length) return [];
-    const { data } = await admin
+    const { data, error } = await admin
       .from("profiles")
-      .select("id, username")
-      .in("username", cleanUsernames);
-    return Array.isArray(data) ? data.map((row) => String(row.id)).filter(Boolean) : [];
+      .select("id, username");
+    if (error) {
+      console.error("Failed to resolve event invite recipients:", error);
+      return [];
+    }
+    const lowered = cleanUsernames.map((name) => name.toLowerCase());
+    return Array.isArray(data)
+      ? data
+        .filter((row) => lowered.includes(String(row.username || "").trim().toLowerCase()))
+        .map((row) => String(row.id))
+        .filter(Boolean)
+      : [];
   }
 
   return [];
@@ -182,6 +196,13 @@ serve(async (req) => {
   }
 
   const recipientUserIds = await resolveRecipientUserIds(type, body);
+  console.log("push-notify resolved recipients", {
+    type,
+    actorUserId: userData.user.id,
+    targetUsername: body?.target_username || null,
+    targetUsernames: Array.isArray(body?.target_usernames) ? body.target_usernames : [],
+    recipientUserIds,
+  });
   if (!recipientUserIds.length) {
     return new Response(JSON.stringify({ ok: true, skipped: true }), {
       status: 200,
