@@ -351,8 +351,8 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="/auth-client.js"></script>
-  <script src="/account-menu.js"></script>
+  <script src="/auth-client.js?v=20260309c"></script>
+  <script src="/account-menu.js?v=20260309c"></script>
   <script>
     const DEFAULT_AVATAR = "/images/default_pfp.jpg";
     const accountsGrid = document.getElementById("accountsGrid");
@@ -485,10 +485,13 @@
         return;
       }
       if (window.PaidenAuth && typeof window.PaidenAuth.invokeEdgeFunction === "function") {
-        window.PaidenAuth.invokeEdgeFunction("push-notify", {
+        const notifyRes = await window.PaidenAuth.invokeEdgeFunction("push-notify", {
           type: "friend_request",
           target_username: friendUsername,
-        }).catch(() => {});
+        }).catch((err) => ({ ok: false, error: err?.message || "Could not trigger friend request notification." }));
+        if (!notifyRes || notifyRes.ok === false) {
+          console.error("Friend request push-notify failed:", notifyRes?.error || "Unknown error");
+        }
       }
       pendingOutgoingUsernames.add(friendUsername.toLowerCase());
       btn.textContent = "Requested";

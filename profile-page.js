@@ -985,13 +985,16 @@
         await loadCalendarEventsForMonth();
         await loadPendingEventInvites();
         if (inviteNames.length && window.PaidenAuth && typeof window.PaidenAuth.invokeEdgeFunction === "function") {
-          window.PaidenAuth.invokeEdgeFunction("push-notify", {
+          const notifyRes = await window.PaidenAuth.invokeEdgeFunction("push-notify", {
             type: "event_invite",
             target_usernames: inviteNames,
             event_title: title,
             event_starts_at: startsAt.toISOString(),
             is_update: isEditingEvent,
-          }).catch(() => {});
+          }).catch((err) => ({ ok: false, error: err?.message || "Could not trigger event invite notification." }));
+          if (!notifyRes || notifyRes.ok === false) {
+            console.error("Event invite push-notify failed:", notifyRes?.error || "Unknown error");
+          }
         }
         setStatus(isEditingEvent ? "Event updated." : "Event created.");
       } finally {
