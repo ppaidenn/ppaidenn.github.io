@@ -186,6 +186,45 @@ begin
     insert into public.friendships (user_id, friend_id)
     values (req.receiver_id, req.requester_id)
     on conflict (user_id, friend_id) do nothing;
+
+    insert into public.event_invites (event_id, invitee_id, inviter_id, status, created_at, responded_at)
+    select
+      sec.event_id,
+      req.receiver_id,
+      req.requester_id,
+      'pending',
+      now(),
+      null
+    from public.shared_event_claims sec
+    join public.calendar_events e
+      on e.id = sec.event_id
+     and e.owner_id = req.requester_id
+    where sec.owner_id = req.requester_id
+      and sec.recipient_id = req.receiver_id
+      and sec.status = 'pending_friendship'
+    on conflict (event_id, invitee_id)
+    do update set
+      status = case
+        when event_invites.status = 'accepted' then event_invites.status
+        else 'pending'
+      end,
+      responded_at = case
+        when event_invites.status = 'accepted' then event_invites.responded_at
+        else null
+      end,
+      created_at = case
+        when event_invites.status = 'accepted' then event_invites.created_at
+        else now()
+      end;
+
+    update public.shared_event_claims
+    set
+      status = 'claimed',
+      claimed_at = now(),
+      updated_at = now()
+    where owner_id = req.requester_id
+      and recipient_id = req.receiver_id
+      and status = 'pending_friendship';
   end if;
 
   return true;

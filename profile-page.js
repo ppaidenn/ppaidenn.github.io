@@ -1045,13 +1045,15 @@
     await loadNotificationPreferences();
     await loadCalendarEventsForMonth();
     await loadPendingEventInvites();
-    const claimedSharedInvite = await claimDeferredSharedEventInviteIfNeeded();
+    const shareState = getEventShareFlowState();
+    const claimedSharedInvite = shareState.state === "friend-request"
+      ? false
+      : await claimDeferredSharedEventInviteIfNeeded();
 
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission().catch(() => {});
     }
 
-    const shareState = getEventShareFlowState();
     if (shareState.token && shareState.state === "friend-request") {
       const ownerLabel = shareState.owner ? ` from @${shareState.owner}` : "";
       setStatus(`Accept the friend request${ownerLabel} to unlock the shared calendar invite.`);
@@ -1531,8 +1533,12 @@
       await loadFriends();
       await loadFriendRequests();
       if (acceptRequest) {
-        const claimed = await claimDeferredSharedEventInviteIfNeeded();
-        if (!claimed) {
+        await loadPendingEventInvites();
+        const shareState = getEventShareFlowState();
+        if (shareState.token) {
+          clearEventShareFlowState();
+          setStatus("Friend request accepted. Calendar invite added.");
+        } else {
           setStatus("Friend request accepted.");
         }
       } else {

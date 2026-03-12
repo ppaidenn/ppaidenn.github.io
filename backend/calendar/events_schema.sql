@@ -61,6 +61,21 @@ create table if not exists public.event_reminder_deliveries (
 create index if not exists event_reminder_deliveries_schedule_idx
   on public.event_reminder_deliveries (scheduled_for, sent_at desc);
 
+create table if not exists public.shared_event_claims (
+  event_id uuid not null references public.calendar_events(id) on delete cascade,
+  recipient_id uuid not null references auth.users(id) on delete cascade,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  share_token uuid not null,
+  status text not null default 'pending_friendship' check (status in ('pending_friendship','claimed','canceled')),
+  claimed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (event_id, recipient_id)
+);
+
+create index if not exists shared_event_claims_recipient_status_idx
+  on public.shared_event_claims (recipient_id, status, updated_at desc);
+
 alter table public.calendar_events enable row level security;
 alter table public.event_invites enable row level security;
 
@@ -466,6 +481,38 @@ begin
     where (f.user_id = target_event.owner_id and f.friend_id = me)
        or (f.user_id = me and f.friend_id = target_event.owner_id)
   ) then
+    insert into public.shared_event_claims (
+      event_id,
+      recipient_id,
+      owner_id,
+      share_token,
+      status,
+      claimed_at,
+      updated_at
+    )
+    values (
+      target_event.id,
+      me,
+      target_event.owner_id,
+      target_share_token,
+      'pending_friendship',
+      null,
+      now()
+    )
+    on conflict (event_id, recipient_id)
+    do update set
+      owner_id = excluded.owner_id,
+      share_token = excluded.share_token,
+      status = case
+        when shared_event_claims.status = 'claimed' then shared_event_claims.status
+        else 'pending_friendship'
+      end,
+      claimed_at = case
+        when shared_event_claims.status = 'claimed' then shared_event_claims.claimed_at
+        else null
+      end,
+      updated_at = now();
+
     insert into public.friend_requests (requester_id, receiver_id, status, responded_at, created_at)
     values (target_event.owner_id, me, 'pending', null, now())
     on conflict (requester_id, receiver_id)
@@ -504,6 +551,32 @@ begin
       when event_invites.status = 'accepted' then event_invites.created_at
       else now()
     end;
+
+  insert into public.shared_event_claims (
+    event_id,
+    recipient_id,
+    owner_id,
+    share_token,
+    status,
+    claimed_at,
+    updated_at
+  )
+  values (
+    target_event.id,
+    me,
+    target_event.owner_id,
+    target_share_token,
+    'claimed',
+    now(),
+    now()
+  )
+  on conflict (event_id, recipient_id)
+  do update set
+    owner_id = excluded.owner_id,
+    share_token = excluded.share_token,
+    status = 'claimed',
+    claimed_at = now(),
+    updated_at = now();
 
   return query
   select
