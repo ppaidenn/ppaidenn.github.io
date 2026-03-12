@@ -156,7 +156,7 @@
     </section>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/auth-client.js?v=20260311b"></script>
+  <script src="/auth-client.js?v=20260312a"></script>
   <script>
     (() => {
       const titleEl = document.getElementById("inviteTitle");
@@ -193,10 +193,31 @@
         }
         actionsEl.innerHTML = list.map((action) => {
           const cls = action.secondary ? "action-link secondary" : "action-link";
-          return `<a class="${cls}" href="${action.href}">${action.label}</a>`;
+          const extraAttr = action.dataAction ? ` data-event-invite-${action.dataAction}="1"` : "";
+          return `<a class="${cls}" href="${action.href}"${extraAttr}>${action.label}</a>`;
         }).join("");
         actionsEl.hidden = false;
       }
+
+      async function signOutAndRedirect() {
+        try {
+          if (window.PaidenAuth && typeof window.PaidenAuth.signOut === "function") {
+            await window.PaidenAuth.signOut();
+          }
+        } catch (_) {
+          // Best-effort sign out.
+        }
+        window.location.href = `/signin?next=${encodeURIComponent(getNextPath())}`;
+      }
+
+      document.addEventListener("click", (event) => {
+        const signOutBtn = event.target.closest("[data-event-invite-signout]");
+        if (!signOutBtn) return;
+        event.preventDefault();
+        signOutAndRedirect().catch(() => {
+          window.location.href = `/signin?next=${encodeURIComponent(getNextPath())}`;
+        });
+      });
 
       async function run() {
         const token = getToken();
@@ -258,9 +279,15 @@
           if (titleEl) titleEl.textContent = "Invite unavailable";
           if (textEl) textEl.textContent = "This shared link is invalid, expired, or not available to your account.";
           renderActions([
+            { href: `#`, label: "Use Another Account", dataAction: "signout" },
             { href: `/signin?next=${encodeURIComponent(getNextPath())}`, label: "Sign In" },
             { href: "/create-account", label: "Create Account", secondary: true },
           ]);
+          if (hintEl) {
+            hintEl.textContent = profileRes.user.email
+              ? `Signed in as ${profileRes.user.email}. Use another account if needed.`
+              : "A different signed-in account may be blocking this invite.";
+          }
           setStatus("You may need to be friends with the event owner before using this link.", true);
           return;
         }
@@ -287,6 +314,7 @@
         if (titleEl) titleEl.textContent = "Invite error";
         if (textEl) textEl.textContent = "Something went wrong while processing this shared event.";
         renderActions([
+          { href: `#`, label: "Use Another Account", dataAction: "signout" },
           { href: `/signin?next=${encodeURIComponent(getNextPath())}`, label: "Sign In" },
           { href: "/create-account", label: "Create Account", secondary: true },
         ]);
