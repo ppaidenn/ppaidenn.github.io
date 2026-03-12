@@ -17,6 +17,17 @@
     button.textContent = pending ? "Please wait..." : idleText;
   }
 
+  function getSafeNextPath() {
+    try {
+      const raw = new URLSearchParams(window.location.search).get("next") || "";
+      if (!raw.startsWith("/")) return "";
+      if (raw.startsWith("//")) return "";
+      return raw;
+    } catch (_) {
+      return "";
+    }
+  }
+
   const createPasswordEl = document.getElementById("password");
   const createToggleEl = document.getElementById("toggleCreatePassword");
   if (createPasswordEl && createToggleEl) {
@@ -87,8 +98,9 @@
       setButtonPending(submitBtn, false, "Sign In");
 
       if (!res.ok) return setStatus(res.error || "Could not sign in.", true);
-      setStatus("Signed in. Redirecting to blog...");
-      window.setTimeout(() => { window.location.href = "/blog"; }, 700);
+      const nextPath = getSafeNextPath() || "/blog";
+      setStatus("Signed in. Redirecting...");
+      window.setTimeout(() => { window.location.href = nextPath; }, 700);
     });
   }
 

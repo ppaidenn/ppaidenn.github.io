@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>paiden.com</title>
+  <meta name="description" content="Shared paiden.com calendar event invite">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="apple-touch-icon" href="/images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+  <link rel="stylesheet" href="/account-menu.css">
+  <style>
+    :root {
+      --side-margin: 10vw;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --brand-font-size: 2.5vw;
+      --nav-font-size: 1.2vw;
+      --spacing-large: 1.5vw;
+      --spacing-small: 0.5vw;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #e0e0e0;
+      color: #111;
+      overflow-x: hidden;
+    }
+    .top-nav {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      background: #000;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+    .top-nav-inner {
+      margin: 0 var(--side-margin);
+      min-height: calc(64px + var(--safe-top));
+      padding-top: var(--safe-top);
+      display: flex;
+      align-items: flex-end;
+    }
+    .brand {
+      color: #fff;
+      text-decoration: none;
+      font-size: var(--brand-font-size);
+      font-weight: bold;
+      padding-bottom: var(--spacing-small);
+      padding-right: var(--spacing-large);
+      border-right: 0.1vw solid #fff;
+      margin-right: var(--spacing-large);
+    }
+    .nav-links { display: flex; align-items: flex-end; }
+    .nav-links a {
+      color: #fff;
+      text-decoration: none;
+      font-size: var(--nav-font-size);
+      font-weight: bold;
+      margin-right: var(--spacing-large);
+      padding-bottom: var(--spacing-small);
+    }
+    .content-wrap {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      padding: clamp(24px, 4.5vh, 42px) 0 calc(30px + var(--safe-bottom));
+      min-height: calc(100vh - 120px);
+    }
+    .content-inner {
+      margin: 0 var(--side-margin);
+      max-width: 760px;
+      background: rgba(255,255,255,0.78);
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 22px;
+      box-shadow: 0 10px 34px rgba(0,0,0,0.08);
+      padding: clamp(20px, 2.4vw, 34px);
+    }
+    .kicker {
+      letter-spacing: 0.18em;
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(16,21,28,0.65);
+      margin-bottom: 10px;
+    }
+    h1 { margin: 0 0 12px; font-size: clamp(28px, 3.6vw, 44px); }
+    p { margin: 0 0 14px; line-height: 1.5; }
+    .status {
+      margin-top: 14px;
+      min-height: 22px;
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(17,17,17,0.8);
+    }
+    .hint {
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(17,17,17,0.62);
+    }
+    @media (max-width: 768px) {
+      body { padding-top: calc(var(--safe-top) + 58px); }
+      .top-nav { display: none; }
+      .content-inner { border-radius: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top-nav" role="navigation" aria-label="Primary site navigation">
+    <div class="top-nav-inner">
+      <a class="brand" href="/">paiden.com</a>
+      <nav class="nav-links">
+        <a href="/resume">Resume</a>
+        <a href="/photos">Photos</a>
+        <a href="/blog">Blog</a>
+        <a href="/contactme">Contact Me</a>
+      </nav>
+    </div>
+  </header>
+  <main class="content-wrap">
+    <section class="content-inner">
+      <div class="kicker">CALENDAR INVITE</div>
+      <h1 id="inviteTitle">Checking event link...</h1>
+      <p id="inviteText">One moment while paiden.com prepares this event invite.</p>
+      <div class="hint" id="inviteHint">If you are not signed in, you will be redirected first.</div>
+      <div class="status" id="inviteStatus"></div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/auth-client.js?v=20260311b"></script>
+  <script>
+    (() => {
+      const titleEl = document.getElementById("inviteTitle");
+      const textEl = document.getElementById("inviteText");
+      const hintEl = document.getElementById("inviteHint");
+      const statusEl = document.getElementById("inviteStatus");
+
+      function setStatus(message, isError = false) {
+        if (!statusEl) return;
+        statusEl.textContent = message || "";
+        statusEl.style.color = isError ? "#a10000" : "rgba(17,17,17,0.8)";
+      }
+
+      function getToken() {
+        try {
+          return String(new URLSearchParams(window.location.search).get("token") || "").trim();
+        } catch (_) {
+          return "";
+        }
+      }
+
+      async function run() {
+        const token = getToken();
+        if (!token) {
+          if (titleEl) titleEl.textContent = "Invalid event link";
+          if (textEl) textEl.textContent = "This event invite link is missing its token.";
+          if (hintEl) hintEl.textContent = "";
+          setStatus("Ask the sender to generate a fresh event share link.", true);
+          return;
+        }
+
+        if (!window.PaidenAuth) {
+          setStatus("Auth service unavailable.", true);
+          return;
+        }
+
+        const profileRes = await window.PaidenAuth.getCurrentProfile();
+        if (!profileRes.ok) {
+          setStatus(profileRes.error || "Could not load account state.", true);
+          return;
+        }
+
+        if (!profileRes.user) {
+          const next = `${window.location.pathname}${window.location.search}`;
+          window.location.href = `/signin?next=${encodeURIComponent(next)}`;
+          return;
+        }
+
+        if (titleEl) titleEl.textContent = "Claiming event invite...";
+        if (textEl) textEl.textContent = "Adding this shared event to your paiden.com account.";
+
+        const client = window.PaidenAuth.getClient();
+        const { data, error } = await client.rpc("claim_shared_event_invite", {
+          target_share_token: token,
+        });
+
+        if (error) {
+          if (titleEl) titleEl.textContent = "Could not claim invite";
+          if (textEl) textEl.textContent = "This event link could not be processed.";
+          setStatus(error.message || "Shared event claim failed.", true);
+          return;
+        }
+
+        const row = Array.isArray(data) ? data[0] : null;
+        if (!row) {
+          if (titleEl) titleEl.textContent = "Invite unavailable";
+          if (textEl) textEl.textContent = "This shared link is invalid, expired, or not available to your account.";
+          setStatus("You may need to be friends with the event owner before using this link.", true);
+          return;
+        }
+
+        const ownerUsername = String(row.owner_username || "").trim();
+        const eventTitle = String(row.title || "this event").trim() || "this event";
+        const inviteStatus = String(row.invite_status || "pending").trim();
+        if (titleEl) titleEl.textContent = "Event invite added";
+        if (textEl) {
+          textEl.textContent = inviteStatus === "accepted"
+            ? `You already have ${eventTitle} on your calendar. Redirecting to @${ownerUsername}...`
+            : `${eventTitle} has been added as an invite on your account. Redirecting to @${ownerUsername}...`;
+        }
+        if (hintEl) hintEl.textContent = "";
+        setStatus(inviteStatus === "accepted" ? "Invite already accepted." : "Invite created.");
+
+        const targetPath = ownerUsername ? `/${encodeURIComponent(ownerUsername)}` : "/profile";
+        window.setTimeout(() => {
+          window.location.href = targetPath;
+        }, 1000);
+      }
+
+      run().catch((err) => {
+        if (titleEl) titleEl.textContent = "Invite error";
+        if (textEl) textEl.textContent = "Something went wrong while processing this shared event.";
+        setStatus(err && err.message ? err.message : "Unexpected event invite error.", true);
+      });
+    })();
+  </script>
+</body>
+</html>

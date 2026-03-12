@@ -3,6 +3,7 @@ create extension if not exists pgcrypto;
 create table if not exists public.calendar_events (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
+  share_token uuid not null default gen_random_uuid(),
   title text not null,
   description text,
   location text,
@@ -16,8 +17,22 @@ create table if not exists public.calendar_events (
   constraint calendar_events_time_order check (ends_at > starts_at)
 );
 
+alter table public.calendar_events add column if not exists share_token uuid;
+update public.calendar_events
+set share_token = gen_random_uuid()
+where share_token is null;
+
+alter table public.calendar_events
+  alter column share_token set default gen_random_uuid();
+
+alter table public.calendar_events
+  alter column share_token set not null;
+
 create index if not exists calendar_events_owner_starts_idx
   on public.calendar_events (owner_id, starts_at);
+
+create unique index if not exists calendar_events_share_token_key
+  on public.calendar_events (share_token);
 
 create table if not exists public.event_invites (
   event_id uuid not null references public.calendar_events(id) on delete cascade,
@@ -324,6 +339,7 @@ $$;
 
 grant execute on function public.get_my_calendar_events(timestamptz, timestamptz) to authenticated;
 
+drop function if exists public.get_my_calendar_events_detail(timestamptz, timestamptz);
 create or replace function public.get_my_calendar_events_detail(start_at timestamptz, end_at timestamptz)
 returns table (
   event_id uuid,
@@ -335,6 +351,7 @@ returns table (
   starts_at timestamptz,
   ends_at timestamptz,
   invite_status text,
+  share_token uuid,
   invite_usernames text[],
   can_edit boolean
 )
@@ -353,6 +370,7 @@ as $$
       e.starts_at,
       e.ends_at,
       'owner'::text as invite_status,
+      e.share_token,
       coalesce(
         array_agg(inv_p.username order by lower(inv_p.username), inv_p.username)
           filter (where inv_p.username is not null),
@@ -379,6 +397,7 @@ as $$
       e.starts_at,
       e.ends_at,
       i.status::text as invite_status,
+      null::uuid as share_token,
       '{}'::text[] as invite_usernames,
       false as can_edit
     from public.event_invites i
@@ -396,6 +415,91 @@ as $$
 $$;
 
 grant execute on function public.get_my_calendar_events_detail(timestamptz, timestamptz) to authenticated;
+
+create or replace function public.claim_shared_event_invite(target_share_token uuid)
+returns table (
+  event_id uuid,
+  owner_username text,
+  title text,
+  invite_status text
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  me uuid := auth.uid();
+  target_event public.calendar_events%rowtype;
+  owner_name text;
+begin
+  if me is null or target_share_token is null then
+    return;
+  end if;
+
+  select *
+    into target_event
+  from public.calendar_events e
+  where e.share_token = target_share_token
+  limit 1;
+
+  if target_event.id is null then
+    return;
+  end if;
+
+  select p.username
+    into owner_name
+  from public.profiles p
+  where p.id = target_event.owner_id
+  limit 1;
+
+  if target_event.owner_id = me then
+    return query
+    select target_event.id, coalesce(owner_name, ''), target_event.title, 'owner'::text;
+    return;
+  end if;
+
+  if not exists (
+    select 1
+    from public.friendships f
+    where f.user_id = target_event.owner_id
+      and f.friend_id = me
+  ) then
+    return;
+  end if;
+
+  insert into public.event_invites (event_id, invitee_id, inviter_id, status, created_at, responded_at)
+  values (target_event.id, me, target_event.owner_id, 'pending', now(), null)
+  on conflict (event_id, invitee_id)
+  do update set
+    status = case
+      when event_invites.status = 'accepted' then event_invites.status
+      else 'pending'
+    end,
+    responded_at = case
+      when event_invites.status = 'accepted' then event_invites.responded_at
+      else null
+    end,
+    created_at = case
+      when event_invites.status = 'accepted' then event_invites.created_at
+      else now()
+    end;
+
+  return query
+  select
+    target_event.id,
+    coalesce(owner_name, ''),
+    target_event.title,
+    coalesce((
+      select i.status::text
+      from public.event_invites i
+      where i.event_id = target_event.id
+        and i.invitee_id = me
+      limit 1
+    ), 'pending'::text);
+end;
+$$;
+
+grant execute on function public.claim_shared_event_invite(uuid) to authenticated;
 
 create or replace function public.get_my_pending_event_invites()
 returns table (

@@ -18,6 +18,7 @@
     "create-account",
     "forgot-password",
     "reset-password",
+    "event-invite",
     "tomi-p-shrine",
     "notifications",
     "news",

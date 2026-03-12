@@ -67,8 +67,12 @@
   const eventModalCloseBtn = document.getElementById("eventModalCloseBtn");
   const eventModalCancelBtn = document.getElementById("eventModalCancelBtn");
   const eventTitleInput = document.getElementById("eventTitleInput");
-  const eventStartInput = document.getElementById("eventStartInput");
-  const eventEndInput = document.getElementById("eventEndInput");
+  const eventStartDateInput = document.getElementById("eventStartDateInput");
+  const eventStartHourInput = document.getElementById("eventStartHourInput");
+  const eventStartMinuteInput = document.getElementById("eventStartMinuteInput");
+  const eventEndDateInput = document.getElementById("eventEndDateInput");
+  const eventEndHourInput = document.getElementById("eventEndHourInput");
+  const eventEndMinuteInput = document.getElementById("eventEndMinuteInput");
   const eventLocationInput = document.getElementById("eventLocationInput");
   const eventDescriptionInput = document.getElementById("eventDescriptionInput");
   const eventInviteFriendsBox = document.getElementById("eventInviteFriendsBox");
@@ -303,11 +307,12 @@
     return `${y}-${m}-${day}T${h}:${min}`;
   }
 
-  function snapDateTimeLocalValueToQuarterHour(value) {
-    if (!value) return "";
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return "";
-    return toLocalDateTimeValue(roundUpToQuarterHour(d));
+  function toLocalDateValue(dateLike) {
+    const d = new Date(dateLike);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
   }
 
   function roundUpToQuarterHour(dateLike) {
@@ -319,6 +324,50 @@
       d.setMinutes(min + (15 - remainder));
     }
     return d;
+  }
+
+  function buildHourOptions() {
+    return Array.from({ length: 24 }, (_, hour) => {
+      const value = String(hour).padStart(2, "0");
+      const label = new Date(2000, 0, 1, hour, 0, 0, 0).toLocaleTimeString([], {
+        hour: "numeric",
+        hour12: true,
+      });
+      return { value, label };
+    });
+  }
+
+  function buildMinuteOptions() {
+    return ["00", "15", "30", "45"];
+  }
+
+  function populateTimeSelect(selectEl, options) {
+    if (!selectEl) return;
+    selectEl.innerHTML = options
+      .map((option) => {
+        if (typeof option === "string") {
+          return `<option value="${option}">${option}</option>`;
+        }
+        return `<option value="${option.value}">${option.label}</option>`;
+      })
+      .join("");
+  }
+
+  function setDateAndTimeControls(dateInput, hourInput, minuteInput, dateLike) {
+    if (!dateInput || !hourInput || !minuteInput) return;
+    const d = roundUpToQuarterHour(dateLike);
+    dateInput.value = toLocalDateValue(d);
+    hourInput.value = String(d.getHours()).padStart(2, "0");
+    minuteInput.value = String(d.getMinutes()).padStart(2, "0");
+  }
+
+  function getDateFromControls(dateInput, hourInput, minuteInput) {
+    const dateValue = String(dateInput?.value || "").trim();
+    const hourValue = String(hourInput?.value || "").trim();
+    const minuteValue = String(minuteInput?.value || "").trim();
+    if (!dateValue || hourValue === "" || minuteValue === "") return null;
+    const result = new Date(`${dateValue}T${hourValue}:${minuteValue}`);
+    return Number.isNaN(result.getTime()) ? null : result;
   }
 
   function defaultEventRangeForDay(dayKey) {
@@ -357,21 +406,19 @@
   }
 
   function syncEventEndOneHourAfterStart() {
-    if (!eventStartInput || !eventEndInput) return;
-    const snappedStartValue = snapDateTimeLocalValueToQuarterHour(String(eventStartInput.value || "").trim());
-    if (!snappedStartValue) return;
-    eventStartInput.value = snappedStartValue;
-    const end = new Date(snappedStartValue);
+    const start = getDateFromControls(eventStartDateInput, eventStartHourInput, eventStartMinuteInput);
+    if (!start || !eventEndDateInput || !eventEndHourInput || !eventEndMinuteInput) return;
+    setDateAndTimeControls(eventStartDateInput, eventStartHourInput, eventStartMinuteInput, start);
+    const end = new Date(start);
     end.setHours(end.getHours() + 1);
-    eventEndInput.value = toLocalDateTimeValue(end);
+    setDateAndTimeControls(eventEndDateInput, eventEndHourInput, eventEndMinuteInput, end);
   }
 
   function normalizeEventDateInputs() {
-    if (!eventStartInput || !eventEndInput) return;
-    const snappedStartValue = snapDateTimeLocalValueToQuarterHour(String(eventStartInput.value || "").trim());
-    const snappedEndValue = snapDateTimeLocalValueToQuarterHour(String(eventEndInput.value || "").trim());
-    if (snappedStartValue) eventStartInput.value = snappedStartValue;
-    if (snappedEndValue) eventEndInput.value = snappedEndValue;
+    const start = getDateFromControls(eventStartDateInput, eventStartHourInput, eventStartMinuteInput);
+    const end = getDateFromControls(eventEndDateInput, eventEndHourInput, eventEndMinuteInput);
+    if (start) setDateAndTimeControls(eventStartDateInput, eventStartHourInput, eventStartMinuteInput, start);
+    if (end) setDateAndTimeControls(eventEndDateInput, eventEndHourInput, eventEndMinuteInput, end);
   }
 
   function renderCalendarSelectors() {
@@ -432,14 +479,14 @@
   }
 
   function beginEventDraftForDay(dayKey) {
-    if (!eventStartInput || !eventEndInput) return;
+    if (!eventStartDateInput || !eventStartHourInput || !eventStartMinuteInput || !eventEndDateInput || !eventEndHourInput || !eventEndMinuteInput) return;
     const { start, end } = defaultEventRangeForDay(dayKey);
     editingEventId = "";
     if (eventModalTitle) eventModalTitle.textContent = "Create Event";
     if (eventCreateBtn) eventCreateBtn.textContent = "Create Event";
     if (eventDeleteBtn) eventDeleteBtn.style.display = "none";
-    eventStartInput.value = toLocalDateTimeValue(start);
-    eventEndInput.value = toLocalDateTimeValue(end);
+    setDateAndTimeControls(eventStartDateInput, eventStartHourInput, eventStartMinuteInput, start);
+    setDateAndTimeControls(eventEndDateInput, eventEndHourInput, eventEndMinuteInput, end);
     if (eventTitleInput) eventTitleInput.value = "";
     if (eventLocationInput) eventLocationInput.value = "";
     if (eventDescriptionInput) eventDescriptionInput.value = "";
@@ -455,7 +502,7 @@
   }
 
   function beginEventEdit(eventRow) {
-    if (!eventRow || !eventStartInput || !eventEndInput) return;
+    if (!eventRow || !eventStartDateInput || !eventStartHourInput || !eventStartMinuteInput || !eventEndDateInput || !eventEndHourInput || !eventEndMinuteInput) return;
     editingEventId = String(eventRow.event_id || "").trim();
     if (!editingEventId) return;
     if (eventModalTitle) eventModalTitle.textContent = "Edit Event";
@@ -464,8 +511,8 @@
     if (eventTitleInput) eventTitleInput.value = String(eventRow.title || "");
     if (eventLocationInput) eventLocationInput.value = String(eventRow.location || "");
     if (eventDescriptionInput) eventDescriptionInput.value = String(eventRow.description || "");
-    eventStartInput.value = toLocalDateTimeValue(eventRow.starts_at);
-    eventEndInput.value = toLocalDateTimeValue(eventRow.ends_at);
+    setDateAndTimeControls(eventStartDateInput, eventStartHourInput, eventStartMinuteInput, eventRow.starts_at);
+    setDateAndTimeControls(eventEndDateInput, eventEndHourInput, eventEndMinuteInput, eventRow.ends_at);
     selectedInviteSet = new Set(Array.isArray(eventRow.invite_usernames) ? eventRow.invite_usernames.map((name) => String(name || "").trim()).filter(Boolean) : []);
     if (eventInviteSearchInput) eventInviteSearchInput.value = "";
     selectedDayKey = toDateKey(eventRow.starts_at);
@@ -765,22 +812,57 @@
     calendarEventsList.innerHTML = rows.map((e) => {
       const owner = e.owner_username ? `By ${escapeHTML(e.owner_username)} - ` : "";
       const when = formatEventTime(e.starts_at);
-      const where = e.location ? `<br>${escapeHTML(e.location)}` : "";
       const status = e.invite_status === "pending" ? " (Invite Pending)" : "";
       const rowClass = e.invite_status === "pending" ? "calendar-event-row pending" : "calendar-event-row";
-      const editButton = e.can_edit
-        ? `<button class="calendar-event-edit-btn" data-edit-event-id="${escapeHTML(String(e.event_id || ""))}" type="button">Edit</button>`
-        : "";
+      const actions = [];
+      if (e.can_edit) {
+        actions.push(`<button class="calendar-event-edit-btn" data-edit-event-id="${escapeHTML(String(e.event_id || ""))}" type="button">Edit</button>`);
+        if (e.share_token) {
+          actions.push(`<button class="calendar-event-edit-btn" data-share-event-token="${escapeHTML(String(e.share_token || ""))}" type="button">Share Link</button>`);
+        }
+      }
       return `
         <div class="${rowClass}">
           <div class="calendar-event-row-head">
             <strong>${escapeHTML(e.title || "Untitled")}</strong>
-            ${editButton}
+            ${actions.length ? `<div class="calendar-event-actions">${actions.join("")}</div>` : ""}
           </div>
           <div class="calendar-event-row-body">${status ? `<div>${status.trim()}</div>` : ""}<div>${owner}${escapeHTML(when)}</div>${e.location ? `<div>${escapeHTML(e.location)}</div>` : ""}</div>
         </div>
       `;
     }).join("");
+  }
+
+  async function shareEventInviteLink(shareToken) {
+    const token = String(shareToken || "").trim();
+    if (!token) {
+      setStatus("This event does not have a share link yet.", true);
+      return;
+    }
+    const shareUrl = `${window.location.origin}/event-invite/?token=${encodeURIComponent(token)}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "paiden.com event invite",
+          text: "Open this link to add the event invite to your account.",
+          url: shareUrl,
+        });
+        setStatus("Event link ready to share.");
+        return;
+      }
+    } catch (_) {
+      // Fall back to clipboard.
+    }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        setStatus("Event invite link copied.");
+        return;
+      }
+    } catch (_) {
+      // Fall back to prompt.
+    }
+    window.prompt("Copy this event invite link:", shareUrl);
   }
 
   function renderCalendarGrid() {
@@ -1233,8 +1315,21 @@
     });
   }
 
-  if (eventStartInput) {
-    eventStartInput.addEventListener("change", syncEventEndOneHourAfterStart);
+  populateTimeSelect(eventStartHourInput, buildHourOptions());
+  populateTimeSelect(eventEndHourInput, buildHourOptions());
+  populateTimeSelect(eventStartMinuteInput, buildMinuteOptions());
+  populateTimeSelect(eventEndMinuteInput, buildMinuteOptions());
+
+  if (eventStartDateInput) {
+    eventStartDateInput.addEventListener("change", syncEventEndOneHourAfterStart);
+  }
+
+  if (eventStartHourInput) {
+    eventStartHourInput.addEventListener("change", syncEventEndOneHourAfterStart);
+  }
+
+  if (eventStartMinuteInput) {
+    eventStartMinuteInput.addEventListener("change", syncEventEndOneHourAfterStart);
   }
 
   if (eventCreateForm) {
@@ -1244,18 +1339,15 @@
 
       normalizeEventDateInputs();
       const title = String(eventTitleInput?.value || "").trim();
-      const startsLocal = String(eventStartInput?.value || "").trim();
-      const endsLocal = String(eventEndInput?.value || "").trim();
+      const startsAt = getDateFromControls(eventStartDateInput, eventStartHourInput, eventStartMinuteInput);
+      const endsAt = getDateFromControls(eventEndDateInput, eventEndHourInput, eventEndMinuteInput);
       const location = String(eventLocationInput?.value || "").trim();
       const description = String(eventDescriptionInput?.value || "").trim();
 
-      if (!title || !startsLocal || !endsLocal) {
+      if (!title || !startsAt || !endsAt) {
         setEventModalStatus("Event title, start, and end are required.", true);
         return;
       }
-
-      const startsAt = new Date(startsLocal);
-      const endsAt = new Date(endsLocal);
       if (!(startsAt instanceof Date) || Number.isNaN(startsAt.getTime()) || !(endsAt instanceof Date) || Number.isNaN(endsAt.getTime()) || endsAt <= startsAt) {
         setEventModalStatus("Event date/time is invalid.", true);
         return;
@@ -1379,6 +1471,16 @@
       if (!eventId) return;
       const eventRow = calendarEvents.find((row) => String(row.event_id || "") === eventId && row.can_edit);
       if (eventRow) beginEventEdit(eventRow);
+      return;
+    }
+
+    const shareEventBtn = event.target.closest("[data-share-event-token]");
+    if (shareEventBtn) {
+      const shareToken = String(shareEventBtn.getAttribute("data-share-event-token") || "").trim();
+      if (!shareToken) return;
+      await shareEventInviteLink(shareToken).catch(() => {
+        setStatus("Could not share event link.", true);
+      });
       return;
     }
 
