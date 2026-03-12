@@ -232,7 +232,7 @@
     }
   }
 
-  async function createAccount({ fullName, username, email, password, securityQuestion, securityAnswer }) {
+  async function createAccount({ fullName, username, email, password, securityQuestion, securityAnswer, redirectTo }) {
     const client = requireClient();
     const normalizedEmail = String(email || "").trim().toLowerCase();
     const fullNameValue = String(fullName || "").trim();
@@ -270,7 +270,10 @@
     const { data, error } = await client.auth.signUp({
       email: normalizedEmail,
       password: String(password || ""),
-      options: { data: payload },
+      options: {
+        data: payload,
+        emailRedirectTo: String(redirectTo || `${window.location.origin}/profile`).trim(),
+      },
     });
     if (error) {
       const msg = String(error.message || "");

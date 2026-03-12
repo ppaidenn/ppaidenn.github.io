@@ -183,6 +183,10 @@
         return `${window.location.pathname}${window.location.search}`;
       }
 
+      function getCreateAccountHref() {
+        return `/create-account?next=${encodeURIComponent(getNextPath())}`;
+      }
+
       function renderActions(actions) {
         if (!actionsEl) return;
         const list = Array.isArray(actions) ? actions : [];
@@ -227,7 +231,7 @@
           if (hintEl) hintEl.textContent = "";
           renderActions([
             { href: "/signin", label: "Sign In" },
-            { href: "/create-account", label: "Create Account", secondary: true },
+            { href: getCreateAccountHref(), label: "Create Account", secondary: true },
           ]);
           setStatus("Ask the sender to generate a fresh event share link.", true);
           return;
@@ -248,7 +252,7 @@
           const next = getNextPath();
           renderActions([
             { href: `/signin?next=${encodeURIComponent(next)}`, label: "Sign In" },
-            { href: `/create-account`, label: "Create Account", secondary: true },
+            { href: getCreateAccountHref(), label: "Create Account", secondary: true },
           ]);
           window.location.href = `/signin?next=${encodeURIComponent(next)}`;
           return;
@@ -268,7 +272,7 @@
           if (textEl) textEl.textContent = "This event link could not be processed.";
           renderActions([
             { href: `/signin?next=${encodeURIComponent(getNextPath())}`, label: "Use Another Account" },
-            { href: "/create-account", label: "Create Account", secondary: true },
+            { href: getCreateAccountHref(), label: "Create Account", secondary: true },
           ]);
           setStatus(error.message || "Shared event claim failed.", true);
           return;
@@ -281,7 +285,7 @@
           renderActions([
             { href: `#`, label: "Use Another Account", dataAction: "signout" },
             { href: `/signin?next=${encodeURIComponent(getNextPath())}`, label: "Sign In" },
-            { href: "/create-account", label: "Create Account", secondary: true },
+            { href: getCreateAccountHref(), label: "Create Account", secondary: true },
           ]);
           if (hintEl) {
             hintEl.textContent = profileRes.user.email
@@ -326,7 +330,7 @@
         renderActions([
           { href: `#`, label: "Use Another Account", dataAction: "signout" },
           { href: `/signin?next=${encodeURIComponent(getNextPath())}`, label: "Sign In" },
-          { href: "/create-account", label: "Create Account", secondary: true },
+          { href: getCreateAccountHref(), label: "Create Account", secondary: true },
         ]);
         setStatus(err && err.message ? err.message : "Unexpected event invite error.", true);
       });

@@ -65,6 +65,7 @@
         password,
         securityQuestion,
         securityAnswer,
+        redirectTo: `${window.location.origin}${getSafeNextPath() || "/profile"}`,
       });
       setButtonPending(submitBtn, false, "Create Account");
 
@@ -98,7 +99,7 @@
       setButtonPending(submitBtn, false, "Sign In");
 
       if (!res.ok) return setStatus(res.error || "Could not sign in.", true);
-      const nextPath = getSafeNextPath() || "/blog";
+      const nextPath = getSafeNextPath() || "/profile";
       setStatus("Signed in. Redirecting...");
       window.setTimeout(() => { window.location.href = nextPath; }, 700);
     });
