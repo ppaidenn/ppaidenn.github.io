@@ -1027,7 +1027,8 @@
     const res = await window.PaidenAuth.getCurrentProfile();
     if (!res.ok || !res.user) {
       setStatus("Not signed in. Redirecting to sign in...");
-      window.setTimeout(() => { window.location.href = "/signin"; }, 900);
+      const nextPath = `${window.location.pathname}${window.location.search}${window.location.hash || ""}`;
+      window.setTimeout(() => { window.location.href = `/signin?next=${encodeURIComponent(nextPath)}`; }, 900);
       return;
     }
     const profile = res.profile || {};
