@@ -67,10 +67,8 @@
   const eventModalCloseBtn = document.getElementById("eventModalCloseBtn");
   const eventModalCancelBtn = document.getElementById("eventModalCancelBtn");
   const eventTitleInput = document.getElementById("eventTitleInput");
-  const eventStartDateInput = document.getElementById("eventStartDateInput");
-  const eventStartTimeInput = document.getElementById("eventStartTimeInput");
-  const eventEndDateInput = document.getElementById("eventEndDateInput");
-  const eventEndTimeInput = document.getElementById("eventEndTimeInput");
+  const eventStartInput = document.getElementById("eventStartInput");
+  const eventEndInput = document.getElementById("eventEndInput");
   const eventLocationInput = document.getElementById("eventLocationInput");
   const eventDescriptionInput = document.getElementById("eventDescriptionInput");
   const eventInviteFriendsBox = document.getElementById("eventInviteFriendsBox");
@@ -305,35 +303,11 @@
     return `${y}-${m}-${day}T${h}:${min}`;
   }
 
-  function toLocalDateValue(dateLike) {
-    const d = new Date(dateLike);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${day}`;
-  }
-
-  function toQuarterHourTimeValue(dateLike) {
-    const d = roundUpToQuarterHour(dateLike);
-    const h = String(d.getHours()).padStart(2, "0");
-    const min = String(d.getMinutes()).padStart(2, "0");
-    return `${h}:${min}`;
-  }
-
-  function buildQuarterHourTimeOptions() {
-    const options = [];
-    for (let hour = 0; hour < 24; hour += 1) {
-      for (const minute of [0, 15, 30, 45]) {
-        const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-        const labelDate = new Date(2000, 0, 1, hour, minute, 0, 0);
-        const label = labelDate.toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-        });
-        options.push({ value, label });
-      }
-    }
-    return options;
+  function snapDateTimeLocalValueToQuarterHour(value) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "";
+    return toLocalDateTimeValue(roundUpToQuarterHour(d));
   }
 
   function roundUpToQuarterHour(dateLike) {
@@ -345,28 +319,6 @@
       d.setMinutes(min + (15 - remainder));
     }
     return d;
-  }
-
-  function populateQuarterHourTimeSelect(selectEl) {
-    if (!selectEl) return;
-    const options = buildQuarterHourTimeOptions();
-    selectEl.innerHTML = options
-      .map((option) => `<option value="${option.value}">${option.label}</option>`)
-      .join("");
-  }
-
-  function getEventDateTimeFromInputs(dateInput, timeInput) {
-    const dateValue = String(dateInput?.value || "").trim();
-    const timeValue = String(timeInput?.value || "").trim();
-    if (!dateValue || !timeValue) return null;
-    const result = new Date(`${dateValue}T${timeValue}`);
-    return Number.isNaN(result.getTime()) ? null : result;
-  }
-
-  function setEventDateTimeInputs(dateInput, timeInput, dateLike) {
-    if (!dateInput || !timeInput) return;
-    dateInput.value = toLocalDateValue(dateLike);
-    timeInput.value = toQuarterHourTimeValue(dateLike);
   }
 
   function defaultEventRangeForDay(dayKey) {
@@ -405,19 +357,21 @@
   }
 
   function syncEventEndOneHourAfterStart() {
-    const start = getEventDateTimeFromInputs(eventStartDateInput, eventStartTimeInput);
-    if (!start || !eventEndDateInput || !eventEndTimeInput) return;
-    setEventDateTimeInputs(eventStartDateInput, eventStartTimeInput, start);
-    const end = new Date(start);
+    if (!eventStartInput || !eventEndInput) return;
+    const snappedStartValue = snapDateTimeLocalValueToQuarterHour(String(eventStartInput.value || "").trim());
+    if (!snappedStartValue) return;
+    eventStartInput.value = snappedStartValue;
+    const end = new Date(snappedStartValue);
     end.setHours(end.getHours() + 1);
-    setEventDateTimeInputs(eventEndDateInput, eventEndTimeInput, end);
+    eventEndInput.value = toLocalDateTimeValue(end);
   }
 
   function normalizeEventDateInputs() {
-    const start = getEventDateTimeFromInputs(eventStartDateInput, eventStartTimeInput);
-    const end = getEventDateTimeFromInputs(eventEndDateInput, eventEndTimeInput);
-    if (start) setEventDateTimeInputs(eventStartDateInput, eventStartTimeInput, start);
-    if (end) setEventDateTimeInputs(eventEndDateInput, eventEndTimeInput, end);
+    if (!eventStartInput || !eventEndInput) return;
+    const snappedStartValue = snapDateTimeLocalValueToQuarterHour(String(eventStartInput.value || "").trim());
+    const snappedEndValue = snapDateTimeLocalValueToQuarterHour(String(eventEndInput.value || "").trim());
+    if (snappedStartValue) eventStartInput.value = snappedStartValue;
+    if (snappedEndValue) eventEndInput.value = snappedEndValue;
   }
 
   function renderCalendarSelectors() {
@@ -478,14 +432,14 @@
   }
 
   function beginEventDraftForDay(dayKey) {
-    if (!eventStartDateInput || !eventStartTimeInput || !eventEndDateInput || !eventEndTimeInput) return;
+    if (!eventStartInput || !eventEndInput) return;
     const { start, end } = defaultEventRangeForDay(dayKey);
     editingEventId = "";
     if (eventModalTitle) eventModalTitle.textContent = "Create Event";
     if (eventCreateBtn) eventCreateBtn.textContent = "Create Event";
     if (eventDeleteBtn) eventDeleteBtn.style.display = "none";
-    setEventDateTimeInputs(eventStartDateInput, eventStartTimeInput, start);
-    setEventDateTimeInputs(eventEndDateInput, eventEndTimeInput, end);
+    eventStartInput.value = toLocalDateTimeValue(start);
+    eventEndInput.value = toLocalDateTimeValue(end);
     if (eventTitleInput) eventTitleInput.value = "";
     if (eventLocationInput) eventLocationInput.value = "";
     if (eventDescriptionInput) eventDescriptionInput.value = "";
@@ -501,7 +455,7 @@
   }
 
   function beginEventEdit(eventRow) {
-    if (!eventRow || !eventStartDateInput || !eventStartTimeInput || !eventEndDateInput || !eventEndTimeInput) return;
+    if (!eventRow || !eventStartInput || !eventEndInput) return;
     editingEventId = String(eventRow.event_id || "").trim();
     if (!editingEventId) return;
     if (eventModalTitle) eventModalTitle.textContent = "Edit Event";
@@ -510,8 +464,8 @@
     if (eventTitleInput) eventTitleInput.value = String(eventRow.title || "");
     if (eventLocationInput) eventLocationInput.value = String(eventRow.location || "");
     if (eventDescriptionInput) eventDescriptionInput.value = String(eventRow.description || "");
-    setEventDateTimeInputs(eventStartDateInput, eventStartTimeInput, eventRow.starts_at);
-    setEventDateTimeInputs(eventEndDateInput, eventEndTimeInput, eventRow.ends_at);
+    eventStartInput.value = toLocalDateTimeValue(eventRow.starts_at);
+    eventEndInput.value = toLocalDateTimeValue(eventRow.ends_at);
     selectedInviteSet = new Set(Array.isArray(eventRow.invite_usernames) ? eventRow.invite_usernames.map((name) => String(name || "").trim()).filter(Boolean) : []);
     if (eventInviteSearchInput) eventInviteSearchInput.value = "";
     selectedDayKey = toDateKey(eventRow.starts_at);
@@ -1279,15 +1233,8 @@
     });
   }
 
-  populateQuarterHourTimeSelect(eventStartTimeInput);
-  populateQuarterHourTimeSelect(eventEndTimeInput);
-
-  if (eventStartDateInput) {
-    eventStartDateInput.addEventListener("change", syncEventEndOneHourAfterStart);
-  }
-
-  if (eventStartTimeInput) {
-    eventStartTimeInput.addEventListener("change", syncEventEndOneHourAfterStart);
+  if (eventStartInput) {
+    eventStartInput.addEventListener("change", syncEventEndOneHourAfterStart);
   }
 
   if (eventCreateForm) {
@@ -1297,8 +1244,8 @@
 
       normalizeEventDateInputs();
       const title = String(eventTitleInput?.value || "").trim();
-      const startsLocal = getEventDateTimeFromInputs(eventStartDateInput, eventStartTimeInput);
-      const endsLocal = getEventDateTimeFromInputs(eventEndDateInput, eventEndTimeInput);
+      const startsLocal = String(eventStartInput?.value || "").trim();
+      const endsLocal = String(eventEndInput?.value || "").trim();
       const location = String(eventLocationInput?.value || "").trim();
       const description = String(eventDescriptionInput?.value || "").trim();
 
@@ -1307,8 +1254,8 @@
         return;
       }
 
-      const startsAt = startsLocal;
-      const endsAt = endsLocal;
+      const startsAt = new Date(startsLocal);
+      const endsAt = new Date(endsLocal);
       if (!(startsAt instanceof Date) || Number.isNaN(startsAt.getTime()) || !(endsAt instanceof Date) || Number.isNaN(endsAt.getTime()) || endsAt <= startsAt) {
         setEventModalStatus("Event date/time is invalid.", true);
         return;

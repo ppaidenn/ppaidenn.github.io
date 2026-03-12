@@ -548,13 +548,7 @@
       grid-template-columns: 1fr 1fr;
       gap: 8px;
     }
-    .event-time-group {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 132px;
-      gap: 8px;
-    }
     .event-modal-form input,
-    .event-modal-form select,
     .event-modal-form textarea {
       width: 100%;
       border: 1px solid rgba(15, 61, 42, 0.22);
@@ -932,7 +926,6 @@
       .event-modal-actions { margin-top: 6px; }
       .profile-photo-edit-row { grid-template-columns: 1fr; }
       .event-form-row { grid-template-columns: 1fr; }
-      .event-time-group { grid-template-columns: 1fr 112px; }
     }
   </style>
 </head>
@@ -1081,14 +1074,8 @@
       <form class="event-modal-form" id="eventCreateForm">
         <input id="eventTitleInput" type="text" maxlength="140" placeholder="Event title" required>
         <div class="event-form-row">
-          <div class="event-time-group">
-            <input id="eventStartDateInput" type="date" required>
-            <select id="eventStartTimeInput" required aria-label="Event start time"></select>
-          </div>
-          <div class="event-time-group">
-            <input id="eventEndDateInput" type="date" required>
-            <select id="eventEndTimeInput" required aria-label="Event end time"></select>
-          </div>
+          <input id="eventStartInput" type="datetime-local" step="900" required>
+          <input id="eventEndInput" type="datetime-local" step="900" required>
         </div>
         <input id="eventLocationInput" type="text" maxlength="240" placeholder="Location (optional)">
         <textarea id="eventDescriptionInput" maxlength="2000" placeholder="Description (optional)"></textarea>
