@@ -419,7 +419,7 @@ grant execute on function public.get_my_calendar_events_detail(timestamptz, time
 drop function if exists public.claim_shared_event_invite(uuid);
 create or replace function public.claim_shared_event_invite(target_share_token uuid)
 returns table (
-  event_id uuid,
+  shared_event_id uuid,
   owner_username text,
   title text,
   invite_status text,
