@@ -1385,7 +1385,6 @@
   });
   window.addEventListener("resize", hideEventContextMenu);
   window.addEventListener("scroll", hideEventContextMenu, { passive: true });
-  window.addEventListener("beforeunload", clearEventReminderTimers);
 
   loadProfile();
 })();
