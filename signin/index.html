@@ -142,6 +142,8 @@
       margin-top: 12px;
       display: flex;
       justify-content: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
     }
     .auth-link-row a {
       color: #0f4d33;
@@ -233,7 +235,10 @@
           <input id="password" type="password" placeholder="Enter password">
         </div>
         <button class="btn" id="signInSubmit" type="submit">Sign In</button>
-        <div class="auth-link-row"><a href="/forgot-password">Forgot Password?</a></div>
+        <div class="auth-link-row">
+          <a href="/forgot-password">Forgot Password?</a>
+          <a href="/create-account">Create Account</a>
+        </div>
         <div class="auth-status" id="authStatus"></div>
       </form>
     </section>

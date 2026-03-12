@@ -102,6 +102,30 @@
       font-weight: 700;
       color: rgba(17,17,17,0.62);
     }
+    .action-row {
+      margin-top: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .action-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 140px;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.18);
+      background: #111;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .action-link.secondary {
+      background: #fff;
+      color: #111;
+    }
     @media (max-width: 768px) {
       body { padding-top: calc(var(--safe-top) + 58px); }
       .top-nav { display: none; }
@@ -127,6 +151,7 @@
       <h1 id="inviteTitle">Checking event link...</h1>
       <p id="inviteText">One moment while paiden.com prepares this event invite.</p>
       <div class="hint" id="inviteHint">If you are not signed in, you will be redirected first.</div>
+      <div class="action-row" id="inviteActions" hidden></div>
       <div class="status" id="inviteStatus"></div>
     </section>
   </main>
@@ -137,6 +162,7 @@
       const titleEl = document.getElementById("inviteTitle");
       const textEl = document.getElementById("inviteText");
       const hintEl = document.getElementById("inviteHint");
+      const actionsEl = document.getElementById("inviteActions");
       const statusEl = document.getElementById("inviteStatus");
 
       function setStatus(message, isError = false) {
@@ -153,12 +179,35 @@
         }
       }
 
+      function getNextPath() {
+        return `${window.location.pathname}${window.location.search}`;
+      }
+
+      function renderActions(actions) {
+        if (!actionsEl) return;
+        const list = Array.isArray(actions) ? actions : [];
+        if (!list.length) {
+          actionsEl.hidden = true;
+          actionsEl.innerHTML = "";
+          return;
+        }
+        actionsEl.innerHTML = list.map((action) => {
+          const cls = action.secondary ? "action-link secondary" : "action-link";
+          return `<a class="${cls}" href="${action.href}">${action.label}</a>`;
+        }).join("");
+        actionsEl.hidden = false;
+      }
+
       async function run() {
         const token = getToken();
         if (!token) {
           if (titleEl) titleEl.textContent = "Invalid event link";
           if (textEl) textEl.textContent = "This event invite link is missing its token.";
           if (hintEl) hintEl.textContent = "";
+          renderActions([
+            { href: "/signin", label: "Sign In" },
+            { href: "/create-account", label: "Create Account", secondary: true },
+          ]);
           setStatus("Ask the sender to generate a fresh event share link.", true);
           return;
         }
@@ -175,13 +224,18 @@
         }
 
         if (!profileRes.user) {
-          const next = `${window.location.pathname}${window.location.search}`;
+          const next = getNextPath();
+          renderActions([
+            { href: `/signin?next=${encodeURIComponent(next)}`, label: "Sign In" },
+            { href: `/create-account`, label: "Create Account", secondary: true },
+          ]);
           window.location.href = `/signin?next=${encodeURIComponent(next)}`;
           return;
         }
 
         if (titleEl) titleEl.textContent = "Claiming event invite...";
         if (textEl) textEl.textContent = "Adding this shared event to your paiden.com account.";
+        renderActions([]);
 
         const client = window.PaidenAuth.getClient();
         const { data, error } = await client.rpc("claim_shared_event_invite", {
@@ -191,6 +245,10 @@
         if (error) {
           if (titleEl) titleEl.textContent = "Could not claim invite";
           if (textEl) textEl.textContent = "This event link could not be processed.";
+          renderActions([
+            { href: `/signin?next=${encodeURIComponent(getNextPath())}`, label: "Use Another Account" },
+            { href: "/create-account", label: "Create Account", secondary: true },
+          ]);
           setStatus(error.message || "Shared event claim failed.", true);
           return;
         }
@@ -199,6 +257,10 @@
         if (!row) {
           if (titleEl) titleEl.textContent = "Invite unavailable";
           if (textEl) textEl.textContent = "This shared link is invalid, expired, or not available to your account.";
+          renderActions([
+            { href: `/signin?next=${encodeURIComponent(getNextPath())}`, label: "Sign In" },
+            { href: "/create-account", label: "Create Account", secondary: true },
+          ]);
           setStatus("You may need to be friends with the event owner before using this link.", true);
           return;
         }
@@ -224,6 +286,10 @@
       run().catch((err) => {
         if (titleEl) titleEl.textContent = "Invite error";
         if (textEl) textEl.textContent = "Something went wrong while processing this shared event.";
+        renderActions([
+          { href: `/signin?next=${encodeURIComponent(getNextPath())}`, label: "Sign In" },
+          { href: "/create-account", label: "Create Account", secondary: true },
+        ]);
         setStatus(err && err.message ? err.message : "Unexpected event invite error.", true);
       });
     })();
