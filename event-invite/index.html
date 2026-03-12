@@ -183,8 +183,13 @@
         return `${window.location.pathname}${window.location.search}`;
       }
 
+      function getProfileFlowPath(tokenValue) {
+        const token = String(tokenValue || getToken() || "").trim();
+        return token ? `/profile?eventShareToken=${encodeURIComponent(token)}` : "/profile";
+      }
+
       function getCreateAccountHref() {
-        return `/create-account?next=${encodeURIComponent(getNextPath())}`;
+        return `/create-account?next=${encodeURIComponent(getProfileFlowPath())}`;
       }
 
       function renderActions(actions) {
@@ -251,10 +256,10 @@
         if (!profileRes.user) {
           const next = getNextPath();
           renderActions([
-            { href: `/signin?next=${encodeURIComponent(next)}`, label: "Sign In" },
+            { href: `/signin?next=${encodeURIComponent(getProfileFlowPath(token))}`, label: "Sign In" },
             { href: getCreateAccountHref(), label: "Create Account", secondary: true },
           ]);
-          window.location.href = `/signin?next=${encodeURIComponent(next)}`;
+          window.location.href = `/signin?next=${encodeURIComponent(getProfileFlowPath(token))}`;
           return;
         }
 
