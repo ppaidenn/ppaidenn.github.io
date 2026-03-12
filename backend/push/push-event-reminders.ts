@@ -34,13 +34,23 @@ function buildReminderPayload(row: {
   } catch (_) {
     startLabel = "";
   }
+  const body = startLabel
+    ? `1-Hour Reminder\n${title} starts at ${startLabel}.`
+    : `1-Hour Reminder\n${title} starts in one hour.`;
+  const url = `${SITE_URL}/profile`;
+  const tag = `event-reminder-${title}`;
   return {
     title: "paiden.com",
-    body: startLabel
-      ? `1-Hour Reminder\n${title} starts at ${startLabel}.`
-      : `1-Hour Reminder\n${title} starts in one hour.`,
-    url: `${SITE_URL}/profile`,
-    tag: `event-reminder-${title}`,
+    body,
+    url,
+    tag,
+    web_push: 8030,
+    notification: {
+      title: "paiden.com",
+      body,
+      navigate: url,
+      tag,
+    },
   };
 }
 

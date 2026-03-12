@@ -18,13 +18,26 @@ self.addEventListener("push", (event) => {
     };
   }
 
-  const title = payload && payload.title ? String(payload.title) : "paiden.com";
+  const declarative = payload && payload.web_push === 8030 && payload.notification ? payload.notification : null;
+  const title = declarative && declarative.title
+    ? String(declarative.title)
+    : payload && payload.title
+      ? String(payload.title)
+      : "paiden.com";
   const options = {
-    body: payload && payload.body ? String(payload.body) : "New activity on paiden.com.",
+    body: declarative && declarative.body
+      ? String(declarative.body)
+      : payload && payload.body
+        ? String(payload.body)
+        : "New activity on paiden.com.",
     icon: "/images/favicon.png",
     badge: "/images/favicon.png",
     data: {
-      url: payload && payload.url ? String(payload.url) : "/blog",
+      url: declarative && declarative.navigate
+        ? String(declarative.navigate)
+        : payload && payload.url
+          ? String(payload.url)
+          : "/blog",
     },
   };
 

@@ -44,6 +44,14 @@
     return navigator.serviceWorker.ready;
   }
 
+  async function getPushManager() {
+    if ("pushManager" in window && window.pushManager) {
+      return window.pushManager;
+    }
+    const reg = await ensureSw();
+    return reg.pushManager;
+  }
+
   async function getVapidPublicKey() {
     if (cachedPublicKey) return cachedPublicKey;
 
@@ -117,17 +125,17 @@
     }
 
     try {
-      const reg = await ensureSw();
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
         setEnabled(false);
         return { ok: false, message: "Permission was not granted." };
       }
 
-      let subscription = await reg.pushManager.getSubscription();
+      const pushManager = await getPushManager();
+      let subscription = await pushManager.getSubscription();
       if (!subscription) {
         const publicKey = await getVapidPublicKey();
-        subscription = await reg.pushManager.subscribe({
+        subscription = await pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(publicKey),
         });
@@ -145,8 +153,8 @@
 
   async function disableNotifications() {
     try {
-      const reg = await ensureSw();
-      const sub = await reg.pushManager.getSubscription();
+      const pushManager = await getPushManager();
+      const sub = await pushManager.getSubscription();
       if (sub) {
         const endpoint = sub.endpoint;
         await sub.unsubscribe().catch(() => {
@@ -169,8 +177,8 @@
       if (!bearer) {
         return { ok: false, message: "No authenticated session available for targeted push sync." };
       }
-      const reg = await ensureSw();
-      const subscription = await reg.pushManager.getSubscription();
+      const pushManager = await getPushManager();
+      const subscription = await pushManager.getSubscription();
       if (!subscription) return { ok: false, message: "No active subscription to sync." };
       await syncSubscriptionToServer(subscription.toJSON());
       return { ok: true, message: "Push subscription synced." };

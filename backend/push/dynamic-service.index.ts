@@ -64,12 +64,21 @@ function buildPushPayload(postId, title, author, text) {
   const body = excerpt
     ? `${safeAuthor}: ${excerpt.slice(0, 120)}${excerpt.length > 120 ? "..." : ""}`
     : `${safeAuthor} published a new post.`;
+  const url = postId ? `${BLOG_PUBLIC_URL}?post=${encodeURIComponent(String(postId))}` : BLOG_PUBLIC_URL;
+  const tag = "new-post";
 
   return JSON.stringify({
     title: safeTitle,
     body,
-    url: postId ? `${BLOG_PUBLIC_URL}?post=${encodeURIComponent(String(postId))}` : BLOG_PUBLIC_URL,
-    tag: "new-post",
+    url,
+    tag,
+    web_push: 8030,
+    notification: {
+      title: safeTitle,
+      body,
+      navigate: url,
+      tag,
+    },
   });
 }
 

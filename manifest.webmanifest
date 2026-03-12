@@ -1,6 +1,7 @@
 {
   "name": "paiden.com",
   "short_name": "paiden",
+  "id": "https://paiden.com/",
   "start_url": "/",
   "scope": "/",
   "display": "fullscreen",

@@ -26,54 +26,43 @@ function extractBearerToken(authorizationHeader: string) {
 
 function buildPayload(type: string, actorUsername: string, body: any) {
   const safeActor = String(actorUsername || "Someone").trim() || "Someone";
+  let title = "paiden.com";
+  let message = "New activity on paiden.com.";
+  let url = `${SITE_URL}/profile`;
+  let tag = "paiden-activity";
 
   if (type === "friend_request") {
-    return {
-      title: "paiden.com",
-      body: `New Friend Request\n${safeActor} sent you a friend request.`,
-      url: `${SITE_URL}/profile`,
-      tag: "friend-request",
-    };
-  }
-
-  if (type === "event_invite") {
+    message = `New Friend Request\n${safeActor} sent you a friend request.`;
+    tag = "friend-request";
+  } else if (type === "event_invite") {
     const eventTitle = String(body?.event_title || "an event").trim() || "an event";
     const isUpdate = body?.is_update === true;
-    return {
-      title: "paiden.com",
-      body: `${isUpdate ? "Event Updated" : "Event Invite"}\n${safeActor} ${isUpdate ? "updated" : "invited you to"} ${eventTitle}.`,
-      url: `${SITE_URL}/profile`,
-      tag: isUpdate ? `event-update-${eventTitle}` : `event-invite-${eventTitle}`,
-    };
-  }
-
-  if (type === "friend_removed") {
-    return {
-      title: "paiden.com",
-      body: `${safeActor} removed you as a friend.`,
-      url: `${SITE_URL}/profile`,
-      tag: "friend-removed",
-    };
-  }
-
-  if (type === "event_reminder") {
+    message = `${isUpdate ? "Event Updated" : "Event Invite"}\n${safeActor} ${isUpdate ? "updated" : "invited you to"} ${eventTitle}.`;
+    tag = isUpdate ? `event-update-${eventTitle}` : `event-invite-${eventTitle}`;
+  } else if (type === "friend_removed") {
+    message = `${safeActor} removed you as a friend.`;
+    tag = "friend-removed";
+  } else if (type === "event_reminder") {
     const eventTitle = String(body?.event_title || "an event").trim() || "an event";
     const startLabel = String(body?.starts_at_label || "").trim();
-    return {
-      title: "paiden.com",
-      body: startLabel
-        ? `1-Hour Reminder\n${eventTitle} starts at ${startLabel}.`
-        : `1-Hour Reminder\n${eventTitle} starts in one hour.`,
-      url: `${SITE_URL}/profile`,
-      tag: `event-reminder-${eventTitle}`,
-    };
+    message = startLabel
+      ? `1-Hour Reminder\n${eventTitle} starts at ${startLabel}.`
+      : `1-Hour Reminder\n${eventTitle} starts in one hour.`;
+    tag = `event-reminder-${eventTitle}`;
   }
 
   return {
-    title: "paiden.com",
-    body: "New activity on paiden.com.",
-    url: `${SITE_URL}/profile`,
-    tag: "paiden-activity",
+    title,
+    body: message,
+    url,
+    tag,
+    web_push: 8030,
+    notification: {
+      title,
+      body: message,
+      navigate: url,
+      tag,
+    },
   };
 }
 
