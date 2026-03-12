@@ -303,6 +303,13 @@
     return `${y}-${m}-${day}T${h}:${min}`;
   }
 
+  function snapDateTimeLocalValueToQuarterHour(value) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "";
+    return toLocalDateTimeValue(roundUpToQuarterHour(d));
+  }
+
   function roundUpToQuarterHour(dateLike) {
     const d = new Date(dateLike);
     d.setSeconds(0, 0);
@@ -347,6 +354,24 @@
     const end = new Date(start);
     end.setHours(end.getHours() + 1);
     return { start, end };
+  }
+
+  function syncEventEndOneHourAfterStart() {
+    if (!eventStartInput || !eventEndInput) return;
+    const snappedStartValue = snapDateTimeLocalValueToQuarterHour(String(eventStartInput.value || "").trim());
+    if (!snappedStartValue) return;
+    eventStartInput.value = snappedStartValue;
+    const end = new Date(snappedStartValue);
+    end.setHours(end.getHours() + 1);
+    eventEndInput.value = toLocalDateTimeValue(end);
+  }
+
+  function normalizeEventDateInputs() {
+    if (!eventStartInput || !eventEndInput) return;
+    const snappedStartValue = snapDateTimeLocalValueToQuarterHour(String(eventStartInput.value || "").trim());
+    const snappedEndValue = snapDateTimeLocalValueToQuarterHour(String(eventEndInput.value || "").trim());
+    if (snappedStartValue) eventStartInput.value = snappedStartValue;
+    if (snappedEndValue) eventEndInput.value = snappedEndValue;
   }
 
   function renderCalendarSelectors() {
@@ -1208,11 +1233,25 @@
     });
   }
 
+  if (eventStartInput) {
+    eventStartInput.addEventListener("change", syncEventEndOneHourAfterStart);
+  }
+
+  if (eventEndInput) {
+    eventEndInput.addEventListener("change", () => {
+      const snappedEndValue = snapDateTimeLocalValueToQuarterHour(String(eventEndInput.value || "").trim());
+      if (snappedEndValue) {
+        eventEndInput.value = snappedEndValue;
+      }
+    });
+  }
+
   if (eventCreateForm) {
     eventCreateForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return;
 
+      normalizeEventDateInputs();
       const title = String(eventTitleInput?.value || "").trim();
       const startsLocal = String(eventStartInput?.value || "").trim();
       const endsLocal = String(eventEndInput?.value || "").trim();

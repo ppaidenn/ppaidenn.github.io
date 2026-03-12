@@ -455,7 +455,7 @@ as $$
     left join public.notification_preferences np on np.user_id = e.owner_id
     where e.starts_at > run_at
       and (e.starts_at - interval '1 hour') <= run_at
-      and (e.starts_at - interval '1 hour') > (run_at - interval '30 minutes')
+      and (e.starts_at - interval '1 hour') > (run_at - interval '15 minutes')
       and greatest(e.created_at, e.updated_at) <= (e.starts_at - interval '1 hour')
       and coalesce(np.notify_event_one_hour, true)
   ),
@@ -477,7 +477,7 @@ as $$
     left join public.notification_preferences np on np.user_id = i.invitee_id
     where e.starts_at > run_at
       and (e.starts_at - interval '1 hour') <= run_at
-      and (e.starts_at - interval '1 hour') > (run_at - interval '30 minutes')
+      and (e.starts_at - interval '1 hour') > (run_at - interval '15 minutes')
       and greatest(e.created_at, e.updated_at, i.created_at, coalesce(i.responded_at, i.created_at)) <= (e.starts_at - interval '1 hour')
       and coalesce(np.notify_event_one_hour, true)
   ),

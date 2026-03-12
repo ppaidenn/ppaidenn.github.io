@@ -7,4 +7,4 @@ Required Cloudflare variables/secrets:
 - CRON_SECRET
 
 Recommended cron:
-- */5 * * * *
+- */15 * * * *
