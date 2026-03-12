@@ -64,16 +64,22 @@ serve(async (req) => {
       }
     }
 
-    const { error } = await admin.from("push_subscriptions").upsert({
+    const upsertPayload: Record<string, unknown> = {
       endpoint: subscription.endpoint,
-      user_id: authUserId,
       p256dh: subscription.p256dh,
       auth: subscription.auth,
       user_agent: req.headers.get("user-agent") || null,
       is_active: true,
       updated_at: new Date().toISOString(),
       last_seen_at: new Date().toISOString(),
-    }, { onConflict: "endpoint" });
+    };
+
+    // Preserve any existing account linkage when a device sync occurs without a live auth session.
+    if (authUserId) {
+      upsertPayload.user_id = authUserId;
+    }
+
+    const { error } = await admin.from("push_subscriptions").upsert(upsertPayload, { onConflict: "endpoint" });
 
     if (error) {
       console.error("push_subscriptions upsert failed:", error);

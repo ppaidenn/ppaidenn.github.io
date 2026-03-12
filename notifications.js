@@ -7,16 +7,16 @@
 
   let cachedPublicKey = "";
 
-  async function getAuthBearer() {
+  async function getAccessTokenOrEmpty() {
     try {
       if (window.PaidenAuth && typeof window.PaidenAuth.getAccessToken === "function") {
         const token = await window.PaidenAuth.getAccessToken();
         if (token) return token;
       }
     } catch (_) {
-      // Fall back to anon key.
+      // Treat auth lookup failure as unauthenticated.
     }
-    return SUPABASE_KEY;
+    return "";
   }
 
   function isEnabled() {
@@ -72,13 +72,13 @@
   }
 
   async function syncSubscriptionToServer(subscription) {
-    const bearer = await getAuthBearer();
+    const bearer = await getAccessTokenOrEmpty();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/${PUSH_SUBSCRIBE_FN}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${bearer}`,
+        Authorization: `Bearer ${bearer || SUPABASE_KEY}`,
       },
       body: JSON.stringify({ subscription }),
     });
@@ -91,13 +91,13 @@
 
   async function removeSubscriptionFromServer(endpoint) {
     if (!endpoint) return;
-    const bearer = await getAuthBearer();
+    const bearer = await getAccessTokenOrEmpty();
     await fetch(`${SUPABASE_URL}/functions/v1/${PUSH_SUBSCRIBE_FN}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
         apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${bearer}`,
+        Authorization: `Bearer ${bearer || SUPABASE_KEY}`,
       },
       body: JSON.stringify({ endpoint }),
     }).catch(() => {
@@ -165,6 +165,10 @@
 
   async function syncCurrentSubscription() {
     try {
+      const bearer = await getAccessTokenOrEmpty();
+      if (!bearer) {
+        return { ok: false, message: "No authenticated session available for targeted push sync." };
+      }
       const reg = await ensureSw();
       const subscription = await reg.pushManager.getSubscription();
       if (!subscription) return { ok: false, message: "No active subscription to sync." };
