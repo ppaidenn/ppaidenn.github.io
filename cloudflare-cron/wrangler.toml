@@ -1,0 +1,6 @@
+name = "paiden-event-reminder-cron"
+main = "worker.js"
+compatibility_date = "2026-03-11"
+
+[triggers]
+crons = ["*/5 * * * *"]
