@@ -416,12 +416,14 @@ $$;
 
 grant execute on function public.get_my_calendar_events_detail(timestamptz, timestamptz) to authenticated;
 
+drop function if exists public.claim_shared_event_invite(uuid);
 create or replace function public.claim_shared_event_invite(target_share_token uuid)
 returns table (
   event_id uuid,
   owner_username text,
   title text,
-  invite_status text
+  invite_status text,
+  action_status text
 )
 language plpgsql
 security definer
@@ -454,16 +456,35 @@ begin
 
   if target_event.owner_id = me then
     return query
-    select target_event.id, coalesce(owner_name, ''), target_event.title, 'owner'::text;
+    select target_event.id, coalesce(owner_name, ''), target_event.title, 'owner'::text, 'owner'::text;
     return;
   end if;
 
   if not exists (
     select 1
     from public.friendships f
-    where f.user_id = target_event.owner_id
-      and f.friend_id = me
+    where (f.user_id = target_event.owner_id and f.friend_id = me)
+       or (f.user_id = me and f.friend_id = target_event.owner_id)
   ) then
+    insert into public.friend_requests (requester_id, receiver_id, status, responded_at, created_at)
+    values (target_event.owner_id, me, 'pending', null, now())
+    on conflict (requester_id, receiver_id)
+    do update set
+      status = case
+        when friend_requests.status = 'accepted' then friend_requests.status
+        else 'pending'
+      end,
+      responded_at = case
+        when friend_requests.status = 'accepted' then friend_requests.responded_at
+        else null
+      end,
+      created_at = case
+        when friend_requests.status = 'accepted' then friend_requests.created_at
+        else now()
+      end;
+
+    return query
+    select target_event.id, coalesce(owner_name, ''), target_event.title, null::text, 'friend_request_created'::text;
     return;
   end if;
 
@@ -495,7 +516,8 @@ begin
       where i.event_id = target_event.id
         and i.invitee_id = me
       limit 1
-    ), 'pending'::text);
+    ), 'pending'::text),
+    'event_invite_created'::text;
 end;
 $$;
 

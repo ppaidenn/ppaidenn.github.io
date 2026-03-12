@@ -111,6 +111,65 @@
     notify_event_one_hour: true,
   };
 
+  function getEventShareFlowState() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        token: String(params.get("eventShareToken") || "").trim(),
+        state: String(params.get("eventShareState") || "").trim(),
+        owner: String(params.get("eventShareOwner") || "").trim(),
+        title: String(params.get("eventShareTitle") || "").trim(),
+      };
+    } catch (_) {
+      return { token: "", state: "", owner: "", title: "" };
+    }
+  }
+
+  function clearEventShareFlowState() {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("eventShareToken");
+      url.searchParams.delete("eventShareState");
+      url.searchParams.delete("eventShareOwner");
+      url.searchParams.delete("eventShareTitle");
+      const next = `${url.pathname}${url.search}${url.hash}`;
+      window.history.replaceState({}, "", next);
+    } catch (_) {
+      // no-op
+    }
+  }
+
+  async function claimDeferredSharedEventInviteIfNeeded() {
+    if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return false;
+    const shareState = getEventShareFlowState();
+    if (!shareState.token) return false;
+    const client = window.PaidenAuth.getClient();
+    const { data, error } = await client.rpc("claim_shared_event_invite", {
+      target_share_token: shareState.token,
+    });
+    if (error) {
+      setStatus(error.message || "Could not claim shared event invite.", true);
+      return false;
+    }
+    const row = Array.isArray(data) ? data[0] : null;
+    if (!row) {
+      setStatus("Shared event link is no longer available.", true);
+      return false;
+    }
+    const actionStatus = String(row.action_status || "").trim();
+    if (actionStatus === "friend_request_created") {
+      const ownerLabel = shareState.owner ? ` from @${shareState.owner}` : "";
+      setStatus(`Friend request${ownerLabel} is waiting for your response before the event can be added.`);
+      return false;
+    }
+    await loadCalendarEventsForMonth();
+    await loadPendingEventInvites();
+    const title = shareState.title || String(row.title || "the shared event");
+    setStatus(`Calendar invite added for ${title}.`);
+    clearEventShareFlowState();
+    return true;
+  }
+
   function setProfileModalStatus(message, isError = false) {
     if (!profileModalStatusEl) return;
     profileModalStatusEl.textContent = message || "";
@@ -986,11 +1045,21 @@
     await loadNotificationPreferences();
     await loadCalendarEventsForMonth();
     await loadPendingEventInvites();
+    const claimedSharedInvite = await claimDeferredSharedEventInviteIfNeeded();
 
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission().catch(() => {});
     }
 
+    const shareState = getEventShareFlowState();
+    if (shareState.token && shareState.state === "friend-request") {
+      const ownerLabel = shareState.owner ? ` from @${shareState.owner}` : "";
+      setStatus(`Accept the friend request${ownerLabel} to unlock the shared calendar invite.`);
+      return;
+    }
+    if (claimedSharedInvite) {
+      return;
+    }
     setStatus("Profile loaded.");
   }
 
@@ -1461,7 +1530,15 @@
       }
       await loadFriends();
       await loadFriendRequests();
-      setStatus(acceptRequest ? "Friend request accepted." : "Friend request rejected.");
+      if (acceptRequest) {
+        const claimed = await claimDeferredSharedEventInviteIfNeeded();
+        if (!claimed) {
+          setStatus("Friend request accepted.");
+        }
+      } else {
+        clearEventShareFlowState();
+        setStatus("Friend request rejected.");
+      }
       return;
     }
 

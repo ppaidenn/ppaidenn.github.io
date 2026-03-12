@@ -295,18 +295,28 @@
         const ownerUsername = String(row.owner_username || "").trim();
         const eventTitle = String(row.title || "this event").trim() || "this event";
         const inviteStatus = String(row.invite_status || "pending").trim();
+        const actionStatus = String(row.action_status || "").trim();
+        const profilePath = `/profile?eventShareToken=${encodeURIComponent(token)}${ownerUsername ? `&eventShareOwner=${encodeURIComponent(ownerUsername)}` : ""}${eventTitle ? `&eventShareTitle=${encodeURIComponent(eventTitle)}` : ""}`;
+        if (actionStatus === "friend_request_created") {
+          if (titleEl) titleEl.textContent = "Friend request sent";
+          if (textEl) textEl.textContent = `${ownerUsername ? `@${ownerUsername}` : "The event owner"} has sent you a friend request. Redirecting you to your profile so you can accept it and unlock ${eventTitle}.`;
+          if (hintEl) hintEl.textContent = "Accept the friend request first. The event invite will be added automatically right after.";
+          setStatus("Friend request created. Redirecting to your profile...");
+          window.setTimeout(() => {
+            window.location.href = `${profilePath}&eventShareState=friend-request`;
+          }, 900);
+          return;
+        }
         if (titleEl) titleEl.textContent = "Event invite added";
         if (textEl) {
           textEl.textContent = inviteStatus === "accepted"
-            ? `You already have ${eventTitle} on your calendar. Redirecting to @${ownerUsername}...`
-            : `${eventTitle} has been added as an invite on your account. Redirecting to @${ownerUsername}...`;
+            ? `You already have ${eventTitle} on your calendar. Redirecting to your profile...`
+            : `${eventTitle} has been added to your account. Redirecting to your profile...`;
         }
         if (hintEl) hintEl.textContent = "";
         setStatus(inviteStatus === "accepted" ? "Invite already accepted." : "Invite created.");
-
-        const targetPath = ownerUsername ? `/${encodeURIComponent(ownerUsername)}` : "/profile";
         window.setTimeout(() => {
-          window.location.href = targetPath;
+          window.location.href = `${profilePath}&eventShareState=event-invite`;
         }, 1000);
       }
 
