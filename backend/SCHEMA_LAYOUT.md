@@ -36,6 +36,12 @@ This folder is split by feature so SQL changes are easier to maintain.
 
 ## `backend/push`
 - `push_subscriptions_schema.sql`: `push_subscriptions` table + trigger.
+- `notification_preferences_schema.sql`: notification preference table + RPCs.
+- `notifications_inbox_schema.sql`: account inbox table + RPCs:
+  - `get_my_notifications`
+  - `get_my_unread_notification_count`
+  - `mark_notification_read`
+  - `mark_all_notifications_read`
 
 ## `backend/calendar`
 - `events_schema.sql`: calendar + invites:
@@ -63,4 +69,6 @@ This folder is split by feature so SQL changes are easier to maintain.
 13. `backend/auth/username_signup_lookup_schema.sql`
 14. `backend/auth/username_signin_lookup_schema.sql`
 15. `backend/push/push_subscriptions_schema.sql`
-16. `backend/calendar/events_schema.sql`
+16. `backend/push/notification_preferences_schema.sql`
+17. `backend/push/notifications_inbox_schema.sql`
+18. `backend/calendar/events_schema.sql`

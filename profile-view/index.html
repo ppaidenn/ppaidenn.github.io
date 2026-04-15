@@ -740,15 +740,6 @@
           friendActionBtn.disabled = false;
           friendActionBtn.textContent = "Add Friend";
           setStatus("Friend removed.");
-          if (window.PaidenAuth && typeof window.PaidenAuth.invokeEdgeFunction === "function") {
-            const notifyRes = await window.PaidenAuth.invokeEdgeFunction("push-notify", {
-              type: "friend_removed",
-              target_username: viewedUsername,
-            }).catch((err) => ({ ok: false, error: err?.message || "Could not trigger friend removal notification." }));
-            if (!notifyRes || notifyRes.ok === false) {
-              console.error("Friend removal push-notify failed:", notifyRes?.error || "Unknown error");
-            }
-          }
           await loadFriendCalendarEvents();
           return;
         }

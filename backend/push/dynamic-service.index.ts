@@ -114,20 +114,9 @@ async function sendPostPushNotifications(postId, title, author, text, authorUser
       (Array.isArray(preferenceRows) ? preferenceRows : []).map((row) => [String(row.user_id), String(row.blog_post_mode || "all")]),
     );
 
-    let friendUserIdSet = new Set<string>();
-    if (authorUserId) {
-      const { data: friendshipRows } = await admin
-        .from("friendships")
-        .select("user_id")
-        .eq("friend_id", authorUserId);
-      friendUserIdSet = new Set((Array.isArray(friendshipRows) ? friendshipRows : []).map((row) => String(row.user_id || "")).filter(Boolean));
-    }
-
     allowedUserIdSet = new Set(subscriptionUserIds.filter((userId) => {
       const mode = prefMap.get(userId) || "all";
-      if (mode === "none") return false;
-      if (mode === "friends") return Boolean(authorUserId) && friendUserIdSet.has(userId);
-      return true;
+      return mode === "all";
     }));
   }
 

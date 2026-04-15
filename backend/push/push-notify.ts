@@ -120,6 +120,39 @@ async function sendPushToUserIds(userIds: string[], payload: Record<string, stri
   }
 }
 
+async function insertInboxNotifications(
+  type: string,
+  userIds: string[],
+  actorUserId: string,
+  actorUsername: string,
+  payload: any,
+  body: any,
+) {
+  if (!Array.isArray(userIds) || !userIds.length) return;
+  const inboxType = type === "event_invite" && body?.is_update === true ? "event_update" : type;
+  const rows = userIds
+    .map((userId) => String(userId || "").trim())
+    .filter(Boolean)
+    .map((userId) => ({
+      user_id: userId,
+      type: inboxType,
+      title: String(payload?.title || "paiden.com"),
+      body: String(payload?.body || "New activity on paiden.com."),
+      link_url: String(payload?.url || `${SITE_URL}/profile`),
+      actor_user_id: actorUserId || null,
+      actor_username: actorUsername || null,
+      entity_type: inboxType.startsWith("event_") ? "event" : inboxType.startsWith("friend_") ? "friendship" : null,
+      entity_id: inboxType.startsWith("event_")
+        ? String(body?.event_starts_at || body?.event_title || "").trim() || null
+        : actorUserId || null,
+    }));
+  if (!rows.length) return;
+  const { error } = await admin.from("notifications_inbox").insert(rows);
+  if (error) {
+    console.error("Failed to insert inbox notifications:", error);
+  }
+}
+
 async function filterRecipientUserIdsByPreference(type: string, userIds: string[]) {
   if (!Array.isArray(userIds) || !userIds.length) return [];
   const { data, error } = await admin
@@ -244,13 +277,18 @@ serve(async (req) => {
     filteredRecipientUserIds,
   });
   if (!filteredRecipientUserIds.length) {
+    const actorName = String(actorProfile?.username || userData.user.email || "Someone");
+    const payload = buildPayload(type, actorName, body);
+    await insertInboxNotifications(type, recipientUserIds, String(userData.user.id || ""), actorName, payload, body);
     return new Response(JSON.stringify({ ok: true, skipped: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const payload = buildPayload(type, String(actorProfile?.username || userData.user.email || "Someone"), body);
+  const actorName = String(actorProfile?.username || userData.user.email || "Someone");
+  const payload = buildPayload(type, actorName, body);
+  await insertInboxNotifications(type, recipientUserIds, String(userData.user.id || ""), actorName, payload, body);
   await sendPushToUserIds(filteredRecipientUserIds, payload);
 
   return new Response(JSON.stringify({ ok: true, sent_to: filteredRecipientUserIds.length }), {

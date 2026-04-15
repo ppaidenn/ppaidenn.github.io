@@ -40,10 +40,12 @@
   const notificationModalStatusEl = document.getElementById("notificationModalStatus");
   const notificationSettingsForm = document.getElementById("notificationSettingsForm");
   const notifyFriendRequestInput = document.getElementById("notifyFriendRequestInput");
-  const notifyFriendRemovedInput = document.getElementById("notifyFriendRemovedInput");
   const notifyEventInviteInput = document.getElementById("notifyEventInviteInput");
   const notifyEventOneHourInput = document.getElementById("notifyEventOneHourInput");
   const blogPostModeInputs = Array.from(document.querySelectorAll('input[name="blogPostMode"]'));
+  const notificationInboxCounterText = document.getElementById("notificationInboxCounterText");
+  const notificationInboxList = document.getElementById("notificationInboxList");
+  const notificationInboxMarkAllBtn = document.getElementById("notificationInboxMarkAllBtn");
 
   const friendsToggleBtn = document.getElementById("friendsToggleBtn");
   const friendsCounterText = document.getElementById("friendsCounterText");
@@ -106,10 +108,10 @@
   let notificationPreferences = {
     blog_post_mode: "all",
     notify_friend_request: true,
-    notify_friend_removed: true,
     notify_event_invite: true,
     notify_event_one_hour: true,
   };
+  let notificationInboxRows = [];
 
   function getEventShareFlowState() {
     try {
@@ -245,13 +247,64 @@
   }
 
   function renderNotificationPreferences() {
+    const normalizedBlogMode = notificationPreferences.blog_post_mode === "all" ? "all" : "none";
     blogPostModeInputs.forEach((input) => {
-      input.checked = input.value === notificationPreferences.blog_post_mode;
+      input.checked = input.value === normalizedBlogMode;
     });
     if (notifyFriendRequestInput) notifyFriendRequestInput.checked = notificationPreferences.notify_friend_request !== false;
-    if (notifyFriendRemovedInput) notifyFriendRemovedInput.checked = notificationPreferences.notify_friend_removed !== false;
     if (notifyEventInviteInput) notifyEventInviteInput.checked = notificationPreferences.notify_event_invite !== false;
     if (notifyEventOneHourInput) notifyEventOneHourInput.checked = notificationPreferences.notify_event_one_hour !== false;
+  }
+
+  function formatNotificationTimestamp(iso) {
+    try {
+      return new Date(iso).toLocaleString([], {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function setNotificationInboxCount(count) {
+    if (!notificationInboxCounterText) return;
+    notificationInboxCounterText.textContent = String(Math.max(0, Number(count) || 0));
+  }
+
+  function renderNotificationInbox(rows = []) {
+    if (!notificationInboxList) return;
+    const list = Array.isArray(rows) ? rows : [];
+    const unreadCount = list.filter((row) => !row.read_at).length;
+    setNotificationInboxCount(unreadCount);
+    if (notificationInboxMarkAllBtn) notificationInboxMarkAllBtn.disabled = unreadCount === 0;
+    if (!list.length) {
+      notificationInboxList.innerHTML = '<div class="request-empty">No account notifications yet.</div>';
+      return;
+    }
+    notificationInboxList.innerHTML = list.map((row) => {
+      const id = String(row.notification_id || "").trim();
+      const title = escapeHTML(String(row.title || "Notification"));
+      const body = escapeHTML(String(row.body || ""));
+      const createdAt = formatNotificationTimestamp(row.created_at);
+      const unread = !row.read_at;
+      const hasLink = String(row.link_url || "").trim().length > 0;
+      return `
+        <div class="inbox-row ${unread ? "unread" : ""}">
+          <div class="inbox-row-main">
+            <div class="inbox-row-title">${title}</div>
+            <div class="inbox-row-body">${body}</div>
+            <div class="inbox-row-meta">${escapeHTML(createdAt || "")}${unread ? ' · Unread' : ''}</div>
+          </div>
+          <div class="inbox-row-actions">
+            ${hasLink ? `<button class="inbox-row-btn" type="button" data-notification-open="${escapeHTML(id)}">Open</button>` : ""}
+            ${unread ? `<button class="inbox-row-btn secondary" type="button" data-notification-read="${escapeHTML(id)}">Mark Read</button>` : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
   }
 
   function openNotificationModal() {
@@ -795,14 +848,57 @@
     const row = Array.isArray(data) ? data[0] : data;
     if (row) {
       notificationPreferences = {
-        blog_post_mode: String(row.blog_post_mode || "all"),
+        blog_post_mode: String(row.blog_post_mode || "all") === "all" ? "all" : "none",
         notify_friend_request: row.notify_friend_request !== false,
-        notify_friend_removed: row.notify_friend_removed !== false,
         notify_event_invite: row.notify_event_invite !== false,
         notify_event_one_hour: row.notify_event_one_hour !== false,
       };
     }
     renderNotificationPreferences();
+  }
+
+  async function loadNotificationInbox() {
+    if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return;
+    const client = window.PaidenAuth.getClient();
+    const { data, error } = await client.rpc("get_my_notifications", { p_limit: 30 });
+    if (error) {
+      notificationInboxRows = [];
+      renderNotificationInbox([]);
+      return;
+    }
+    notificationInboxRows = Array.isArray(data) ? data : [];
+    renderNotificationInbox(notificationInboxRows);
+  }
+
+  async function markNotificationRead(notificationId, { navigate = false } = {}) {
+    const id = String(notificationId || "").trim();
+    if (!id || !window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return;
+    const row = notificationInboxRows.find((item) => String(item.notification_id || "") === id) || null;
+    const client = window.PaidenAuth.getClient();
+    await client.rpc("mark_notification_read", { target_notification_id: id }).catch(() => ({}));
+    if (row) {
+      row.read_at = row.read_at || new Date().toISOString();
+    }
+    renderNotificationInbox(notificationInboxRows);
+    if (navigate && row && row.link_url) {
+      window.location.href = String(row.link_url);
+    }
+  }
+
+  async function markAllNotificationsRead() {
+    if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return;
+    const client = window.PaidenAuth.getClient();
+    const { error } = await client.rpc("mark_all_notifications_read");
+    if (error) {
+      setStatus(error.message || "Could not mark notifications read.", true);
+      return;
+    }
+    notificationInboxRows = notificationInboxRows.map((row) => ({
+      ...row,
+      read_at: row.read_at || new Date().toISOString(),
+    }));
+    renderNotificationInbox(notificationInboxRows);
+    setStatus("Notification inbox marked read.");
   }
 
   async function saveNotificationPreferences() {
@@ -811,7 +907,6 @@
     const nextPrefs = {
       blog_post_mode: selectedModeInput ? selectedModeInput.value : "all",
       notify_friend_request: Boolean(notifyFriendRequestInput?.checked),
-      notify_friend_removed: Boolean(notifyFriendRemovedInput?.checked),
       notify_event_invite: Boolean(notifyEventInviteInput?.checked),
       notify_event_one_hour: Boolean(notifyEventOneHourInput?.checked),
     };
@@ -825,7 +920,7 @@
       const { data, error } = await client.rpc("save_my_notification_preferences", {
         p_blog_post_mode: nextPrefs.blog_post_mode,
         p_notify_friend_request: nextPrefs.notify_friend_request,
-        p_notify_friend_removed: nextPrefs.notify_friend_removed,
+        p_notify_friend_removed: false,
         p_notify_event_invite: nextPrefs.notify_event_invite,
         p_notify_event_one_hour: nextPrefs.notify_event_one_hour,
       });
@@ -1043,6 +1138,7 @@
     renderWeekdays();
     await loadFriends();
     await loadFriendRequests();
+    await loadNotificationInbox();
     await loadNotificationPreferences();
     await loadCalendarEventsForMonth();
     await loadPendingEventInvites();
@@ -1093,6 +1189,12 @@
   if (notificationSettingsBtn) {
     notificationSettingsBtn.addEventListener("click", () => {
       openNotificationModal();
+    });
+  }
+
+  if (notificationInboxMarkAllBtn) {
+    notificationInboxMarkAllBtn.addEventListener("click", async () => {
+      await markAllNotificationsRead();
     });
   }
 
@@ -1512,6 +1614,20 @@
       return;
     }
 
+    const openNotificationBtn = event.target.closest("[data-notification-open]");
+    if (openNotificationBtn) {
+      event.preventDefault();
+      await markNotificationRead(String(openNotificationBtn.getAttribute("data-notification-open") || "").trim(), { navigate: true });
+      return;
+    }
+
+    const markNotificationBtn = event.target.closest("[data-notification-read]");
+    if (markNotificationBtn) {
+      event.preventDefault();
+      await markNotificationRead(String(markNotificationBtn.getAttribute("data-notification-read") || "").trim(), { navigate: false });
+      return;
+    }
+
     const friendReqBtn = event.target.closest("[data-request-action][data-request-id]");
     if (friendReqBtn) {
       event.preventDefault();
@@ -1533,6 +1649,7 @@
       }
       await loadFriends();
       await loadFriendRequests();
+      await loadNotificationInbox();
       if (acceptRequest) {
         await loadPendingEventInvites();
         const shareState = getEventShareFlowState();

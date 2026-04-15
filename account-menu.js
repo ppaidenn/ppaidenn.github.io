@@ -78,17 +78,21 @@
     if (!res || !res.ok || !res.user) return { signedIn: false, profile: null, pendingCount: 0 };
     let pendingCount = 0;
     let pendingEventInvites = 0;
+    let unreadInboxCount = 0;
     try {
       const client = window.PaidenAuth.getClient();
       const { data } = await client.rpc("get_my_pending_request_count");
       pendingCount = Number.isFinite(Number(data)) ? Number(data) : 0;
       const { data: inviteData } = await client.rpc("get_my_pending_event_invites");
       pendingEventInvites = Array.isArray(inviteData) ? inviteData.length : 0;
+      const { data: inboxUnread } = await client.rpc("get_my_unread_notification_count");
+      unreadInboxCount = Number.isFinite(Number(inboxUnread)) ? Number(inboxUnread) : 0;
     } catch (_) {
       pendingCount = 0;
       pendingEventInvites = 0;
+      unreadInboxCount = 0;
     }
-    return { signedIn: true, profile: res.profile || null, pendingCount: pendingCount + pendingEventInvites };
+    return { signedIn: true, profile: res.profile || null, pendingCount: Math.max(pendingCount + pendingEventInvites, unreadInboxCount) };
   }
 
   async function handleSignOut() {

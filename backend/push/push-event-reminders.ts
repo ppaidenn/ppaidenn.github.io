@@ -137,6 +137,28 @@ serve(async (req) => {
   let sentCount = 0;
   const staleIds: string[] = [];
 
+  const inboxRows = rows.map((row) => {
+    const payload = buildReminderPayload(row);
+    return {
+      user_id: String(row.recipient_id || ""),
+      type: "event_reminder",
+      title: String(payload.title || "paiden.com"),
+      body: String(payload.body || "Event reminder"),
+      link_url: String(payload.url || `${SITE_URL}/profile`),
+      actor_user_id: null,
+      actor_username: String(row.owner_username || "").trim() || null,
+      entity_type: "event",
+      entity_id: String(row.event_id || "").trim() || null,
+    };
+  }).filter((row) => row.user_id);
+
+  if (inboxRows.length) {
+    const { error: inboxError } = await admin.from("notifications_inbox").insert(inboxRows);
+    if (inboxError) {
+      console.error("Failed to insert event reminder inbox rows:", inboxError);
+    }
+  }
+
   for (const row of rows) {
     const userId = String(row.recipient_id || "");
     const targets = subscriptionsByUser.get(userId) || [];
