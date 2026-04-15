@@ -1408,7 +1408,7 @@
       #composerModal .modal-shell{
         width: 100%;
         height: auto;
-        max-height: calc(100vh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 88px));
+        max-height: calc(100dvh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 88px));
       }
       #postModal{
         align-items: flex-start;
@@ -1420,8 +1420,8 @@
       }
       #postModal .modal-shell{
         width: 100%;
-        height: calc(100vh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 88px));
-        max-height: calc(100vh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 88px));
+        height: calc(100dvh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 88px));
+        max-height: calc(100dvh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 88px));
       }
       #postModal .modal-body{
         display: grid;
@@ -1504,7 +1504,7 @@
       }
       .image-lightbox-inner{
         width: 100%;
-        height: calc(100vh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 74px));
+        height: calc(100dvh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 74px));
       }
       .image-lightbox-close{
         top: 8px;
@@ -1516,10 +1516,12 @@
 
       html, body {
         background: #0e1116;
-        overscroll-behavior-y: contain;
+        overscroll-behavior-y: auto;
       }
       body {
         padding-top: calc(env(safe-area-inset-top, 0px) + 58px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
       }
       .mobile-fixed-header {
         position: fixed;
@@ -2297,6 +2299,12 @@ function excerpt(text, maxChars = 1000) {
     }
 
     function lockScroll(){
+      if (isMobileViewport()) {
+        document.documentElement.classList.remove("no-scroll");
+        document.body.classList.remove("no-scroll");
+        document.body.style.paddingRight = "";
+        return;
+      }
       const sw = window.innerWidth - document.documentElement.clientWidth;
       document.documentElement.classList.add("no-scroll");
       document.body.classList.add("no-scroll");
