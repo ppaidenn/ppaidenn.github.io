@@ -2641,6 +2641,7 @@ function excerpt(text, maxChars = 1000) {
     let activePostCommentsCount = 0;
     let activePostComments = [];
     let activeModalTab = null;
+    let savedBlogScrollY = 0;
     const isMobileViewport = () => window.matchMedia("(max-width: 768px)").matches;
     let isImageLightboxOpen = false;
     let isTextExpanded = false;
@@ -2657,6 +2658,12 @@ function excerpt(text, maxChars = 1000) {
       modal.classList.remove("open");
       modal.setAttribute("aria-hidden", "true");
       unlockScroll();
+      const restoreY = Math.max(0, Number(savedBlogScrollY) || 0);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: restoreY, behavior: "auto" });
+        });
+      });
     }
 
     function showModalImage(i) {
@@ -2827,6 +2834,7 @@ function excerpt(text, maxChars = 1000) {
     }
 
     function openPostFromCard(card) {
+      savedBlogScrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
       const title = card.getAttribute("data-title") || "";
       const author = card.getAttribute("data-author") || "";
       const created = card.getAttribute("data-created") || "";
