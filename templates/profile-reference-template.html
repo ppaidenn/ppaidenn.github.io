@@ -46,6 +46,10 @@
       display: flex;
     }
 
+    body.use-compact-header .footer {
+      display: none;
+    }
+
     .top-nav {
       width: 100vw;
       margin-left: calc(50% - 50vw);
@@ -226,7 +230,9 @@
       display: flex;
       align-items: flex-start;
       gap: 40px;
-      flex-wrap: wrap;
+      flex: 1 1 auto;
+      min-width: 0;
+      flex-wrap: nowrap;
     }
 
     .footer-left {
@@ -269,7 +275,11 @@
       display: flex;
       flex-direction: column;
       align-items: flex-end;
+      justify-content: flex-start;
+      margin-left: auto;
+      flex: 0 0 auto;
       gap: 12px;
+      text-align: right;
     }
 
     .follow-text {
@@ -280,6 +290,8 @@
     .social-icons {
       display: flex;
       gap: 12px;
+      flex-wrap: nowrap;
+      justify-content: flex-end;
     }
 
     .social-icons a {
@@ -338,19 +350,6 @@
     @media (max-width: 1100px) {
       .template-main {
         grid-template-columns: 1fr;
-      }
-
-      .footer-inner {
-        flex-direction: column;
-        gap: 30px;
-      }
-
-      .footer-left-cluster {
-        gap: 28px;
-      }
-
-      .footer-social {
-        align-items: flex-start;
       }
     }
   </style>
