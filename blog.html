@@ -1145,10 +1145,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      touch-action: none;
-    }
-    .modal-imgwrap.is-zoomed {
-      cursor: grab;
+      touch-action: pan-y;
     }
 
     .modal-img {
@@ -1160,8 +1157,6 @@
       cursor: zoom-in;
       object-fit: contain;
       image-orientation: from-image;
-      transform-origin: center center;
-      will-change: transform;
       user-select: none;
       -webkit-user-drag: none;
     }
@@ -1249,12 +1244,17 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      touch-action: none;
     }
     .image-lightbox img{
       max-width: 100%;
       max-height: 100%;
       object-fit: contain;
       border-radius: 10px;
+      transform-origin: center center;
+      will-change: transform;
+      user-select: none;
+      -webkit-user-drag: none;
     }
     .image-lightbox-close{
       position: absolute;
@@ -2676,21 +2676,27 @@ function excerpt(text, maxChars = 1000) {
     const isMobileViewport = () => window.matchMedia("(max-width: 768px)").matches;
     let isImageLightboxOpen = false;
     let isTextExpanded = false;
-    let modalImageScale = 1;
-    let modalImageTranslateX = 0;
-    let modalImageTranslateY = 0;
     let modalImageGestureIgnoreClickUntil = 0;
     let modalTouchMode = "idle";
     let modalTouchStartX = 0;
     let modalTouchStartY = 0;
     let modalTouchDeltaX = 0;
     let modalTouchDeltaY = 0;
-    let modalTouchStartTranslateX = 0;
-    let modalTouchStartTranslateY = 0;
-    let modalPinchStartDistance = 0;
-    let modalPinchStartScale = 1;
-    let modalPinchStartMidX = 0;
-    let modalPinchStartMidY = 0;
+    let lightboxImageScale = 1;
+    let lightboxImageTranslateX = 0;
+    let lightboxImageTranslateY = 0;
+    let lightboxGestureIgnoreClickUntil = 0;
+    let lightboxTouchMode = "idle";
+    let lightboxTouchStartX = 0;
+    let lightboxTouchStartY = 0;
+    let lightboxTouchDeltaX = 0;
+    let lightboxTouchDeltaY = 0;
+    let lightboxTouchStartTranslateX = 0;
+    let lightboxTouchStartTranslateY = 0;
+    let lightboxPinchStartDistance = 0;
+    let lightboxPinchStartScale = 1;
+    let lightboxPinchStartMidX = 0;
+    let lightboxPinchStartMidY = 0;
 
     function clampNumber(value, min, max) {
       return Math.min(max, Math.max(min, value));
@@ -2709,45 +2715,42 @@ function excerpt(text, maxChars = 1000) {
       };
     }
 
-    function clampModalImageTransform() {
-      if (!modalImg) return;
-      if (modalImageScale <= 1.01) {
-        modalImageScale = 1;
-        modalImageTranslateX = 0;
-        modalImageTranslateY = 0;
+    function clampLightboxImageTransform() {
+      if (!imageLightboxImg) return;
+      if (lightboxImageScale <= 1.01) {
+        lightboxImageScale = 1;
+        lightboxImageTranslateX = 0;
+        lightboxImageTranslateY = 0;
         return;
       }
-      const baseWidth = modalImg.offsetWidth || 0;
-      const baseHeight = modalImg.offsetHeight || 0;
-      const maxX = Math.max(0, (baseWidth * (modalImageScale - 1)) / 2);
-      const maxY = Math.max(0, (baseHeight * (modalImageScale - 1)) / 2);
-      modalImageTranslateX = clampNumber(modalImageTranslateX, -maxX, maxX);
-      modalImageTranslateY = clampNumber(modalImageTranslateY, -maxY, maxY);
+      const baseWidth = imageLightboxImg.offsetWidth || 0;
+      const baseHeight = imageLightboxImg.offsetHeight || 0;
+      const maxX = Math.max(0, (baseWidth * (lightboxImageScale - 1)) / 2);
+      const maxY = Math.max(0, (baseHeight * (lightboxImageScale - 1)) / 2);
+      lightboxImageTranslateX = clampNumber(lightboxImageTranslateX, -maxX, maxX);
+      lightboxImageTranslateY = clampNumber(lightboxImageTranslateY, -maxY, maxY);
     }
 
-    function applyModalImageTransform(animated = false) {
-      if (!modalImg) return;
-      clampModalImageTransform();
-      modalImg.style.transition = animated ? "transform 160ms ease" : "none";
-      modalImg.style.transform = `translate(${modalImageTranslateX}px, ${modalImageTranslateY}px) scale(${modalImageScale})`;
-      modalImg.style.cursor = modalImageScale > 1.01 ? "grab" : "zoom-in";
-      if (modalImgWrap) {
-        modalImgWrap.classList.toggle("is-zoomed", modalImageScale > 1.01);
-      }
+    function applyLightboxImageTransform(animated = false) {
+      if (!imageLightboxImg) return;
+      clampLightboxImageTransform();
+      imageLightboxImg.style.transition = animated ? "transform 160ms ease" : "none";
+      imageLightboxImg.style.transform = `translate(${lightboxImageTranslateX}px, ${lightboxImageTranslateY}px) scale(${lightboxImageScale})`;
+      imageLightboxImg.style.cursor = lightboxImageScale > 1.01 ? "grab" : "zoom-in";
     }
 
-    function resetModalImageTransform(animated = false) {
-      modalImageScale = 1;
-      modalImageTranslateX = 0;
-      modalImageTranslateY = 0;
-      applyModalImageTransform(animated);
+    function resetLightboxImageTransform(animated = false) {
+      lightboxImageScale = 1;
+      lightboxImageTranslateX = 0;
+      lightboxImageTranslateY = 0;
+      applyLightboxImageTransform(animated);
     }
 
-    function zoomModalImageInPlace(animated = false) {
-      modalImageScale = 2;
-      modalImageTranslateX = 0;
-      modalImageTranslateY = 0;
-      applyModalImageTransform(animated);
+    function zoomLightboxImageInPlace(animated = false) {
+      lightboxImageScale = 2;
+      lightboxImageTranslateX = 0;
+      lightboxImageTranslateY = 0;
+      applyLightboxImageTransform(animated);
     }
 
     function openModal() {
@@ -2773,7 +2776,6 @@ function excerpt(text, maxChars = 1000) {
     function showModalImage(i) {
       if (!modalImages.length) return;
       modalIndex = (i + modalImages.length) % modalImages.length;
-      resetModalImageTransform();
       modalImg.src = modalImages[modalIndex];
       modalCounter.textContent = (modalIndex + 1) + " / " + modalImages.length;
 
@@ -2785,6 +2787,7 @@ function excerpt(text, maxChars = 1000) {
     function renderLightboxImage() {
       if (!modalImages.length || !imageLightboxImg) return;
       imageLightboxImg.src = modalImages[modalIndex];
+      resetLightboxImageTransform();
       if (imageLightboxCounter) {
         imageLightboxCounter.textContent = (modalIndex + 1) + " / " + modalImages.length;
       }
@@ -2798,6 +2801,7 @@ function excerpt(text, maxChars = 1000) {
     }
     function closeImageLightbox() {
       if (!imageLightbox) return;
+      resetLightboxImageTransform();
       isImageLightboxOpen = false;
       imageLightbox.classList.remove("open");
       imageLightbox.setAttribute("aria-hidden", "true");
@@ -3018,77 +3022,35 @@ function excerpt(text, maxChars = 1000) {
       modalImg.addEventListener("click", (e) => {
         e.preventDefault();
         if (Date.now() < modalImageGestureIgnoreClickUntil) return;
-        if (modalImageScale > 1.01) {
-          resetModalImageTransform(true);
-          return;
-        }
-        zoomModalImageInPlace(true);
+        openImageLightbox();
       });
     }
     if (modalImgWrap) {
       modalImgWrap.addEventListener("touchstart", (e) => {
         if (!modalImages.length) return;
-        if (e.touches.length >= 2) {
-          const [touchA, touchB] = e.touches;
-          const midpoint = getTouchMidpoint(touchA, touchB);
-          modalTouchMode = "pinch";
-          modalPinchStartDistance = getTouchDistance(touchA, touchB);
-          modalPinchStartScale = modalImageScale;
-          modalPinchStartMidX = midpoint.x;
-          modalPinchStartMidY = midpoint.y;
-          modalTouchStartTranslateX = modalImageTranslateX;
-          modalTouchStartTranslateY = modalImageTranslateY;
-          return;
-        }
         if (e.touches.length !== 1) return;
         const touch = e.touches[0];
         modalTouchStartX = Number(touch.clientX || 0);
         modalTouchStartY = Number(touch.clientY || 0);
         modalTouchDeltaX = 0;
         modalTouchDeltaY = 0;
-        modalTouchStartTranslateX = modalImageTranslateX;
-        modalTouchStartTranslateY = modalImageTranslateY;
-        modalTouchMode = modalImageScale > 1.01 ? "pan" : "swipe";
+        modalTouchMode = "swipe";
       }, { passive: true });
 
       modalImgWrap.addEventListener("touchmove", (e) => {
         if (!modalImages.length) return;
-        if (modalTouchMode === "pinch" && e.touches.length >= 2) {
-          const [touchA, touchB] = e.touches;
-          const distance = getTouchDistance(touchA, touchB);
-          if (!modalPinchStartDistance) return;
-          const midpoint = getTouchMidpoint(touchA, touchB);
-          modalImageScale = clampNumber(modalPinchStartScale * (distance / modalPinchStartDistance), 1, 4);
-          modalImageTranslateX = modalTouchStartTranslateX + (midpoint.x - modalPinchStartMidX);
-          modalImageTranslateY = modalTouchStartTranslateY + (midpoint.y - modalPinchStartMidY);
-          applyModalImageTransform();
-          e.preventDefault();
-          return;
-        }
         if (e.touches.length !== 1) return;
         const touch = e.touches[0];
         modalTouchDeltaX = Number(touch.clientX || 0) - modalTouchStartX;
         modalTouchDeltaY = Number(touch.clientY || 0) - modalTouchStartY;
-        if (modalTouchMode === "pan" && modalImageScale > 1.01) {
-          modalImageTranslateX = modalTouchStartTranslateX + modalTouchDeltaX;
-          modalImageTranslateY = modalTouchStartTranslateY + modalTouchDeltaY;
-          applyModalImageTransform();
-          e.preventDefault();
-          return;
-        }
-        if (modalTouchMode === "swipe" && Math.abs(modalTouchDeltaX) > Math.abs(modalTouchDeltaY)) {
+        if (Math.abs(modalTouchDeltaX) > Math.abs(modalTouchDeltaY)) {
           e.preventDefault();
         }
       }, { passive: false });
 
       modalImgWrap.addEventListener("touchend", () => {
-        if (modalTouchMode === "swipe" && modalImageScale <= 1.01) {
-          if (Math.abs(modalTouchDeltaX) > 48 && Math.abs(modalTouchDeltaX) > Math.abs(modalTouchDeltaY) + 10) {
-            showModalImage(modalTouchDeltaX > 0 ? modalIndex - 1 : modalIndex + 1);
-            modalImageGestureIgnoreClickUntil = Date.now() + 320;
-          }
-        } else if (modalTouchMode === "pan" || modalTouchMode === "pinch") {
-          applyModalImageTransform(true);
+        if (Math.abs(modalTouchDeltaX) > 48 && Math.abs(modalTouchDeltaX) > Math.abs(modalTouchDeltaY) + 10) {
+          showModalImage(modalTouchDeltaX > 0 ? modalIndex - 1 : modalIndex + 1);
           modalImageGestureIgnoreClickUntil = Date.now() + 320;
         }
         modalTouchMode = "idle";
@@ -3100,7 +3062,6 @@ function excerpt(text, maxChars = 1000) {
         modalTouchMode = "idle";
         modalTouchDeltaX = 0;
         modalTouchDeltaY = 0;
-        applyModalImageTransform(true);
       });
     }
     if (imageLightboxClose) imageLightboxClose.addEventListener("click", closeImageLightbox);
@@ -3112,27 +3073,94 @@ function excerpt(text, maxChars = 1000) {
       });
     }
     if (imageLightboxInner) {
-      let x0 = null;
-      let y0 = null;
       imageLightboxInner.addEventListener("touchstart", (e) => {
-        x0 = e.touches[0].clientX;
-        y0 = e.touches[0].clientY;
-      }, { passive: true });
-      imageLightboxInner.addEventListener("touchend", (e) => {
-        if (x0 === null || y0 === null) return;
-        const dx = e.changedTouches[0].clientX - x0;
-        const dy = e.changedTouches[0].clientY - y0;
-        x0 = null;
-        y0 = null;
-        if (Math.abs(dy) > 48 && Math.abs(dy) > Math.abs(dx)) {
-          closeImageLightbox();
+        if (!modalImages.length) return;
+        if (e.touches.length >= 2) {
+          const [touchA, touchB] = e.touches;
+          const midpoint = getTouchMidpoint(touchA, touchB);
+          lightboxTouchMode = "pinch";
+          lightboxPinchStartDistance = getTouchDistance(touchA, touchB);
+          lightboxPinchStartScale = lightboxImageScale;
+          lightboxPinchStartMidX = midpoint.x;
+          lightboxPinchStartMidY = midpoint.y;
+          lightboxTouchStartTranslateX = lightboxImageTranslateX;
+          lightboxTouchStartTranslateY = lightboxImageTranslateY;
           return;
         }
-        if (Math.abs(dx) > 40) {
-          if (dx > 0) showModalImage(modalIndex - 1);
-          else showModalImage(modalIndex + 1);
-        }
+        if (e.touches.length !== 1) return;
+        const touch = e.touches[0];
+        lightboxTouchStartX = Number(touch.clientX || 0);
+        lightboxTouchStartY = Number(touch.clientY || 0);
+        lightboxTouchDeltaX = 0;
+        lightboxTouchDeltaY = 0;
+        lightboxTouchStartTranslateX = lightboxImageTranslateX;
+        lightboxTouchStartTranslateY = lightboxImageTranslateY;
+        lightboxTouchMode = lightboxImageScale > 1.01 ? "pan" : "swipe";
       }, { passive: true });
+      imageLightboxInner.addEventListener("touchmove", (e) => {
+        if (!modalImages.length) return;
+        if (lightboxTouchMode === "pinch" && e.touches.length >= 2) {
+          const [touchA, touchB] = e.touches;
+          if (!lightboxPinchStartDistance) return;
+          const distance = getTouchDistance(touchA, touchB);
+          const midpoint = getTouchMidpoint(touchA, touchB);
+          lightboxImageScale = clampNumber(lightboxPinchStartScale * (distance / lightboxPinchStartDistance), 1, 4);
+          lightboxImageTranslateX = lightboxTouchStartTranslateX + (midpoint.x - lightboxPinchStartMidX);
+          lightboxImageTranslateY = lightboxTouchStartTranslateY + (midpoint.y - lightboxPinchStartMidY);
+          applyLightboxImageTransform();
+          e.preventDefault();
+          return;
+        }
+        if (e.touches.length !== 1) return;
+        const touch = e.touches[0];
+        lightboxTouchDeltaX = Number(touch.clientX || 0) - lightboxTouchStartX;
+        lightboxTouchDeltaY = Number(touch.clientY || 0) - lightboxTouchStartY;
+        if (lightboxTouchMode === "pan" && lightboxImageScale > 1.01) {
+          lightboxImageTranslateX = lightboxTouchStartTranslateX + lightboxTouchDeltaX;
+          lightboxImageTranslateY = lightboxTouchStartTranslateY + lightboxTouchDeltaY;
+          applyLightboxImageTransform();
+          e.preventDefault();
+          return;
+        }
+        if (Math.abs(lightboxTouchDeltaX) > Math.abs(lightboxTouchDeltaY)) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+      imageLightboxInner.addEventListener("touchend", () => {
+        if (lightboxTouchMode === "swipe" && lightboxImageScale <= 1.01) {
+          if (Math.abs(lightboxTouchDeltaY) > 48 && Math.abs(lightboxTouchDeltaY) > Math.abs(lightboxTouchDeltaX)) {
+            closeImageLightbox();
+          } else if (Math.abs(lightboxTouchDeltaX) > 40 && Math.abs(lightboxTouchDeltaX) > Math.abs(lightboxTouchDeltaY) + 8) {
+            showModalImage(lightboxTouchDeltaX > 0 ? modalIndex - 1 : modalIndex + 1);
+          }
+          lightboxGestureIgnoreClickUntil = Date.now() + 320;
+        } else if (lightboxTouchMode === "pan" || lightboxTouchMode === "pinch") {
+          applyLightboxImageTransform(true);
+          lightboxGestureIgnoreClickUntil = Date.now() + 320;
+        }
+        lightboxTouchMode = "idle";
+        lightboxTouchDeltaX = 0;
+        lightboxTouchDeltaY = 0;
+      });
+      imageLightboxInner.addEventListener("touchcancel", () => {
+        lightboxTouchMode = "idle";
+        lightboxTouchDeltaX = 0;
+        lightboxTouchDeltaY = 0;
+        applyLightboxImageTransform(true);
+      });
+    }
+    if (imageLightboxImg) {
+      imageLightboxImg.addEventListener("click", (e) => {
+        if (Date.now() < lightboxGestureIgnoreClickUntil) {
+          e.preventDefault();
+          return;
+        }
+        if (lightboxImageScale > 1.01) {
+          resetLightboxImageTransform(true);
+          return;
+        }
+        zoomLightboxImageInPlace(true);
+      });
     }
     if (modalBody) modalBody.addEventListener("click", () => {
       if (!isMobileViewport()) return;
