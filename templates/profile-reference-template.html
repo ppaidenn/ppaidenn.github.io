@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Profile Reference Template | paiden.com</title>
+  <meta name="description" content="Reference template based on the paiden.com profile view layout">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="apple-touch-icon" href="/images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="/account-menu.css">
+  <style>
+    :root {
+      --side-margin: 10vw;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --brand-font-size: 2.5vw;
+      --nav-font-size: 1.2vw;
+      --spacing-small: 0.5vw;
+      --spacing-large: 1.5vw;
+      --footer-padding: 7vh;
+      --footer-title-font-size: 2vw;
+      --footer-subtitle-font-size: 1vw;
+      --footer-nav-font-size: 1vw;
+      --footer-nav-left: 15vw;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #e0e0e0;
+      color: #111;
+      overflow-x: hidden;
+    }
+
+    .top-nav {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      background: #000;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .top-nav-inner {
+      margin: 0 var(--side-margin);
+      min-height: calc(70px + var(--safe-top));
+      padding-top: var(--safe-top);
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .brand {
+      color: #fff;
+      text-decoration: none;
+      font-size: var(--brand-font-size);
+      font-weight: bold;
+      line-height: 1;
+      padding-bottom: var(--spacing-small);
+      padding-right: var(--spacing-large);
+      border-right: 0.1vw solid #fff;
+      margin-right: var(--spacing-large);
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .nav-links a {
+      color: #fff;
+      text-decoration: none;
+      font-size: var(--nav-font-size);
+      font-weight: bold;
+      line-height: 1;
+      margin-right: var(--spacing-large);
+      padding-bottom: var(--spacing-small);
+      transform: translateY(2px);
+      opacity: 1;
+    }
+
+    .nav-links a:last-child {
+      margin-right: 0;
+    }
+
+    .mobile-fixed-header {
+      display: none;
+    }
+
+    .content-wrap {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      padding: clamp(26px, 4.8vh, 48px) 0 calc(34px + var(--safe-bottom));
+      min-height: calc(100vh - 320px);
+      background:
+        radial-gradient(circle at top left, rgba(204, 217, 210, 0.35), transparent 30%),
+        linear-gradient(180deg, #d8dbd7 0%, #dfe1db 100%);
+    }
+
+    .content-inner {
+      width: min(1240px, calc(100vw - (2 * var(--side-margin))));
+      margin: 0 auto;
+      background:
+        radial-gradient(circle at top left, rgba(208, 224, 214, 0.42), transparent 34%),
+        linear-gradient(180deg, rgba(248,250,247,0.96), rgba(233,237,232,0.9));
+      border: 1px solid rgba(22, 40, 31, 0.1);
+      border-radius: 22px;
+      box-shadow: 0 18px 42px rgba(0,0,0,0.1);
+      padding: clamp(20px, 2.2vw, 32px);
+    }
+
+    .template-main {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.96fr) minmax(360px, 1.04fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .template-panel {
+      border: 1px solid rgba(22, 40, 31, 0.12);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.82), rgba(238,243,238,0.72));
+      padding: clamp(18px, 1.8vw, 24px);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.5),
+        0 10px 24px rgba(21, 32, 25, 0.08);
+    }
+
+    .kicker {
+      letter-spacing: 0.18em;
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(32, 59, 44, 0.72);
+      margin-bottom: 10px;
+    }
+
+    .template-name {
+      margin: 0 0 4px;
+      font-size: clamp(34px, 4vw, 58px);
+      line-height: 0.96;
+      font-weight: 800;
+    }
+
+    .template-handle {
+      margin: 0 0 18px;
+      font-size: 18px;
+      font-weight: 700;
+      color: rgba(17,17,17,0.65);
+    }
+
+    .template-copy {
+      font-size: 16px;
+      line-height: 1.65;
+      color: rgba(17,17,17,0.78);
+      margin: 0 0 16px;
+    }
+
+    .template-box {
+      border-radius: 14px;
+      border: 1px solid rgba(20, 43, 31, 0.12);
+      background: rgba(255,255,255,0.94);
+      padding: 16px;
+      min-height: 110px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.42);
+    }
+
+    .template-box + .template-box {
+      margin-top: 14px;
+    }
+
+    .template-box h3 {
+      margin: 0 0 10px;
+      font-size: 22px;
+    }
+
+    .template-box p {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.6;
+      color: rgba(17,17,17,0.76);
+    }
+
+    .template-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .footer {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      background: #000;
+      color: #fff;
+      padding: var(--footer-padding) 0 calc(var(--footer-padding) + var(--safe-bottom));
+      position: relative;
+    }
+
+    .footer-inner {
+      position: relative;
+      margin: 0 var(--side-margin);
+      min-height: 160px;
+    }
+
+    .footer-left {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .footer-brand {
+      color: #fff;
+      text-decoration: none;
+      font-size: var(--footer-title-font-size);
+      font-weight: bold;
+    }
+
+    .footer-created,
+    .footer-updated {
+      font-size: var(--footer-subtitle-font-size);
+    }
+
+    .footer-nav {
+      position: absolute;
+      top: 50%;
+      left: var(--footer-nav-left);
+      transform: translateY(-45%);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .footer-nav a {
+      font-size: var(--footer-nav-font-size);
+      color: #fff;
+      text-decoration: none;
+      margin-bottom: var(--spacing-small);
+    }
+
+    .footer-nav a:hover {
+      text-decoration: underline;
+    }
+
+    .footer-social {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      transform: translateY(-45%);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 12px;
+    }
+
+    .follow-text {
+      font-size: var(--footer-nav-font-size);
+      font-weight: bold;
+    }
+
+    .social-icons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .social-icons a {
+      color: #fff;
+      font-size: 22px;
+      text-decoration: none;
+    }
+
+    @media (max-width: 900px) {
+      .template-main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      :root {
+        --brand-font-size: 10vw;
+        --nav-font-size: 4.4vw;
+        --footer-title-font-size: 7vw;
+        --footer-subtitle-font-size: 3.6vw;
+        --footer-nav-font-size: 3.6vw;
+      }
+
+      .top-nav {
+        display: none;
+      }
+
+      .mobile-fixed-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        padding: calc(12px + var(--safe-top)) 16px 12px;
+        background: #000;
+      }
+
+      .mobile-fixed-brand {
+        color: #fff;
+        text-decoration: none;
+        font-size: 10vw;
+        font-weight: bold;
+        line-height: 1;
+      }
+
+      .mobile-fixed-nav {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+
+      .mobile-fixed-nav a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 22px;
+        line-height: 1;
+      }
+
+      .content-inner {
+        width: calc(100vw - 32px);
+      }
+
+      .footer-inner {
+        min-height: unset;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+      }
+
+      .footer-nav,
+      .footer-social {
+        position: static;
+        transform: none;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="top-nav" role="navigation" aria-label="Primary site navigation">
+    <div class="top-nav-inner">
+      <a class="brand" href="/">paiden.com</a>
+      <nav class="nav-links">
+        <a href="/resume">Resume</a>
+        <a href="/photos">Photos</a>
+        <a href="/blog">Blog</a>
+        <a href="/contactme">Contact Me</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation">
+    <a class="mobile-fixed-brand" href="/">paiden.com</a>
+    <div class="mobile-fixed-nav">
+      <a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a>
+      <a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a>
+      <a href="/contactme" aria-label="Contact"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a>
+    </div>
+  </div>
+
+  <main class="content-wrap">
+    <section class="content-inner">
+      <div class="template-main">
+        <div class="template-panel">
+          <div class="kicker">PROFILE-STYLE REFERENCE</div>
+          <h1 class="template-name">Sample Layout</h1>
+          <div class="template-handle">@template</div>
+          <p class="template-copy">
+            This page gives you a profile-view-style shell for future pages: black header overhang, soft gray outer field, cream inner container, and balanced stacked content modules.
+          </p>
+          <div class="template-box">
+            <h3>Primary Copy Block</h3>
+            <p>Drop in sample text here when you want to test heading scale, paragraph width, and how a new page concept feels before wiring in real data.</p>
+          </div>
+          <div class="template-box">
+            <h3>Secondary Detail</h3>
+            <p>Use this area for notes, links, side content, or a compact summary section. It mirrors the quieter utility blocks used on the profile pages.</p>
+          </div>
+        </div>
+
+        <div class="template-panel">
+          <div class="template-stack">
+            <div class="template-box">
+              <h3>Right Column Module</h3>
+              <p>This is where a calendar, feed, activity panel, image area, or supporting content block can sit while still feeling anchored to the profile-page layout language.</p>
+            </div>
+            <div class="template-box">
+              <h3>Reference Notes</h3>
+              <p>Keep this template around when you want a page that feels more app-like than the homepage, but still lives inside the same paiden.com header and footer system.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <a class="footer-brand" href="/">paiden.com</a>
+        <div class="footer-created">Created by Paiden Nicks</div>
+        <div class="footer-updated" id="last-updated"></div>
+      </div>
+      <div class="footer-nav">
+        <a href="/resume">Resume</a>
+        <a href="/photos">Photos</a>
+        <a href="/blog">Blog</a>
+        <a href="/contactme">Contact Me</a>
+      </div>
+      <div class="footer-social">
+        <span class="follow-text">Follow Me</span>
+        <div class="social-icons">
+          <a href="https://www.linkedin.com/in/paiden" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i></a>
+          <a href="https://www.instagram.com/paiden_26" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
+          <a href="https://snapchat.com/t/m04JWymy" target="_blank" rel="noopener"><i class="fab fa-snapchat"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/account-menu.js"></script>
+  <script>
+    const lastUpdated = document.getElementById("last-updated");
+    if (lastUpdated) {
+      lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();
+    }
+  </script>
+</body>
+</html>

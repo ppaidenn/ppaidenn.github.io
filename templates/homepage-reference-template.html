@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Homepage Reference Template | paiden.com</title>
+  <meta name="description" content="Reference template based on the paiden.com homepage layout">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="apple-touch-icon" href="/images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="/account-menu.css">
+  <style>
+    :root {
+      --side-margin: 10vw;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --nav-height: 20vh;
+      --brand-font-size: 2.5vw;
+      --nav-font-size: 1.2vw;
+      --spacing-small: 0.5vw;
+      --spacing-large: 1.5vw;
+      --footer-padding: 7vh;
+      --footer-title-font-size: 2vw;
+      --footer-subtitle-font-size: 1vw;
+      --footer-nav-font-size: 1vw;
+      --footer-nav-left: 15vw;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #dbddd9;
+      color: #111;
+      overflow-x: hidden;
+    }
+
+    .mobile-fixed-header {
+      display: none;
+    }
+
+    .slideshow-container {
+      position: relative;
+      width: 100vw;
+      height: 72vh;
+      min-height: 520px;
+      overflow: hidden;
+      margin-left: calc(50% - 50vw);
+      background: #000;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    .slide.active {
+      opacity: 1;
+    }
+
+    .slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .nav-overlay {
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: calc(var(--nav-height) + var(--safe-top));
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .nav-overlay::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: var(--nav-height);
+      background: linear-gradient(180deg, rgba(0,0,0,0.9), rgba(0,0,0,0.3), transparent);
+      pointer-events: none;
+    }
+
+    .nav-inner {
+      position: relative;
+      z-index: 2;
+      margin: 0 var(--side-margin);
+      min-height: calc(64px + var(--safe-top));
+      padding-top: var(--safe-top);
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-start;
+      pointer-events: auto;
+    }
+
+    .brand a {
+      color: #fff;
+      text-decoration: none;
+      font-size: var(--brand-font-size);
+      font-weight: bold;
+      padding-bottom: var(--spacing-small);
+      padding-right: var(--spacing-large);
+      border-right: 0.1vw solid #fff;
+      margin-right: var(--spacing-large);
+    }
+
+    .nav-items {
+      display: flex;
+      align-items: flex-end;
+      gap: 0;
+    }
+
+    .nav-items a {
+      color: #fff;
+      text-decoration: none;
+      font-size: var(--nav-font-size);
+      font-weight: bold;
+      margin-right: var(--spacing-large);
+      padding-bottom: var(--spacing-small);
+      opacity: 1;
+    }
+
+    .nav-items a:last-child {
+      margin-right: 0;
+    }
+
+    .slideshow-text {
+      position: absolute;
+      left: var(--side-margin);
+      bottom: clamp(48px, 8vh, 90px);
+      z-index: 4;
+      color: #fff;
+      max-width: min(720px, 60vw);
+      text-shadow: 0 4px 20px rgba(0,0,0,0.44);
+    }
+
+    .slideshow-text h1 {
+      margin: 0 0 10px;
+      font-size: clamp(40px, 5vw, 72px);
+      line-height: 0.96;
+    }
+
+    .slideshow-text h2 {
+      margin: 0;
+      font-size: clamp(18px, 1.8vw, 28px);
+      font-weight: 600;
+    }
+
+    .main-content {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      padding: 46px 0 calc(52px + var(--safe-bottom));
+      background:
+        radial-gradient(circle at top left, rgba(197, 211, 200, 0.32), transparent 28%),
+        linear-gradient(180deg, #d6dbd4 0%, #d8d9d3 100%);
+    }
+
+    .home-wrap {
+      width: min(1180px, calc(100vw - (2 * var(--side-margin))));
+      margin: 0 auto;
+    }
+
+    .home-panel {
+      border-radius: 28px;
+      border: 1px solid rgba(32, 53, 40, 0.12);
+      background:
+        linear-gradient(180deg, rgba(252,251,245,0.97), rgba(241,239,231,0.94));
+      box-shadow: 0 18px 36px rgba(21, 26, 22, 0.1);
+      padding: clamp(28px, 3vw, 44px);
+    }
+
+    .template-kicker {
+      letter-spacing: 0.16em;
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(58, 78, 62, 0.78);
+      margin-bottom: 12px;
+    }
+
+    .template-title {
+      margin: 0 0 14px;
+      font-size: clamp(34px, 4vw, 54px);
+      line-height: 0.98;
+    }
+
+    .template-copy {
+      max-width: 760px;
+      font-size: 18px;
+      line-height: 1.6;
+      color: rgba(17, 17, 17, 0.82);
+      margin-bottom: 26px;
+    }
+
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 24px;
+    }
+
+    .template-card {
+      border-radius: 20px;
+      background: rgba(255,255,255,0.82);
+      border: 1px solid rgba(28, 42, 32, 0.1);
+      padding: 20px;
+      min-height: 180px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.48);
+    }
+
+    .template-card h3 {
+      margin: 0 0 10px;
+      font-size: 22px;
+    }
+
+    .template-card p {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.6;
+      color: rgba(17, 17, 17, 0.76);
+    }
+
+    .footer {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      background: #000;
+      color: #fff;
+      padding: var(--footer-padding) 0 calc(var(--footer-padding) + var(--safe-bottom));
+      position: relative;
+    }
+
+    .footer-inner {
+      position: relative;
+      margin: 0 var(--side-margin);
+      min-height: 160px;
+    }
+
+    .footer-left {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .footer-brand {
+      color: #fff;
+      text-decoration: none;
+      font-size: var(--footer-title-font-size);
+      font-weight: bold;
+    }
+
+    .footer-created,
+    .footer-updated {
+      font-size: var(--footer-subtitle-font-size);
+    }
+
+    .footer-nav {
+      position: absolute;
+      top: 50%;
+      left: var(--footer-nav-left);
+      transform: translateY(-45%);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .footer-nav a {
+      font-size: var(--footer-nav-font-size);
+      color: #fff;
+      text-decoration: none;
+      margin-bottom: var(--spacing-small);
+    }
+
+    .footer-nav a:hover {
+      text-decoration: underline;
+    }
+
+    .footer-social {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      transform: translateY(-45%);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 12px;
+    }
+
+    .follow-text {
+      font-size: var(--footer-nav-font-size);
+      font-weight: bold;
+    }
+
+    .social-icons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .social-icons a {
+      color: #fff;
+      font-size: 22px;
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      :root {
+        --nav-height: 16vh;
+        --brand-font-size: 10vw;
+        --nav-font-size: 4.4vw;
+        --footer-title-font-size: 7vw;
+        --footer-subtitle-font-size: 3.6vw;
+        --footer-nav-font-size: 3.6vw;
+      }
+
+      .mobile-fixed-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        padding: calc(12px + var(--safe-top)) 16px 12px;
+        background: #000;
+      }
+
+      .mobile-fixed-brand {
+        color: #fff;
+        text-decoration: none;
+        font-size: 10vw;
+        font-weight: bold;
+        line-height: 1;
+      }
+
+      .mobile-fixed-nav {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+
+      .mobile-fixed-nav a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 22px;
+        line-height: 1;
+      }
+
+      .nav-overlay {
+        display: none;
+      }
+
+      .slideshow-container {
+        height: 48vh;
+        min-height: 340px;
+      }
+
+      .slideshow-text {
+        left: 16px;
+        right: 16px;
+        bottom: 28px;
+        max-width: none;
+      }
+
+      .main-content {
+        padding-top: 28px;
+      }
+
+      .home-wrap {
+        width: calc(100vw - 32px);
+      }
+
+      .template-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-inner {
+        min-height: unset;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+      }
+
+      .footer-nav,
+      .footer-social {
+        position: static;
+        transform: none;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation">
+    <a class="mobile-fixed-brand" href="/">paiden.com</a>
+    <div class="mobile-fixed-nav">
+      <a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a>
+      <a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a>
+      <a href="/contactme" aria-label="Contact Me"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a>
+    </div>
+  </div>
+
+  <div class="slideshow-container">
+    <div class="nav-overlay">
+      <div class="nav-inner">
+        <div class="brand">
+          <a href="/">paiden.com</a>
+        </div>
+        <div class="nav-items">
+          <a href="/resume">Resume</a>
+          <a href="/photos">Photos</a>
+          <a href="/blog">Blog</a>
+          <a href="/contactme">Contact Me</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="slideshow-text">
+      <h1>Homepage Template</h1>
+      <h2>Reference layout using the live slideshow, black header overlay, and cream content panel.</h2>
+    </div>
+
+    <div class="slide active"><img src="/images/header/falls.JPG" alt="Falls"></div>
+    <div class="slide"><img src="/images/header/swiss.JPG" alt="Swiss"></div>
+    <div class="slide"><img src="/images/header/rocket.JPG" alt="Rocket"></div>
+    <div class="slide"><img src="/images/header/chief_mtn.JPG" alt="Chief Mountain"></div>
+    <div class="slide"><img src="/images/header/land.JPG" alt="Land"></div>
+    <div class="slide"><img src="/images/header/incline.jpg" alt="Incline"></div>
+    <div class="slide"><img src="/images/header/castle.JPG" alt="Castle"></div>
+    <div class="slide"><img src="/images/header/lake.JPG" alt="Lake"></div>
+    <div class="slide"><img src="/images/header/avalanche.JPG" alt="Avalanche"></div>
+    <div class="slide"><img src="/images/header/sistine.JPG" alt="Sistine"></div>
+  </div>
+
+  <main class="main-content">
+    <section class="home-wrap">
+      <div class="home-panel">
+        <div class="template-kicker">REFERENCE PAGE</div>
+        <h1 class="template-title">Cream Box Content Area</h1>
+        <p class="template-copy">
+          Use this page as a starter when you want the homepage treatment: slideshow hero, black floating header, cream central content box, and the existing footer system. This paragraph is only here to give you a font, spacing, and rhythm reference while you mock up new sections.
+        </p>
+
+        <div class="template-grid">
+          <article class="template-card">
+            <h3>Sample Section</h3>
+            <p>This card is placeholder copy so we can judge headline sizing, paragraph density, and how content breathes inside the cream panel.</p>
+          </article>
+          <article class="template-card">
+            <h3>Another Module</h3>
+            <p>Keep this as a quick block for testing cards, announcements, calls to action, or any homepage-adjacent landing content you want to prototype.</p>
+          </article>
+          <article class="template-card">
+            <h3>Spacing Reference</h3>
+            <p>The goal here is not finished content. It is just enough structure to reuse the homepage shell consistently when you spin up a new page idea.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <a class="footer-brand" href="/">paiden.com</a>
+        <div class="footer-created">Created by Paiden Nicks</div>
+        <div class="footer-updated" id="last-updated"></div>
+      </div>
+
+      <div class="footer-nav">
+        <a href="/resume">Resume</a>
+        <a href="/photos">Photos</a>
+        <a href="/blog">Blog</a>
+        <a href="/contactme">Contact Me</a>
+      </div>
+
+      <div class="footer-social">
+        <span class="follow-text">Follow Me</span>
+        <div class="social-icons">
+          <a href="https://www.linkedin.com/in/paiden" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i></a>
+          <a href="https://www.instagram.com/paiden_26" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
+          <a href="https://snapchat.com/t/m04JWymy" target="_blank" rel="noopener"><i class="fab fa-snapchat"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/account-menu.js"></script>
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    let slideIndex = 0;
+
+    function showNextSlide() {
+      if (!slides.length) return;
+      slides[slideIndex].classList.remove("active");
+      slideIndex = (slideIndex + 1) % slides.length;
+      slides[slideIndex].classList.add("active");
+    }
+
+    if (slides.length > 1) {
+      setInterval(showNextSlide, 5000);
+    }
+
+    const lastUpdated = document.getElementById("last-updated");
+    if (lastUpdated) {
+      lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();
+    }
+  </script>
+</body>
+</html>
