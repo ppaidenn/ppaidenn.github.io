@@ -242,6 +242,9 @@ as $$
 declare
   me uuid := auth.uid();
   friend_target uuid;
+  actor_username text;
+  existing_request_status text;
+  request_row_id uuid;
 begin
   if me is null then
     return false;
@@ -257,6 +260,12 @@ begin
     return false;
   end if;
 
+  select p.username
+    into actor_username
+  from public.profiles p
+  where p.id = me
+  limit 1;
+
   if exists (
     select 1
     from public.friendships f
@@ -266,10 +275,44 @@ begin
     return true;
   end if;
 
+  select fr.status
+    into existing_request_status
+  from public.friend_requests fr
+  where fr.requester_id = me
+    and fr.receiver_id = friend_target
+  limit 1;
+
   insert into public.friend_requests (requester_id, receiver_id, status, responded_at, created_at)
   values (me, friend_target, 'pending', null, now())
   on conflict (requester_id, receiver_id)
-  do update set status = 'pending', responded_at = null, created_at = now();
+  do update set status = 'pending', responded_at = null, created_at = now()
+  returning id into request_row_id;
+
+  if coalesce(existing_request_status, '') <> 'pending'
+     and to_regclass('public.notifications_inbox') is not null then
+    insert into public.notifications_inbox (
+      user_id,
+      type,
+      title,
+      body,
+      link_url,
+      actor_user_id,
+      actor_username,
+      entity_type,
+      entity_id
+    )
+    values (
+      friend_target,
+      'friend_request',
+      'paiden.com',
+      format('New Friend Request\n%s sent you a friend request.', coalesce(nullif(actor_username, ''), 'Someone')),
+      '/profile',
+      me,
+      actor_username,
+      'friendship',
+      coalesce(request_row_id::text, me::text)
+    );
+  end if;
 
   return true;
 end;

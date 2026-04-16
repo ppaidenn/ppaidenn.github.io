@@ -448,6 +448,8 @@ declare
   me uuid := auth.uid();
   target_event public.calendar_events%rowtype;
   owner_name text;
+  existing_friend_request_status text;
+  friend_request_row_id uuid;
 begin
   if me is null or target_share_token is null then
     return;
@@ -513,6 +515,13 @@ begin
       end,
       updated_at = now();
 
+    select fr.status
+      into existing_friend_request_status
+    from public.friend_requests fr
+    where fr.requester_id = target_event.owner_id
+      and fr.receiver_id = me
+    limit 1;
+
     insert into public.friend_requests (requester_id, receiver_id, status, responded_at, created_at)
     values (target_event.owner_id, me, 'pending', null, now())
     on conflict (requester_id, receiver_id)
@@ -528,7 +537,34 @@ begin
       created_at = case
         when friend_requests.status = 'accepted' then friend_requests.created_at
         else now()
-      end;
+      end
+    returning id into friend_request_row_id;
+
+    if coalesce(existing_friend_request_status, '') <> 'pending'
+       and to_regclass('public.notifications_inbox') is not null then
+      insert into public.notifications_inbox (
+        user_id,
+        type,
+        title,
+        body,
+        link_url,
+        actor_user_id,
+        actor_username,
+        entity_type,
+        entity_id
+      )
+      values (
+        me,
+        'friend_request',
+        'paiden.com',
+        format('New Friend Request\n%s sent you a friend request.', coalesce(nullif(owner_name, ''), 'Someone')),
+        '/profile',
+        target_event.owner_id,
+        owner_name,
+        'friendship',
+        coalesce(friend_request_row_id::text, target_event.owner_id::text)
+      );
+    end if;
 
     return query
     select target_event.id, coalesce(owner_name, ''), target_event.title, null::text, 'friend_request_created'::text;
