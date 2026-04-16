@@ -134,7 +134,7 @@
       margin-bottom: 18px;
       align-items: stretch;
     }
-    .profile-top > div:last-child {
+    .profile-summary-card {
       background: rgba(243, 246, 242, 0.84);
       border: 1px solid rgba(20, 43, 31, 0.1);
       border-radius: 16px;
@@ -142,10 +142,12 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.45);
     }
     .profile-avatar-col {
-      display: grid;
+      display: flex;
+      flex-direction: column;
       gap: 12px;
-      align-content: start;
+      min-height: 100%;
     }
+    .profile-avatar-col .btn-secondary { margin-top: auto; }
     .avatar-wrap {
       background: rgba(255,255,255,0.9);
       border: 1px solid rgba(0,0,0,0.12);
@@ -523,6 +525,13 @@
       border-radius: 16px;
       border: 1px solid rgba(20, 43, 31, 0.1);
       background: rgba(241,245,241,0.8);
+    }
+    .profile-section-label {
+      display: block;
+      margin: 0 0 8px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #111;
     }
     .profile-posts-list {
       border: 1px solid rgba(0,0,0,0.14);
@@ -1177,21 +1186,23 @@
                 <button class="btn edit-profile-btn" id="profileEditBtn" type="button"><i class="fa-solid fa-pen" aria-hidden="true"></i> Edit Profile</button>
                 <button class="btn-secondary edit-profile-btn" id="notificationSettingsBtn" type="button"><i class="fa-solid fa-bell" aria-hidden="true"></i> Customize Notifications</button>
               </div>
-              <div>
+              <div class="profile-summary-card">
                 <div class="profile-display-name" id="profileDisplayName">Loading...</div>
                 <div class="profile-display-username" id="profileDisplayUsername">@loading</div>
                 <div class="row"><span class="label">Email:</span> <span id="profileEmail">Loading...</span></div>
                 <div class="row"><span class="label">Bio:</span></div>
                 <div class="profile-readonly-box" id="profileBioDisplay">Loading...</div>
-                <div class="row" style="margin-top:12px;"><span class="label">Links:</span></div>
-                <div class="profile-links-box">
-                  <div class="profile-links-list" id="profileLinksDisplay"></div>
-                </div>
-                <div class="profile-posts-wrap">
-                  <div class="requests-title">My Blog Posts: <span id="profilePostsCounterText">0</span></div>
-                  <div class="profile-posts-list" id="profilePostsList"></div>
-                </div>
               </div>
+            </div>
+            <div class="profile-links-wrap">
+              <div class="row" style="margin-top:0;"><span class="label">Links:</span></div>
+              <div class="profile-links-box">
+                <div class="profile-links-list" id="profileLinksDisplay"></div>
+              </div>
+            </div>
+            <div class="profile-posts-wrap">
+              <span class="profile-section-label">My Blog Posts: <span id="profilePostsCounterText">0</span></span>
+              <div class="profile-posts-list" id="profilePostsList"></div>
             </div>
             <div class="friends-wrap">
               <button class="friends-toggle" id="friendsToggleBtn" type="button" aria-expanded="false">
