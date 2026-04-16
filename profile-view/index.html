@@ -406,6 +406,12 @@
     .footer-social .follow-text { font-size: var(--footer-nav-font-size); font-weight: bold; margin-bottom: var(--spacing-small); }
     .social-icons { display: flex; gap: 1vw; }
     .social-icons a { color: white; font-size: 2vw; text-decoration: none; }
+    @media (max-width: 1220px) {
+      .content-inner {
+        width: min(920px, calc(100vw - (2 * var(--side-margin))));
+      }
+      .profile-main { grid-template-columns: 1fr; }
+    }
     @media (max-width: 768px) {
       body { padding-top: calc(var(--safe-top) + 58px); }
       .top-nav { display: none; }
@@ -423,7 +429,6 @@
       .content-inner {
         width: calc(100vw - 10vw);
       }
-      .profile-main { grid-template-columns: 1fr; }
       .profile-top { grid-template-columns: 1fr; }
       .footer { display: none !important; }
     }
