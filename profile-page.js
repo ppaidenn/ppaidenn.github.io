@@ -46,6 +46,8 @@
   const notificationInboxCounterText = document.getElementById("notificationInboxCounterText");
   const notificationInboxList = document.getElementById("notificationInboxList");
   const notificationInboxMarkAllBtn = document.getElementById("notificationInboxMarkAllBtn");
+  const profilePostsCounterText = document.getElementById("profilePostsCounterText");
+  const profilePostsList = document.getElementById("profilePostsList");
 
   const friendsToggleBtn = document.getElementById("friendsToggleBtn");
   const friendsCounterText = document.getElementById("friendsCounterText");
@@ -112,6 +114,7 @@
     notify_event_one_hour: true,
   };
   let notificationInboxRows = [];
+  let accountPosts = [];
 
   function getEventShareFlowState() {
     try {
@@ -231,6 +234,77 @@
     renderProfileLinks(profile.personal_links);
     if (avatarImgEl) avatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
     if (profileModalAvatarImgEl) profileModalAvatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
+  }
+
+  function formatPostDate(iso) {
+    try {
+      return new Date(iso).toLocaleDateString([], {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function buildPostExcerpt(body) {
+    const text = String(body || "").replace(/\s+/g, " ").trim();
+    if (!text) return "";
+    return text.length > 180 ? `${text.slice(0, 177)}...` : text;
+  }
+
+  function setProfilePostsCount(count) {
+    if (!profilePostsCounterText) return;
+    profilePostsCounterText.textContent = String(Math.max(0, Number(count) || 0));
+  }
+
+  function renderAccountPosts(rows = []) {
+    if (!profilePostsList) return;
+    const list = Array.isArray(rows) ? rows : [];
+    setProfilePostsCount(list.length);
+    if (!list.length) {
+      profilePostsList.innerHTML = '<div class="request-empty">No account-linked blog posts yet.</div>';
+      return;
+    }
+    profilePostsList.innerHTML = list.map((row) => {
+      const title = escapeHTML(String(row.title || "Untitled"));
+      const excerpt = escapeHTML(buildPostExcerpt(row.body));
+      const created = escapeHTML(formatPostDate(row.created_at));
+      const postId = encodeURIComponent(String(row.id || "").trim());
+      return `
+        <div class="profile-post-row">
+          <div class="profile-post-title">${title}</div>
+          <div class="profile-post-meta">${created}</div>
+          <div class="profile-post-body">${excerpt || "No post preview available."}</div>
+          <a class="profile-post-link" href="/blog?post=${postId}"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i><span>Open on Blog</span></a>
+        </div>
+      `;
+    }).join("");
+  }
+
+  async function loadAccountPosts(userId) {
+    if (!profilePostsList || !window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return;
+    const cleanUserId = String(userId || "").trim();
+    if (!cleanUserId) {
+      accountPosts = [];
+      renderAccountPosts([]);
+      return;
+    }
+    const client = window.PaidenAuth.getClient();
+    const { data, error } = await client
+      .from("posts")
+      .select("id, title, body, created_at")
+      .eq("user_id", cleanUserId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (error) {
+      accountPosts = [];
+      renderAccountPosts([]);
+      return;
+    }
+    accountPosts = Array.isArray(data) ? data : [];
+    renderAccountPosts(accountPosts);
   }
 
   function openProfileModal() {
@@ -1185,6 +1259,7 @@
     await loadFriendRequests();
     await loadNotificationInbox();
     await loadNotificationPreferences();
+    await loadAccountPosts(String(res.user.id || ""));
     await loadCalendarEventsForMonth();
     await loadPendingEventInvites();
     const shareState = getEventShareFlowState();
