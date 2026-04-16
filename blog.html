@@ -1192,6 +1192,26 @@
       padding: 4px 10px;
       font-size: 0.85rem;
     }
+    .modal-expand-btn {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      z-index: 2;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.45);
+      color: #fff;
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    .modal-expand-btn:hover {
+      background: rgba(0,0,0,0.58);
+    }
 
     .modal-thumbs {
       display: grid;
@@ -1878,6 +1898,7 @@ Note: I am notified of all posts and will be moderating content. You do not have
 </div>
 <div class="modal-gallery" id="modalGallery">
 <div class="modal-imgwrap">
+<button aria-label="Open full screen image" class="modal-expand-btn" id="modalExpandBtn" type="button"><i class="fa-solid fa-expand"></i></button>
 <div class="modal-counter" id="modalCounter"></div>
 <img alt="Post photo" class="modal-img" id="modalImg">
 </img></div>
@@ -2617,6 +2638,7 @@ function excerpt(text, maxChars = 1000) {
     const modalBody = document.getElementById("modalBody");
     const modalGallery = document.getElementById("modalGallery");
     const modalImgWrap = document.querySelector("#postModal .modal-imgwrap");
+    const modalExpandBtn = document.getElementById("modalExpandBtn");
     const modalImg = document.getElementById("modalImg");
     const modalPrev = document.getElementById("modalPrev");
     const modalNext = document.getElementById("modalNext");
@@ -2716,6 +2738,13 @@ function excerpt(text, maxChars = 1000) {
 
     function resetModalImageTransform(animated = false) {
       modalImageScale = 1;
+      modalImageTranslateX = 0;
+      modalImageTranslateY = 0;
+      applyModalImageTransform(animated);
+    }
+
+    function zoomModalImageInPlace(animated = false) {
+      modalImageScale = 2;
       modalImageTranslateX = 0;
       modalImageTranslateY = 0;
       applyModalImageTransform(animated);
@@ -2978,14 +3007,22 @@ function excerpt(text, maxChars = 1000) {
     modalPrev.addEventListener("click", () => showModalImage(modalIndex - 1));
     modalNext.addEventListener("click", () => showModalImage(modalIndex + 1));
     modalClose.addEventListener("click", closeModal);
+    if (modalExpandBtn) {
+      modalExpandBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openImageLightbox();
+      });
+    }
     if (modalImg) {
-      modalImg.addEventListener("click", () => {
+      modalImg.addEventListener("click", (e) => {
+        e.preventDefault();
         if (Date.now() < modalImageGestureIgnoreClickUntil) return;
         if (modalImageScale > 1.01) {
           resetModalImageTransform(true);
           return;
         }
-        openImageLightbox();
+        zoomModalImageInPlace(true);
       });
     }
     if (modalImgWrap) {
