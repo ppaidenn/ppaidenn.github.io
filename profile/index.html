@@ -270,6 +270,14 @@
       font-size: 14px;
       font-weight: 700;
     }
+    .profile-links-wrap,
+    .profile-posts-wrap,
+    .friends-wrap,
+    .requests-wrap,
+    .inbox-wrap {
+      margin-top: 14px;
+      width: 100%;
+    }
     .btn {
       border: 1px solid rgba(0,0,0,0.2);
       background: #111;
@@ -282,14 +290,6 @@
     }
     .edit-profile-btn {
       width: 100%;
-    }
-    .friends-wrap {
-      margin-top: 12px;
-      width: 100%;
-      padding: 12px;
-      border-radius: 16px;
-      border: 1px solid rgba(20, 43, 31, 0.1);
-      background: rgba(241,245,241,0.8);
     }
     .friends-toggle {
       width: 100%;
@@ -344,14 +344,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-    }
-    .requests-wrap {
-      margin-top: 14px;
-      width: 100%;
-      padding: 12px;
-      border-radius: 16px;
-      border: 1px solid rgba(20, 43, 31, 0.1);
-      background: rgba(241,245,241,0.8);
     }
     .requests-title {
       font-size: 14px;
@@ -414,14 +406,6 @@
     .request-action.reject {
       background: #fff;
       color: #111;
-    }
-    .inbox-wrap {
-      margin-top: 14px;
-      width: 100%;
-      padding: 12px;
-      border-radius: 16px;
-      border: 1px solid rgba(20, 43, 31, 0.1);
-      background: rgba(237,244,239,0.84);
     }
     .inbox-head {
       display: flex;
@@ -517,14 +501,6 @@
       font-size: 12px;
       font-weight: 700;
       color: rgba(17,17,17,0.6);
-    }
-    .profile-posts-wrap {
-      margin-top: 14px;
-      width: 100%;
-      padding: 12px;
-      border-radius: 16px;
-      border: 1px solid rgba(20, 43, 31, 0.1);
-      background: rgba(241,245,241,0.8);
     }
     .profile-section-label {
       display: block;
@@ -1195,7 +1171,7 @@
               </div>
             </div>
             <div class="profile-links-wrap">
-              <div class="row" style="margin-top:0;"><span class="label">Links:</span></div>
+              <span class="profile-section-label">Links</span>
               <div class="profile-links-box">
                 <div class="profile-links-list" id="profileLinksDisplay"></div>
               </div>
@@ -1205,8 +1181,9 @@
               <div class="profile-posts-list" id="profilePostsList"></div>
             </div>
             <div class="friends-wrap">
+              <span class="profile-section-label">Friends</span>
               <button class="friends-toggle" id="friendsToggleBtn" type="button" aria-expanded="false">
-                <span id="friendsCounterText">Friends: 0</span>
+                <span id="friendsCounterText">0</span>
                 <i class="fa-solid fa-caret-down" aria-hidden="true"></i>
               </button>
               <div class="friends-dropdown" id="friendsDropdown"></div>
@@ -1453,7 +1430,7 @@
   <script src="/auth-client.js?v=20260312c"></script>
   <script src="/notifications.js?v=20260312c"></script>
   <script src="/account-menu.js?v=20260415a"></script>
-  <script src="/profile-page.js?v=20260415c"></script>
+  <script src="/profile-page.js?v=20260416a"></script>
   <script>
     const lastUpdated = document.getElementById("last-updated");
     if (lastUpdated) lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();

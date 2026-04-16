@@ -798,7 +798,7 @@
   function setFriendsCount(count) {
     if (!friendsCounterText) return;
     const total = Number.isFinite(count) && count > 0 ? count : 0;
-    friendsCounterText.textContent = `Friends: ${total}`;
+    friendsCounterText.textContent = String(total);
   }
 
   function renderInviteSelectedChips() {
