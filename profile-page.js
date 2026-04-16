@@ -870,19 +870,64 @@
     renderNotificationInbox(notificationInboxRows);
   }
 
+  function isSameProfileNotificationLink(linkUrl) {
+    const raw = String(linkUrl || "").trim();
+    if (!raw) return false;
+    try {
+      const parsed = new URL(raw, window.location.origin);
+      return parsed.origin === window.location.origin && parsed.pathname === "/profile";
+    } catch (_) {
+      return raw === "/profile" || raw.startsWith("/profile?");
+    }
+  }
+
+  function focusNotificationTarget(row) {
+    const type = String(row?.type || "").trim();
+    let target = null;
+    let message = "";
+    if (type === "friend_request") {
+      target = friendRequestsList;
+      message = "Opened friend request section.";
+    } else if (type === "event_invite") {
+      target = eventInvitesList;
+      message = "Opened event invites section.";
+    } else if (type === "event_update" || type === "event_reminder") {
+      target = calendarEventsList || calendarGrid;
+      message = "Opened calendar activity section.";
+    }
+    if (!target || typeof target.scrollIntoView !== "function") return false;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (message) setStatus(message);
+    return true;
+  }
+
   async function markNotificationRead(notificationId, { navigate = false } = {}) {
     const id = String(notificationId || "").trim();
-    if (!id || !window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return;
+    if (!id || !window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return false;
     const row = notificationInboxRows.find((item) => String(item.notification_id || "") === id) || null;
     const client = window.PaidenAuth.getClient();
-    await client.rpc("mark_notification_read", { target_notification_id: id }).catch(() => ({}));
+    const { data, error } = await client.rpc("mark_notification_read", { target_notification_id: id });
+    if (error || data === false) {
+      setStatus((error && error.message) || "Could not mark notification read.", true);
+      return false;
+    }
     if (row) {
       row.read_at = row.read_at || new Date().toISOString();
     }
     renderNotificationInbox(notificationInboxRows);
-    if (navigate && row && row.link_url) {
-      window.location.href = String(row.link_url);
+    if (navigate && row) {
+      const linkUrl = String(row.link_url || "").trim();
+      if (linkUrl) {
+        if (isSameProfileNotificationLink(linkUrl) && focusNotificationTarget(row)) {
+          await loadNotificationInbox();
+          return true;
+        }
+        window.location.href = linkUrl;
+        return true;
+      }
     }
+    await loadNotificationInbox();
+    return true;
   }
 
   async function markAllNotificationsRead() {
@@ -1195,6 +1240,25 @@
   if (notificationInboxMarkAllBtn) {
     notificationInboxMarkAllBtn.addEventListener("click", async () => {
       await markAllNotificationsRead();
+    });
+  }
+
+  if (notificationInboxList) {
+    notificationInboxList.addEventListener("click", async (event) => {
+      const clickTarget = event.target instanceof Element ? event.target : null;
+      if (!clickTarget) return;
+      const openNotificationBtn = clickTarget.closest("[data-notification-open]");
+      if (openNotificationBtn) {
+        event.preventDefault();
+        await markNotificationRead(String(openNotificationBtn.getAttribute("data-notification-open") || "").trim(), { navigate: true });
+        return;
+      }
+
+      const markNotificationBtn = clickTarget.closest("[data-notification-read]");
+      if (markNotificationBtn) {
+        event.preventDefault();
+        await markNotificationRead(String(markNotificationBtn.getAttribute("data-notification-read") || "").trim(), { navigate: false });
+      }
     });
   }
 
@@ -1611,20 +1675,6 @@
         selectedInviteSet.delete(username);
         renderInviteFriendOptions();
       }
-      return;
-    }
-
-    const openNotificationBtn = event.target.closest("[data-notification-open]");
-    if (openNotificationBtn) {
-      event.preventDefault();
-      await markNotificationRead(String(openNotificationBtn.getAttribute("data-notification-open") || "").trim(), { navigate: true });
-      return;
-    }
-
-    const markNotificationBtn = event.target.closest("[data-notification-read]");
-    if (markNotificationBtn) {
-      event.preventDefault();
-      await markNotificationRead(String(markNotificationBtn.getAttribute("data-notification-read") || "").trim(), { navigate: false });
       return;
     }
 
