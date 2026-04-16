@@ -82,23 +82,37 @@
       min-height: calc(100vh - 320px);
     }
     .content-inner {
-      margin: 0 var(--side-margin);
+      width: min(1280px, calc(100vw - (2 * var(--side-margin))));
+      margin: 0 auto;
       background: rgba(255,255,255,0.75);
       border: 1px solid rgba(0,0,0,0.1);
       border-radius: 22px;
       box-shadow: 0 10px 34px rgba(0,0,0,0.08);
       padding: clamp(18px, 2.2vw, 32px);
-      max-width: none;
     }
     .profile-main {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 18px;
+      grid-template-columns: minmax(320px, 0.94fr) minmax(420px, 1.06fr);
+      gap: 20px;
       align-items: start;
     }
     .profile-left-col,
     .profile-right-col {
       min-width: 0;
+    }
+    .profile-panel {
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.58);
+      padding: clamp(16px, 1.8vw, 24px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+    }
+    .profile-left-col {
+      display: grid;
+    }
+    .profile-right-col {
+      display: grid;
+      align-content: start;
     }
     .kicker {
       letter-spacing: 0.18em;
@@ -255,7 +269,7 @@
     }
     .friends-wrap {
       margin-top: 12px;
-      max-width: 320px;
+      width: 100%;
     }
     .friends-toggle {
       width: 100%;
@@ -313,7 +327,7 @@
     }
     .requests-wrap {
       margin-top: 14px;
-      max-width: 420px;
+      width: 100%;
     }
     .requests-title {
       font-size: 14px;
@@ -379,7 +393,7 @@
     }
     .inbox-wrap {
       margin-top: 14px;
-      max-width: 420px;
+      width: 100%;
     }
     .inbox-head {
       display: flex;
@@ -478,7 +492,7 @@
     }
     .profile-posts-wrap {
       margin-top: 14px;
-      max-width: 420px;
+      width: 100%;
     }
     .profile-posts-list {
       border: 1px solid rgba(0,0,0,0.14);
@@ -1071,6 +1085,9 @@
       .mobile-fixed-brand { color: #fff; text-decoration: none; font-weight: 800; font-size: clamp(22px, 6.4vw, 30px); line-height: 1; }
       .mobile-fixed-nav { display: flex; align-items: center; gap: 18px; padding-left: 16px; }
       .mobile-fixed-nav a { color: #fff; text-decoration: none; font-size: 22px; line-height: 1; }
+      .content-inner {
+        width: calc(100vw - 10vw);
+      }
       .profile-main { grid-template-columns: 1fr; }
       .profile-top { grid-template-columns: 1fr; }
       .footer { display: none !important; }
@@ -1119,74 +1136,78 @@
     <section class="content-inner">
       <div class="profile-main">
         <div class="profile-left-col">
-          <div class="kicker">ACCOUNT</div>
-          <h1>Profile</h1>
-          <div class="profile-top">
-            <div class="profile-avatar-col">
-              <div class="avatar-wrap">
-                <img id="profileAvatarImg" alt="Profile photo" src="/images/default_pfp.jpg">
+          <div class="profile-panel">
+            <div class="kicker">ACCOUNT</div>
+            <h1>Profile</h1>
+            <div class="profile-top">
+              <div class="profile-avatar-col">
+                <div class="avatar-wrap">
+                  <img id="profileAvatarImg" alt="Profile photo" src="/images/default_pfp.jpg">
+                </div>
+                <button class="btn edit-profile-btn" id="profileEditBtn" type="button"><i class="fa-solid fa-pen" aria-hidden="true"></i> Edit Profile</button>
+                <button class="btn-secondary edit-profile-btn" id="notificationSettingsBtn" type="button"><i class="fa-solid fa-bell" aria-hidden="true"></i> Customize Notifications</button>
               </div>
-              <button class="btn edit-profile-btn" id="profileEditBtn" type="button"><i class="fa-solid fa-pen" aria-hidden="true"></i> Edit Profile</button>
-              <button class="btn-secondary edit-profile-btn" id="notificationSettingsBtn" type="button"><i class="fa-solid fa-bell" aria-hidden="true"></i> Customize Notifications</button>
-            </div>
-            <div>
-              <div class="profile-display-name" id="profileDisplayName">Loading...</div>
-              <div class="profile-display-username" id="profileDisplayUsername">@loading</div>
-              <div class="row"><span class="label">Email:</span> <span id="profileEmail">Loading...</span></div>
-              <div class="row"><span class="label">Bio:</span></div>
-              <div class="profile-readonly-box" id="profileBioDisplay">Loading...</div>
-              <div class="row" style="margin-top:12px;"><span class="label">Links:</span></div>
-              <div class="profile-links-box">
-                <div class="profile-links-list" id="profileLinksDisplay"></div>
-              </div>
-              <div class="profile-posts-wrap">
-                <div class="requests-title">My Blog Posts: <span id="profilePostsCounterText">0</span></div>
-                <div class="profile-posts-list" id="profilePostsList"></div>
+              <div>
+                <div class="profile-display-name" id="profileDisplayName">Loading...</div>
+                <div class="profile-display-username" id="profileDisplayUsername">@loading</div>
+                <div class="row"><span class="label">Email:</span> <span id="profileEmail">Loading...</span></div>
+                <div class="row"><span class="label">Bio:</span></div>
+                <div class="profile-readonly-box" id="profileBioDisplay">Loading...</div>
+                <div class="row" style="margin-top:12px;"><span class="label">Links:</span></div>
+                <div class="profile-links-box">
+                  <div class="profile-links-list" id="profileLinksDisplay"></div>
+                </div>
+                <div class="profile-posts-wrap">
+                  <div class="requests-title">My Blog Posts: <span id="profilePostsCounterText">0</span></div>
+                  <div class="profile-posts-list" id="profilePostsList"></div>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="friends-wrap">
-            <button class="friends-toggle" id="friendsToggleBtn" type="button" aria-expanded="false">
-              <span id="friendsCounterText">Friends: 0</span>
-              <i class="fa-solid fa-caret-down" aria-hidden="true"></i>
-            </button>
-            <div class="friends-dropdown" id="friendsDropdown"></div>
-          </div>
-          <div class="requests-wrap">
-            <div class="requests-title">Friend Requests: <span id="friendRequestsCounterText">0</span></div>
-            <div class="requests-list" id="friendRequestsList"></div>
-          </div>
-          <div class="inbox-wrap">
-            <div class="inbox-head">
-              <div class="inbox-title">Notification Inbox: <span id="notificationInboxCounterText">0</span></div>
-              <button class="inbox-mark-btn" id="notificationInboxMarkAllBtn" type="button">Mark All Read</button>
+            <div class="friends-wrap">
+              <button class="friends-toggle" id="friendsToggleBtn" type="button" aria-expanded="false">
+                <span id="friendsCounterText">Friends: 0</span>
+                <i class="fa-solid fa-caret-down" aria-hidden="true"></i>
+              </button>
+              <div class="friends-dropdown" id="friendsDropdown"></div>
             </div>
-            <div class="inbox-list" id="notificationInboxList"></div>
-            <div class="inbox-note">Account notifications are saved here even if push delivery is missed.</div>
+            <div class="requests-wrap">
+              <div class="requests-title">Friend Requests: <span id="friendRequestsCounterText">0</span></div>
+              <div class="requests-list" id="friendRequestsList"></div>
+            </div>
+            <div class="inbox-wrap">
+              <div class="inbox-head">
+                <div class="inbox-title">Notification Inbox: <span id="notificationInboxCounterText">0</span></div>
+                <button class="inbox-mark-btn" id="notificationInboxMarkAllBtn" type="button">Mark All Read</button>
+              </div>
+              <div class="inbox-list" id="notificationInboxList"></div>
+              <div class="inbox-note">Account notifications are saved here even if push delivery is missed.</div>
+            </div>
           </div>
         </div>
         <div class="profile-right-col">
-          <div class="calendar-wrap">
-            <div class="calendar-head">
-              <div class="calendar-head-left">
-                <button class="calendar-add-btn" id="calendarNewEventBtn" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> New Event</button>
-                <div class="calendar-month" id="calendarMonthLabel">Calendar</div>
-                <select class="calendar-select" id="calendarMonthSelect" aria-label="Select month"></select>
-                <select class="calendar-select" id="calendarYearSelect" aria-label="Select year"></select>
+          <div class="profile-panel">
+            <div class="calendar-wrap">
+              <div class="calendar-head">
+                <div class="calendar-head-left">
+                  <button class="calendar-add-btn" id="calendarNewEventBtn" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> New Event</button>
+                  <div class="calendar-month" id="calendarMonthLabel">Calendar</div>
+                  <select class="calendar-select" id="calendarMonthSelect" aria-label="Select month"></select>
+                  <select class="calendar-select" id="calendarYearSelect" aria-label="Select year"></select>
+                </div>
+                <div class="calendar-head-right">
+                  <button class="calendar-nav-btn" id="calendarPrevMonthBtn" type="button"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+                  <button class="calendar-nav-btn" id="calendarNextMonthBtn" type="button"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+                </div>
               </div>
-              <div class="calendar-head-right">
-                <button class="calendar-nav-btn" id="calendarPrevMonthBtn" type="button"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
-                <button class="calendar-nav-btn" id="calendarNextMonthBtn" type="button"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
-              </div>
-            </div>
-            <div class="calendar-weekdays" id="calendarWeekdays"></div>
-            <div class="calendar-grid" id="calendarGrid"></div>
-            <div class="calendar-hint">Tip: Right-click a current/future day for quick event create.</div>
-            <div class="calendar-events-list" id="calendarEventsList"></div>
+              <div class="calendar-weekdays" id="calendarWeekdays"></div>
+              <div class="calendar-grid" id="calendarGrid"></div>
+              <div class="calendar-hint">Tip: Right-click a current/future day for quick event create.</div>
+              <div class="calendar-events-list" id="calendarEventsList"></div>
 
-            <div class="event-invites-wrap">
-              <div class="requests-title">Event Invites: <span id="eventInvitesCounterText">0</span></div>
-              <div class="event-invites-list" id="eventInvitesList"></div>
+              <div class="event-invites-wrap">
+                <div class="requests-title">Event Invites: <span id="eventInvitesCounterText">0</span></div>
+                <div class="event-invites-list" id="eventInvitesList"></div>
+              </div>
             </div>
           </div>
         </div>
