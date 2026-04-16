@@ -38,6 +38,14 @@
       overflow-x: hidden;
     }
 
+    body.use-compact-header .top-nav {
+      display: none;
+    }
+
+    body.use-compact-header .mobile-fixed-header {
+      display: flex;
+    }
+
     .top-nav {
       width: 100vw;
       margin-left: calc(50% - 50vw);
@@ -208,10 +216,17 @@
 
     .footer-inner {
       margin: 0 var(--side-margin);
-      display: grid;
-      grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
-      gap: 28px;
+      display: flex;
+      justify-content: space-between;
+      gap: 40px;
       align-items: start;
+    }
+
+    .footer-left-cluster {
+      display: flex;
+      align-items: flex-start;
+      gap: 40px;
+      flex-wrap: wrap;
     }
 
     .footer-left {
@@ -236,6 +251,7 @@
       display: flex;
       flex-direction: column;
       align-items: flex-start;
+      padding-top: 4px;
     }
 
     .footer-nav a {
@@ -272,13 +288,8 @@
       text-decoration: none;
     }
 
-    @media (max-width: 1220px) {
-      .top-nav {
-        display: none;
-      }
-
+    @media (max-width: 768px) {
       .mobile-fixed-header {
-        display: flex;
         align-items: center;
         justify-content: space-between;
         position: sticky;
@@ -308,24 +319,7 @@
         font-size: 22px;
         line-height: 1;
       }
-    }
 
-    @media (max-width: 1100px) {
-      .template-main {
-        grid-template-columns: 1fr;
-      }
-
-      .footer-inner {
-        grid-template-columns: 1fr;
-        gap: 30px;
-      }
-
-      .footer-social {
-        align-items: flex-start;
-      }
-    }
-
-    @media (max-width: 768px) {
       :root {
         --footer-title-font-size: 36px;
         --footer-subtitle-font-size: 18px;
@@ -338,6 +332,25 @@
 
       .content-inner {
         width: calc(100vw - 32px);
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .template-main {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-inner {
+        flex-direction: column;
+        gap: 30px;
+      }
+
+      .footer-left-cluster {
+        gap: 28px;
+      }
+
+      .footer-social {
+        align-items: flex-start;
       }
     }
   </style>
@@ -402,16 +415,18 @@
 
   <footer class="footer">
     <div class="footer-inner">
-      <div class="footer-left">
-        <a class="footer-brand" href="/">paiden.com</a>
-        <div class="footer-created">Created by Paiden Nicks</div>
-        <div class="footer-updated" id="last-updated"></div>
-      </div>
-      <div class="footer-nav">
-        <a href="/resume">Resume</a>
-        <a href="/photos">Photos</a>
-        <a href="/blog">Blog</a>
-        <a href="/contactme">Contact Me</a>
+      <div class="footer-left-cluster">
+        <div class="footer-left">
+          <a class="footer-brand" href="/">paiden.com</a>
+          <div class="footer-created">Created by Paiden Nicks</div>
+          <div class="footer-updated" id="last-updated"></div>
+        </div>
+        <div class="footer-nav">
+          <a href="/resume">Resume</a>
+          <a href="/photos">Photos</a>
+          <a href="/blog">Blog</a>
+          <a href="/contactme">Contact Me</a>
+        </div>
       </div>
       <div class="footer-social">
         <span class="follow-text">Follow Me</span>
@@ -426,10 +441,34 @@
 
   <script src="/account-menu.js"></script>
   <script>
+    function syncTemplateHeaderMode() {
+      const topNav = document.querySelector(".top-nav");
+      const navInner = document.querySelector(".top-nav-inner");
+      const navLinks = document.querySelector(".top-nav .nav-links");
+      if (!topNav || !navInner || !navLinks) return;
+
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+      if (viewportWidth <= 768) {
+        document.body.classList.add("use-compact-header");
+        return;
+      }
+
+      const leftGap = navInner.getBoundingClientRect().left;
+      const rightGap = viewportWidth - navLinks.getBoundingClientRect().right;
+      const shouldUseCompactHeader = rightGap <= leftGap + 2;
+      document.body.classList.toggle("use-compact-header", shouldUseCompactHeader);
+    }
+
     const lastUpdated = document.getElementById("last-updated");
     if (lastUpdated) {
       lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();
     }
+
+    syncTemplateHeaderMode();
+    window.addEventListener("resize", syncTemplateHeaderMode);
+    window.addEventListener("load", syncTemplateHeaderMode);
+    setTimeout(syncTemplateHeaderMode, 250);
+    setTimeout(syncTemplateHeaderMode, 1000);
   </script>
 </body>
 </html>
