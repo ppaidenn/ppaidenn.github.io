@@ -84,10 +84,12 @@
     .content-inner {
       width: min(1280px, calc(100vw - (2 * var(--side-margin))));
       margin: 0 auto;
-      background: rgba(255,255,255,0.75);
-      border: 1px solid rgba(0,0,0,0.1);
+      background:
+        radial-gradient(circle at top left, rgba(208, 224, 214, 0.42), transparent 34%),
+        linear-gradient(180deg, rgba(248,250,247,0.96), rgba(233,237,232,0.9));
+      border: 1px solid rgba(22, 40, 31, 0.1);
       border-radius: 22px;
-      box-shadow: 0 10px 34px rgba(0,0,0,0.08);
+      box-shadow: 0 18px 42px rgba(0,0,0,0.1);
       padding: clamp(18px, 2.2vw, 32px);
     }
     .profile-main {
@@ -101,11 +103,14 @@
       min-width: 0;
     }
     .profile-panel {
-      border: 1px solid rgba(0,0,0,0.1);
+      border: 1px solid rgba(22, 40, 31, 0.12);
       border-radius: 18px;
-      background: rgba(255,255,255,0.58);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.82), rgba(238,243,238,0.72));
       padding: clamp(16px, 1.8vw, 24px);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.5),
+        0 10px 24px rgba(21, 32, 25, 0.08);
     }
     .profile-left-col {
       display: grid;
@@ -118,16 +123,23 @@
       letter-spacing: 0.18em;
       font-size: 12px;
       font-weight: 800;
-      color: rgba(16,21,28,0.65);
+      color: rgba(32, 59, 44, 0.72);
       margin-bottom: 10px;
     }
     h1 { margin: 0 0 12px; font-size: clamp(30px, 3.8vw, 48px); }
     .profile-top {
       display: grid;
       grid-template-columns: 170px 1fr;
-      gap: 18px;
-      margin-bottom: 16px;
-      align-items: start;
+      gap: 20px;
+      margin-bottom: 18px;
+      align-items: stretch;
+    }
+    .profile-top > div:last-child {
+      background: rgba(243, 246, 242, 0.84);
+      border: 1px solid rgba(20, 43, 31, 0.1);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.45);
     }
     .profile-avatar-col {
       display: grid;
@@ -211,21 +223,23 @@
     }
     .profile-readonly-box {
       width: 100%;
-      border: 1px solid rgba(0,0,0,0.14);
+      border: 1px solid rgba(20, 43, 31, 0.12);
       border-radius: 12px;
       padding: 12px;
       font-size: 15px;
-      background: rgba(255,255,255,0.82);
+      background: rgba(255,255,255,0.94);
       min-height: 110px;
       white-space: pre-wrap;
       word-break: break-word;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
     }
     .profile-links-box {
       width: 100%;
-      border: 1px solid rgba(0,0,0,0.14);
+      border: 1px solid rgba(20, 43, 31, 0.12);
       border-radius: 12px;
       padding: 12px;
-      background: rgba(255,255,255,0.82);
+      background: rgba(255,255,255,0.94);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
     }
     .profile-links-list {
       display: grid;
@@ -270,6 +284,10 @@
     .friends-wrap {
       margin-top: 12px;
       width: 100%;
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(20, 43, 31, 0.1);
+      background: rgba(241,245,241,0.8);
     }
     .friends-toggle {
       width: 100%;
@@ -328,6 +346,10 @@
     .requests-wrap {
       margin-top: 14px;
       width: 100%;
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(20, 43, 31, 0.1);
+      background: rgba(241,245,241,0.8);
     }
     .requests-title {
       font-size: 14px;
@@ -394,6 +416,10 @@
     .inbox-wrap {
       margin-top: 14px;
       width: 100%;
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(20, 43, 31, 0.1);
+      background: rgba(237,244,239,0.84);
     }
     .inbox-head {
       display: flex;
@@ -493,6 +519,10 @@
     .profile-posts-wrap {
       margin-top: 14px;
       width: 100%;
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(20, 43, 31, 0.1);
+      background: rgba(241,245,241,0.8);
     }
     .profile-posts-list {
       border: 1px solid rgba(0,0,0,0.14);
