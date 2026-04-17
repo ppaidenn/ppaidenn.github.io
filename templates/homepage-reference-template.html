@@ -238,12 +238,32 @@
     }
 
     .footer-inner {
-      position: relative;
       margin: 0 var(--side-margin);
-      min-height: 160px;
+      display: flex;
+      justify-content: space-between;
+      gap: 40px;
+      align-items: start;
     }
 
-    .footer-left {
+    .footer-left-cluster {
+      display: grid;
+      grid-template-columns: auto auto;
+      grid-template-rows: auto auto;
+      column-gap: 40px;
+      row-gap: 10px;
+      align-items: start;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .footer-brand-wrap {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .footer-meta {
+      grid-column: 1;
+      grid-row: 2;
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -262,13 +282,13 @@
     }
 
     .footer-nav {
-      position: absolute;
-      top: 50%;
-      left: var(--footer-nav-left);
-      transform: translateY(-45%);
+      grid-column: 2;
+      grid-row: 1 / span 2;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
+      align-self: stretch;
+      padding-top: 4px;
     }
 
     .footer-nav a {
@@ -283,13 +303,11 @@
     }
 
     .footer-social {
-      position: absolute;
-      top: 50%;
-      right: 0;
-      transform: translateY(-45%);
       display: flex;
       flex-direction: column;
       align-items: flex-end;
+      margin-left: auto;
+      flex: 0 0 auto;
       gap: 12px;
     }
 
@@ -300,13 +318,20 @@
 
     .social-icons {
       display: flex;
-      gap: 12px;
+      gap: 1vw;
+      justify-content: flex-end;
+      flex-wrap: nowrap;
     }
 
     .social-icons a {
       color: #fff;
-      font-size: 22px;
+      font-size: 2vw;
       text-decoration: none;
+      transition: transform 0.2s ease;
+    }
+
+    .social-icons a:hover {
+      transform: scale(1.1);
     }
 
     @media (max-width: 768px) {
@@ -375,22 +400,34 @@
         width: calc(100vw - 32px);
       }
 
-      .template-grid {
-        grid-template-columns: 1fr;
-      }
-
       .footer-inner {
-        min-height: unset;
         display: flex;
         flex-direction: column;
         gap: 30px;
       }
 
-      .footer-nav,
+      .footer-left-cluster {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
       .footer-social {
-        position: static;
-        transform: none;
         align-items: flex-start;
+        margin-left: 0;
+      }
+
+      .social-icons {
+        gap: 14px;
+        justify-content: flex-start;
+      }
+
+      .social-icons a {
+        font-size: 5vw;
+      }
+
+      .template-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -466,17 +503,20 @@
 
   <footer class="footer">
     <div class="footer-inner">
-      <div class="footer-left">
-        <a class="footer-brand" href="/">paiden.com</a>
-        <div class="footer-created">Created by Paiden Nicks</div>
-        <div class="footer-updated" id="last-updated"></div>
-      </div>
-
-      <div class="footer-nav">
-        <a href="/resume">Resume</a>
-        <a href="/photos">Photos</a>
-        <a href="/blog">Blog</a>
-        <a href="/contactme">Contact Me</a>
+      <div class="footer-left-cluster">
+        <div class="footer-brand-wrap">
+          <a class="footer-brand" href="/">paiden.com</a>
+        </div>
+        <div class="footer-meta">
+          <div class="footer-created">Created by Paiden Nicks</div>
+          <div class="footer-updated" id="last-updated"></div>
+        </div>
+        <div class="footer-nav">
+          <a href="/resume">Resume</a>
+          <a href="/photos">Photos</a>
+          <a href="/blog">Blog</a>
+          <a href="/contactme">Contact Me</a>
+        </div>
       </div>
 
       <div class="footer-social">

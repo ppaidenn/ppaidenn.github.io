@@ -227,15 +227,24 @@
     }
 
     .footer-left-cluster {
-      display: flex;
+      display: grid;
+      grid-template-columns: auto auto;
+      grid-template-rows: auto auto;
+      column-gap: 40px;
+      row-gap: 10px;
       align-items: flex-start;
-      gap: 40px;
       flex: 1 1 auto;
       min-width: 0;
-      flex-wrap: nowrap;
     }
 
-    .footer-left {
+    .footer-brand-wrap {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .footer-meta {
+      grid-column: 1;
+      grid-row: 2;
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -254,9 +263,12 @@
     }
 
     .footer-nav {
+      grid-column: 2;
+      grid-row: 1 / span 2;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
+      align-self: stretch;
       padding-top: 4px;
     }
 
@@ -289,15 +301,20 @@
 
     .social-icons {
       display: flex;
-      gap: 12px;
+      gap: 1vw;
       flex-wrap: nowrap;
       justify-content: flex-end;
     }
 
     .social-icons a {
       color: #fff;
-      font-size: 22px;
+      font-size: 2vw;
       text-decoration: none;
+      transition: transform 0.2s ease;
+    }
+
+    .social-icons a:hover {
+      transform: scale(1.1);
     }
 
     @media (max-width: 768px) {
@@ -344,6 +361,14 @@
 
       .content-inner {
         width: calc(100vw - 32px);
+      }
+
+      .social-icons {
+        gap: 14px;
+      }
+
+      .social-icons a {
+        font-size: 5vw;
       }
     }
 
@@ -415,8 +440,10 @@
   <footer class="footer">
     <div class="footer-inner">
       <div class="footer-left-cluster">
-        <div class="footer-left">
+        <div class="footer-brand-wrap">
           <a class="footer-brand" href="/">paiden.com</a>
+        </div>
+        <div class="footer-meta">
           <div class="footer-created">Created by Paiden Nicks</div>
           <div class="footer-updated" id="last-updated"></div>
         </div>
