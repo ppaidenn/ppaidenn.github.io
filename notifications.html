@@ -223,6 +223,7 @@
   </style>
   <link rel="stylesheet" href="/account-menu.css">
   <link rel="stylesheet" href="/shared-footer.css?v=20260417a">
+  <link rel="stylesheet" href="/shared-app-header.css?v=20260417a">
 </head>
 <body>
   <header class="top-nav" role="navigation" aria-label="Primary site navigation">
@@ -289,7 +290,6 @@
   </footer>
 
   <script src="/notifications.js"></script>
-  <script src="/account-menu.js"></script>
   <script>
     const statusEl = document.getElementById("notifyStatus");
     const btnEnable = document.getElementById("btnEnableNotifications");
@@ -321,7 +321,13 @@
     const lastUpdated = document.getElementById("last-updated");
     if (lastUpdated) lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();
   </script>
+  <script src="/shared-app-header.js?v=20260417a"></script>
+  <script src="/account-menu.js?v=20260417a"></script>
   <script src="/shared-footer.js?v=20260417a"></script>
 </body>
 </html>
+
+
+
+
 
