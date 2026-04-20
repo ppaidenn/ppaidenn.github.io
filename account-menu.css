@@ -153,8 +153,11 @@
 .mobile-fixed-nav .profile-nav-link {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   font-size: 22px;
+  min-width: 28px;
+  min-height: 28px;
 }
 
 .nav-items .profile-icon,
@@ -168,6 +171,23 @@
 
 .mobile-fixed-nav .profile-nav-link {
   color: #fff;
+}
+
+.mobile-fixed-header,
+.mobile-fixed-nav,
+.mobile-fixed-nav .profile-menu {
+  overflow: visible !important;
+}
+
+.mobile-fixed-nav .profile-menu {
+  position: relative;
+  z-index: 10001;
+  pointer-events: auto;
+}
+
+.mobile-fixed-nav .profile-dropdown {
+  top: calc(100% + 10px);
+  right: 0;
 }
 
 .profile-dropdown {

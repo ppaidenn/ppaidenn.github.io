@@ -70,6 +70,35 @@
       if (existing) existing.remove();
       container.insertAdjacentHTML("beforeend", buildMenuHtml({ signedIn, isMobile, pendingCount }));
     });
+    bindMenuInteractions();
+  }
+
+  function bindMenuInteractions() {
+    document.querySelectorAll(".profile-menu").forEach((menu) => {
+      if (menu.dataset.bound === "1") return;
+      menu.dataset.bound = "1";
+
+      const trigger = menu.querySelector(".profile-nav-link");
+      if (trigger) {
+        trigger.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const willOpen = !menu.classList.contains("is-open");
+          closeAllProfileMenus(menu);
+          menu.classList.toggle("is-open", willOpen);
+          trigger.setAttribute("aria-expanded", willOpen ? "true" : "false");
+        });
+      }
+
+      const signOutBtn = menu.querySelector(".profile-signout");
+      if (signOutBtn) {
+        signOutBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          handleSignOut();
+        });
+      }
+    });
   }
 
   async function resolveAuthState() {
@@ -114,25 +143,6 @@
   }
 
   document.addEventListener("click", (event) => {
-    const signOutBtn = event.target.closest(".profile-signout");
-    if (signOutBtn) {
-      event.preventDefault();
-      handleSignOut();
-      return;
-    }
-
-    const trigger = event.target.closest(".profile-nav-link");
-    if (trigger) {
-      event.preventDefault();
-      const menu = trigger.closest(".profile-menu");
-      if (!menu) return;
-      const willOpen = !menu.classList.contains("is-open");
-      closeAllProfileMenus(menu);
-      menu.classList.toggle("is-open", willOpen);
-      trigger.setAttribute("aria-expanded", willOpen ? "true" : "false");
-      return;
-    }
-
     if (!event.target.closest(".profile-menu")) {
       closeAllProfileMenus();
     }
