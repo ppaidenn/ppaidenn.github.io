@@ -18,23 +18,33 @@
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  letter-spacing: inherit;
   color: inherit;
   text-decoration: none;
   border: 0;
+  border-radius: 0;
   background: transparent;
   padding: 0;
   line-height: 1;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .nav-items .profile-menu {
   margin-right: var(--spacing-large, 18px);
   margin-left: 0;
+  display: inline-flex;
+  align-items: flex-end;
 }
 
 .nav-links .profile-menu {
   margin-right: var(--spacing-large, 18px);
   margin-left: 0;
+  display: inline-flex;
+  align-items: flex-end;
 }
 
 .nav-items .profile-nav-link {
@@ -80,6 +90,7 @@
 .nav-overlay .nav-items .profile-menu {
   display: inline-flex;
   align-items: flex-end;
+  align-self: flex-end;
 }
 
 .nav-overlay .nav-items .profile-nav-link {
