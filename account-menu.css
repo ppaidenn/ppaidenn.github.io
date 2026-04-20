@@ -85,7 +85,7 @@
   display: inline-flex;
   align-items: flex-end;
   position: relative;
-  top: -3px;
+  top: -1px;
 }
 
 .nav-overlay .nav-items .profile-nav-link {
