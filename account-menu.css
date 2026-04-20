@@ -89,13 +89,22 @@
 
 .nav-overlay .nav-items .profile-menu {
   display: inline-flex;
-  align-items: flex-end;
-  align-self: flex-end;
-  padding-bottom: var(--spacing-small, 0.5vw);
+  align-items: center;
+  align-self: center;
 }
 
 .nav-overlay .nav-items .profile-nav-link {
-  padding-bottom: 0 !important;
+  padding-bottom: var(--spacing-small, 0.5vw) !important;
+  transform: translateY(2px);
+}
+
+.nav-overlay .nav-items {
+  align-items: center;
+}
+
+.nav-overlay .nav-items > a {
+  line-height: 1;
+  transform: translateY(2px);
 }
 
 .profile-label {
