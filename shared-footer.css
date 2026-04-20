@@ -1,6 +1,11 @@
 @media (min-width: 769px) {
+  .footer {
+    padding: 56px 0 calc(56px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
   .footer .footer-inner {
-    margin: 0 var(--side-margin, 10vw) !important;
+    width: min(1480px, calc(100vw - 96px)) !important;
+    margin: 0 auto !important;
     display: flex !important;
     justify-content: space-between !important;
     gap: 40px !important;
@@ -45,14 +50,14 @@
     display: block;
     color: #fff;
     text-decoration: none;
-    font-size: var(--footer-title-font-size, 2vw);
+    font-size: 44px;
     font-weight: bold;
     line-height: 1;
   }
 
   .footer .footer-created,
   .footer .footer-updated {
-    font-size: var(--footer-subtitle-font-size, 1vw);
+    font-size: 18px;
     color: #fff;
     line-height: 1.15;
   }
@@ -73,7 +78,7 @@
 
   .footer .footer-nav a {
     display: block;
-    font-size: var(--footer-nav-font-size, 1vw) !important;
+    font-size: 18px !important;
     color: #fff;
     text-decoration: none;
     margin-bottom: var(--spacing-small, 8px) !important;
@@ -98,21 +103,21 @@
 
   .footer .follow-text,
   .footer .footer-social .follow-text {
-    font-size: var(--footer-nav-font-size, 1vw) !important;
+    font-size: 18px !important;
     font-weight: bold;
     margin-bottom: var(--spacing-small, 8px);
   }
 
   .footer .social-icons {
     display: flex !important;
-    gap: 1vw !important;
+    gap: 18px !important;
     flex-wrap: nowrap;
     justify-content: flex-end;
   }
 
   .footer .social-icons a {
     color: #fff;
-    font-size: 2vw !important;
+    font-size: 42px !important;
     text-decoration: none;
     transition: transform 0.2s ease;
   }
