@@ -15,9 +15,7 @@
 .profile-nav-link {
   list-style: none;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
+  display: inline-block;
   appearance: none;
   -webkit-appearance: none;
   font: inherit;
@@ -29,7 +27,6 @@
   background: transparent;
   padding: 0;
   line-height: 1;
-  gap: 8px;
   white-space: nowrap;
 }
 
@@ -48,8 +45,6 @@
 }
 
 .nav-items .profile-nav-link {
-  display: inline-flex;
-  align-items: center;
   font-size: var(--nav-font-size, 1.2vw);
   font-family: inherit;
   font-weight: bold;
@@ -66,8 +61,6 @@
 }
 
 .nav-links .profile-nav-link {
-  display: inline-flex;
-  align-items: center;
   font-size: var(--nav-font-size, 1.2vw);
   font-family: inherit;
   font-weight: bold;
@@ -116,6 +109,7 @@
 
 .profile-icon {
   font-size: inherit;
+  vertical-align: middle;
 }
 
 .profile-request-badge {
@@ -139,6 +133,9 @@
 }
 
 .mobile-fixed-nav .profile-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 22px;
 }
 

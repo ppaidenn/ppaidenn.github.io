@@ -40,6 +40,7 @@
   function buildMenuHtml({ signedIn, isMobile, pendingCount }) {
     const count = Number.isFinite(pendingCount) ? pendingCount : 0;
     const badge = count > 0 ? `<span class="profile-request-badge">${count}</span>` : "";
+    const triggerHref = signedIn ? "/profile/?v=20260304" : "/signin";
     const triggerInner = isMobile
       ? `<i class="fa-solid fa-user profile-icon" aria-hidden="true"></i>${badge}<span class="profile-label">Profile</span>`
       : `<span class="profile-label">Profile</span>${badge}<i class="fa-solid fa-user profile-icon" aria-hidden="true"></i>`;
@@ -54,7 +55,7 @@
 
     return `
 <div class="profile-menu">
-  <button type="button" class="profile-nav-link" aria-label="Profile" aria-expanded="false" aria-haspopup="menu">${triggerInner}</button>
+  <a href="${triggerHref}" class="profile-nav-link" aria-label="Profile" aria-expanded="false" aria-haspopup="menu">${triggerInner}</a>
   <div class="profile-dropdown" role="menu">
     ${links}
   </div>
@@ -122,6 +123,7 @@
 
     const trigger = event.target.closest(".profile-nav-link");
     if (trigger) {
+      event.preventDefault();
       const menu = trigger.closest(".profile-menu");
       if (!menu) return;
       const willOpen = !menu.classList.contains("is-open");
