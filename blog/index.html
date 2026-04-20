@@ -420,6 +420,21 @@
       grid-template-columns: 1fr;
       gap: 1.6vw;
     }
+    .blog-grid-status {
+      min-height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 28px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.88);
+      font-size: clamp(16px, 1vw, 18px);
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
 
     /* Colorful rounded post cards (similar “soft card” feel to photos page, but punchier) */
     .post-card {
@@ -1707,65 +1722,7 @@
 
 <!-- Grid -->
 <div class="blog-grid" id="blogGrid">
-<!-- ===================== BLOG POSTS START =====================
-             STATIC POSTS (EDIT/DELETE IN THIS FILE)
-             - Each <article class="post-card"> block below is ONE post.
-             - To delete a post: remove the whole block from POST:START to POST:END.
-             - Keep this section for "permanent" posts that ship with the site.
-             ===================== BLOG POSTS START ===================== -->
-<!-- TEMPLATE (copy/paste to add a new static post)
-        <article class="post-card" data-post-id="static-003"
-                 data-title="Your title"
-                 data-author="Your name"
-                 data-created="2025-12-16T00:00:00Z"
-                 data-body="Write your post here. Use \n for new lines."
-                 data-images="data:image/jpeg;base64,...||data:image/png;base64,...">
-          <div class="post-inner">
-            <div class="post-topline">
-              <h4 class="post-title">Your title</h4>
-              <span class="post-date">Dec 16, 2025</span>
-            </div>
-            
-            <div class="post-meta">
-              <div class="post-author">By <span class="post-author-name"></span></div>
-            </div>
-            <div class="post-content-row">
-              <div class="post-content-left">
-                <p class="post-excerpt">Short preview text...</p>
-              </div>
-              <div class="post-thumbrow" aria-hidden="true"></div>
-            </div>
-          </div>
-        </article>
-        -->
-<!-- POST:START static-001 -->
-<article class="post-card" data-author="Paiden" data-body="This is a public forum that anyone may use to spread their message. Click any post to open it in a popup. You can also create new posts with photos using the form above.
-
-Note: I am notified of all posts and will be moderating content. You do not have free speech, I am the dictator of this blog." data-comments-count="0" data-created="2025-12-16T00:00:00Z" data-images="" data-post-id="static-001" data-title="Welcome to the blog">
-<div class="post-inner">
-  <div class="post-left">
-    <h4 class="post-title">Welcome to the blog</h4>
-    <div class="post-meta">
-      <div class="post-author">By <span class="post-author-name"></span></div>
-      <div class="post-date">Dec 16, 2025</div>
-    </div>
-    <p class="post-excerpt">This is a public forum that anyone may use to spread their message. 
-      Click any post to open it in a popup. You can also create new posts with photos using the form above.
-      <br><br>
-      Note: I am notified of all posts and will be moderating content. You do not have free speech, I am the dictator of this blog.
-    </p>
-    <div class="post-comments-cta">View <span class="post-comments-count">0</span> comments</div>
-  </div>
-  <div aria-hidden="true" class="post-right">
-    <div class="post-thumbrow"></div>
-  </div>
-</div>
-</article>
-<!-- POST:END static-001 -->
-<!-- ===================== BLOG POSTS END ===================== -->
-<!-- ===========================================
-             USER POSTS (AUTO-INSERTED VIA localStorage)
-             =========================================== -->
+  <div class="blog-grid-status" id="blogGridStatus">Loading blog posts...</div>
 </div>
 <div class="pagination" id="paginationBar"></div>
 
@@ -1986,6 +1943,7 @@ Note: I am notified of all posts and will be moderating content. You do not have
     }
 
     const blogGrid = document.getElementById("blogGrid");
+    const blogGridStatus = document.getElementById("blogGridStatus");
         const pageRangeLabel = document.getElementById("pageRangeLabel");
     const paginationBar = document.getElementById("paginationBar");
     const PAGE_SIZE = 10;
@@ -2206,6 +2164,10 @@ function excerpt(text, maxChars = 1000) {
     async function renderUserPostsIntoGrid() {
       // Remove any previously-rendered user posts
       blogGrid.querySelectorAll('[data-source="user"]').forEach(n => n.remove());
+      if (blogGridStatus) {
+        blogGridStatus.hidden = false;
+        blogGridStatus.textContent = "Loading blog posts...";
+      }
 
       const posts = await loadPostsFromSupabase();
 
@@ -2252,6 +2214,10 @@ function excerpt(text, maxChars = 1000) {
         `;
         // Put user posts at the top of the grid (right after composer section)
         blogGrid.appendChild(card);
+      }
+      if (blogGridStatus) {
+        blogGridStatus.hidden = posts.length > 0;
+        blogGridStatus.textContent = posts.length ? "" : "No blog posts yet.";
       }
       sortAllPostsByDateDesc();
       await hydrateAllCommentCountsFromSupabase();
