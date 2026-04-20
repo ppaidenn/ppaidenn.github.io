@@ -284,21 +284,21 @@
     .contact-left-card{
       background: #ffffff;
       border-radius: 28px;
-      padding: 3vw;
+      padding: clamp(24px, 2.4vw, 36px);
       box-shadow: 0 18px 45px rgba(0,0,0,0.10);
       border: 1px solid rgba(0,0,0,0.06);
       color: #111;
     }
 
     .contact-left-card h3{
-      margin: 0 0 1vw 0;
-      font-size: 2vw;
+      margin: 0 0 14px 0;
+      font-size: clamp(28px, 1.9vw, 38px);
       letter-spacing: 0.01em;
     }
 
     .contact-left-card p{
-      margin: 0 0 2vw 0;
-      font-size: 1.1vw;
+      margin: 0 0 24px 0;
+      font-size: clamp(16px, 0.95vw, 18px);
       line-height: 1.7;
       color: #222;
     }
@@ -310,8 +310,8 @@
 
     .contact-form label{
       display: block;
-      margin-bottom: 0.6vw; /* consistent spacing above all fields */
-      font-size: 0.95vw;
+      margin-bottom: 8px; /* consistent spacing above all fields */
+      font-size: clamp(14px, 0.82vw, 16px);
       font-weight: 700;
       color: #111;
     }
@@ -319,17 +319,17 @@
     .contact-form input,
     .contact-form textarea{
       width: 100%;
-      padding: 0.95vw 1.05vw;
+      padding: clamp(12px, 0.95vw, 16px) clamp(14px, 1.05vw, 18px);
       border-radius: 14px;
       border: 1px solid rgba(0,0,0,0.16);
       background: rgba(244,240,231,0.45); /* a hint of cream */
-      font-size: 1vw;
+      font-size: clamp(15px, 0.9vw, 17px);
       outline: none;
-      margin-bottom: 1.6vw; /* consistent spacing below all fields */
+      margin-bottom: 20px; /* consistent spacing below all fields */
     }
 
     .contact-form textarea{
-      min-height: 10vw;
+      min-height: clamp(170px, 10vw, 220px);
       resize: vertical;
     }
 
@@ -337,22 +337,22 @@
       justify-self: start;
       border: 0;
       border-radius: 999px;
-      padding: 0.9vw 1.4vw;
+      padding: clamp(11px, 0.9vw, 15px) clamp(16px, 1.4vw, 22px);
       background: #f4f0e7; /* cream like main_page */
       color: #111;
       font-weight: 800;
-      font-size: 1vw;
+      font-size: clamp(15px, 0.9vw, 17px);
       cursor: pointer;
       box-shadow: 0 12px 26px rgba(0,0,0,0.10);
       border: 1px solid rgba(0,0,0,0.10);
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
     .turnstile-wrap{
-      margin: 0 0 1.6vw 0;
+      margin: 0 0 20px 0;
     }
 
     .contact-form button:hover{
-      transform: translateY(-0.12vw);
+      transform: translateY(-2px);
       box-shadow: 0 16px 34px rgba(0,0,0,0.14);
     }
     .contact-form button:disabled{
@@ -364,7 +364,7 @@
 
     .contact-right{
       display: grid;
-      gap: 1.2vw;
+      gap: clamp(14px, 1.1vw, 20px);
     }
 
     .contact-action{
@@ -372,8 +372,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 1vw;
-      padding: 1.1vw 1.3vw;
+      gap: clamp(12px, 1vw, 18px);
+      padding: clamp(14px, 1.1vw, 18px) clamp(16px, 1.3vw, 22px);
       border-radius: 18px;
       background: #f4f0e7; /* cream buttons */
       border: 1px solid rgba(0,0,0,0.10);
@@ -381,23 +381,23 @@
       text-decoration: none;
       color: #111;
       font-weight: 800;
-      font-size: 1.05vw;
+      font-size: clamp(16px, 0.95vw, 18px);
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
     .contact-action:hover{
-      transform: translateY(-0.12vw);
+      transform: translateY(-2px);
       box-shadow: 0 18px 40px rgba(0,0,0,0.12);
     }
 
     .contact-action .action-left{
       display: inline-flex;
       align-items: center;
-      gap: 0.9vw;
+      gap: clamp(10px, 0.9vw, 16px);
     }
 
     .contact-action i{
-      font-size: 1.25vw;
+      font-size: clamp(18px, 1.05vw, 22px);
     }
 
     .contact-action .action-arrow{

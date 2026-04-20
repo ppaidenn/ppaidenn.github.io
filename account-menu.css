@@ -84,10 +84,13 @@
 .nav-overlay .nav-items .profile-menu {
   display: inline-flex;
   align-items: flex-end;
+  position: relative;
+  top: -3px;
 }
 
 .nav-overlay .nav-items .profile-nav-link {
-  transform: translateY(-1px);
+  transform: none;
+  padding-bottom: var(--spacing-small, 0.5vw) !important;
 }
 
 .profile-label {
