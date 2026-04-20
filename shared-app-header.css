@@ -6,6 +6,10 @@ body.use-compact-header .mobile-fixed-header {
   display: flex !important;
 }
 
+body.use-compact-header {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 58px) !important;
+}
+
 .top-nav {
   width: 100vw !important;
   margin-left: calc(50% - 50vw) !important;
@@ -81,46 +85,50 @@ body.use-compact-header .mobile-fixed-header {
   display: none !important;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  padding: calc(12px + var(--safe-top, 0px)) 16px 12px;
-  background: #000;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: calc(env(safe-area-inset-top, 0px) + 58px) !important;
+  width: 100vw !important;
+  margin-left: 0 !important;
+  padding-top: env(safe-area-inset-top, 0px) !important;
+  padding-left: 5vw !important;
+  padding-right: 5vw !important;
+  padding-bottom: 0 !important;
+  background: #000 !important;
+  z-index: 10000 !important;
 }
 
 .mobile-fixed-brand {
-  color: #fff;
-  text-decoration: none;
-  font-size: clamp(34px, 7vw, 42px);
-  font-weight: bold;
-  line-height: 1;
+  color: #fff !important;
+  text-decoration: none !important;
+  font-size: clamp(22px, 6.4vw, 30px) !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
 }
 
 .mobile-fixed-nav {
-  display: flex;
-  align-items: center;
-  gap: 18px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 18px !important;
+  padding-left: 16px !important;
 }
 
-.mobile-fixed-nav a {
-  color: #fff;
-  text-decoration: none;
-  font-size: 22px;
-  line-height: 1;
+.mobile-fixed-nav a,
+.mobile-fixed-nav .profile-nav-link {
+  color: #fff !important;
+  text-decoration: none !important;
+  font-size: 22px !important;
+  line-height: 1 !important;
 }
 
 .mobile-fixed-nav .profile-menu {
   margin-right: 0 !important;
 }
 
-.mobile-fixed-nav .profile-menu summary {
-  font-size: 22px;
-}
-
 @media (max-width: 768px) {
   .mobile-fixed-brand {
-    font-size: clamp(34px, 10vw, 44px);
+    font-size: clamp(22px, 6.4vw, 30px) !important;
   }
 }
