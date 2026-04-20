@@ -40,7 +40,7 @@
   function buildMenuHtml({ signedIn, isMobile, pendingCount }) {
     const count = Number.isFinite(pendingCount) ? pendingCount : 0;
     const badge = count > 0 ? `<span class="profile-request-badge">${count}</span>` : "";
-    const summaryInner = isMobile
+    const triggerInner = isMobile
       ? `<i class="fa-solid fa-user profile-icon" aria-hidden="true"></i>${badge}<span class="profile-label">Profile</span>`
       : `<span class="profile-label">Profile</span>${badge}<i class="fa-solid fa-user profile-icon" aria-hidden="true"></i>`;
 
@@ -53,12 +53,12 @@
          <a href="/create-account">Create Account</a>`;
 
     return `
-<details class="profile-menu">
-  <summary class="profile-nav-link" aria-label="Profile">${summaryInner}</summary>
-  <div class="profile-dropdown">
+<div class="profile-menu">
+  <button type="button" class="profile-nav-link" aria-label="Profile" aria-expanded="false" aria-haspopup="menu">${triggerInner}</button>
+  <div class="profile-dropdown" role="menu">
     ${links}
   </div>
-</details>`;
+</div>`;
   }
 
   function renderMenus(signedIn, pendingCount = 0) {
@@ -103,11 +103,42 @@
     window.location.href = "/";
   }
 
+  function closeAllProfileMenus(exceptMenu = null) {
+    document.querySelectorAll(".profile-menu.is-open").forEach((menu) => {
+      if (exceptMenu && menu === exceptMenu) return;
+      menu.classList.remove("is-open");
+      const trigger = menu.querySelector(".profile-nav-link");
+      if (trigger) trigger.setAttribute("aria-expanded", "false");
+    });
+  }
+
   document.addEventListener("click", (event) => {
     const signOutBtn = event.target.closest(".profile-signout");
-    if (!signOutBtn) return;
-    event.preventDefault();
-    handleSignOut();
+    if (signOutBtn) {
+      event.preventDefault();
+      handleSignOut();
+      return;
+    }
+
+    const trigger = event.target.closest(".profile-nav-link");
+    if (trigger) {
+      const menu = trigger.closest(".profile-menu");
+      if (!menu) return;
+      const willOpen = !menu.classList.contains("is-open");
+      closeAllProfileMenus(menu);
+      menu.classList.toggle("is-open", willOpen);
+      trigger.setAttribute("aria-expanded", willOpen ? "true" : "false");
+      return;
+    }
+
+    if (!event.target.closest(".profile-menu")) {
+      closeAllProfileMenus();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    closeAllProfileMenus();
   });
 
   renderMenus(false, 0);
