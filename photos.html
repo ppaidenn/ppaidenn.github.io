@@ -18,21 +18,21 @@
   <style>
     /* CUSTOM PROPERTIES: Adjust these values to tweak proportions */
     :root {
-      --side-margin: 10vw;            /* Responsive horizontal margin */
+      --side-margin: max(10vw, calc((100vw - 1480px) / 2)); /* Responsive horizontal margin with ultrawide cap */
       --nav-height: 20vh;             /* Height of navigation overlay */
       --slideshow-height: 85vh;       /* Height of the slideshow container */
-      --footer-padding: 7vh;          /* Vertical padding for the footer */
-      --brand-font-size: 2.5vw;       /* Font size for nav brand (paiden.com) */
-      --nav-font-size: 1.2vw;         /* Font size for other nav links */
-      --header-font-size: 4vw;        /* Font size for overlay header */
-      --subheader-font-size: 1.5vw;   /* Font size for overlay subheader */
+      --footer-padding: 56px;          /* Vertical padding for the footer */
+      --brand-font-size: clamp(36px, 2.5vw, 48px);       /* Font size for nav brand (paiden.com) */
+      --nav-font-size: clamp(18px, 1.2vw, 22px);         /* Font size for other nav links */
+      --header-font-size: clamp(46px, 3.5vw, 64px);      /* Font size for overlay header */
+      --subheader-font-size: clamp(20px, 1.3vw, 26px);   /* Font size for overlay subheader */
       --footer-title-font-size: 2vw;  /* Font size for footer brand/button */
       --footer-subtitle-font-size: 1vw; /* Font size for footer text */
-      --footer-button-spacing: 0.75vw; /* Adjustable space between paiden.com and footer text */
+      --footer-button-spacing: 14px; /* Adjustable space between paiden.com and footer text */
       --footer-nav-font-size: 1vw;    /* Font size for footer navigation links */
       --footer-nav-left: 15vw;        /* Adjustable left offset for footer navigation links */
-      --spacing-small: 0.5vw;         /* Small vertical spacing */
-      --spacing-large: 1.5vw;         /* Larger horizontal spacing */
+      --spacing-small: clamp(8px, 0.5vw, 10px);         /* Small vertical spacing */
+      --spacing-large: clamp(18px, 1.5vw, 28px);         /* Larger horizontal spacing */
       --safe-top: env(safe-area-inset-top, 0px);
     }
 
@@ -226,7 +226,7 @@
 
     @media (max-width: 600px) {
       :root {
-        --side-margin: 5vw; --slideshow-height: 46vh; --brand-font-size: 4vw; --nav-font-size: 3vw; --header-font-size: 8.5vw; --subheader-font-size: 4.8vw; --footer-title-font-size: 4vw; --footer-subtitle-font-size: 2vw; --footer-nav-font-size: 3vw;
+        --side-margin: max(10vw, calc((100vw - 1480px) / 2)); --slideshow-height: 46vh; --brand-font-size: clamp(36px, 2.5vw, 48px); --nav-font-size: clamp(18px, 1.2vw, 22px); --header-font-size: clamp(46px, 3.5vw, 64px); --subheader-font-size: clamp(20px, 1.3vw, 26px); --footer-title-font-size: 4vw; --footer-subtitle-font-size: 2vw; --footer-nav-font-size: 3vw;
       }
       .nav-inner, .footer-inner { margin-left: var(--side-margin); margin-right: var(--side-margin); }
       .social-icons a { font-size: 5vw; }
@@ -672,6 +672,8 @@
   <script src="/shared-footer.js?v=20260417a"></script>
 </body>
 </html>
+
+
 
 
 

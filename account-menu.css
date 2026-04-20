@@ -48,10 +48,11 @@
   font-family: inherit;
   font-weight: bold;
   text-decoration: none;
-  padding-bottom: var(--spacing-small, 0px);
+  padding-bottom: var(--spacing-small, 0.5vw);
   margin: 0;
   color: #fff;
   opacity: 1;
+  line-height: 1;
 }
 .nav-items .profile-menu > .profile-nav-link,
 .nav-items .profile-menu > .profile-nav-link .profile-label {
@@ -78,6 +79,15 @@
 .nav-items .profile-nav-link:hover,
 .nav-links .profile-nav-link:hover {
   text-decoration: underline;
+}
+
+.nav-overlay .nav-items .profile-menu {
+  display: inline-flex;
+  align-items: flex-end;
+}
+
+.nav-overlay .nav-items .profile-nav-link {
+  transform: translateY(-1px);
 }
 
 .profile-label {

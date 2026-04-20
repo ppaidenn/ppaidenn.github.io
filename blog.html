@@ -18,21 +18,21 @@
 <style>
     /* CUSTOM PROPERTIES: Adjust these values to tweak proportions */
     :root {
-      --side-margin: 10vw;
+      --side-margin: max(10vw, calc((100vw - 1480px) / 2));
       --nav-height: 20vh;
       --slideshow-height: 85vh;
-      --footer-padding: 7vh;
-      --brand-font-size: 2.5vw;
-      --nav-font-size: 1.2vw;
-      --header-font-size: 4vw;
-      --subheader-font-size: 1.5vw;
+      --footer-padding: 56px;
+      --brand-font-size: clamp(36px, 2.5vw, 48px);
+      --nav-font-size: clamp(18px, 1.2vw, 22px);
+      --header-font-size: clamp(46px, 3.5vw, 64px);
+      --subheader-font-size: clamp(20px, 1.3vw, 26px);
       --footer-title-font-size: 2vw;
       --footer-subtitle-font-size: 1vw;
-      --footer-button-spacing: 0.75vw;
+      --footer-button-spacing: 14px;
       --footer-nav-font-size: 1vw;
       --footer-nav-left: 15vw;
-      --spacing-small: 0.5vw;
-      --spacing-large: 1.5vw;
+      --spacing-small: clamp(8px, 0.5vw, 10px);
+      --spacing-large: clamp(18px, 1.5vw, 28px);
       --safe-top: env(safe-area-inset-top, 0px);
 
       /* Blog theme */
@@ -1379,12 +1379,12 @@
 
     @media (max-width: 600px) {
       :root {
-        --side-margin: 5vw;
+        --side-margin: max(10vw, calc((100vw - 1480px) / 2));
         --slideshow-height: 46vh;
-        --brand-font-size: 4vw;
-        --nav-font-size: 3vw;
-        --header-font-size: 8.5vw;
-        --subheader-font-size: 4.8vw;
+        --brand-font-size: clamp(36px, 2.5vw, 48px);
+        --nav-font-size: clamp(18px, 1.2vw, 22px);
+        --header-font-size: clamp(46px, 3.5vw, 64px);
+        --subheader-font-size: clamp(20px, 1.3vw, 26px);
         --footer-title-font-size: 4vw;
         --footer-subtitle-font-size: 2vw;
         --footer-nav-font-size: 3vw;
@@ -3306,6 +3306,8 @@ function excerpt(text, maxChars = 1000) {
   <script src="/shared-footer.js?v=20260417a"></script>
 </body>
 </html>
+
+
 
 
 
