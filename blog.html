@@ -423,20 +423,17 @@
       grid-template-columns: 1fr;
       gap: 1.6vw;
     }
-    .blog-grid-status {
-      min-height: 180px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 28px;
-      border-radius: 22px;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.88);
+    .blog-load-state {
+      margin-top: 20px;
+      margin-bottom: 12px;
+      text-align: left;
+      color: #111;
       font-size: clamp(16px, 1vw, 18px);
       font-weight: 700;
       letter-spacing: 0.01em;
+    }
+    .blog-load-state.is-hidden {
+      display: none !important;
     }
 
     /* Colorful rounded post cards (similar “soft card” feel to photos page, but punchier) */
@@ -1753,10 +1750,10 @@
         </button>
 </div>
 <div class="page-range" id="pageRangeLabel"></div>
+<div class="blog-load-state" id="blogGridStatus">Loading blog posts...</div>
 
 <!-- Grid -->
 <div class="blog-grid" id="blogGrid">
-  <div class="blog-grid-status" id="blogGridStatus">Loading blog posts...</div>
 </div>
 <div class="pagination" id="paginationBar"></div>
 
@@ -2196,13 +2193,16 @@ function excerpt(text, maxChars = 1000) {
       });
     }
 
+    function setBlogGridStatus(message, visible) {
+      if (!blogGridStatus) return;
+      blogGridStatus.textContent = message || "";
+      blogGridStatus.classList.toggle("is-hidden", !visible);
+    }
+
     async function renderUserPostsIntoGrid() {
       // Remove any previously-rendered user posts
       blogGrid.querySelectorAll('[data-source="user"]').forEach(n => n.remove());
-      if (blogGridStatus) {
-        blogGridStatus.hidden = false;
-        blogGridStatus.textContent = "Loading blog posts...";
-      }
+      setBlogGridStatus("Loading blog posts...", true);
 
       const posts = await loadPostsFromSupabase();
 
@@ -2250,10 +2250,7 @@ function excerpt(text, maxChars = 1000) {
         // Put user posts at the top of the grid (right after composer section)
         blogGrid.appendChild(card);
       }
-      if (blogGridStatus) {
-        blogGridStatus.hidden = posts.length > 0;
-        blogGridStatus.textContent = posts.length ? "" : "No blog posts yet.";
-      }
+      setBlogGridStatus(posts.length ? "" : "No blog posts yet.", posts.length === 0);
       sortAllPostsByDateDesc();
       await hydrateAllCommentCountsFromSupabase();
       await hydrateAuthorProfiles(Array.from(blogGrid.querySelectorAll('.post-card[data-source="user"]')));
