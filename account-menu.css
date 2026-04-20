@@ -80,6 +80,10 @@
   text-decoration: underline;
 }
 
+.nav-overlay .nav-inner {
+  align-items: center !important;
+}
+
 .nav-overlay .nav-items {
   align-items: center;
 }
