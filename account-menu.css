@@ -91,10 +91,11 @@
   display: inline-flex;
   align-items: flex-end;
   align-self: flex-end;
+  padding-bottom: var(--spacing-small, 0.5vw);
 }
 
 .nav-overlay .nav-items .profile-nav-link {
-  padding-bottom: var(--spacing-small, 0.5vw) !important;
+  padding-bottom: 0 !important;
 }
 
 .profile-label {
