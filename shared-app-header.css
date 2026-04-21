@@ -127,6 +127,12 @@ body.use-compact-header {
   margin-right: 0 !important;
 }
 
+.mobile-fixed-nav .profile-dropdown a,
+.mobile-fixed-nav .profile-dropdown .profile-signout {
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+}
+
 @media (max-width: 768px) {
   .mobile-fixed-brand {
     font-size: clamp(22px, 6.4vw, 30px) !important;
