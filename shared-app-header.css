@@ -115,8 +115,8 @@ body.use-compact-header {
   padding-left: 16px !important;
 }
 
-.mobile-fixed-nav a,
-.mobile-fixed-nav .profile-nav-link {
+.mobile-fixed-nav > a,
+.mobile-fixed-nav > .profile-menu > .profile-nav-link {
   color: #fff !important;
   text-decoration: none !important;
   font-size: 22px !important;
