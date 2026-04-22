@@ -19,6 +19,7 @@
     "forgot-password",
     "reset-password",
     "event-invite",
+    "tournaments",
     "tomi-p-shrine",
     "notifications",
     "news",
