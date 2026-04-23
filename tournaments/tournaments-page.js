@@ -239,6 +239,7 @@
       const error = new Error(data.error?.message || data.error_description || "Spotify request failed.");
       error.spotifyStatus = response.status;
       error.spotifyPayload = data;
+      error.spotifyUrl = url.toString();
       throw error;
     }
     return data;
@@ -323,7 +324,7 @@
     });
 
     const rawTracks = [];
-    let nextUrl = `${SPOTIFY_API}/playlists/${playlistId}/items?limit=100&offset=0&additional_types=track&fields=items(item(id,name,artists(name),album(images),external_urls.spotify,preview_url,is_local,type)),next,total`;
+    let nextUrl = `${SPOTIFY_API}/playlists/${playlistId}/items?limit=100&offset=0&additional_types=track&fields=items(item(id,name,popularity,artists(name),album(images),external_urls.spotify,preview_url,is_local,type)),next,total`;
 
     while (nextUrl) {
       const data = await spotifyFetchUrl(nextUrl, accessToken);
@@ -334,6 +335,7 @@
         rawTracks.push({
           id: track.id,
           name: track.name || "Untitled track",
+          popularity: Number(track.popularity) || 0,
           artists: Array.isArray(track.artists) ? track.artists.map((artist) => artist?.name).filter(Boolean) : [],
           image: track.album?.images?.[0]?.url || "",
           spotifyUrl: track.external_urls?.spotify || "",
@@ -351,21 +353,10 @@
       deduped.push(track);
     });
 
-    const popularityMap = new Map();
-    for (let index = 0; index < deduped.length; index += 50) {
-      const batch = deduped.slice(index, index + 50);
-      const ids = batch.map((track) => track.id).join(",");
-      const data = await spotifyFetch("/tracks", accessToken, { ids });
-      const tracks = Array.isArray(data.tracks) ? data.tracks : [];
-      tracks.forEach((track) => {
-        if (track?.id) popularityMap.set(track.id, Number(track.popularity) || 0);
-      });
-    }
-
     const rankedTracks = deduped
       .map((track) => ({
         ...track,
-        popularity: popularityMap.get(track.id) ?? 0,
+        popularity: Number(track.popularity) || 0,
       }))
       .sort((a, b) => {
         if (b.popularity !== a.popularity) return b.popularity - a.popularity;
@@ -674,7 +665,11 @@
         updateAuthUi();
         setStatus("Spotify session expired or was rejected. Reconnect Spotify, then try building the bracket again.", "error");
       } else if (errorObj?.spotifyStatus === 403) {
-        setStatus("Spotify denied access to that playlist. If it is private or collaborative, reconnect Spotify and make sure the signed-in Spotify account can open that playlist.", "error");
+        if (String(errorObj?.spotifyUrl || "").includes("/tracks")) {
+          setStatus("Spotify denied the follow-up track popularity lookup. The bracket builder has been updated to avoid that extra call; refresh the page and try again.", "error");
+        } else {
+          setStatus("Spotify denied access to that playlist. If it is private or collaborative, reconnect Spotify and make sure the signed-in Spotify account can open that playlist.", "error");
+        }
       } else {
         setStatus(errorObj.message || "Could not build the bracket.", "error");
       }
