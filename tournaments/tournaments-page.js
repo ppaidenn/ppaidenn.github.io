@@ -1,4 +1,5 @@
 (() => {
+  const DEFAULT_CLIENT_ID = "3a032e0e0d4e4108b6e1e7b581b793df";
   const CLIENT_ID_KEY = "paiden_spotify_client_id";
   const AUTH_KEY = "paiden_spotify_auth";
   const VERIFIER_KEY = "paiden_spotify_pkce_verifier";
@@ -42,7 +43,7 @@
   }
 
   function getStoredClientId() {
-    return localStorage.getItem(CLIENT_ID_KEY) || "";
+    return localStorage.getItem(CLIENT_ID_KEY) || DEFAULT_CLIENT_ID;
   }
 
   function saveClientId(clientId) {
@@ -218,6 +219,10 @@
         }
       });
     }
+    return spotifyFetchUrl(url.toString(), accessToken);
+  }
+
+  async function spotifyFetchUrl(url, accessToken) {
     const response = await fetch(url.toString(), {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -225,7 +230,10 @@
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(data.error?.message || data.error_description || "Spotify request failed.");
+      const error = new Error(data.error?.message || data.error_description || "Spotify request failed.");
+      error.spotifyStatus = response.status;
+      error.spotifyPayload = data;
+      throw error;
     }
     return data;
   }
@@ -312,15 +320,7 @@
     let nextUrl = `${SPOTIFY_API}/playlists/${playlistId}/tracks?limit=100&offset=0&fields=items(track(id,name,artists(name),album(images),external_urls.spotify,preview_url,is_local,type)),next,total`;
 
     while (nextUrl) {
-      const response = await fetch(nextUrl, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data.error?.message || "Could not load playlist tracks.");
-      }
+      const data = await spotifyFetchUrl(nextUrl, accessToken);
       const items = Array.isArray(data.items) ? data.items : [];
       items.forEach((item) => {
         const track = item?.track;
@@ -596,7 +596,15 @@
       }
     } catch (errorObj) {
       clearBracketState();
-      setStatus(errorObj.message || "Could not build the bracket.", "error");
+      if (errorObj?.spotifyStatus === 401) {
+        clearAuth();
+        updateAuthUi();
+        setStatus("Spotify session expired or was rejected. Reconnect Spotify, then try building the bracket again.", "error");
+      } else if (errorObj?.spotifyStatus === 403) {
+        setStatus("Spotify denied access to that playlist. If it is private or collaborative, reconnect Spotify and make sure the signed-in Spotify account can open that playlist.", "error");
+      } else {
+        setStatus(errorObj.message || "Could not build the bracket.", "error");
+      }
     } finally {
       buildBracketBtn.disabled = false;
       buildBracketBtn.innerHTML = `<i class="fa-solid fa-bracket-curly" aria-hidden="true"></i> Build Bracket`;
@@ -612,7 +620,11 @@
   }
 
   async function init() {
-    clientIdInput.value = getStoredClientId();
+    const initialClientId = getStoredClientId();
+    if (initialClientId && !localStorage.getItem(CLIENT_ID_KEY)) {
+      saveClientId(initialClientId);
+    }
+    clientIdInput.value = initialClientId;
     state.auth = loadAuth();
     updateAuthUi();
 
