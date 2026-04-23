@@ -651,6 +651,23 @@
       line-height: 1.5;
     }
 
+    .debug-card {
+      border: 1px dashed rgba(12,18,24,0.22);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.52);
+      padding: clamp(16px, 1.8vw, 24px);
+    }
+
+    .debug-output {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      color: rgba(16,21,28,0.84);
+    }
+
     .footer {
       width: 100%;
       margin-left: 0;
@@ -821,6 +838,12 @@
           <section class="status-card" id="statusCard">
             <div class="status-title">Status</div>
             <p class="status-text" id="statusText">Save your Spotify client ID, connect Spotify, then paste a playlist to build a seeded bracket.</p>
+          </section>
+
+          <section class="debug-card">
+            <div class="kicker">DEBUG</div>
+            <h2>Spotify Diagnostics</h2>
+            <pre class="debug-output" id="debugOutput">No diagnostics yet. Build a bracket or reconnect Spotify to inspect the current account and playlist access steps.</pre>
           </section>
         </div>
 

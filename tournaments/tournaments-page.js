@@ -34,12 +34,18 @@
   const playlistPreview = document.getElementById("playlistPreview");
   const bracketBoard = document.getElementById("bracketBoard");
   const championChip = document.getElementById("championChip");
+  const debugOutput = document.getElementById("debugOutput");
 
   function setStatus(message, kind = "info") {
     statusText.textContent = message;
     statusCard.classList.remove("error", "success");
     if (kind === "error") statusCard.classList.add("error");
     if (kind === "success") statusCard.classList.add("success");
+  }
+
+  function setDebug(lines) {
+    if (!debugOutput) return;
+    debugOutput.textContent = Array.isArray(lines) ? lines.join("\n") : String(lines || "");
   }
 
   function getStoredClientId() {
@@ -379,6 +385,69 @@
     renderBracket();
   }
 
+  async function runPlaylistDiagnostics(playlistId, accessToken) {
+    const lines = [
+      `Client ID: ${getStoredClientId() || "(missing)"}`,
+      `Redirect URI: ${REDIRECT_URI}`,
+      `Playlist ID: ${playlistId || "(missing)"}`,
+      `Scopes requested: ${SCOPES}`,
+      "",
+    ];
+
+    let meData = null;
+    try {
+      meData = await spotifyFetch("/me", accessToken);
+      lines.push(`[OK] /me`);
+      lines.push(`Spotify account: ${meData.display_name || "(no display name)"}`);
+      lines.push(`Spotify user id: ${meData.id || "(missing)"}`);
+    } catch (errorObj) {
+      lines.push(`[FAIL ${errorObj?.spotifyStatus || "?"}] /me`);
+      lines.push(`Message: ${errorObj?.message || "Unknown Spotify error"}`);
+      setDebug(lines);
+      return { meData: null, playlistData: null, tracksStatus: null };
+    }
+
+    let playlistData = null;
+    try {
+      playlistData = await spotifyFetch(`/playlists/${playlistId}`, accessToken, {
+        fields: "id,name,public,collaborative,owner(display_name,id),tracks.total",
+      });
+      lines.push("");
+      lines.push(`[OK] /playlists/${playlistId}`);
+      lines.push(`Playlist name: ${playlistData.name || "(unknown)"}`);
+      lines.push(`Playlist owner: ${playlistData.owner?.display_name || playlistData.owner?.id || "(unknown)"}`);
+      lines.push(`Playlist owner id: ${playlistData.owner?.id || "(missing)"}`);
+      lines.push(`Public: ${String(playlistData.public)}`);
+      lines.push(`Collaborative: ${String(playlistData.collaborative)}`);
+      lines.push(`Track count: ${playlistData.tracks?.total ?? "(unknown)"}`);
+    } catch (errorObj) {
+      lines.push("");
+      lines.push(`[FAIL ${errorObj?.spotifyStatus || "?"}] /playlists/${playlistId}`);
+      lines.push(`Message: ${errorObj?.message || "Unknown Spotify error"}`);
+      setDebug(lines);
+      return { meData, playlistData: null, tracksStatus: errorObj?.spotifyStatus || null };
+    }
+
+    try {
+      await spotifyFetch(`/playlists/${playlistId}/tracks`, accessToken, {
+        limit: 1,
+        offset: 0,
+        fields: "items(track(id,name)),next,total",
+      });
+      lines.push("");
+      lines.push(`[OK] /playlists/${playlistId}/tracks`);
+    } catch (errorObj) {
+      lines.push("");
+      lines.push(`[FAIL ${errorObj?.spotifyStatus || "?"}] /playlists/${playlistId}/tracks`);
+      lines.push(`Message: ${errorObj?.message || "Unknown Spotify error"}`);
+      setDebug(lines);
+      return { meData, playlistData, tracksStatus: errorObj?.spotifyStatus || null };
+    }
+
+    setDebug(lines);
+    return { meData, playlistData, tracksStatus: 200 };
+  }
+
   function getRoundCount() {
     return state.bracketSize ? Math.log2(state.bracketSize) : 0;
   }
@@ -548,6 +617,7 @@
     if (!playlistId) {
       setStatus("Paste a valid Spotify playlist URL, URI, or 22-character playlist ID.", "error");
       playlistInput.focus();
+      setDebug("No diagnostics yet. Paste a valid Spotify playlist URL, URI, or 22-character playlist ID first.");
       return;
     }
 
@@ -556,6 +626,7 @@
       accessToken = await getValidAccessToken();
     } catch (errorObj) {
       setStatus(errorObj.message || "Connect Spotify first.", "error");
+      setDebug(`Spotify auth is not ready.\nMessage: ${errorObj.message || "Connect Spotify first."}`);
       return;
     }
 
@@ -563,6 +634,7 @@
     buildBracketBtn.textContent = "Building...";
     try {
       setStatus("Loading playlist from Spotify...");
+      await runPlaylistDiagnostics(playlistId, accessToken);
       const { playlist, tracks } = await fetchPlaylistItems(playlistId, accessToken);
       if (tracks.length < 2) {
         throw new Error("This playlist does not have enough Spotify tracks to build a bracket.");
@@ -625,6 +697,13 @@
       saveClientId(initialClientId);
     }
     clientIdInput.value = initialClientId;
+    setDebug([
+      `Client ID: ${initialClientId || "(missing)"}`,
+      `Redirect URI: ${REDIRECT_URI}`,
+      `Scopes requested: ${SCOPES}`,
+      "",
+      "No diagnostics yet. Build a bracket or reconnect Spotify to inspect the current account and playlist access steps.",
+    ]);
     state.auth = loadAuth();
     updateAuthUi();
 
