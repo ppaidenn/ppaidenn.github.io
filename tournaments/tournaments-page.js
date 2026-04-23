@@ -319,17 +319,17 @@
 
   async function fetchPlaylistItems(playlistId, accessToken) {
     const playlist = await spotifyFetch(`/playlists/${playlistId}`, accessToken, {
-      fields: "id,name,description,owner(display_name,id),images(url),external_urls.spotify,tracks.total",
+      fields: "id,name,description,owner(display_name,id),images(url),external_urls.spotify,items(total)",
     });
 
     const rawTracks = [];
-    let nextUrl = `${SPOTIFY_API}/playlists/${playlistId}/tracks?limit=100&offset=0&fields=items(track(id,name,artists(name),album(images),external_urls.spotify,preview_url,is_local,type)),next,total`;
+    let nextUrl = `${SPOTIFY_API}/playlists/${playlistId}/items?limit=100&offset=0&additional_types=track&fields=items(item(id,name,artists(name),album(images),external_urls.spotify,preview_url,is_local,type)),next,total`;
 
     while (nextUrl) {
       const data = await spotifyFetchUrl(nextUrl, accessToken);
       const items = Array.isArray(data.items) ? data.items : [];
       items.forEach((item) => {
-        const track = item?.track;
+        const track = item?.item || item?.track;
         if (!track || track.is_local || track.type !== "track" || !track.id) return;
         rawTracks.push({
           id: track.id,
@@ -410,7 +410,7 @@
     let playlistData = null;
     try {
       playlistData = await spotifyFetch(`/playlists/${playlistId}`, accessToken, {
-        fields: "id,name,public,collaborative,owner(display_name,id),tracks.total",
+        fields: "id,name,public,collaborative,owner(display_name,id),items(total)",
       });
       lines.push("");
       lines.push(`[OK] /playlists/${playlistId}`);
@@ -419,7 +419,7 @@
       lines.push(`Playlist owner id: ${playlistData.owner?.id || "(missing)"}`);
       lines.push(`Public: ${String(playlistData.public)}`);
       lines.push(`Collaborative: ${String(playlistData.collaborative)}`);
-      lines.push(`Track count: ${playlistData.tracks?.total ?? "(unknown)"}`);
+      lines.push(`Track count: ${playlistData.items?.total ?? playlistData.tracks?.total ?? "(unknown)"}`);
     } catch (errorObj) {
       lines.push("");
       lines.push(`[FAIL ${errorObj?.spotifyStatus || "?"}] /playlists/${playlistId}`);
@@ -429,16 +429,17 @@
     }
 
     try {
-      await spotifyFetch(`/playlists/${playlistId}/tracks`, accessToken, {
+      await spotifyFetch(`/playlists/${playlistId}/items`, accessToken, {
+        additional_types: "track",
         limit: 1,
         offset: 0,
-        fields: "items(track(id,name)),next,total",
+        fields: "items(item(id,name)),next,total",
       });
       lines.push("");
-      lines.push(`[OK] /playlists/${playlistId}/tracks`);
+      lines.push(`[OK] /playlists/${playlistId}/items`);
     } catch (errorObj) {
       lines.push("");
-      lines.push(`[FAIL ${errorObj?.spotifyStatus || "?"}] /playlists/${playlistId}/tracks`);
+      lines.push(`[FAIL ${errorObj?.spotifyStatus || "?"}] /playlists/${playlistId}/items`);
       lines.push(`Message: ${errorObj?.message || "Unknown Spotify error"}`);
       setDebug(lines);
       return { meData, playlistData, tracksStatus: errorObj?.spotifyStatus || null };
