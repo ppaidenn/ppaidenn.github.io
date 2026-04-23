@@ -285,20 +285,19 @@
     }
   }
 
-  function largestPowerOfTwoUnder(value) {
+  function smallestPowerOfTwoAtOrAbove(value) {
     let size = 1;
-    while (size * 2 <= value) size *= 2;
+    while (size < value) size *= 2;
     return size;
   }
 
   function resolveBracketSize(totalTracks, requested) {
-    const maxAvailable = Math.min(64, largestPowerOfTwoUnder(totalTracks));
-    if (maxAvailable < 2) return 0;
-    if (requested === "auto") return maxAvailable;
+    const minimumSize = smallestPowerOfTwoAtOrAbove(totalTracks);
+    if (minimumSize < 2) return 0;
+    if (requested === "auto") return minimumSize;
     const numeric = Number(requested);
-    if (!Number.isFinite(numeric) || numeric < 2) return maxAvailable;
-    if (numeric <= maxAvailable) return numeric;
-    return maxAvailable;
+    if (!Number.isFinite(numeric) || numeric < 2) return minimumSize;
+    return Math.max(numeric, minimumSize);
   }
 
   function buildSeedOrder(size) {
@@ -455,6 +454,10 @@
   }
 
   function getMatchWinner(roundIndex, matchIndex) {
+    const left = getMatchCompetitor(roundIndex, matchIndex, "left");
+    const right = getMatchCompetitor(roundIndex, matchIndex, "right");
+    if (left && !right) return left;
+    if (right && !left) return right;
     const pick = state.picks[`${roundIndex}:${matchIndex}`];
     if (!pick) return null;
     return getMatchCompetitor(roundIndex, matchIndex, pick);
@@ -504,7 +507,7 @@
         ${cover ? `<img class="playlist-cover" src="${cover}" alt="">` : `<div class="playlist-cover" aria-hidden="true"></div>`}
         <div>
           <h3 class="playlist-title">${escapeHtml(state.playlist.name || "Spotify playlist")}</h3>
-          <p class="playlist-meta">Owner: ${escapeHtml(state.playlist.owner?.display_name || state.playlist.owner?.id || "Unknown")} · ${state.entrants.length} ranked tracks · ${state.bracketSize}-seed bracket</p>
+          <p class="playlist-meta">Owner: ${escapeHtml(state.playlist.owner?.display_name || state.playlist.owner?.id || "Unknown")} · ${state.entrants.length} ranked tracks · ${state.bracketSize}-slot bracket${state.bracketSize > state.entrants.length ? ` with ${state.bracketSize - state.entrants.length} byes` : ""}</p>
           ${state.playlist.external_urls?.spotify ? `<p class="playlist-meta"><a class="spotify-link" href="${state.playlist.external_urls.spotify}" target="_blank" rel="noopener">Open playlist on Spotify</a></p>` : ""}
         </div>
       </div>
@@ -573,13 +576,14 @@
 
   function renderCompetitorButton(roundIndex, matchIndex, side, competitor, isWinner) {
     if (!competitor) {
+      const label = roundIndex === 0 ? "Bye" : "Waiting on earlier round";
       return `
         <button class="match-competitor" type="button" disabled>
           <div class="match-track">
-            <span class="match-seed">-</span>
-            <span class="match-name">TBD</span>
+            <span class="match-seed">${roundIndex === 0 ? "BYE" : "-"}</span>
+            <span class="match-name">${roundIndex === 0 ? "Automatic advance" : "TBD"}</span>
           </div>
-          <div class="match-meta"><span>Waiting on earlier round</span></div>
+          <div class="match-meta"><span>${label}</span></div>
         </button>
       `;
     }
@@ -637,7 +641,7 @@
         throw new Error("Not enough ranked tracks to build a power-of-two bracket.");
       }
 
-      const selectedTracks = tracks.slice(0, resolvedSize).map((track, index) => ({
+      const selectedTracks = tracks.map((track, index) => ({
         ...track,
         seed: index + 1,
       }));
@@ -652,11 +656,14 @@
       renderPlaylistPreview();
       renderBracket();
 
+      const byeCount = Math.max(0, resolvedSize - selectedTracks.length);
       const requested = bracketSizeSelect.value;
-      if (requested !== "auto" && Number(requested) !== resolvedSize) {
-        setStatus(`Playlist loaded. Only ${tracks.length} unique tracks were available, so the bracket was sized down to ${resolvedSize}.`, "success");
+      if (byeCount > 0) {
+        setStatus(`Bracket built from ${playlist.name}. Included all ${selectedTracks.length} songs in a ${resolvedSize}-slot bracket with ${byeCount} byes.`, "success");
+      } else if (requested !== "auto" && Number(requested) !== resolvedSize) {
+        setStatus(`Bracket built from ${playlist.name}. Expanded the bracket to ${resolvedSize} slots so all ${selectedTracks.length} songs are included.`, "success");
       } else {
-        setStatus(`Bracket built from ${playlist.name}. Seeded ${resolvedSize} tracks by Spotify popularity.`, "success");
+        setStatus(`Bracket built from ${playlist.name}. Included all ${selectedTracks.length} songs and seeded them by Spotify popularity.`, "success");
       }
     } catch (errorObj) {
       clearBracketState();
@@ -762,3 +769,4 @@
     setStatus(errorObj.message || "Could not initialize Spotify tournaments.", "error");
   });
 })();
+
