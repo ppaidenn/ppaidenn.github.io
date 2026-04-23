@@ -20,6 +20,8 @@
     picks: {},
     activeRoundIndex: null,
     activeSelectionCursor: 0,
+    authRedirectProcessing: false,
+    lastHandledAuthUrl: "",
   };
 
   const clientIdInput = document.getElementById("spotifyClientIdInput");
@@ -266,11 +268,16 @@
     const code = url.searchParams.get("code");
     const error = url.searchParams.get("error");
     if (!code && !error) return;
+    const redirectKey = `${url.pathname}${url.search}`;
+    if (state.authRedirectProcessing || state.lastHandledAuthUrl === redirectKey) return;
+    state.authRedirectProcessing = true;
+    state.lastHandledAuthUrl = redirectKey;
 
     if (error) {
       setStatus(`Spotify sign-in was not completed: ${error}`, "error");
       url.searchParams.delete("error");
       history.replaceState({}, "", url.pathname);
+      state.authRedirectProcessing = false;
       return;
     }
 
@@ -292,8 +299,17 @@
       setStatus(errorObj.message || "Could not complete Spotify sign-in.", "error");
     } finally {
       url.searchParams.delete("code");
+      url.searchParams.delete("state");
       history.replaceState({}, "", url.pathname);
+      state.authRedirectProcessing = false;
     }
+  }
+
+  async function syncSpotifyAuthState() {
+    await handleSpotifyRedirect();
+    state.auth = loadAuth();
+    updateAuthUi();
+    renderApp();
   }
 
   function smallestPowerOfTwoAtOrAbove(value) {
@@ -923,9 +939,7 @@
     updateAuthUi();
     renderApp();
 
-    await handleSpotifyRedirect();
-    updateAuthUi();
-    renderApp();
+    await syncSpotifyAuthState();
 
     if (state.auth?.access_token && !state.auth.user_name) {
       getValidAccessToken()
@@ -1002,6 +1016,20 @@
   voteModal.addEventListener("click", (event) => {
     if (event.target === voteModal) {
       closeVoteModal();
+    }
+  });
+
+  window.addEventListener("pageshow", () => {
+    syncSpotifyAuthState().catch(() => {});
+  });
+
+  window.addEventListener("focus", () => {
+    syncSpotifyAuthState().catch(() => {});
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      syncSpotifyAuthState().catch(() => {});
     }
   });
 
