@@ -15,9 +15,11 @@
     auth: null,
     playlist: null,
     entrants: [],
-    slotEntrants: [],
-    bracketSize: 0,
+    rounds: [],
+    mainDrawSize: 0,
     picks: {},
+    activeRoundIndex: null,
+    activeSelectionCursor: 0,
   };
 
   const clientIdInput = document.getElementById("spotifyClientIdInput");
@@ -26,15 +28,24 @@
   const disconnectBtn = document.getElementById("spotifyDisconnectBtn");
   const authPill = document.getElementById("spotifyAuthPill");
   const playlistInput = document.getElementById("playlistInput");
-  const bracketSizeSelect = document.getElementById("bracketSizeSelect");
   const buildBracketBtn = document.getElementById("buildBracketBtn");
   const resetBracketBtn = document.getElementById("resetBracketBtn");
   const statusCard = document.getElementById("statusCard");
   const statusText = document.getElementById("statusText");
   const playlistPreview = document.getElementById("playlistPreview");
-  const bracketBoard = document.getElementById("bracketBoard");
+  const roundStage = document.getElementById("roundStage");
   const championChip = document.getElementById("championChip");
   const debugOutput = document.getElementById("debugOutput");
+  const voteModal = document.getElementById("voteModal");
+  const voteModalKicker = document.getElementById("voteModalKicker");
+  const voteModalTitle = document.getElementById("voteModalTitle");
+  const voteModalSubtitle = document.getElementById("voteModalSubtitle");
+  const voteProgressText = document.getElementById("voteProgressText");
+  const voteCompleteNote = document.getElementById("voteCompleteNote");
+  const voteMatchup = document.getElementById("voteMatchup");
+  const votePrevBtn = document.getElementById("votePrevBtn");
+  const voteNextBtn = document.getElementById("voteNextBtn");
+  const voteModalCloseBtn = document.getElementById("voteModalCloseBtn");
 
   function setStatus(message, kind = "info") {
     statusText.textContent = message;
@@ -291,6 +302,12 @@
     return size;
   }
 
+  function powerOfTwoAtOrBelow(value) {
+    let size = 1;
+    while (size * 2 <= value) size *= 2;
+    return size;
+  }
+
   function resolveBracketSize(totalTracks, requested) {
     const minimumSize = smallestPowerOfTwoAtOrAbove(totalTracks);
     if (minimumSize < 2) return 0;
@@ -323,7 +340,7 @@
     });
 
     const rawTracks = [];
-    let nextUrl = `${SPOTIFY_API}/playlists/${playlistId}/items?limit=100&offset=0&additional_types=track&fields=items(item(id,name,popularity,artists(name),album(images),external_urls.spotify,preview_url,is_local,type)),next,total`;
+    let nextUrl = `${SPOTIFY_API}/playlists/${playlistId}/items?limit=100&offset=0&additional_types=track&fields=items(item(id,name,popularity,artists(name),album(images,release_date),external_urls.spotify,preview_url,is_local,type)),next,total`;
 
     while (nextUrl) {
       const data = await spotifyFetchUrl(nextUrl, accessToken);
@@ -337,6 +354,7 @@
           popularity: Number(track.popularity) || 0,
           artists: Array.isArray(track.artists) ? track.artists.map((artist) => artist?.name).filter(Boolean) : [],
           image: track.album?.images?.[0]?.url || "",
+          year: String(track.album?.release_date || "").slice(0, 4) || "Unknown year",
           spotifyUrl: track.external_urls?.spotify || "",
           previewUrl: track.preview_url || "",
         });
@@ -368,11 +386,15 @@
   function clearBracketState() {
     state.playlist = null;
     state.entrants = [];
-    state.slotEntrants = [];
-    state.bracketSize = 0;
+    state.rounds = [];
+    state.mainDrawSize = 0;
     state.picks = {};
+    state.activeRoundIndex = null;
+    state.activeSelectionCursor = 0;
     renderPlaylistPreview();
-    renderBracket();
+    renderChampion();
+    renderRoundStage();
+    renderVoteModal();
   }
 
   async function runPlaylistDiagnostics(playlistId, accessToken) {
@@ -439,28 +461,127 @@
     return { meData, playlistData, tracksStatus: 200 };
   }
 
-  function getRoundCount() {
-    return state.bracketSize ? Math.log2(state.bracketSize) : 0;
+  function roundLabelForSize(size) {
+    if (size <= 1) return "Champion";
+    if (size === 2) return "Final";
+    return `Round of ${size}`;
   }
 
-  function getMatchCompetitor(roundIndex, matchIndex, side) {
-    if (!state.slotEntrants.length) return null;
-    if (roundIndex === 0) {
-      const slotIndex = matchIndex * 2 + (side === "left" ? 0 : 1);
-      return state.slotEntrants[slotIndex] || null;
+  function buildTournamentRounds(entries) {
+    const total = entries.length;
+    const mainDrawSize = powerOfTwoAtOrBelow(total);
+    const overflow = total - mainDrawSize;
+    const rounds = [];
+    const seedRefs = new Map();
+
+    if (overflow > 0) {
+      const autoCount = total - overflow * 2;
+      const prelimMatches = [];
+      for (let i = 0; i < overflow; i += 1) {
+        const betterSeed = entries[autoCount + i];
+        const lowerSeed = entries[total - 1 - i];
+        prelimMatches.push({
+          effectiveSeed: betterSeed.seed,
+          sides: [
+            { type: "entrant", entry: betterSeed },
+            { type: "entrant", entry: lowerSeed },
+          ],
+        });
+      }
+
+      rounds.push({
+        id: "preliminary-round",
+        label: "Preliminary Round",
+        description: `Win ${overflow} matchup${overflow === 1 ? "" : "s"} to trim into the ${roundLabelForSize(mainDrawSize).toLowerCase()}.`,
+        matches: prelimMatches,
+      });
+
+      entries.slice(0, autoCount).forEach((entry) => {
+        seedRefs.set(entry.seed, { type: "entrant", entry });
+      });
+      prelimMatches.forEach((match, index) => {
+        seedRefs.set(match.effectiveSeed, { type: "winner", roundIndex: 0, matchIndex: index });
+      });
+    } else {
+      entries.forEach((entry) => {
+        seedRefs.set(entry.seed, { type: "entrant", entry });
+      });
     }
-    const previousMatchIndex = matchIndex * 2 + (side === "left" ? 0 : 1);
-    return getMatchWinner(roundIndex - 1, previousMatchIndex);
+
+    const mainOrder = buildSeedOrder(mainDrawSize);
+    const mainMatches = [];
+    for (let i = 0; i < mainOrder.length; i += 2) {
+      mainMatches.push({
+        sides: [seedRefs.get(mainOrder[i]) || null, seedRefs.get(mainOrder[i + 1]) || null],
+      });
+    }
+
+    rounds.push({
+      id: `round-${mainDrawSize}`,
+      label: roundLabelForSize(mainDrawSize),
+      description: `Make every pick needed to decide the ${roundLabelForSize(mainDrawSize).toLowerCase()}.`,
+      matches: mainMatches,
+    });
+
+    let previousRoundIndex = rounds.length - 1;
+    let fieldSize = mainDrawSize / 2;
+    while (fieldSize >= 1) {
+      const previousRound = rounds[previousRoundIndex];
+      if (previousRound.matches.length <= 1) break;
+      const nextMatches = [];
+      for (let matchIndex = 0; matchIndex < previousRound.matches.length; matchIndex += 2) {
+        nextMatches.push({
+          sides: [
+            { type: "winner", roundIndex: previousRoundIndex, matchIndex },
+            { type: "winner", roundIndex: previousRoundIndex, matchIndex: matchIndex + 1 },
+          ],
+        });
+      }
+      rounds.push({
+        id: `round-${fieldSize}`,
+        label: roundLabelForSize(fieldSize),
+        description: fieldSize === 2
+          ? "Choose the final winner for the playlist."
+          : `Move the remaining songs through the ${roundLabelForSize(fieldSize).toLowerCase()}.`,
+        matches: nextMatches,
+      });
+      previousRoundIndex = rounds.length - 1;
+      fieldSize /= 2;
+    }
+
+    return { rounds, mainDrawSize };
+  }
+
+  function getRoundKey(roundIndex, matchIndex) {
+    return `${roundIndex}:${matchIndex}`;
+  }
+
+  function resolveParticipant(ref) {
+    if (!ref) return null;
+    if (ref.type === "entrant") return ref.entry;
+    if (ref.type === "winner") return getMatchWinner(ref.roundIndex, ref.matchIndex);
+    return null;
+  }
+
+  function getRoundByIndex(roundIndex) {
+    return state.rounds[roundIndex] || null;
+  }
+
+  function getMatchCompetitor(roundIndex, matchIndex, sideIndex) {
+    const round = getRoundByIndex(roundIndex);
+    const match = round?.matches?.[matchIndex];
+    if (!match) return null;
+    return resolveParticipant(match.sides[sideIndex]);
   }
 
   function getMatchWinner(roundIndex, matchIndex) {
-    const left = getMatchCompetitor(roundIndex, matchIndex, "left");
-    const right = getMatchCompetitor(roundIndex, matchIndex, "right");
+    const left = getMatchCompetitor(roundIndex, matchIndex, 0);
+    const right = getMatchCompetitor(roundIndex, matchIndex, 1);
     if (left && !right) return left;
     if (right && !left) return right;
-    const pick = state.picks[`${roundIndex}:${matchIndex}`];
+    const pick = state.picks[getRoundKey(roundIndex, matchIndex)];
     if (!pick) return null;
-    return getMatchCompetitor(roundIndex, matchIndex, pick);
+    return pick === "left" ? left : right;
   }
 
   function clearLaterRounds(startRound) {
@@ -471,25 +592,65 @@
   }
 
   function setMatchWinner(roundIndex, matchIndex, side) {
-    state.picks[`${roundIndex}:${matchIndex}`] = side;
+    state.picks[getRoundKey(roundIndex, matchIndex)] = side;
     clearLaterRounds(roundIndex + 1);
-    renderBracket();
+    renderApp();
+    if (state.activeRoundIndex === roundIndex) {
+      advanceActiveSelection();
+    }
+  }
+  function getRoundInfo(roundIndex) {
+    const round = getRoundByIndex(roundIndex);
+    if (!round) return null;
+    const ready = roundIndex === 0 || isRoundComplete(roundIndex - 1);
+    const matchInfos = round.matches.map((_, matchIndex) => {
+      const left = getMatchCompetitor(roundIndex, matchIndex, 0);
+      const right = getMatchCompetitor(roundIndex, matchIndex, 1);
+      const pick = state.picks[getRoundKey(roundIndex, matchIndex)] || "";
+      const winner = pick === "left" ? left : pick === "right" ? right : null;
+      const requiresVote = !!(left && right);
+      const autoAdvance = !!((left && !right) || (right && !left));
+      return { matchIndex, left, right, pick, winner, requiresVote, autoAdvance };
+    });
+    const selectionMatchIndexes = matchInfos.filter((info) => info.requiresVote).map((info) => info.matchIndex);
+    const completedSelections = matchInfos.filter((info) => info.requiresVote && info.winner).length;
+    const selectionTotal = selectionMatchIndexes.length;
+    const completed = ready && completedSelections === selectionTotal;
+    return {
+      round,
+      roundIndex,
+      ready,
+      completed,
+      matchInfos,
+      selectionMatchIndexes,
+      selectionTotal,
+      completedSelections,
+    };
   }
 
-  function roundLabel(roundIndex, totalRounds) {
-    if (roundIndex === totalRounds - 1) return "Final";
-    if (roundIndex === totalRounds - 2) return "Semifinals";
-    if (roundIndex === totalRounds - 3) return "Quarterfinals";
-    return `Round ${roundIndex + 1}`;
+  function isRoundComplete(roundIndex) {
+    const info = getRoundInfo(roundIndex);
+    return !!info && info.completed;
+  }
+
+  function getFinalWinner() {
+    if (!state.rounds.length) return null;
+    return getMatchWinner(state.rounds.length - 1, 0);
+  }
+
+  function formatRoundSummary(info) {
+    if (!info.ready) return "Complete the previous round to unlock this one.";
+    if (!info.selectionTotal) return "No manual picks are needed here.";
+    return `${info.completedSelections}/${info.selectionTotal} picks locked in.`;
   }
 
   function renderPlaylistPreview() {
-    if (!state.playlist || !state.entrants.length || !state.bracketSize) {
-      playlistPreview.innerHTML = `<div class="empty-state">No playlist loaded yet. Once you build a bracket, this panel will show the playlist cover, owner, seed size, and top-ranked tracks.</div>`;
+    if (!state.playlist || !state.entrants.length || !state.mainDrawSize) {
+      playlistPreview.innerHTML = `<div class="empty-state">No playlist loaded yet. Once you build a tournament, this panel will show the playlist cover, owner, seeds, and round structure.</div>`;
       return;
     }
 
-    const topSeeds = state.entrants.slice(0, Math.min(state.bracketSize, 8));
+    const topSeeds = state.entrants.slice(0, Math.min(state.entrants.length, 8));
     const cover = state.playlist.images?.[0]?.url || "";
     const seedButtons = topSeeds.map((track) => `
       <button class="seed-option" type="button">
@@ -498,16 +659,22 @@
           <span class="seed-track">${escapeHtml(track.name)}</span>
           <span class="seed-artist">${escapeHtml(track.artists.join(", "))}</span>
         </span>
-        <span class="seed-score">Pop ${track.popularity}</span>
+        <span class="seed-score">${escapeHtml(track.year)} · Pop ${track.popularity}</span>
       </button>
     `).join("");
+
+    const prelimRound = state.rounds.find((round) => round.id === "preliminary-round");
+    const prelimText = prelimRound
+      ? `Preliminary round: ${prelimRound.matches.length} matchup${prelimRound.matches.length === 1 ? "" : "s"}.`
+      : "No preliminary round needed.";
 
     playlistPreview.innerHTML = `
       <div class="playlist-head">
         ${cover ? `<img class="playlist-cover" src="${cover}" alt="">` : `<div class="playlist-cover" aria-hidden="true"></div>`}
         <div>
           <h3 class="playlist-title">${escapeHtml(state.playlist.name || "Spotify playlist")}</h3>
-          <p class="playlist-meta">Owner: ${escapeHtml(state.playlist.owner?.display_name || state.playlist.owner?.id || "Unknown")} · ${state.entrants.length} ranked tracks · ${state.bracketSize}-slot bracket${state.bracketSize > state.entrants.length ? ` with ${state.bracketSize - state.entrants.length} byes` : ""}</p>
+          <p class="playlist-meta">Owner: ${escapeHtml(state.playlist.owner?.display_name || state.playlist.owner?.id || "Unknown")} - ${state.entrants.length} ranked songs - main draw ${roundLabelForSize(state.mainDrawSize).toLowerCase()}.</p>
+          <p class="playlist-meta">${prelimText}</p>
           ${state.playlist.external_urls?.spotify ? `<p class="playlist-meta"><a class="spotify-link" href="${state.playlist.external_urls.spotify}" target="_blank" rel="noopener">Open playlist on Spotify</a></p>` : ""}
         </div>
       </div>
@@ -517,95 +684,150 @@
     `;
   }
 
-  function escapeHtml(value) {
-    return String(value || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
-
   function renderChampion() {
-    const totalRounds = getRoundCount();
-    const champion = totalRounds ? getMatchWinner(totalRounds - 1, 0) : null;
-    const strong = champion
-      ? `${champion.name} · ${champion.artists.join(", ")}`
+    const champion = getFinalWinner();
+    const label = champion
+      ? `${champion.name} - ${champion.artists.join(", ")}`
       : "No winner selected yet";
-    championChip.innerHTML = `<span>Champion</span><strong>${escapeHtml(strong)}</strong>`;
+    championChip.innerHTML = `<span>Champion</span><strong>${escapeHtml(label)}</strong>`;
   }
 
-  function renderBracket() {
-    renderChampion();
-    if (!state.bracketSize || !state.slotEntrants.length) {
-      bracketBoard.innerHTML = `<div class="empty-state">Build a playlist bracket to render the tournament board here.</div>`;
+  function renderRoundStage() {
+    if (!state.rounds.length) {
+      roundStage.innerHTML = `<div class="empty-state">Build a playlist tournament to unlock round-by-round voting.</div>`;
       return;
     }
 
-    const totalRounds = getRoundCount();
-    const roundHtml = [];
-
-    for (let roundIndex = 0; roundIndex < totalRounds; roundIndex += 1) {
-      const matchesInRound = state.bracketSize / Math.pow(2, roundIndex + 1);
-      const matchHtml = [];
-      for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex += 1) {
-        const left = getMatchCompetitor(roundIndex, matchIndex, "left");
-        const right = getMatchCompetitor(roundIndex, matchIndex, "right");
-        const winner = state.picks[`${roundIndex}:${matchIndex}`] || "";
-        matchHtml.push(renderMatch(roundIndex, matchIndex, left, right, winner));
-      }
-      roundHtml.push(`
-        <section class="bracket-round">
-          <div class="round-label">${roundLabel(roundIndex, totalRounds)}</div>
-          ${matchHtml.join("")}
-        </section>
-      `);
-    }
-
-    bracketBoard.innerHTML = roundHtml.join("");
-  }
-
-  function renderMatch(roundIndex, matchIndex, left, right, winner) {
-    return `
-      <div class="match-card">
-        ${renderCompetitorButton(roundIndex, matchIndex, "left", left, winner === "left")}
-        ${renderCompetitorButton(roundIndex, matchIndex, "right", right, winner === "right")}
-      </div>
-    `;
-  }
-
-  function renderCompetitorButton(roundIndex, matchIndex, side, competitor, isWinner) {
-    if (!competitor) {
-      const label = roundIndex === 0 ? "Bye" : "Waiting on earlier round";
+    roundStage.innerHTML = state.rounds.map((round, roundIndex) => {
+      const info = getRoundInfo(roundIndex);
+      const statusLabel = !info.ready
+        ? "Locked"
+        : info.completed
+          ? "Complete"
+          : info.selectionTotal
+            ? "Ready"
+            : "Auto";
+      const statusClass = !info.ready ? "" : info.completed ? " complete" : " ready";
+      const helper = info.selectionTotal
+        ? `${info.selectionTotal} selections to make.`
+        : "This round only contains automatic advancers.";
       return `
-        <button class="match-competitor" type="button" disabled>
-          <div class="match-track">
-            <span class="match-seed">${roundIndex === 0 ? "BYE" : "-"}</span>
-            <span class="match-name">${roundIndex === 0 ? "Automatic advance" : "TBD"}</span>
+        <section class="round-card">
+          <div class="round-card-head">
+            <div>
+              <h3 class="round-card-title">${escapeHtml(round.label)}</h3>
+              <p class="round-card-copy">${escapeHtml(round.description)}</p>
+            </div>
+            <div class="round-card-status${statusClass}">${escapeHtml(statusLabel)}</div>
           </div>
-          <div class="match-meta"><span>${label}</span></div>
-        </button>
+          <div class="round-card-meta">
+            <div class="round-chip">${escapeHtml(formatRoundSummary(info))}</div>
+            <div class="round-chip">${escapeHtml(helper)}</div>
+          </div>
+          <div class="round-actions">
+            <button class="btn round-open-btn" type="button" data-open-round="${roundIndex}" ${info.ready ? "" : "disabled"}>Open ${escapeHtml(round.label)}</button>
+          </div>
+        </section>
       `;
-    }
+    }).join("");
+  }
+  function getCurrentModalContext() {
+    if (state.activeRoundIndex === null || state.activeRoundIndex === undefined) return null;
+    const info = getRoundInfo(state.activeRoundIndex);
+    if (!info) return null;
+    const selectionTotal = info.selectionMatchIndexes.length;
+    const safeCursor = Math.min(Math.max(state.activeSelectionCursor, 0), Math.max(selectionTotal - 1, 0));
+    state.activeSelectionCursor = safeCursor;
+    const matchIndex = info.selectionMatchIndexes[safeCursor] ?? null;
+    const match = matchIndex === null ? null : info.matchInfos.find((entry) => entry.matchIndex === matchIndex) || null;
+    return { info, selectionTotal, matchIndex, match };
+  }
 
+  function renderVoteChoice(entry, selected, side) {
+    if (!entry) {
+      return `<div class="empty-state">No competitor is available in this slot.</div>`;
+    }
+    const hotkey = side === "left" ? "1 / A / ←" : "2 / D / →";
     return `
-      <button
-        class="match-competitor${isWinner ? " winner" : ""}"
-        type="button"
-        data-round="${roundIndex}"
-        data-match="${matchIndex}"
-        data-side="${side}"
-      >
-        <div class="match-track">
-          <span class="match-seed">${competitor.seed}</span>
-          <span class="match-name">${escapeHtml(competitor.name)}</span>
-        </div>
-        <div class="match-meta">
-          <span>${escapeHtml(competitor.artists.join(", "))}</span>
-          <span>Pop ${competitor.popularity}</span>
+      <button class="vote-choice${selected ? " selected" : ""}" type="button" data-vote-side="${side}">
+        <span class="vote-hotkey">${hotkey}</span>
+        <div class="vote-choice-body">
+          ${entry.image ? `<img class="vote-cover" src="${entry.image}" alt="">` : `<div class="vote-cover" aria-hidden="true"></div>`}
+          <div class="vote-copy">
+            <h4 class="vote-title">${escapeHtml(entry.name)}</h4>
+            <p class="vote-artist">${escapeHtml(entry.artists.join(", "))}</p>
+            <div class="vote-meta">
+              <span>Seed ${entry.seed}</span>
+              <span>${escapeHtml(entry.year)}</span>
+              <span>Pop ${entry.popularity}</span>
+            </div>
+          </div>
         </div>
       </button>
     `;
+  }
+
+  function renderVoteModal() {
+    const context = getCurrentModalContext();
+    const isOpen = !!context;
+    voteModal.classList.toggle("open", isOpen);
+    voteModal.setAttribute("aria-hidden", isOpen ? "false" : "true");
+    if (!context) return;
+
+    const { info, selectionTotal, match } = context;
+    voteModalKicker.textContent = info.round.label.toUpperCase();
+    voteModalTitle.textContent = info.round.label.startsWith("Round") ? `The ${info.round.label}` : info.round.label;
+    voteModalSubtitle.textContent = `${info.round.description} ${info.selectionTotal ? `${info.selectionTotal} selections need to be made in this round.` : "No manual selections remain in this round."}`;
+    voteProgressText.textContent = `Selection ${Math.min(state.activeSelectionCursor + 1, Math.max(selectionTotal, 1))} / ${Math.max(selectionTotal, 1)}`;
+    voteCompleteNote.hidden = !info.completed;
+
+    if (!match) {
+      voteMatchup.innerHTML = `<div class="empty-state">No manual matchups are left in this round.</div>`;
+      votePrevBtn.disabled = true;
+      voteNextBtn.disabled = true;
+      return;
+    }
+
+    voteMatchup.innerHTML = `
+      ${renderVoteChoice(match.left, match.pick === "left", "left")}
+      ${renderVoteChoice(match.right, match.pick === "right", "right")}
+    `;
+
+    votePrevBtn.disabled = state.activeSelectionCursor <= 0;
+    voteNextBtn.disabled = state.activeSelectionCursor >= selectionTotal - 1;
+  }
+
+  function renderApp() {
+    renderPlaylistPreview();
+    renderChampion();
+    renderRoundStage();
+    renderVoteModal();
+  }
+
+  function openRoundModal(roundIndex) {
+    const info = getRoundInfo(roundIndex);
+    if (!info || !info.ready) return;
+    state.activeRoundIndex = roundIndex;
+    const firstIncomplete = info.selectionMatchIndexes.findIndex((matchIndex) => {
+      const match = info.matchInfos.find((entry) => entry.matchIndex === matchIndex);
+      return match && !match.winner;
+    });
+    state.activeSelectionCursor = firstIncomplete >= 0 ? firstIncomplete : 0;
+    renderVoteModal();
+  }
+
+  function closeVoteModal() {
+    state.activeRoundIndex = null;
+    state.activeSelectionCursor = 0;
+    renderVoteModal();
+  }
+
+  function advanceActiveSelection(step = 1) {
+    const context = getCurrentModalContext();
+    if (!context) return;
+    const next = Math.min(Math.max(state.activeSelectionCursor + step, 0), Math.max(context.selectionTotal - 1, 0));
+    state.activeSelectionCursor = next;
+    renderVoteModal();
   }
 
   async function buildBracketFromPlaylist() {
@@ -633,52 +855,41 @@
       await runPlaylistDiagnostics(playlistId, accessToken);
       const { playlist, tracks } = await fetchPlaylistItems(playlistId, accessToken);
       if (tracks.length < 2) {
-        throw new Error("This playlist does not have enough Spotify tracks to build a bracket.");
+        throw new Error("This playlist does not have enough Spotify tracks to build a tournament.");
       }
 
-      const resolvedSize = resolveBracketSize(tracks.length, bracketSizeSelect.value);
-      if (!resolvedSize) {
-        throw new Error("Not enough ranked tracks to build a power-of-two bracket.");
-      }
-
-      const selectedTracks = tracks.map((track, index) => ({
+      const seededTracks = tracks.map((track, index) => ({
         ...track,
         seed: index + 1,
       }));
-      const slotEntrants = buildSeedOrder(resolvedSize).map((seed) => selectedTracks[seed - 1]);
+      const { rounds, mainDrawSize } = buildTournamentRounds(seededTracks);
 
       state.playlist = playlist;
-      state.entrants = selectedTracks;
-      state.slotEntrants = slotEntrants;
-      state.bracketSize = resolvedSize;
+      state.entrants = seededTracks;
+      state.rounds = rounds;
+      state.mainDrawSize = mainDrawSize;
       state.picks = {};
+      state.activeRoundIndex = null;
+      state.activeSelectionCursor = 0;
 
-      renderPlaylistPreview();
-      renderBracket();
+      renderApp();
 
-      const byeCount = Math.max(0, resolvedSize - selectedTracks.length);
-      const requested = bracketSizeSelect.value;
-      if (byeCount > 0) {
-        setStatus(`Bracket built from ${playlist.name}. Included all ${selectedTracks.length} songs in a ${resolvedSize}-slot bracket with ${byeCount} byes.`, "success");
-      } else if (requested !== "auto" && Number(requested) !== resolvedSize) {
-        setStatus(`Bracket built from ${playlist.name}. Expanded the bracket to ${resolvedSize} slots so all ${selectedTracks.length} songs are included.`, "success");
+      const prelimRound = rounds.find((round) => round.id === "preliminary-round");
+      if (prelimRound) {
+        setStatus(`Tournament built from ${playlist.name}. All ${seededTracks.length} songs are included, starting with ${prelimRound.matches.length} preliminary matchup${prelimRound.matches.length === 1 ? "" : "s"} before the ${roundLabelForSize(mainDrawSize).toLowerCase()}.`, "success");
       } else {
-        setStatus(`Bracket built from ${playlist.name}. Included all ${selectedTracks.length} songs and seeded them by Spotify popularity.`, "success");
+        setStatus(`Tournament built from ${playlist.name}. All ${seededTracks.length} songs are included directly in the ${roundLabelForSize(mainDrawSize).toLowerCase()}.`, "success");
       }
     } catch (errorObj) {
       clearBracketState();
       if (errorObj?.spotifyStatus === 401) {
         clearAuth();
         updateAuthUi();
-        setStatus("Spotify session expired or was rejected. Reconnect Spotify, then try building the bracket again.", "error");
+        setStatus("Spotify session expired or was rejected. Reconnect Spotify, then try building the tournament again.", "error");
       } else if (errorObj?.spotifyStatus === 403) {
-        if (String(errorObj?.spotifyUrl || "").includes("/tracks")) {
-          setStatus("Spotify denied the follow-up track popularity lookup. The bracket builder has been updated to avoid that extra call; refresh the page and try again.", "error");
-        } else {
-          setStatus("Spotify denied access to that playlist. If it is private or collaborative, reconnect Spotify and make sure the signed-in Spotify account can open that playlist.", "error");
-        }
+        setStatus("Spotify denied access to that playlist. Reconnect Spotify and make sure the signed-in Spotify account can open the playlist and its tracks.", "error");
       } else {
-        setStatus(errorObj.message || "Could not build the bracket.", "error");
+        setStatus(errorObj.message || "Could not build the tournament.", "error");
       }
     } finally {
       buildBracketBtn.disabled = false;
@@ -688,9 +899,10 @@
 
   function resetBracketPicks() {
     state.picks = {};
-    renderBracket();
-    if (state.bracketSize) {
-      setStatus("Bracket picks reset.", "success");
+    closeVoteModal();
+    renderApp();
+    if (state.rounds.length) {
+      setStatus("Tournament picks reset.", "success");
     }
   }
 
@@ -709,9 +921,11 @@
     ]);
     state.auth = loadAuth();
     updateAuthUi();
+    renderApp();
 
     await handleSpotifyRedirect();
     updateAuthUi();
+    renderApp();
 
     if (state.auth?.access_token && !state.auth.user_name) {
       getValidAccessToken()
@@ -755,18 +969,69 @@
     resetBracketPicks();
   });
 
-  bracketBoard.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-round][data-match][data-side]");
+  roundStage.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-open-round]");
     if (!button) return;
-    const roundIndex = Number(button.getAttribute("data-round"));
-    const matchIndex = Number(button.getAttribute("data-match"));
-    const side = String(button.getAttribute("data-side"));
-    if (!Number.isFinite(roundIndex) || !Number.isFinite(matchIndex) || (side !== "left" && side !== "right")) return;
-    setMatchWinner(roundIndex, matchIndex, side);
+    const roundIndex = Number(button.getAttribute("data-open-round"));
+    if (!Number.isFinite(roundIndex)) return;
+    openRoundModal(roundIndex);
+  });
+
+  voteMatchup.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-vote-side]");
+    if (!button || state.activeRoundIndex === null) return;
+    const side = String(button.getAttribute("data-vote-side"));
+    const context = getCurrentModalContext();
+    if (!context || context.matchIndex === null) return;
+    if (side !== "left" && side !== "right") return;
+    setMatchWinner(state.activeRoundIndex, context.matchIndex, side);
+  });
+
+  votePrevBtn.addEventListener("click", () => {
+    advanceActiveSelection(-1);
+  });
+
+  voteNextBtn.addEventListener("click", () => {
+    advanceActiveSelection(1);
+  });
+
+  voteModalCloseBtn.addEventListener("click", () => {
+    closeVoteModal();
+  });
+
+  voteModal.addEventListener("click", (event) => {
+    if (event.target === voteModal) {
+      closeVoteModal();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (!voteModal.classList.contains("open")) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeVoteModal();
+      return;
+    }
+    const context = getCurrentModalContext();
+    if (!context || context.matchIndex === null) return;
+    const key = event.key.toLowerCase();
+    if (key === "1" || key === "a" || event.key === "ArrowLeft") {
+      event.preventDefault();
+      setMatchWinner(state.activeRoundIndex, context.matchIndex, "left");
+      return;
+    }
+    if (key === "2" || key === "d" || event.key === "ArrowRight") {
+      event.preventDefault();
+      setMatchWinner(state.activeRoundIndex, context.matchIndex, "right");
+      return;
+    }
+    if (event.key === "Enter") {
+      event.preventDefault();
+      advanceActiveSelection(1);
+    }
   });
 
   init().catch((errorObj) => {
     setStatus(errorObj.message || "Could not initialize Spotify tournaments.", "error");
   });
 })();
-
