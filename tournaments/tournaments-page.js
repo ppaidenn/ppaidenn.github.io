@@ -114,6 +114,15 @@
     return null;
   }
 
+  function escapeHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   function randomString(length) {
     const bytes = new Uint8Array(length);
     crypto.getRandomValues(bytes);
