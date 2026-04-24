@@ -835,17 +835,20 @@
       return `<div class="empty-state">No competitor is available in this slot.</div>`;
     }
     const hotkey = side === "left" ? "1 / A / ←" : "2 / D / →";
-    const previewMarkup = entry.previewUrl
+    const previewMarkup = entry.spotifyUrl
       ? `
         <div class="vote-preview">
-          <div class="vote-preview-label">Song Snippet</div>
-          <audio controls preload="none" src="${entry.previewUrl}"></audio>
+          <div class="vote-preview-label">Full Song</div>
+          <a class="vote-preview-link" href="${entry.spotifyUrl}" target="_blank" rel="noopener">
+            <i class="fab fa-spotify" aria-hidden="true"></i>
+            <span>Listen on Spotify</span>
+          </a>
         </div>
       `
       : `
         <div class="vote-preview">
-          <div class="vote-preview-label">Song Snippet</div>
-          <div class="vote-preview-note">Spotify did not provide a preview clip for this song.</div>
+          <div class="vote-preview-label">Full Song</div>
+          <div class="vote-preview-note">Spotify did not provide a direct track link for this song.</div>
         </div>
       `;
     return `
