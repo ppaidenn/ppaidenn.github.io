@@ -267,8 +267,12 @@
     return data;
   }
 
+  async function fetchCurrentUserProfile(accessToken) {
+    return spotifyFetch("/me", accessToken);
+  }
+
   async function fetchCurrentUser(accessToken) {
-    const me = await spotifyFetch("/me", accessToken);
+    const me = await fetchCurrentUserProfile(accessToken);
     return me?.display_name || me?.id || "";
   }
 
@@ -300,8 +304,9 @@
       };
       saveAuth(auth);
       const accessToken = await getValidAccessToken();
-      const userName = await fetchCurrentUser(accessToken).catch(() => "");
-      saveAuth({ ...state.auth, user_name: userName });
+      const profile = await fetchCurrentUserProfile(accessToken).catch(() => null);
+      const userName = profile?.display_name || profile?.id || "";
+      saveAuth({ ...state.auth, user_name: userName, user_country: profile?.country || "" });
       setStatus(userName ? `Spotify connected as ${userName}.` : "Spotify connected.", "success");
     } catch (errorObj) {
       clearAuth();
@@ -359,6 +364,29 @@
     return order;
   }
 
+  async function fetchTrackDetailsMap(trackIds, accessToken) {
+    const detailMap = new Map();
+    for (let index = 0; index < trackIds.length; index += 50) {
+      const chunk = trackIds.slice(index, index + 50).filter(Boolean);
+      if (!chunk.length) continue;
+      const data = await spotifyFetch("/tracks", accessToken, {
+        ids: chunk.join(","),
+        market: state.auth?.user_country || undefined,
+      });
+      const tracks = Array.isArray(data?.tracks) ? data.tracks : [];
+      tracks.forEach((track) => {
+        if (!track?.id) return;
+        detailMap.set(track.id, {
+          popularity: Number(track.popularity) || 0,
+          previewUrl: track.preview_url || "",
+          image: track.album?.images?.[0]?.url || "",
+          year: String(track.album?.release_date || "").slice(0, 4) || "Unknown year",
+        });
+      });
+    }
+    return detailMap;
+  }
+
   async function fetchPlaylistItems(playlistId, accessToken) {
     const playlist = await spotifyFetch(`/playlists/${playlistId}`, accessToken, {
       fields: "id,name,description,owner(display_name,id),images(url),external_urls.spotify,items(total)",
@@ -375,6 +403,7 @@
         if (!track || track.is_local || track.type !== "track" || !track.id) return;
         rawTracks.push({
           id: track.id,
+          playlistOrder: rawTracks.length,
           name: track.name || "Untitled track",
           popularity: Number(track.popularity) || 0,
           artists: Array.isArray(track.artists) ? track.artists.map((artist) => artist?.name).filter(Boolean) : [],
@@ -395,14 +424,19 @@
       deduped.push(track);
     });
 
+    const detailMap = await fetchTrackDetailsMap(deduped.map((track) => track.id), accessToken).catch(() => new Map());
+
     const rankedTracks = deduped
       .map((track) => ({
         ...track,
-        popularity: Number(track.popularity) || 0,
+        popularity: Number(detailMap.get(track.id)?.popularity ?? track.popularity) || 0,
+        previewUrl: detailMap.get(track.id)?.previewUrl || track.previewUrl || "",
+        image: detailMap.get(track.id)?.image || track.image || "",
+        year: detailMap.get(track.id)?.year || track.year || "Unknown year",
       }))
       .sort((a, b) => {
         if (b.popularity !== a.popularity) return b.popularity - a.popularity;
-        return a.name.localeCompare(b.name);
+        return a.playlistOrder - b.playlistOrder;
       });
 
     return { playlist, tracks: rankedTracks };
@@ -972,10 +1006,11 @@
 
     if (state.auth?.access_token && !state.auth.user_name) {
       getValidAccessToken()
-        .then((token) => fetchCurrentUser(token))
-        .then((userName) => {
+        .then((token) => fetchCurrentUserProfile(token))
+        .then((profile) => {
+          const userName = profile?.display_name || profile?.id || "";
           if (!userName) return;
-          saveAuth({ ...state.auth, user_name: userName });
+          saveAuth({ ...state.auth, user_name: userName, user_country: profile?.country || "" });
           updateAuthUi();
         })
         .catch(() => {});

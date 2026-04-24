@@ -990,7 +990,7 @@
           <div class="kicker">MUSIC TOURNAMENTS</div>
           <h1>Spotify Bracket Builder</h1>
           <p>Bring in a Spotify playlist, rank the tracks by Spotify popularity, and generate a seeded tournament bracket right on paiden.com.</p>
-          <p class="hero-note">Spotify does not expose raw stream counts through the Web API. This page uses Spotify track popularity as the official seeding signal instead.</p>
+          <p class="hero-note">Spotify does not expose raw stream counts through the Web API. This page uses Spotify track popularity as the official seeding signal instead, and preview clips only show up when Spotify provides a preview URL.</p>
           <div class="hero-metrics">
             <div class="metric-chip">
               <strong>PKCE</strong>
@@ -1008,7 +1008,7 @@
         </div>
         <div class="hero-side">
           <h2>What this page does</h2>
-          <p>Connect your Spotify account, paste a playlist link, and we’ll load the tracks, fetch their Spotify popularity scores, then seed the highest-ranked songs into a bracket.</p>
+          <p>Connect your Spotify account, paste a playlist link, and we'll load the tracks, enrich them with Spotify track detail data, then seed the highest-ranked songs into a bracket.</p>
           <p>Spotify playlist importing works most reliably for playlists you own or collaborate on. For private playlists, you’ll need to authorize Spotify access with playlist-read scopes.</p>
           <p class="tiny-note">To make this work, create a Spotify app and add <code>https://paiden.com/tournaments/</code> as a redirect URI in the Spotify developer dashboard.</p>
         </div>
@@ -1158,6 +1158,7 @@
   <script src="/shared-app-header.js?v=20260421b"></script>
   <script src="/account-menu.js?v=20260420c"></script>
   <script src="/shared-footer.js?v=20260417a"></script>
-  <script src="/tournaments/tournaments-page.js?v=20260423h"></script>
+  <script src="/tournaments/tournaments-page.js?v=20260423i"></script>
 </body>
 </html>
+
