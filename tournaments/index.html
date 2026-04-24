@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>paiden.com</title>
-  <meta name="description" content="Choose between the bracket builder and all tournaments on paiden.com.">
+  <meta name="description" content="Choose between the bracket builder and the tournament board on paiden.com.">
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -16,263 +16,55 @@
   <link rel="stylesheet" href="/shared-footer.css?v=20260417a">
   <link rel="stylesheet" href="/shared-app-header.css?v=20260421b">
   <style>
-    :root {
-      --page-bg: #dfe2db;
-      --panel-border: rgba(11, 17, 22, 0.1);
-      --panel-bg: rgba(255,255,255,0.78);
-      --panel-shadow: 0 12px 32px rgba(0,0,0,0.08);
-      --ink: #10151c;
-      --muted: rgba(16,21,28,0.7);
-      --accent: #1db954;
-    }
-
+    :root { --panel-border: rgba(11,17,22,.1); --panel-bg: rgba(255,255,255,.82); --ink: #10151c; }
     * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      font-family: Arial, sans-serif;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at top left, rgba(29,185,84,0.08), transparent 24%),
-        linear-gradient(180deg, #dfe2db 0%, #d8ddd4 100%);
-    }
-
-    .content-wrap {
-      width: 100%;
-      flex: 1 0 auto;
-      padding: clamp(22px, 4vh, 40px) 0 calc(30px + env(safe-area-inset-bottom, 0px));
-    }
-
-    .content-inner {
-      margin: 0 10vw;
-      padding: clamp(18px, 2.2vw, 32px);
-      border-radius: 22px;
-      border: 1px solid var(--panel-border);
-      background:
-        radial-gradient(circle at top left, rgba(29,185,84,0.1), transparent 34%),
-        linear-gradient(180deg, rgba(255,255,255,0.82), rgba(242,245,239,0.76));
-      box-shadow: var(--panel-shadow);
-    }
-
-    .hero {
-      display: grid;
-      gap: 18px;
-      margin-bottom: 22px;
-    }
-
-    .kicker {
-      letter-spacing: 0.18em;
-      font-size: 12px;
-      font-weight: 800;
-      color: rgba(17,44,29,0.78);
-      margin-bottom: 10px;
-    }
-
-    h1 {
-      margin: 0 0 12px;
-      font-size: clamp(34px, 4vw, 58px);
-      line-height: 0.95;
-    }
-
-    p {
-      margin: 0;
-      font-size: clamp(15px, 1.08vw, 18px);
-      line-height: 1.55;
-      color: rgba(16,21,28,0.86);
-    }
-
-    .tiny-note {
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    .choice-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 18px;
-    }
-
-    .choice-card {
-      display: grid;
-      gap: 14px;
-      padding: clamp(18px, 2vw, 28px);
-      border-radius: 20px;
-      border: 1px solid var(--panel-border);
-      background: var(--panel-bg);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.42);
-    }
-
-    .choice-card h2 {
-      margin: 0;
-      font-size: clamp(24px, 2.2vw, 34px);
-      line-height: 1.02;
-    }
-
-    .choice-points {
-      display: grid;
-      gap: 8px;
-      padding: 0;
-      margin: 0;
-      list-style: none;
-    }
-
-    .choice-points li {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.45;
-    }
-
-    .choice-btn {
-      width: fit-content;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 14px 20px;
-      border-radius: 999px;
-      text-decoration: none;
-      font-weight: 800;
-      font-size: 15px;
-      color: #fff;
-      background: #0f151b;
-      transition: transform 0.16s ease, box-shadow 0.16s ease;
-    }
-
-    .choice-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 24px rgba(0,0,0,0.12);
-    }
-
-    .choice-btn.alt {
-      background: var(--accent);
-    }
-
-    @media (max-width: 900px) {
-      .choice-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 768px) {
-      body {
-        padding-top: calc(env(safe-area-inset-top, 0px) + 58px);
-      }
-
-      .top-nav {
-        display: none;
-      }
-
-      .mobile-fixed-header {
-        display: flex;
-      }
-
-      .content-wrap {
-        padding-top: 18px;
-      }
-
-      .content-inner {
-        margin: 0 5vw;
-        padding: 18px;
-      }
-
-      .footer {
-        display: none !important;
-      }
-    }
+    body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; font-family: Arial, sans-serif; color: var(--ink); background: radial-gradient(circle at top left, rgba(29,185,84,.08), transparent 24%), linear-gradient(180deg,#dfe2db 0%,#d8ddd4 100%); }
+    .content-wrap { flex: 1 0 auto; padding: clamp(22px,4vh,40px) 0 calc(30px + env(safe-area-inset-bottom,0px)); }
+    .content-inner { margin: 0 10vw; padding: clamp(18px,2.2vw,32px); border-radius: 22px; border: 1px solid var(--panel-border); background: radial-gradient(circle at top left, rgba(29,185,84,.1), transparent 34%), linear-gradient(180deg, rgba(255,255,255,.84), rgba(242,245,239,.78)); box-shadow: 0 12px 32px rgba(0,0,0,.08); }
+    .hero { display: grid; gap: 18px; margin-bottom: 22px; }
+    .kicker { letter-spacing: .18em; font-size: 12px; font-weight: 800; color: rgba(17,44,29,.78); margin-bottom: 10px; }
+    h1 { margin: 0 0 12px; font-size: clamp(34px,4vw,58px); line-height: .95; }
+    p { margin: 0; font-size: clamp(15px,1.08vw,18px); line-height: 1.55; color: rgba(16,21,28,.86); }
+    .tiny-note { font-size: 13px; color: rgba(16,21,28,.7); }
+    .choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px; }
+    .choice-card { display: grid; gap: 14px; padding: clamp(18px,2vw,28px); border-radius: 20px; border: 1px solid var(--panel-border); background: var(--panel-bg); box-shadow: inset 0 1px 0 rgba(255,255,255,.42); }
+    .choice-card h2 { margin: 0; font-size: clamp(24px,2.2vw,34px); line-height: 1.02; }
+    .choice-points { display: grid; gap: 8px; padding: 0; margin: 0; list-style: none; }
+    .choice-points li { font-size: 14px; line-height: 1.45; color: rgba(16,21,28,.72); }
+    .choice-btn { width: fit-content; display: inline-flex; align-items: center; gap: 10px; padding: 14px 20px; border-radius: 999px; text-decoration: none; font-weight: 800; font-size: 15px; color: #fff; background: #0f151b; transition: transform .16s ease, box-shadow .16s ease; }
+    .choice-btn.alt { background: #1db954; }
+    .choice-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,.12); }
+    .footer { width: 100%; background: #000; padding: 56px 0 calc(56px + env(safe-area-inset-bottom,0px)); margin-top: auto; flex-shrink: 0; }
+    @media (max-width: 900px) { .choice-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { body { padding-top: calc(env(safe-area-inset-top,0px) + 58px); } .top-nav { display: none; } .mobile-fixed-header { display: flex; } .content-wrap { padding-top: 18px; } .content-inner { margin: 0 5vw; padding: 18px; } .footer { display: none !important; } }
   </style>
 </head>
-<body>
-  <header class="top-nav" role="navigation" aria-label="Primary site navigation">
-    <div class="top-nav-inner">
-      <a class="brand" href="/">paiden.com</a>
-      <nav class="nav-links">
-        <a href="/resume">Resume</a>
-        <a href="/photos">Photos</a>
-        <a href="/blog">Blog</a>
-        <a href="/contactme">Contact Me</a>
-      </nav>
-    </div>
-  </header>
-  <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation">
-    <a class="mobile-fixed-brand" href="/">paiden.com</a>
-    <div class="mobile-fixed-nav">
-      <a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a>
-      <a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a>
-      <a href="/contactme" aria-label="Contact"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a>
-    </div>
-  </div>
+<body data-tournament-view="hub">
+  <header class="top-nav" role="navigation" aria-label="Primary site navigation"><div class="top-nav-inner"><a class="brand" href="/">paiden.com</a><nav class="nav-links"><a href="/resume">Resume</a><a href="/photos">Photos</a><a href="/blog">Blog</a><a href="/contactme">Contact Me</a></nav></div></header>
+  <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation"><a class="mobile-fixed-brand" href="/">paiden.com</a><div class="mobile-fixed-nav"><a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a><a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a><a href="/contactme" aria-label="Contact"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a></div></div>
 
   <main class="content-wrap">
     <section class="content-inner">
       <section class="hero">
         <div class="kicker">TOURNAMENTS</div>
         <h1>Choose a Tournament View</h1>
-        <p>Use the bracket builder to import a Spotify playlist and seed a tournament from playlist order, or jump into the synced tournament board view to browse and vote through the current bracket.</p>
+        <p>Start by building a Spotify-based bracket, or jump straight to the saved tournament list and open an existing bracket to vote through it.</p>
         <p class="tiny-note">If Spotify sends you back here after sign-in, we’ll hand you off to the bracket builder automatically.</p>
       </section>
-
       <section class="choice-grid">
-        <article class="choice-card">
-          <div class="kicker">BUILD</div>
-          <h2>Bracket Builder</h2>
-          <p>Import a playlist, create the preliminary round if needed, and generate the tournament bracket that the rest of the site will follow.</p>
-          <ul class="choice-points">
-            <li>Connect Spotify and paste a playlist</li>
-            <li>Seed songs by playlist order</li>
-            <li>Create or reset the active tournament</li>
-          </ul>
-          <a class="choice-btn" href="/bracket-builder/"><i class="fa-solid fa-bracket-curly" aria-hidden="true"></i><span>Open Bracket Builder</span></a>
-        </article>
-
-        <article class="choice-card">
-          <div class="kicker">BROWSE</div>
-          <h2>All Tournaments</h2>
-          <p>Open the synced tournament board by itself. This page reflects the bracket currently stored from the builder and stays aligned on the same device/browser.</p>
-          <ul class="choice-points">
-            <li>See the current round cards only</li>
-            <li>Open rounds and move through matchups</li>
-            <li>Sync with the builder when a bracket is rebuilt</li>
-          </ul>
-          <a class="choice-btn alt" href="/all-tournaments/"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Open All Tournaments</span></a>
-        </article>
+        <article class="choice-card"><div class="kicker">BUILD</div><h2>Bracket Builder</h2><p>Connect Spotify, paste a playlist, and save a new tournament seeded by playlist order.</p><ul class="choice-points"><li>Spotify import and playlist validation</li><li>Automatic preliminary round generation when needed</li><li>Saves a voteable tournament to the shared list</li></ul><a class="choice-btn" href="/bracket-builder/"><i class="fa-solid fa-bracket-curly" aria-hidden="true"></i><span>Open Bracket Builder</span></a></article>
+        <article class="choice-card"><div class="kicker">BROWSE</div><h2>All Tournaments</h2><p>Open the saved tournament library, then step into any playlist bracket and vote round by round.</p><ul class="choice-points"><li>Playlist cover icons and saved tournament list</li><li>Dedicated detail page for each bracket</li><li>Voting stays synced back into the saved tournament</li></ul><a class="choice-btn alt" href="/all-tournaments/"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Open All Tournaments</span></a></article>
       </section>
     </section>
   </main>
 
-  <footer class="footer">
-    <div class="footer-inner">
-      <div class="footer-left-cluster">
-        <div class="footer-brand-wrap">
-          <div class="footer-brand"><a href="/">paiden.com</a></div>
-          <div class="footer-meta">
-            <div class="footer-created">Created by Paiden Nicks</div>
-            <div class="footer-updated">Today's Date: <span id="currentDate"></span></div>
-          </div>
-        </div>
-        <div class="footer-links">
-          <a href="/resume">Resume</a>
-          <a href="/photos">Photos</a>
-          <a href="/blog">Blog</a>
-          <a href="/contactme">Contact Me</a>
-        </div>
-      </div>
-      <div class="footer-social">
-        <div class="follow-text">Follow Me</div>
-        <div class="social-icons">
-          <a href="https://www.linkedin.com/in/paiden-nicks-0b8a5332a/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-          <a href="https://www.instagram.com/paidennicks/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-          <a href="https://www.snapchat.com/add/pen654?share_id=1pv2D21yhqM&locale=en-US" target="_blank" rel="noopener noreferrer" aria-label="Snapchat"><i class="fab fa-snapchat-ghost"></i></a>
-        </div>
-      </div>
-    </div>
-  </footer>
+  <footer class="footer"><div class="footer-inner"><div class="footer-left-cluster"><div class="footer-brand-stack"><div class="footer-brand-wrap"><a class="footer-brand" href="/">paiden.com</a></div><div class="footer-meta"><div class="footer-created">Created by Paiden Nicks</div><div class="footer-updated">Today's Date: <span id="currentDate"></span></div></div></div><div class="footer-nav"><a href="/resume">Resume</a><a href="/photos">Photos</a><a href="/blog">Blog</a><a href="/contactme">Contact Me</a></div></div><div class="footer-social"><div class="follow-text">Follow Me</div><div class="social-icons"><a href="https://www.linkedin.com/in/paiden-nicks-0b8a5332a/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a><a href="https://www.instagram.com/paidennicks/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="https://www.snapchat.com/add/pen654?share_id=1pv2D21yhqM&locale=en-US" target="_blank" rel="noopener noreferrer" aria-label="Snapchat"><i class="fab fa-snapchat-ghost"></i></a></div></div></div></footer>
 
+  <script>const currentDate=document.getElementById("currentDate");if(currentDate)currentDate.textContent=new Date().toLocaleDateString();</script>
   <script src="/shared-app-header.js?v=20260421b"></script>
   <script src="/account-menu.js?v=20260420c"></script>
   <script src="/shared-footer.js?v=20260417a"></script>
-  <script src="/tournaments/tournaments-page.js?v=20260423m"></script>
+  <script src="/tournaments/tournaments-page.js?v=20260423n"></script>
 </body>
 </html>
+
