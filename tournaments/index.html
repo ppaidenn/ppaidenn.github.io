@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>paiden.com</title>
-  <meta name="description" content="Choose between the bracket builder and the tournament board on paiden.com.">
+  <meta name="description" content="Choose between the bracket builder and the tournament library on paiden.com.">
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -48,12 +48,12 @@
       <section class="hero">
         <div class="kicker">TOURNAMENTS</div>
         <h1>Choose a Tournament View</h1>
-        <p>Start by building a Spotify-based bracket, or jump straight to the saved tournament list and open an existing bracket to vote through it.</p>
+        <p>Start by building a Spotify-based bracket, or jump straight to the saved tournament library and open an existing bracket to vote through it with other paiden.com users.</p>
         <p class="tiny-note">If Spotify sends you back here after sign-in, we’ll hand you off to the bracket builder automatically.</p>
       </section>
       <section class="choice-grid">
-        <article class="choice-card"><div class="kicker">BUILD</div><h2>Bracket Builder</h2><p>Connect Spotify, paste a playlist, and save a new tournament seeded by playlist order.</p><ul class="choice-points"><li>Spotify import and playlist validation</li><li>Automatic preliminary round generation when needed</li><li>Saves a voteable tournament to the shared list</li></ul><a class="choice-btn" href="/bracket-builder/"><i class="fa-solid fa-bracket-curly" aria-hidden="true"></i><span>Open Bracket Builder</span></a></article>
-        <article class="choice-card"><div class="kicker">BROWSE</div><h2>All Tournaments</h2><p>Open the saved tournament library, then step into any playlist bracket and vote round by round.</p><ul class="choice-points"><li>Playlist cover icons and saved tournament list</li><li>Dedicated detail page for each bracket</li><li>Voting stays synced back into the saved tournament</li></ul><a class="choice-btn alt" href="/all-tournaments/"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Open All Tournaments</span></a></article>
+        <article class="choice-card"><div class="kicker">BUILD</div><h2>Bracket Builder</h2><p>Connect Spotify, name the bracket, choose public or private visibility, and save the finished tournament to your paiden.com account.</p><ul class="choice-points"><li>Spotify import and playlist validation</li><li>Automatic preliminary round generation when needed</li><li>Owner-linked bracket saving with privacy controls</li></ul><a class="choice-btn" href="/bracket-builder/"><i class="fa-solid fa-bracket-curly" aria-hidden="true"></i><span>Open Bracket Builder</span></a></article>
+        <article class="choice-card"><div class="kicker">BROWSE</div><h2>All Tournaments</h2><p>Open the saved tournament library, then step into any bracket detail page to vote round by round or manage private invites if you own it.</p><ul class="choice-points"><li>Bracket names, playlist art, and visibility labels</li><li>Public browsing plus private invite-only participation</li><li>Dedicated detail page for each saved tournament</li></ul><a class="choice-btn alt" href="/all-tournaments/"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Open All Tournaments</span></a></article>
       </section>
     </section>
   </main>
@@ -64,7 +64,8 @@
   <script src="/shared-app-header.js?v=20260421b"></script>
   <script src="/account-menu.js?v=20260420c"></script>
   <script src="/shared-footer.js?v=20260417a"></script>
-  <script src="/tournaments/tournaments-page.js?v=20260423n"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/auth-client.js?v=20260312c"></script>
+  <script src="/tournaments/tournaments-page.js?v=20260423o"></script>
 </body>
 </html>
-

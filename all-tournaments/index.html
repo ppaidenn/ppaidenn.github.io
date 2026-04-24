@@ -22,7 +22,7 @@
     .content-wrap { flex: 1 0 auto; padding: clamp(22px,4vh,40px) 0 calc(30px + env(safe-area-inset-bottom,0px)); }
     .content-inner { margin: 0 10vw; border-radius: 22px; border: 1px solid var(--panel-border); padding: clamp(18px,2.2vw,32px); background: radial-gradient(circle at top left, rgba(29,185,84,.1), transparent 34%), linear-gradient(180deg, rgba(255,255,255,.84), rgba(242,245,239,.78)); box-shadow: 0 12px 32px rgba(0,0,0,.08); }
     .hero { display: grid; grid-template-columns: minmax(280px,1.1fr) minmax(260px,.9fr); gap: 22px; margin-bottom: 22px; }
-    .hero-copy,.hero-side,.list-card { border: 1px solid var(--panel-border); border-radius: 18px; background: var(--panel-bg); padding: clamp(16px,1.8vw,24px); box-shadow: inset 0 1px 0 rgba(255,255,255,.45); }
+    .hero-copy,.hero-side,.list-card,.notice-card { border: 1px solid var(--panel-border); border-radius: 18px; background: var(--panel-bg); padding: clamp(16px,1.8vw,24px); box-shadow: inset 0 1px 0 rgba(255,255,255,.45); }
     .kicker { letter-spacing: .18em; font-size: 12px; font-weight: 800; color: rgba(17,44,29,.78); margin-bottom: 10px; }
     h1 { margin: 0 0 14px; font-size: clamp(30px,4vw,52px); line-height: .98; }
     h2 { margin: 0 0 10px; font-size: clamp(20px,2vw,28px); line-height: 1.08; }
@@ -34,9 +34,16 @@
     .tournament-list-card { display: grid; grid-template-columns: 92px minmax(0,1fr) auto; gap: 16px; align-items: center; border-radius: 18px; border: 1px solid rgba(12,18,24,.1); background: rgba(255,255,255,.92); padding: 14px; color: inherit; text-decoration: none; transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
     .tournament-list-card:hover { transform: translateY(-2px); border-color: rgba(29,185,84,.28); box-shadow: 0 12px 24px rgba(0,0,0,.08); }
     .tournament-list-cover { width: 92px; height: 92px; border-radius: 18px; object-fit: cover; background: linear-gradient(135deg, rgba(29,185,84,.16), rgba(11,17,22,.12)); border: 1px solid rgba(12,18,24,.08); }
-    .tournament-list-copy { min-width: 0; display: grid; gap: 6px; } .tournament-list-copy h2 { margin: 0; font-size: clamp(22px,2.1vw,30px); } .tournament-list-copy p { margin: 0; font-size: 14px; color: rgba(16,21,28,.7); }
+    .tournament-list-copy { min-width: 0; display: grid; gap: 8px; }
+    .tournament-list-copy h2 { margin: 0; font-size: clamp(22px,2.1vw,30px); }
+    .tournament-list-copy p { margin: 0; font-size: 14px; color: rgba(16,21,28,.7); }
+    .tournament-list-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+    .meta-chip { border-radius: 999px; padding: 7px 10px; background: rgba(15,21,27,.06); border: 1px solid rgba(15,21,27,.08); font-size: 12px; font-weight: 800; color: rgba(16,21,28,.72); letter-spacing: .05em; text-transform: uppercase; }
+    .meta-chip.public { background: rgba(29,185,84,.12); border-color: rgba(29,185,84,.22); color: #11422b; }
+    .meta-chip.private { background: rgba(31,49,70,.08); border-color: rgba(31,49,70,.16); color: #22354b; }
     .tournament-list-arrow { width: 46px; height: 46px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #0f151b; color: #fff; }
     .empty-state { border-radius: 16px; border: 1px dashed rgba(12,18,24,.18); background: rgba(255,255,255,.48); padding: 18px; color: rgba(16,21,28,.72); font-size: 15px; line-height: 1.5; }
+    .notice-card[hidden] { display: none !important; }
     .footer { width: 100%; background: #000; padding: 56px 0 calc(56px + env(safe-area-inset-bottom,0px)); margin-top: auto; flex-shrink: 0; }
     @media (max-width: 1080px) { .hero { grid-template-columns: 1fr; } }
     @media (max-width: 768px) { body { padding-top: calc(env(safe-area-inset-top,0px) + 58px); } .top-nav { display: none; } .mobile-fixed-header { display: flex; } .content-wrap { padding-top: 18px; } .content-inner { margin: 0 5vw; padding: 16px; } .tournament-list-card { grid-template-columns: 76px minmax(0,1fr); } .tournament-list-arrow { display: none; } .tournament-list-cover { width: 76px; height: 76px; } .footer { display: none !important; } }
@@ -46,7 +53,7 @@
   <header class="top-nav" role="navigation" aria-label="Primary site navigation"><div class="top-nav-inner"><a class="brand" href="/">paiden.com</a><nav class="nav-links"><a href="/resume">Resume</a><a href="/photos">Photos</a><a href="/blog">Blog</a><a href="/contactme">Contact Me</a></nav></div></header>
   <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation"><a class="mobile-fixed-brand" href="/">paiden.com</a><div class="mobile-fixed-nav"><a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a><a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a><a href="/contactme" aria-label="Contact"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a></div></div>
 
-  <main class="content-wrap"><section class="content-inner"><section class="hero"><div class="hero-copy"><div class="kicker">ALL TOURNAMENTS</div><h1>Saved Tournament Library</h1><p>Every bracket you build from Spotify lands here. Open any saved playlist to get the full voting page with round cards and matchup-by-matchup voting.</p><p class="tiny-note">This list syncs within the same browser/device profile when a new bracket is saved from the builder.</p></div><div class="hero-side"><h2>How to use it</h2><p>Build a bracket from <a href="/bracket-builder/">Bracket Builder</a>, then come back here and open the saved tournament by playlist name. Each tournament opens in its own profile-style page with the playlist cover, title, and vote flow.</p></div></section><section class="list-card"><div class="title-row"><div><div class="kicker">LIBRARY</div><h2>Current Saved Tournaments</h2></div><div id="libraryCount">No saved tournaments yet</div></div><div class="library-list" id="tournamentLibraryList"><div class="empty-state">Loading saved tournaments...</div></div></section></section></main>
+  <main class="content-wrap"><section class="content-inner"><section class="hero"><div class="hero-copy"><div class="kicker">ALL TOURNAMENTS</div><h1>Saved Tournament Library</h1><p>Every bracket saved into a paiden.com account lands here. Public brackets are browseable by everyone, and private brackets appear here for the owner plus invited participants.</p><p class="tiny-note">Tournament titles come from the bracket name you chose in Bracket Builder. Playlist art is used as the icon.</p></div><div class="hero-side"><h2>How to use it</h2><p>Build a bracket from <a href="/bracket-builder/">Bracket Builder</a>, then come back here and open the saved tournament by bracket name. Each tournament opens in its own detail page with round-by-round voting and owner invite controls.</p></div></section><section class="notice-card" id="libraryNoticeCard" hidden><div class="kicker">NOTICE</div><p id="libraryNoticeText">Loading tournament library...</p></section><section class="list-card"><div class="title-row"><div><div class="kicker">LIBRARY</div><h2>Current Saved Tournaments</h2></div><div id="libraryCount">Loading tournaments...</div></div><div class="library-list" id="tournamentLibraryList"><div class="empty-state">Loading saved tournaments...</div></div></section></section></main>
 
   <footer class="footer"><div class="footer-inner"><div class="footer-left-cluster"><div class="footer-brand-stack"><div class="footer-brand-wrap"><a class="footer-brand" href="/">paiden.com</a></div><div class="footer-meta"><div class="footer-created">Created by Paiden Nicks</div><div class="footer-updated" id="last-updated"></div></div></div><div class="footer-nav"><a href="/resume">Resume</a><a href="/photos">Photos</a><a href="/blog">Blog</a><a href="/contactme">Contact Me</a></div></div><div class="footer-social"><span class="follow-text">Follow Me</span><div class="social-icons"><a href="https://www.linkedin.com/in/paiden" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a><a href="https://www.instagram.com/paiden_26" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="https://snapchat.com/t/m04JWymy" target="_blank" rel="noopener" aria-label="Snapchat"><i class="fab fa-snapchat"></i></a></div></div></div></footer>
 
@@ -54,7 +61,8 @@
   <script src="/shared-app-header.js?v=20260421b"></script>
   <script src="/account-menu.js?v=20260420c"></script>
   <script src="/shared-footer.js?v=20260417a"></script>
-  <script src="/tournaments/tournaments-page.js?v=20260423n"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/auth-client.js?v=20260312c"></script>
+  <script src="/tournaments/tournaments-page.js?v=20260423o"></script>
 </body>
 </html>
-

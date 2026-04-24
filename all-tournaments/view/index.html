@@ -25,26 +25,41 @@
     .detail-cover { width: 120px; height: 120px; border-radius: 22px; object-fit: cover; background: linear-gradient(135deg, rgba(29,185,84,.16), rgba(11,17,22,.12)); border: 1px solid rgba(12,18,24,.08); }
     .kicker { letter-spacing: .18em; font-size: 12px; font-weight: 800; color: rgba(17,44,29,.78); margin-bottom: 10px; }
     h1 { margin: 0 0 12px; font-size: clamp(30px,4vw,52px); line-height: .98; }
+    h2 { margin: 0 0 10px; font-size: clamp(20px,2vw,28px); line-height: 1.08; }
+    h3 { margin: 0; font-size: 18px; }
     p { margin: 0 0 10px; font-size: clamp(15px,1.08vw,18px); line-height: 1.5; color: rgba(16,21,28,.86); }
     .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
     .hero-link, .btn, .btn-secondary { border-radius: 999px; border: 1px solid rgba(12,18,24,.12); padding: 12px 18px; display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 800; cursor: pointer; }
     .hero-link, .btn { background: #0f151b; color: #fff; }
     .btn-secondary { background: rgba(255,255,255,.92); color: #0b1116; }
-    .detail-shell, .empty-shell { border: 1px solid var(--panel-border); border-radius: 18px; background: var(--panel-bg); padding: clamp(16px,1.8vw,24px); box-shadow: inset 0 1px 0 rgba(255,255,255,.45); }
+    .detail-shell, .empty-shell, .notice-card, .owner-card { border: 1px solid var(--panel-border); border-radius: 18px; background: var(--panel-bg); padding: clamp(16px,1.8vw,24px); box-shadow: inset 0 1px 0 rgba(255,255,255,.45); }
     .detail-shell { display: grid; gap: 18px; }
+    .notice-card[hidden], .owner-card[hidden] { display: none !important; }
+    .detail-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(320px,.48fr); gap: 18px; align-items: start; }
     .bracket-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+    .chip-row, .round-card-meta, .round-actions, .owner-actions, .participants-list { display: flex; gap: 8px; flex-wrap: wrap; }
     .champion-chip { border-radius: 14px; padding: 12px 14px; min-width: min(100%,260px); background: rgba(29,185,84,.12); border: 1px solid rgba(29,185,84,.24); }
     .champion-chip span { display: block; font-size: 12px; font-weight: 800; color: rgba(17,68,43,.72); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
     .champion-chip strong { display: block; font-size: 18px; color: #0b1116; line-height: 1.15; }
+    .meta-chip, .round-card-status, .round-chip { border-radius: 999px; padding: 8px 12px; border: 1px solid rgba(15,21,27,.1); background: rgba(15,21,27,.06); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: rgba(16,21,28,.7); }
+    .meta-chip.public, .round-card-status.ready { background: rgba(29,185,84,.12); border-color: rgba(29,185,84,.22); color: #11422b; }
+    .meta-chip.private { background: rgba(31,49,70,.08); border-color: rgba(31,49,70,.16); color: #22354b; }
+    .round-card-status.complete { background: rgba(15,21,27,.88); border-color: rgba(15,21,27,.88); color: #fff; }
     .round-stage { display: grid; gap: 12px; }
     .round-card { border-radius: 16px; border: 1px solid rgba(12,18,24,.08); background: rgba(255,255,255,.86); box-shadow: 0 4px 16px rgba(0,0,0,.05); padding: 16px; display: grid; gap: 12px; }
     .round-card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
     .round-card-title { margin: 0; font-size: 18px; }
     .round-card-copy { margin: 0; font-size: 14px; color: rgba(16,21,28,.72); }
-    .round-card-status, .round-chip { border-radius: 999px; padding: 8px 12px; border: 1px solid rgba(15,21,27,.1); background: rgba(15,21,27,.06); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: rgba(16,21,28,.7); }
-    .round-card-status.ready { background: rgba(29,185,84,.12); border-color: rgba(29,185,84,.22); color: #11422b; } .round-card-status.complete { background: rgba(15,21,27,.88); border-color: rgba(15,21,27,.88); color: #fff; }
-    .round-card-meta, .round-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .empty-state { border-radius: 16px; border: 1px dashed rgba(12,18,24,.18); background: rgba(255,255,255,.48); padding: 18px; color: rgba(16,21,28,.72); font-size: 15px; line-height: 1.5; }
+    .owner-card { display: grid; gap: 14px; }
+    .owner-panel-block { display: grid; gap: 10px; }
+    .field-row { display: grid; gap: 8px; }
+    .field-row label { font-size: 13px; font-weight: 800; color: rgba(16,21,28,.76); letter-spacing: .08em; text-transform: uppercase; }
+    input { width: 100%; border: 1px solid rgba(14,20,25,.14); background: rgba(255,255,255,.92); color: #0b1116; border-radius: 14px; padding: 12px 14px; outline: none; font: inherit; }
+    input:focus { border-color: rgba(29,185,84,.72); box-shadow: 0 0 0 3px rgba(29,185,84,.16); }
+    .invite-output { word-break: break-all; font-size: 14px; line-height: 1.45; border-radius: 14px; background: rgba(255,255,255,.85); padding: 12px 14px; border: 1px solid rgba(12,18,24,.08); }
+    .participant-pill { display: inline-flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 999px; background: rgba(15,21,27,.06); border: 1px solid rgba(15,21,27,.08); font-size: 13px; font-weight: 700; color: #0b1116; }
+    .participant-pill img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
     .vote-modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 28px; background: rgba(7,12,15,.72); z-index: 80; }
     .vote-modal.open { display: flex; }
     .vote-dialog { width: min(1040px, calc(100vw - 36px)); max-height: min(860px, calc(100vh - 36px)); overflow: auto; border-radius: 24px; background: linear-gradient(180deg, rgba(255,255,255,.97), rgba(243,246,239,.96)); border: 1px solid rgba(12,18,24,.12); box-shadow: 0 22px 60px rgba(0,0,0,.24); padding: 22px; display: grid; gap: 18px; }
@@ -59,7 +74,9 @@
     .vote-matchup { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
     .vote-choice { border-radius: 18px; border: 1px solid rgba(12,18,24,.1); background: rgba(255,255,255,.94); padding: 16px; display: grid; gap: 14px; }
     .vote-choice.selected { border-color: rgba(29,185,84,.5); background: rgba(29,185,84,.12); box-shadow: 0 12px 24px rgba(29,185,84,.12); }
+    .vote-choice.disabled { opacity: .84; }
     .vote-choice-select { width: 100%; border: 0; background: transparent; padding: 0; margin: 0; text-align: left; cursor: pointer; display: grid; gap: 14px; color: inherit; font: inherit; }
+    .vote-choice-select:disabled { cursor: default; }
     .vote-hotkey { display: inline-flex; align-items: center; justify-content: center; width: fit-content; min-width: 120px; padding: 7px 14px; border-radius: 999px; background: #0f151b; color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
     .vote-choice-body { display: grid; grid-template-columns: 112px minmax(0,1fr); gap: 16px; align-items: center; }
     .vote-cover { width: 112px; height: 112px; border-radius: 18px; object-fit: cover; background: linear-gradient(135deg, rgba(29,185,84,.16), rgba(11,17,22,.12)); border: 1px solid rgba(12,18,24,.08); }
@@ -70,7 +87,7 @@
     .vote-preview-note { font-size: 13px; color: rgba(16,21,28,.68); line-height: 1.45; }
     .vote-nav { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
     .footer { width: 100%; background: #000; padding: 56px 0 calc(56px + env(safe-area-inset-bottom,0px)); margin-top: auto; flex-shrink: 0; }
-    @media (max-width: 1080px) { .hero { grid-template-columns: 1fr; } .hero-actions { justify-content: flex-start; } .vote-matchup { grid-template-columns: 1fr; } }
+    @media (max-width: 1080px) { .hero { grid-template-columns: 1fr; } .hero-actions { justify-content: flex-start; } .detail-grid, .vote-matchup { grid-template-columns: 1fr; } }
     @media (max-width: 768px) { body { padding-top: calc(env(safe-area-inset-top,0px) + 58px); } .top-nav { display: none; } .mobile-fixed-header { display: flex; } .content-wrap { padding-top: 18px; } .content-inner { margin: 0 5vw; padding: 16px; } .hero { grid-template-columns: 1fr; } .detail-cover { width: 92px; height: 92px; } .vote-choice-body { grid-template-columns: 88px minmax(0,1fr); } .vote-cover { width: 88px; height: 88px; } .vote-title { font-size: 18px; } .footer { display: none !important; } }
   </style>
 </head>
@@ -78,7 +95,7 @@
   <header class="top-nav" role="navigation" aria-label="Primary site navigation"><div class="top-nav-inner"><a class="brand" href="/">paiden.com</a><nav class="nav-links"><a href="/resume">Resume</a><a href="/photos">Photos</a><a href="/blog">Blog</a><a href="/contactme">Contact Me</a></nav></div></header>
   <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation"><a class="mobile-fixed-brand" href="/">paiden.com</a><div class="mobile-fixed-nav"><a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a><a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a><a href="/contactme" aria-label="Contact"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a></div></div>
 
-  <main class="content-wrap"><section class="content-inner"><section class="hero" id="tournamentDetailRoot"><img class="detail-cover" id="detailHeroCover" alt="" hidden><div><div class="kicker">TOURNAMENT</div><h1 id="detailHeroTitle">Loading tournament...</h1><p id="detailHeroMeta">Pulling the saved playlist details for this bracket.</p><p id="detailHeroSubnote">Once loaded, open any round card below to vote matchup by matchup.</p></div><div class="hero-actions"><a class="hero-link" href="/all-tournaments/"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Back to All Tournaments</span></a></div></section><section class="empty-shell" id="detailEmptyState" hidden><div class="empty-state">This tournament could not be found on this device yet. Build it from the bracket builder or return to the saved list.</div></section><section class="detail-shell"><div class="bracket-head"><div><div class="kicker">BRACKET</div><h2>Round Voting</h2><p>Open one round at a time. The popup keeps the matchup flow simple, shows your progress, and saves picks back into this tournament automatically.</p></div><div class="champion-chip" id="championChip"><span>Champion</span><strong>No winner selected yet</strong></div></div><div class="round-stage" id="roundStage"><div class="empty-state">Loading saved bracket...</div></div></section></section></main>
+  <main class="content-wrap"><section class="content-inner"><section class="hero" id="tournamentDetailRoot"><img class="detail-cover" id="detailHeroCover" alt="" hidden><div><div class="kicker">TOURNAMENT</div><h1 id="detailHeroTitle">Loading tournament...</h1><div class="chip-row"><span class="meta-chip" id="detailVisibilityChip">Loading</span><span class="meta-chip" id="detailPlaylistChip">Playlist</span></div><p id="detailHeroMeta">Pulling the saved bracket details for this tournament.</p><p id="detailHeroSubnote">Once loaded, open any round card below to vote matchup by matchup.</p></div><div class="hero-actions"><a class="hero-link" href="/all-tournaments/"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Back to All Tournaments</span></a></div></section><section class="notice-card" id="detailNoticeCard" hidden><div class="kicker">NOTICE</div><p id="detailNoticeText">Loading tournament...</p></section><section class="empty-shell" id="detailEmptyState" hidden><div class="empty-state" id="detailEmptyStateText">This tournament could not be found.</div></section><section class="detail-grid"><section class="detail-shell"><div class="bracket-head"><div><div class="kicker">BRACKET</div><h2>Round Voting</h2><p>Open one round at a time. The popup keeps the matchup flow simple, shows your progress, and saves picks back into this tournament automatically.</p></div><div class="champion-chip" id="championChip"><span>Champion</span><strong>No winner selected yet</strong></div></div><div class="round-stage" id="roundStage"><div class="empty-state">Loading saved bracket...</div></div></section><aside class="owner-card"><div><div class="kicker">PARTICIPANTS</div><h2>Bracket Access</h2><p id="participantSummaryText">Loading participants...</p></div><div class="participants-list" id="participantsList"><div class="empty-state">No participants yet.</div></div><div class="owner-panel-block"><div class="kicker">OWNER TOOLS</div><p id="ownerToolsIntro">Only the bracket owner can manage private invites.</p><div class="field-row"><label for="friendInviteInput">Invite a paiden.com friend</label><input id="friendInviteInput" type="text" list="friendInviteSuggestions" placeholder="Type a friend's username"><datalist id="friendInviteSuggestions"></datalist></div><div class="owner-actions"><button class="btn-secondary" id="inviteFriendBtn" type="button">Invite Friend</button><button class="btn" id="createInviteLinkBtn" type="button">Create Invite Link</button></div><div class="invite-output" id="inviteLinkOutput">Generate a private invite link here.</div></div></aside></section></section></main>
 
   <div class="vote-modal" id="voteModal" aria-hidden="true"><div class="vote-dialog" role="dialog" aria-modal="true" aria-labelledby="voteModalTitle"><div class="vote-dialog-head"><div class="vote-dialog-copy"><div class="kicker" id="voteModalKicker">ROUND</div><h3 id="voteModalTitle">The Round</h3><p id="voteModalSubtitle">Open a round to start voting.</p></div><button class="vote-close" id="voteModalCloseBtn" type="button" aria-label="Close round voting">&times;</button></div><div class="vote-progress-row"><div class="vote-progress" id="voteProgressText">Selection 0 / 0</div><div class="vote-shortcuts">Keys: <strong>1 / A / Left</strong> for the left song, <strong>2 / D / Right</strong> for the right song, <strong>Enter</strong> = next, <strong>Esc</strong> = close</div></div><div class="vote-complete" id="voteCompleteNote" hidden>All selections in this round are locked in. You can still revisit a matchup and change the result.</div><div class="vote-matchup" id="voteMatchup"><div class="empty-state">Open a round to begin voting.</div></div><div class="vote-nav"><button class="btn-secondary" id="votePrevBtn" type="button">Previous Matchup</button><button class="btn" id="voteNextBtn" type="button">Next Matchup</button></div></div></div>
 
@@ -88,7 +105,8 @@
   <script src="/shared-app-header.js?v=20260421b"></script>
   <script src="/account-menu.js?v=20260420c"></script>
   <script src="/shared-footer.js?v=20260417a"></script>
-  <script src="/tournaments/tournaments-page.js?v=20260423n"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/auth-client.js?v=20260312c"></script>
+  <script src="/tournaments/tournaments-page.js?v=20260423o"></script>
 </body>
 </html>
-

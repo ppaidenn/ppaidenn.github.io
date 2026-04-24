@@ -1,11 +1,8 @@
-﻿
-(() => {
+﻿(() => {
   const DEFAULT_CLIENT_ID = "3a032e0e0d4e4108b6e1e7b581b793df";
   const CLIENT_ID_KEY = "paiden_spotify_client_id";
   const AUTH_KEY = "paiden_spotify_auth";
   const VERIFIER_KEY = "paiden_spotify_pkce_verifier";
-  const TOURNAMENT_STATE_KEY = "paiden_tournament_state_v1";
-  const TOURNAMENT_LIBRARY_KEY = "paiden_tournament_library_v1";
   const SCOPES = ["playlist-read-private", "playlist-read-collaborative"].join(" ");
   const REDIRECT_URI = `${window.location.origin}/tournaments/`;
   const SPOTIFY_ACCOUNTS = "https://accounts.spotify.com";
@@ -24,6 +21,8 @@
 
   const state = {
     auth: null,
+    paidenUser: null,
+    paidenProfile: null,
     library: [],
     playlist: null,
     entrants: [],
@@ -32,7 +31,8 @@
     picks: {},
     activeRoundIndex: null,
     activeSelectionCursor: 0,
-    activeTournamentSlug: null,
+    activeTournament: null,
+    friends: [],
     authRedirectProcessing: false,
     lastHandledAuthUrl: "",
   };
@@ -41,20 +41,41 @@
   const saveClientBtn = document.getElementById("saveSpotifyClientBtn");
   const connectBtn = document.getElementById("spotifyConnectBtn");
   const disconnectBtn = document.getElementById("spotifyDisconnectBtn");
-  const authPill = document.getElementById("spotifyAuthPill");
+  const spotifyAuthPill = document.getElementById("spotifyAuthPill");
+  const paidenAuthPill = document.getElementById("paidenAuthPill");
+  const bracketNameInput = document.getElementById("bracketNameInput");
+  const tournamentVisibilitySelect = document.getElementById("tournamentVisibilitySelect");
   const playlistInput = document.getElementById("playlistInput");
   const buildBracketBtn = document.getElementById("buildBracketBtn");
   const resetBracketBtn = document.getElementById("resetBracketBtn");
   const statusCard = document.getElementById("statusCard");
   const statusText = document.getElementById("statusText");
   const debugOutput = document.getElementById("debugOutput");
+  const savedTournamentCard = document.getElementById("savedTournamentCard");
+  const savedTournamentTitle = document.getElementById("savedTournamentTitle");
+  const savedTournamentCopy = document.getElementById("savedTournamentCopy");
+  const savedTournamentOpenLink = document.getElementById("savedTournamentOpenLink");
   const tournamentLibraryList = document.getElementById("tournamentLibraryList");
   const libraryCount = document.getElementById("libraryCount");
+  const libraryNoticeCard = document.getElementById("libraryNoticeCard");
+  const libraryNoticeText = document.getElementById("libraryNoticeText");
   const detailHeroCover = document.getElementById("detailHeroCover");
   const detailHeroTitle = document.getElementById("detailHeroTitle");
   const detailHeroMeta = document.getElementById("detailHeroMeta");
   const detailHeroSubnote = document.getElementById("detailHeroSubnote");
+  const detailVisibilityChip = document.getElementById("detailVisibilityChip");
+  const detailPlaylistChip = document.getElementById("detailPlaylistChip");
   const detailEmptyState = document.getElementById("detailEmptyState");
+  const detailEmptyStateText = document.getElementById("detailEmptyStateText");
+  const detailNoticeCard = document.getElementById("detailNoticeCard");
+  const detailNoticeText = document.getElementById("detailNoticeText");
+  const participantsList = document.getElementById("participantsList");
+  const participantSummaryText = document.getElementById("participantSummaryText");
+  const friendInviteInput = document.getElementById("friendInviteInput");
+  const friendInviteSuggestions = document.getElementById("friendInviteSuggestions");
+  const inviteFriendBtn = document.getElementById("inviteFriendBtn");
+  const createInviteLinkBtn = document.getElementById("createInviteLinkBtn");
+  const inviteLinkOutput = document.getElementById("inviteLinkOutput");
   const roundStage = document.getElementById("roundStage");
   const championChip = document.getElementById("championChip");
   const voteModal = document.getElementById("voteModal");
@@ -90,6 +111,18 @@
     debugOutput.textContent = Array.isArray(lines) ? lines.join("\n") : String(lines || "");
   }
 
+  function setLibraryNotice(message = "", show = false) {
+    if (!libraryNoticeCard || !libraryNoticeText) return;
+    libraryNoticeText.textContent = message || "";
+    libraryNoticeCard.hidden = !show;
+  }
+
+  function setDetailNotice(message = "", show = false) {
+    if (!detailNoticeCard || !detailNoticeText) return;
+    detailNoticeText.textContent = message || "";
+    detailNoticeCard.hidden = !show;
+  }
+
   function getStoredClientId() {
     return localStorage.getItem(CLIENT_ID_KEY) || DEFAULT_CLIENT_ID;
   }
@@ -118,161 +151,125 @@
     localStorage.removeItem(VERIFIER_KEY);
   }
 
-  function updateAuthUi() {
-    if (!authPill) return;
+  function updateSpotifyAuthUi() {
+    if (!spotifyAuthPill) return;
     const connected = !!(state.auth && state.auth.access_token);
-    authPill.classList.toggle("offline", !connected);
-    authPill.innerHTML = connected
+    spotifyAuthPill.classList.toggle("offline", !connected);
+    spotifyAuthPill.innerHTML = connected
       ? `<i class="fab fa-spotify" aria-hidden="true"></i><span>Spotify connected${state.auth.user_name ? ` as ${escapeHtml(state.auth.user_name)}` : ""}</span>`
       : `<i class="fa-solid fa-circle" aria-hidden="true"></i><span>Not connected</span>`;
   }
 
-  function slugify(value) {
-    const normalized = String(value || "")
-      .normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-    return normalized || "untitled-playlist";
+  function updatePaidenAuthUi() {
+    if (!paidenAuthPill) return;
+    const profile = state.paidenProfile;
+    const connected = !!(state.paidenUser && profile);
+    paidenAuthPill.classList.toggle("offline", !connected);
+    paidenAuthPill.innerHTML = connected
+      ? `<i class="fa-solid fa-user-check" aria-hidden="true"></i><span>Signed in to paiden.com as ${escapeHtml(profile.username || profile.full_name || "account")}</span>`
+      : `<i class="fa-solid fa-circle" aria-hidden="true"></i><span>Not signed in to paiden.com</span>`;
   }
 
-  function loadActiveTournament() {
-    try {
-      const raw = localStorage.getItem(TOURNAMENT_STATE_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch (_) {
-      return null;
+  function getPaidenAuth() {
+    return window.PaidenAuth || null;
+  }
+
+  async function callRpc(name, params = {}) {
+    const auth = getPaidenAuth();
+    if (!auth || typeof auth.getClient !== "function") {
+      throw new Error("Paiden auth client is not available on this page.");
     }
+    const client = auth.getClient();
+    const { data, error } = await client.rpc(name, params || {});
+    if (error) throw new Error(error.message || `Could not call ${name}.`);
+    return data;
   }
 
-  function saveActiveTournament(record) {
-    if (!record) {
-      localStorage.removeItem(TOURNAMENT_STATE_KEY);
+  async function loadCurrentPaidenProfile() {
+    const auth = getPaidenAuth();
+    if (!auth || typeof auth.getCurrentProfile !== "function") {
+      state.paidenUser = null;
+      state.paidenProfile = null;
+      updatePaidenAuthUi();
       return;
     }
-    localStorage.setItem(TOURNAMENT_STATE_KEY, JSON.stringify(record));
+    const result = await auth.getCurrentProfile();
+    if (!result.ok) {
+      state.paidenUser = null;
+      state.paidenProfile = null;
+      updatePaidenAuthUi();
+      return;
+    }
+    state.paidenUser = result.user || null;
+    state.paidenProfile = result.profile || null;
+    updatePaidenAuthUi();
   }
 
-  function normalizeTournamentRecord(record) {
-    if (!record || typeof record !== "object") return null;
-    const playlist = record.playlist && typeof record.playlist === "object" ? record.playlist : null;
-    const playlistId = record.playlistId || playlist?.id || "";
-    const playlistName = record.playlistName || playlist?.name || "Untitled Playlist";
-    if (!playlistId && !playlistName) return null;
+  function normalizeLibraryEntry(row) {
+    if (!row || typeof row !== "object") return null;
     return {
-      slug: record.slug || slugify(playlistName),
-      playlistId,
-      playlistName,
-      cover: record.cover || playlist?.images?.[0]?.url || "",
-      ownerName: record.ownerName || playlist?.owner?.display_name || playlist?.owner?.id || "",
-      playlist,
-      entrants: Array.isArray(record.entrants) ? record.entrants : [],
-      rounds: Array.isArray(record.rounds) ? record.rounds : [],
-      mainDrawSize: Number(record.mainDrawSize) || 0,
-      picks: record.picks && typeof record.picks === "object" ? record.picks : {},
-      updatedAt: record.updatedAt || new Date().toISOString(),
+      id: row.tournament_id || "",
+      slug: row.tournament_slug || "",
+      name: row.bracket_name || "Untitled Bracket",
+      visibility: row.visibility === "public" ? "public" : "private",
+      playlistName: row.playlist_name || "Untitled Playlist",
+      cover: row.playlist_cover_url || "",
+      ownerUsername: row.owner_username || "",
+      ownerAvatarUrl: row.owner_avatar_url || "",
+      entrantCount: Number(row.entrant_count) || 0,
+      participantCount: Number(row.participant_count) || 0,
+      updatedAt: row.updated_at || "",
+      isOwner: !!row.is_owner,
+      isMember: !!row.is_member,
+      canVote: !!row.can_vote,
     };
   }
 
-  function loadTournamentLibrary() {
-    let list = [];
-    try {
-      const raw = localStorage.getItem(TOURNAMENT_LIBRARY_KEY);
-      list = raw ? JSON.parse(raw) : [];
-    } catch (_) {
-      list = [];
-    }
-    list = Array.isArray(list) ? list.map(normalizeTournamentRecord).filter(Boolean) : [];
-    if (list.length) return list;
-
-    const active = normalizeTournamentRecord(loadActiveTournament());
-    if (active) {
-      localStorage.setItem(TOURNAMENT_LIBRARY_KEY, JSON.stringify([active]));
-      return [active];
-    }
-    return [];
-  }
-
-  function saveTournamentLibrary(list) {
-    localStorage.setItem(TOURNAMENT_LIBRARY_KEY, JSON.stringify(list));
-  }
-  function buildSnapshotFromState() {
-    if (!state.playlist || !state.rounds.length) return null;
-    return normalizeTournamentRecord({
-      slug: state.activeTournamentSlug,
-      playlistId: state.playlist.id,
-      playlistName: state.playlist.name,
-      cover: state.playlist.images?.[0]?.url || "",
-      ownerName: state.playlist.owner?.display_name || state.playlist.owner?.id || "",
-      playlist: state.playlist,
-      entrants: state.entrants,
-      rounds: state.rounds,
-      mainDrawSize: state.mainDrawSize,
-      picks: state.picks,
-      updatedAt: new Date().toISOString(),
-    });
-  }
-
-  function chooseTournamentSlug(snapshot) {
-    const base = slugify(snapshot.playlistName || snapshot.playlist?.name || "playlist");
-    const existing = state.library.find((entry) => entry.playlistId === snapshot.playlistId || entry.slug === state.activeTournamentSlug);
-    if (existing?.slug) return existing.slug;
-    let candidate = base;
-    let counter = 2;
-    while (state.library.some((entry) => entry.slug === candidate && entry.playlistId !== snapshot.playlistId)) {
-      candidate = `${base}-${counter}`;
-      counter += 1;
-    }
-    return candidate;
-  }
-
-  function persistCurrentTournament() {
-    const snapshot = buildSnapshotFromState();
-    if (!snapshot) {
-      saveActiveTournament(null);
-      return;
-    }
-    snapshot.slug = chooseTournamentSlug(snapshot);
-    state.activeTournamentSlug = snapshot.slug;
-    const nextLibrary = state.library.filter((entry) => entry.playlistId !== snapshot.playlistId && entry.slug !== snapshot.slug);
-    nextLibrary.unshift(snapshot);
-    nextLibrary.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    state.library = nextLibrary;
-    saveTournamentLibrary(nextLibrary);
-    saveActiveTournament(snapshot);
+  function normalizeTournamentDetail(row) {
+    if (!row || typeof row !== "object") return null;
+    const playlistCover = row.playlist_cover_url || "";
+    return {
+      id: row.tournament_id || "",
+      slug: row.tournament_slug || "",
+      name: row.bracket_name || "Untitled Bracket",
+      visibility: row.visibility === "public" ? "public" : "private",
+      ownerId: row.owner_id || "",
+      ownerUsername: row.owner_username || "",
+      ownerAvatarUrl: row.owner_avatar_url || "",
+      playlist: {
+        id: row.playlist_id || "",
+        name: row.playlist_name || "Untitled Playlist",
+        owner: { display_name: row.playlist_owner_name || row.owner_username || "" },
+        images: playlistCover ? [{ url: playlistCover }] : [],
+        external_urls: { spotify: row.spotify_playlist_url || "" },
+      },
+      entrants: Array.isArray(row.entrants) ? row.entrants : [],
+      rounds: Array.isArray(row.rounds) ? row.rounds : [],
+      picks: row.picks && typeof row.picks === "object" ? row.picks : {},
+      mainDrawSize: Number(row.main_draw_size) || 0,
+      createdAt: row.created_at || "",
+      updatedAt: row.updated_at || "",
+      isOwner: !!row.is_owner,
+      isMember: !!row.is_member,
+      canVote: !!row.can_vote,
+      participants: Array.isArray(row.participants) ? row.participants : [],
+    };
   }
 
   function applyTournamentRecord(record) {
-    const normalized = normalizeTournamentRecord(record);
-    state.playlist = normalized?.playlist || null;
-    state.entrants = normalized?.entrants || [];
-    state.rounds = normalized?.rounds || [];
-    state.mainDrawSize = normalized?.mainDrawSize || 0;
-    state.picks = normalized?.picks || {};
-    state.activeTournamentSlug = normalized?.slug || null;
+    state.activeTournament = record || null;
+    state.playlist = record?.playlist || null;
+    state.entrants = record?.entrants || [];
+    state.rounds = record?.rounds || [];
+    state.mainDrawSize = record?.mainDrawSize || 0;
+    state.picks = record?.picks || {};
     state.activeRoundIndex = null;
     state.activeSelectionCursor = 0;
   }
 
   function clearTournamentState() {
     applyTournamentRecord(null);
-    saveActiveTournament(null);
-  }
-
-  function findTournamentBySlug(slug) {
-    return state.library.find((entry) => entry.slug === slug) || null;
-  }
-
-  function getDetailSlug() {
-    const url = new URL(window.location.href);
-    const querySlug = url.searchParams.get("slug");
-    if (querySlug) return decodeURIComponent(querySlug);
-    const parts = url.pathname.replace(/^\/+|\/+$/g, "").split("/");
-    if (parts[0] === "all-tournaments" && parts[1] && parts[1] !== "view") {
-      return decodeURIComponent(parts[1]);
-    }
-    return "";
+    renderApp();
   }
 
   function formatDate(value) {
@@ -291,9 +288,7 @@
   function base64UrlEncode(buffer) {
     const bytes = new Uint8Array(buffer);
     let binary = "";
-    bytes.forEach((b) => {
-      binary += String.fromCharCode(b);
-    });
+    bytes.forEach((b) => { binary += String.fromCharCode(b); });
     return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
   }
 
@@ -328,9 +323,7 @@
   async function exchangeCodeForToken(code) {
     const verifier = localStorage.getItem(VERIFIER_KEY);
     const clientId = getStoredClientId();
-    if (!verifier || !clientId) {
-      throw new Error("Missing PKCE verifier or Spotify client ID.");
-    }
+    if (!verifier || !clientId) throw new Error("Missing PKCE verifier or Spotify client ID.");
     const body = new URLSearchParams({
       client_id: clientId,
       grant_type: "authorization_code",
@@ -344,9 +337,7 @@
       body: body.toString(),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(data.error_description || data.error || "Could not complete Spotify sign-in.");
-    }
+    if (!response.ok) throw new Error(data.error_description || data.error || "Could not complete Spotify sign-in.");
     localStorage.removeItem(VERIFIER_KEY);
     return data;
   }
@@ -354,9 +345,7 @@
   async function refreshToken() {
     const auth = loadAuth();
     const clientId = getStoredClientId();
-    if (!auth || !auth.refresh_token || !clientId) {
-      throw new Error("No refresh token available.");
-    }
+    if (!auth || !auth.refresh_token || !clientId) throw new Error("No refresh token available.");
     const body = new URLSearchParams({
       client_id: clientId,
       grant_type: "refresh_token",
@@ -368,9 +357,7 @@
       body: body.toString(),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(data.error_description || data.error || "Could not refresh Spotify session.");
-    }
+    if (!response.ok) throw new Error(data.error_description || data.error || "Could not refresh Spotify session.");
     const nextAuth = {
       ...auth,
       access_token: data.access_token,
@@ -383,9 +370,7 @@
 
   async function getValidAccessToken() {
     const auth = state.auth || loadAuth();
-    if (!auth) {
-      throw new Error("Connect Spotify first.");
-    }
+    if (!auth) throw new Error("Connect Spotify first.");
     if (auth.access_token && Number(auth.expires_at || 0) > Date.now()) {
       state.auth = auth;
       return auth.access_token;
@@ -423,6 +408,7 @@
   async function fetchCurrentUserProfile(accessToken) {
     return spotifyFetch("/me", accessToken);
   }
+
   async function handleSpotifyRedirect() {
     const url = new URL(window.location.href);
     const code = url.searchParams.get("code");
@@ -464,7 +450,7 @@
     } finally {
       url.searchParams.delete("code");
       url.searchParams.delete("state");
-      history.replaceState({}, "", url.pathname);
+      history.replaceState({}, "", url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : ""));
       state.authRedirectProcessing = false;
     }
   }
@@ -472,7 +458,7 @@
   async function syncSpotifyAuthState() {
     await handleSpotifyRedirect();
     state.auth = loadAuth();
-    updateAuthUi();
+    updateSpotifyAuthUi();
   }
 
   function parsePlaylistId(input) {
@@ -542,7 +528,6 @@
     const playlist = await spotifyFetch(`/playlists/${playlistId}`, accessToken, {
       fields: "id,name,description,owner(display_name,id),images(url),external_urls.spotify,items(total)",
     });
-
     const tracks = [];
     let nextUrl = `${SPOTIFY_API}/playlists/${playlistId}/items?limit=100&offset=0&additional_types=track&fields=items(item(id,name,artists(name),album(images,release_date),external_urls.spotify,is_local,type)),next,total`;
 
@@ -565,7 +550,6 @@
       });
       nextUrl = data.next || null;
     }
-
     return { playlist, tracks };
   }
 
@@ -597,6 +581,7 @@
     if (size === 2) return "Final";
     return `Round of ${size}`;
   }
+
   function buildTournamentRounds(entries) {
     const total = entries.length;
     const mainDrawSize = powerOfTwoAtOrBelow(total);
@@ -756,14 +741,40 @@
     return `${info.completedSelections}/${info.selectionTotal} picks locked in.`;
   }
 
+  async function persistTournamentPicks(previousPicks) {
+    if (!state.activeTournament?.id) return;
+    const snapshot = JSON.parse(JSON.stringify(state.picks || {}));
+    try {
+      const result = await callRpc("set_music_tournament_picks", {
+        target_tournament_id: state.activeTournament.id,
+        next_picks: snapshot,
+      });
+      if (result !== true) throw new Error("This account cannot update picks for this tournament.");
+      if (state.activeTournament) state.activeTournament.picks = snapshot;
+      setDetailNotice("Picks saved.", true);
+    } catch (errorObj) {
+      state.picks = previousPicks || {};
+      if (state.activeTournament) state.activeTournament.picks = state.picks;
+      renderApp();
+      setDetailNotice(errorObj.message || "Could not save tournament picks.", true);
+    }
+  }
+
   function setMatchWinner(roundIndex, matchIndex, side) {
+    if (!state.activeTournament?.canVote) {
+      setDetailNotice("You need access to this tournament through a paiden.com account before you can vote.", true);
+      return;
+    }
+    const previousPicks = JSON.parse(JSON.stringify(state.picks || {}));
     state.picks[getRoundKey(roundIndex, matchIndex)] = side;
     clearLaterRounds(roundIndex + 1);
-    persistCurrentTournament();
-    renderApp();
-    if (state.activeRoundIndex === roundIndex) {
-      advanceActiveSelection();
+    if (state.activeTournament) {
+      state.activeTournament.picks = state.picks;
+      state.activeTournament.updatedAt = new Date().toISOString();
     }
+    renderApp();
+    persistTournamentPicks(previousPicks);
+    if (state.activeRoundIndex === roundIndex) advanceActiveSelection();
   }
 
   function getCurrentModalContext() {
@@ -777,6 +788,7 @@
     const match = matchIndex === null ? null : info.matchInfos.find((entry) => entry.matchIndex === matchIndex) || null;
     return { info, selectionTotal, matchIndex, match };
   }
+
   function renderChampion() {
     if (!championChip) return;
     const champion = getFinalWinner();
@@ -787,7 +799,7 @@
   function renderRoundStage() {
     if (!roundStage) return;
     if (!state.rounds.length) {
-      roundStage.innerHTML = `<div class="empty-state">No saved bracket is loaded yet. Build one from the bracket builder to unlock round voting.</div>`;
+      roundStage.innerHTML = `<div class="empty-state">No bracket is loaded yet.</div>`;
       return;
     }
     roundStage.innerHTML = state.rounds.map((round, roundIndex) => {
@@ -819,6 +831,7 @@
   function renderVoteChoice(entry, selected, side) {
     if (!entry) return `<div class="empty-state">No competitor is available in this slot.</div>`;
     const hotkey = side === "left" ? "1 / A / Left" : "2 / D / Right";
+    const canVote = !!state.activeTournament?.canVote;
     const previewMarkup = entry.spotifyUrl
       ? `
         <div class="vote-preview">
@@ -836,8 +849,8 @@
         </div>
       `;
     return `
-      <article class="vote-choice${selected ? " selected" : ""}">
-        <button class="vote-choice-select" type="button" data-vote-side="${side}">
+      <article class="vote-choice${selected ? " selected" : ""}${canVote ? "" : " disabled"}">
+        <button class="vote-choice-select" type="button" data-vote-side="${side}" ${canVote ? "" : "disabled"}>
           <span class="vote-hotkey">${hotkey}</span>
           <div class="vote-choice-body">
             ${entry.image ? `<img class="vote-cover" src="${entry.image}" alt="">` : `<div class="vote-cover" aria-hidden="true"></div>`}
@@ -867,7 +880,10 @@
     const { info, selectionTotal, match } = context;
     voteModalKicker.textContent = info.round.label.toUpperCase();
     voteModalTitle.textContent = info.round.label.startsWith("Round") ? `The ${info.round.label}` : info.round.label;
-    voteModalSubtitle.textContent = `${info.round.description} ${info.selectionTotal ? `${info.selectionTotal} selections need to be made in this round.` : "No manual selections remain in this round."}`;
+    const accessSentence = state.activeTournament?.canVote
+      ? (info.selectionTotal ? `${info.selectionTotal} selections need to be made in this round.` : "No manual selections remain in this round.")
+      : "You can view this round, but only eligible paiden.com accounts can submit picks here.";
+    voteModalSubtitle.textContent = `${info.round.description} ${accessSentence}`;
     voteProgressText.textContent = `Selection ${Math.min(state.activeSelectionCursor + 1, Math.max(selectionTotal, 1))} / ${Math.max(selectionTotal, 1)}`;
     voteCompleteNote.hidden = !info.completed;
 
@@ -883,6 +899,31 @@
     voteNextBtn.disabled = state.activeSelectionCursor >= selectionTotal - 1;
   }
 
+  async function loadAccessibleTournaments() {
+    const data = await callRpc("get_accessible_music_tournaments");
+    state.library = (Array.isArray(data) ? data : []).map(normalizeLibraryEntry).filter(Boolean);
+  }
+
+  async function loadTournamentDetailBySlug(slug) {
+    const data = await callRpc("get_music_tournament_detail_by_slug", { target_slug: slug });
+    const row = Array.isArray(data) ? data[0] : null;
+    const record = normalizeTournamentDetail(row);
+    applyTournamentRecord(record);
+    return record;
+  }
+
+  function renderSavedTournamentCard(record) {
+    if (!savedTournamentCard || !savedTournamentTitle || !savedTournamentCopy || !savedTournamentOpenLink) return;
+    if (!record) {
+      savedTournamentCard.hidden = true;
+      return;
+    }
+    savedTournamentTitle.textContent = `${record.name} saved`;
+    savedTournamentCopy.textContent = `${record.visibility === "public" ? "Public" : "Private"} bracket saved for ${record.playlist.name}. Open it to manage invites or start voting.`;
+    savedTournamentOpenLink.href = `/all-tournaments/${encodeURIComponent(record.slug)}`;
+    savedTournamentCard.hidden = false;
+  }
+
   function renderTournamentLibrary() {
     if (!tournamentLibraryList) return;
     const tournaments = [...state.library].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
@@ -892,7 +933,7 @@
     if (!tournaments.length) {
       tournamentLibraryList.innerHTML = `
         <div class="empty-state">
-          No tournaments have been saved on this device yet. Build one from <a href="/bracket-builder/">Bracket Builder</a> and it will show up here.
+          No accessible tournaments are saved yet. Build one from <a href="/bracket-builder/">Bracket Builder</a> or sign in to see your private/member brackets.
         </div>
       `;
       return;
@@ -900,17 +941,20 @@
 
     tournamentLibraryList.innerHTML = tournaments.map((entry) => {
       const href = `/all-tournaments/${encodeURIComponent(entry.slug)}`;
-      const metaBits = [
-        entry.ownerName ? `Owner: ${entry.ownerName}` : "",
-        entry.entrants?.length ? `${entry.entrants.length} songs` : "",
-        entry.updatedAt ? `Updated ${formatDate(entry.updatedAt)}` : "",
-      ].filter(Boolean).join(" - ");
+      const ownership = entry.isOwner ? "You own this bracket" : entry.isMember ? "You can participate" : `Owner: ${entry.ownerUsername || "paiden.com user"}`;
       return `
         <a class="tournament-list-card" href="${href}">
           ${entry.cover ? `<img class="tournament-list-cover" src="${entry.cover}" alt="">` : `<div class="tournament-list-cover" aria-hidden="true"></div>`}
           <div class="tournament-list-copy">
-            <h2>${escapeHtml(entry.playlistName)}</h2>
-            <p>${escapeHtml(metaBits)}</p>
+            <h2>${escapeHtml(entry.name)}</h2>
+            <p>${escapeHtml(entry.playlistName)}</p>
+            <div class="tournament-list-meta">
+              <span class="meta-chip ${entry.visibility}">${escapeHtml(entry.visibility)}</span>
+              <span class="meta-chip">${entry.entrantCount} songs</span>
+              <span class="meta-chip">${entry.participantCount} participants</span>
+              ${entry.updatedAt ? `<span class="meta-chip">Updated ${escapeHtml(formatDate(entry.updatedAt))}</span>` : ""}
+            </div>
+            <p>${escapeHtml(ownership)}</p>
           </div>
           <span class="tournament-list-arrow"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
         </a>
@@ -918,23 +962,62 @@
     }).join("");
   }
 
+  function renderParticipants(record) {
+    if (!participantsList || !participantSummaryText || !inviteLinkOutput) return;
+    const participants = Array.isArray(record?.participants) ? record.participants : [];
+    participantSummaryText.textContent = participants.length
+      ? `${participants.length} paiden.com participant${participants.length === 1 ? "" : "s"} currently have access to this bracket.`
+      : "No participants are linked to this bracket yet.";
+    participantsList.innerHTML = participants.length
+      ? participants.map((person) => `
+          <span class="participant-pill">
+            ${person.avatar_url ? `<img src="${person.avatar_url}" alt="">` : ""}
+            <span>${escapeHtml(person.username || "user")}${person.role === "owner" ? " (owner)" : ""}</span>
+          </span>
+        `).join("")
+      : `<div class="empty-state">No participants are linked to this tournament yet.</div>`;
+
+    const ownerToolsBlock = friendInviteInput?.closest(".owner-panel-block");
+    const canManageInvites = !!(record?.isOwner && record.visibility === "private");
+    if (ownerToolsBlock) ownerToolsBlock.hidden = !canManageInvites;
+    inviteLinkOutput.textContent = canManageInvites
+      ? "Generate a private invite link here."
+      : record?.visibility === "public"
+        ? "This bracket is public, so invite links are not needed."
+        : "Only the bracket owner can generate invite links.";
+  }
+
+  function renderFriendSuggestions() {
+    if (!friendInviteSuggestions) return;
+    friendInviteSuggestions.innerHTML = state.friends.map((friend) => `<option value="${escapeHtml(friend.username || "")}"></option>`).join("");
+  }
+
   function renderDetailHeader(record) {
-    if (!detailHeroTitle || !detailHeroMeta || !detailHeroSubnote || !detailHeroCover || !detailEmptyState) return;
+    if (!detailHeroTitle || !detailHeroMeta || !detailHeroSubnote || !detailHeroCover || !detailEmptyState || !detailVisibilityChip || !detailPlaylistChip) return;
     if (!record) {
       detailHeroTitle.textContent = "Tournament Not Found";
-      detailHeroMeta.textContent = "This saved tournament could not be found on this device.";
-      detailHeroSubnote.textContent = "Build a new bracket from the builder or go back to All Tournaments.";
+      detailHeroMeta.textContent = "This tournament is not available to this account.";
+      detailHeroSubnote.textContent = "If this bracket is private, you need access before the detail page can load.";
+      detailVisibilityChip.textContent = "Unavailable";
+      detailPlaylistChip.textContent = "Playlist";
       detailHeroCover.hidden = true;
       detailEmptyState.hidden = false;
       roundStage?.setAttribute("hidden", "hidden");
       championChip?.setAttribute("hidden", "hidden");
       return;
     }
-    detailHeroTitle.textContent = record.playlistName || "Saved Tournament";
-    detailHeroMeta.textContent = `${record.ownerName ? `Playlist by ${record.ownerName}` : "Saved tournament"}${record.entrants?.length ? ` - ${record.entrants.length} songs` : ""}`;
-    detailHeroSubnote.textContent = "Open a round to vote matchup by matchup. Every pick here updates the saved tournament list immediately.";
-    if (record.cover) {
-      detailHeroCover.src = record.cover;
+    detailHeroTitle.textContent = record.name || "Saved Tournament";
+    detailHeroMeta.textContent = `${record.ownerUsername ? `Hosted by @${record.ownerUsername}` : "Hosted on paiden.com"}${record.entrants?.length ? ` - ${record.entrants.length} songs` : ""}`;
+    detailHeroSubnote.textContent = record.canVote
+      ? "Open a round to vote matchup by matchup. Every pick here updates the saved tournament page immediately."
+      : record.visibility === "public"
+        ? "You can view this public bracket here. Sign in to paiden.com if you want to vote on it."
+        : "This private bracket is only voteable by the owner and invited participants.";
+    detailVisibilityChip.textContent = record.visibility;
+    detailVisibilityChip.className = `meta-chip ${record.visibility}`;
+    detailPlaylistChip.textContent = record.playlist?.name || "Playlist";
+    if (record.playlist?.images?.[0]?.url) {
+      detailHeroCover.src = record.playlist.images[0].url;
       detailHeroCover.hidden = false;
     } else {
       detailHeroCover.hidden = true;
@@ -944,13 +1027,22 @@
     championChip?.removeAttribute("hidden");
   }
 
+  function renderEmptyDetailForInvite() {
+    if (!detailEmptyState || !detailEmptyStateText) return;
+    detailEmptyState.hidden = false;
+    detailEmptyStateText.innerHTML = `This invite link needs a paiden.com account before it can join the bracket. <a href="/signin">Sign in</a> or <a href="/create-account">create an account</a>, then reopen this link.`;
+    roundStage?.setAttribute("hidden", "hidden");
+    championChip?.setAttribute("hidden", "hidden");
+  }
+
   function renderApp() {
     if (pageMode === "library") {
       renderTournamentLibrary();
       return;
     }
     if (pageMode === "detail") {
-      renderDetailHeader(buildSnapshotFromState());
+      renderDetailHeader(state.activeTournament);
+      renderParticipants(state.activeTournament);
       renderChampion();
       renderRoundStage();
       renderVoteModal();
@@ -986,7 +1078,70 @@
     state.activeSelectionCursor = next;
     renderVoteModal();
   }
+
+  function getDetailSlug() {
+    const url = new URL(window.location.href);
+    const querySlug = url.searchParams.get("slug");
+    if (querySlug) return decodeURIComponent(querySlug);
+    const parts = url.pathname.replace(/^\/+|\/+$/g, "").split("/");
+    if (parts[0] === "all-tournaments" && parts[1] && parts[1] !== "view") {
+      return decodeURIComponent(parts[1]);
+    }
+    return "";
+  }
+
+  function getInviteCode() {
+    const url = new URL(window.location.href);
+    return String(url.searchParams.get("invite") || "").trim();
+  }
+
+  async function acceptInviteIfPresent() {
+    const inviteCode = getInviteCode();
+    if (!inviteCode) return false;
+    if (!state.paidenUser) {
+      renderEmptyDetailForInvite();
+      setDetailNotice("Sign in or create a paiden.com account, then reopen this invite link to join the private bracket.", true);
+      return false;
+    }
+    const accepted = await callRpc("accept_music_tournament_invite", { invite_code: inviteCode });
+    const row = Array.isArray(accepted) ? accepted[0] : null;
+    if (row?.tournament_slug) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("invite");
+      history.replaceState({}, "", url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : ""));
+      setDetailNotice(`Invite accepted. You can now participate in ${row.bracket_name || "this bracket"}.`, true);
+      return true;
+    }
+    return false;
+  }
+
+  async function loadFriendsForOwner() {
+    if (!state.activeTournament?.isOwner || state.activeTournament.visibility !== "private") {
+      state.friends = [];
+      renderFriendSuggestions();
+      return;
+    }
+    try {
+      const data = await callRpc("get_my_friends");
+      state.friends = Array.isArray(data) ? data : [];
+      renderFriendSuggestions();
+    } catch (_) {
+      state.friends = [];
+      renderFriendSuggestions();
+    }
+  }
+
   async function buildBracketFromPlaylist() {
+    const bracketName = String(bracketNameInput?.value || "").trim();
+    if (!bracketName) {
+      setStatus("Give the bracket a name before saving it.", "error");
+      bracketNameInput?.focus();
+      return;
+    }
+    if (!state.paidenUser || !state.paidenProfile) {
+      setStatus("Sign in to paiden.com before saving a bracket. This feature now links brackets to user accounts.", "error");
+      return;
+    }
     const playlistId = parsePlaylistId(playlistInput?.value);
     if (!playlistId) {
       setStatus("Paste a valid Spotify playlist URL, URI, or 22-character playlist ID.", "error");
@@ -1006,73 +1161,66 @@
 
     if (buildBracketBtn) {
       buildBracketBtn.disabled = true;
-      buildBracketBtn.innerHTML = "Building...";
+      buildBracketBtn.innerHTML = "Saving...";
     }
 
     try {
       setStatus("Loading playlist from Spotify...");
       await runPlaylistDiagnostics(playlistId, accessToken);
       const { playlist, tracks } = await fetchPlaylistItems(playlistId, accessToken);
-      if (tracks.length < 2) {
-        throw new Error("This playlist does not have enough Spotify tracks to build a tournament.");
-      }
-
+      if (tracks.length < 2) throw new Error("This playlist does not have enough Spotify tracks to build a tournament.");
       const { rounds, mainDrawSize } = buildTournamentRounds(tracks);
-      applyTournamentRecord({ playlist, entrants: tracks, rounds, mainDrawSize, picks: {} });
-      persistCurrentTournament();
-      renderApp();
-
+      const saveResult = await callRpc("upsert_my_music_tournament", {
+        target_tournament_id: null,
+        target_name: bracketName,
+        target_visibility: String(tournamentVisibilitySelect?.value || "private"),
+        target_playlist_id: playlist.id,
+        target_playlist_name: playlist.name,
+        target_playlist_cover_url: playlist.images?.[0]?.url || null,
+        target_spotify_playlist_url: playlist.external_urls?.spotify || null,
+        target_playlist_owner_name: playlist.owner?.display_name || playlist.owner?.id || null,
+        target_entrants: tracks,
+        target_rounds: rounds,
+        target_picks: {},
+        target_main_draw_size: mainDrawSize,
+      });
+      const saveRow = Array.isArray(saveResult) ? saveResult[0] : null;
+      if (!saveRow?.tournament_slug) throw new Error("The tournament saved, but the site did not receive the saved bracket URL.");
+      const detail = await loadTournamentDetailBySlug(saveRow.tournament_slug);
+      await loadAccessibleTournaments();
+      renderSavedTournamentCard(detail);
       const prelimRound = rounds.find((round) => round.id === "preliminary-round");
       const successText = prelimRound
-        ? `Saved ${playlist.name}. All ${tracks.length} songs are included, starting with ${prelimRound.matches.length} preliminary matchup${prelimRound.matches.length === 1 ? "" : "s"} before the ${roundLabelForSize(mainDrawSize).toLowerCase()}.`
-        : `Saved ${playlist.name}. All ${tracks.length} songs land directly in the ${roundLabelForSize(mainDrawSize).toLowerCase()}.`;
+        ? `${detail.name} saved. All ${tracks.length} songs are included, starting with ${prelimRound.matches.length} preliminary matchup${prelimRound.matches.length === 1 ? "" : "s"} before the ${roundLabelForSize(mainDrawSize).toLowerCase()}.`
+        : `${detail.name} saved. All ${tracks.length} songs land directly in the ${roundLabelForSize(mainDrawSize).toLowerCase()}.`;
       setStatus(successText, "success");
+      setDetailNotice("Bracket saved. Open it from the saved card or in All Tournaments.", true);
     } catch (errorObj) {
       clearTournamentState();
       if (errorObj?.spotifyStatus === 401) {
         clearAuth();
-        updateAuthUi();
-        setStatus("Spotify session expired or was rejected. Reconnect Spotify, then try building the tournament again.", "error");
+        updateSpotifyAuthUi();
+        setStatus("Spotify session expired or was rejected. Reconnect Spotify, then try saving the bracket again.", "error");
       } else if (errorObj?.spotifyStatus === 403) {
         setStatus("Spotify denied access to that playlist. Reconnect Spotify and make sure the signed-in Spotify account can open the playlist and its tracks.", "error");
       } else {
-        setStatus(errorObj.message || "Could not build the tournament.", "error");
+        setStatus(errorObj.message || "Could not save the tournament.", "error");
       }
     } finally {
       if (buildBracketBtn) {
         buildBracketBtn.disabled = false;
-        buildBracketBtn.innerHTML = `<i class="fa-solid fa-bracket-curly" aria-hidden="true"></i> Build Bracket`;
+        buildBracketBtn.innerHTML = `<i class="fa-solid fa-bracket-curly" aria-hidden="true"></i> Save Bracket`;
       }
     }
   }
 
-  function resetBracketPicks() {
-    state.picks = {};
-    closeVoteModal();
-    persistCurrentTournament();
-    renderApp();
-    if (state.rounds.length) {
-      setStatus("Tournament picks reset.", "success");
-    }
-  }
-
-  function handleStorageSync() {
-    state.library = loadTournamentLibrary();
-    if (pageMode === "library") {
-      renderTournamentLibrary();
-      return;
-    }
-    if (pageMode === "detail") {
-      const slug = getDetailSlug();
-      const record = findTournamentBySlug(slug);
-      applyTournamentRecord(record);
-      renderApp();
-      return;
-    }
-    const active = normalizeTournamentRecord(loadActiveTournament());
-    if (active) {
-      applyTournamentRecord(active);
-    }
+  function resetBracketBuilder() {
+    if (bracketNameInput) bracketNameInput.value = "";
+    if (playlistInput) playlistInput.value = "";
+    if (tournamentVisibilitySelect) tournamentVisibilitySelect.value = "private";
+    renderSavedTournamentCard(null);
+    setStatus("Builder fields cleared.", "success");
+    clearTournamentState();
   }
 
   async function initBuilderOrHub() {
@@ -1080,34 +1228,60 @@
     if (initialClientId && !localStorage.getItem(CLIENT_ID_KEY)) {
       saveClientId(initialClientId);
     }
-    if (clientIdInput) {
-      clientIdInput.value = initialClientId;
-    }
+    if (clientIdInput) clientIdInput.value = initialClientId;
     if (debugOutput) {
       setDebug([
         `Client ID: ${initialClientId || "(missing)"}`,
         `Redirect URI: ${REDIRECT_URI}`,
         `Scopes requested: ${SCOPES}`,
         "",
-        "No diagnostics yet. Build a bracket or reconnect Spotify to inspect the current account and playlist access steps.",
+        "No diagnostics yet. Save your Spotify client ID, connect Spotify, then build a bracket to inspect the playlist access steps.",
       ]);
     }
     state.auth = loadAuth();
-    updateAuthUi();
+    updateSpotifyAuthUi();
     await syncSpotifyAuthState();
+    await loadCurrentPaidenProfile();
   }
 
-  function initLibraryPage() {
-    state.library = loadTournamentLibrary();
+  async function initLibraryPage() {
+    await loadCurrentPaidenProfile();
+    await loadAccessibleTournaments();
+    setLibraryNotice(
+      state.paidenProfile
+        ? `Showing public tournaments plus any private brackets you own or were invited into as @${state.paidenProfile.username}.`
+        : "Showing public tournaments. Sign in to see your private or invited brackets too.",
+      true
+    );
     renderTournamentLibrary();
   }
 
-  function initDetailPage() {
-    state.library = loadTournamentLibrary();
+  async function initDetailPage() {
+    await loadCurrentPaidenProfile();
+    const inviteAccepted = await acceptInviteIfPresent().catch((errorObj) => {
+      setDetailNotice(errorObj.message || "Could not accept that invite link.", true);
+      return false;
+    });
     const slug = getDetailSlug();
-    const record = findTournamentBySlug(slug);
-    applyTournamentRecord(record);
-    renderApp();
+    if (!slug) {
+      applyTournamentRecord(null);
+      renderApp();
+      return;
+    }
+    try {
+      await loadTournamentDetailBySlug(slug);
+      if (inviteAccepted) setDetailNotice("Invite accepted. This bracket is now linked to your paiden.com account.", true);
+      await loadFriendsForOwner();
+      renderApp();
+    } catch (errorObj) {
+      applyTournamentRecord(null);
+      renderApp();
+      if (getInviteCode() && !state.paidenUser) {
+        renderEmptyDetailForInvite();
+      } else {
+        setDetailNotice(errorObj.message || "Could not load this tournament.", true);
+      }
+    }
   }
 
   if (saveClientBtn) {
@@ -1133,7 +1307,7 @@
   if (disconnectBtn) {
     disconnectBtn.addEventListener("click", () => {
       clearAuth();
-      updateAuthUi();
+      updateSpotifyAuthUi();
       setStatus("Spotify connection cleared from this device.", "success");
     });
   }
@@ -1146,7 +1320,49 @@
 
   if (resetBracketBtn) {
     resetBracketBtn.addEventListener("click", () => {
-      resetBracketPicks();
+      resetBracketBuilder();
+    });
+  }
+
+  if (inviteFriendBtn) {
+    inviteFriendBtn.addEventListener("click", async () => {
+      if (!state.activeTournament?.id) return;
+      const username = String(friendInviteInput?.value || "").trim();
+      if (!username) {
+        setDetailNotice("Type a friend's username first.", true);
+        friendInviteInput?.focus();
+        return;
+      }
+      try {
+        const result = await callRpc("invite_friend_to_music_tournament", {
+          target_tournament_id: state.activeTournament.id,
+          target_friend_username: username,
+        });
+        const row = Array.isArray(result) ? result[0] : null;
+        setDetailNotice(row?.participant_username ? `Invited @${row.participant_username} into this private bracket.` : "Friend added to the bracket.", true);
+        friendInviteInput.value = "";
+        await loadTournamentDetailBySlug(state.activeTournament.slug);
+        await loadFriendsForOwner();
+        renderApp();
+      } catch (errorObj) {
+        setDetailNotice(errorObj.message || "Could not invite that friend.", true);
+      }
+    });
+  }
+
+  if (createInviteLinkBtn) {
+    createInviteLinkBtn.addEventListener("click", async () => {
+      if (!state.activeTournament?.id) return;
+      try {
+        const result = await callRpc("create_music_tournament_invite", {
+          target_tournament_id: state.activeTournament.id,
+        });
+        const row = Array.isArray(result) ? result[0] : null;
+        if (inviteLinkOutput) inviteLinkOutput.textContent = row?.invite_url || "Could not generate the invite URL.";
+        setDetailNotice("Invite link created. Share it with someone who should join this private bracket.", true);
+      } catch (errorObj) {
+        setDetailNotice(errorObj.message || "Could not create an invite link.", true);
+      }
     });
   }
 
@@ -1155,16 +1371,14 @@
       const button = event.target.closest("[data-open-round]");
       if (!button) return;
       const roundIndex = Number(button.getAttribute("data-open-round"));
-      if (Number.isFinite(roundIndex)) {
-        openRoundModal(roundIndex);
-      }
+      if (Number.isFinite(roundIndex)) openRoundModal(roundIndex);
     });
   }
 
   if (voteMatchup) {
     voteMatchup.addEventListener("click", (event) => {
       const button = event.target.closest("[data-vote-side]");
-      if (!button || state.activeRoundIndex === null) return;
+      if (!button || state.activeRoundIndex === null || !state.activeTournament?.canVote) return;
       const side = String(button.getAttribute("data-vote-side"));
       const context = getCurrentModalContext();
       if (!context || context.matchIndex === null || (side !== "left" && side !== "right")) return;
@@ -1177,9 +1391,7 @@
   if (voteModalCloseBtn) voteModalCloseBtn.addEventListener("click", () => closeVoteModal());
   if (voteModal) {
     voteModal.addEventListener("click", (event) => {
-      if (event.target === voteModal) {
-        closeVoteModal();
-      }
+      if (event.target === voteModal) closeVoteModal();
     });
   }
 
@@ -1192,10 +1404,6 @@
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden && (pageMode === "hub" || pageMode === "builder")) syncSpotifyAuthState().catch(() => {});
   });
-  window.addEventListener("storage", (event) => {
-    if (event.key !== TOURNAMENT_LIBRARY_KEY && event.key !== TOURNAMENT_STATE_KEY) return;
-    handleStorageSync();
-  });
 
   document.addEventListener("keydown", (event) => {
     if (!voteModal || !voteModal.classList.contains("open")) return;
@@ -1206,6 +1414,7 @@
       closeVoteModal();
       return;
     }
+    if (!state.activeTournament?.canVote) return;
     const context = getCurrentModalContext();
     if (!context || context.matchIndex === null) return;
     const key = event.key.toLowerCase();
@@ -1226,13 +1435,12 @@
   });
 
   (async () => {
-    state.library = loadTournamentLibrary();
     if (pageMode === "library") {
-      initLibraryPage();
+      await initLibraryPage();
       return;
     }
     if (pageMode === "detail") {
-      initDetailPage();
+      await initDetailPage();
       return;
     }
     if (pageMode === "hub" || pageMode === "builder") {
@@ -1240,6 +1448,7 @@
     }
   })().catch((errorObj) => {
     setStatus(errorObj.message || "Could not initialize tournaments.", "error");
+    setDetailNotice(errorObj.message || "Could not initialize tournaments.", !!detailNoticeCard);
+    setLibraryNotice(errorObj.message || "Could not initialize tournaments.", !!libraryNoticeCard);
   });
 })();
-
