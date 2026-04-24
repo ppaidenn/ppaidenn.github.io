@@ -39,6 +39,8 @@ export default {
       "reset-password",
       "event-invite",
       "tournaments",
+      "bracket-builder",
+      "all-tournaments",
       "tomi-p-shrine",
       "notifications",
       "news",
