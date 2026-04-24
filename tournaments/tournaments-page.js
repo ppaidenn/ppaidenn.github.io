@@ -22,6 +22,7 @@
     activeSelectionCursor: 0,
     authRedirectProcessing: false,
     lastHandledAuthUrl: "",
+    lastTrackDetailLines: [],
   };
 
   const clientIdInput = document.getElementById("spotifyClientIdInput");
@@ -366,12 +367,12 @@
 
   async function fetchTrackDetailsMap(trackIds, accessToken) {
     const detailMap = new Map();
+    const diagnostics = [];
     for (let index = 0; index < trackIds.length; index += 50) {
       const chunk = trackIds.slice(index, index + 50).filter(Boolean);
       if (!chunk.length) continue;
       const data = await spotifyFetch("/tracks", accessToken, {
         ids: chunk.join(","),
-        market: state.auth?.user_country || undefined,
       });
       const tracks = Array.isArray(data?.tracks) ? data.tracks : [];
       tracks.forEach((track) => {
@@ -384,7 +385,13 @@
         });
       });
     }
-    return detailMap;
+    const detailedTracks = Array.from(detailMap.values());
+    diagnostics.push("");
+    diagnostics.push(`[OK] /tracks`);
+    diagnostics.push(`Detailed tracks fetched: ${detailMap.size}/${trackIds.length}`);
+    diagnostics.push(`Tracks with popularity > 0: ${detailedTracks.filter((track) => Number(track.popularity) > 0).length}`);
+    diagnostics.push(`Tracks with preview clips: ${detailedTracks.filter((track) => !!track.previewUrl).length}`);
+    return { detailMap, diagnostics };
   }
 
   async function fetchPlaylistItems(playlistId, accessToken) {
@@ -424,7 +431,19 @@
       deduped.push(track);
     });
 
-    const detailMap = await fetchTrackDetailsMap(deduped.map((track) => track.id), accessToken).catch(() => new Map());
+    let detailMap = new Map();
+    state.lastTrackDetailLines = [];
+    try {
+      const detailResult = await fetchTrackDetailsMap(deduped.map((track) => track.id), accessToken);
+      detailMap = detailResult.detailMap;
+      state.lastTrackDetailLines = detailResult.diagnostics || [];
+    } catch (errorObj) {
+      state.lastTrackDetailLines = [
+        "",
+        `[FAIL ${errorObj?.spotifyStatus || "?"}] /tracks`,
+        `Message: ${errorObj?.message || "Unknown Spotify error"}`,
+      ];
+    }
 
     const rankedTracks = deduped
       .map((track) => ({
@@ -464,6 +483,7 @@
       `Scopes requested: ${SCOPES}`,
       "",
     ];
+    state.lastTrackDetailLines = [];
 
     let meData = null;
     try {
@@ -516,7 +536,7 @@
       return { meData, playlistData, tracksStatus: errorObj?.spotifyStatus || null };
     }
 
-    setDebug(lines);
+    setDebug(lines.concat(state.lastTrackDetailLines || []));
     return { meData, playlistData, tracksStatus: 200 };
   }
 
@@ -634,10 +654,14 @@
   }
 
   function getMatchWinner(roundIndex, matchIndex) {
+    const round = getRoundByIndex(roundIndex);
+    const match = round?.matches?.[matchIndex];
     const left = getMatchCompetitor(roundIndex, matchIndex, 0);
     const right = getMatchCompetitor(roundIndex, matchIndex, 1);
-    if (left && !right) return left;
-    if (right && !left) return right;
+    const leftPending = !!(match?.sides?.[0]?.type === "winner" && !left);
+    const rightPending = !!(match?.sides?.[1]?.type === "winner" && !right);
+    if (left && !right && !rightPending) return left;
+    if (right && !left && !leftPending) return right;
     const pick = state.picks[getRoundKey(roundIndex, matchIndex)];
     if (!pick) return null;
     return pick === "left" ? left : right;
@@ -722,7 +746,7 @@
           <span class="seed-track">${escapeHtml(track.name)}</span>
           <span class="seed-artist">${escapeHtml(track.artists.join(", "))}</span>
         </span>
-        <span class="seed-score">${escapeHtml(track.year)} · Pop ${track.popularity}</span>
+        <span class="seed-score">${escapeHtml(track.year)} · ${escapeHtml(formatPopularityLabel(track))}</span>
       </button>
     `).join("");
 
@@ -933,6 +957,8 @@
       setStatus("Loading playlist from Spotify...");
       await runPlaylistDiagnostics(playlistId, accessToken);
       const { playlist, tracks } = await fetchPlaylistItems(playlistId, accessToken);
+      const currentDebug = debugOutput?.textContent ? debugOutput.textContent.split("\n") : [];
+      setDebug(currentDebug.concat(state.lastTrackDetailLines || []));
       if (tracks.length < 2) {
         throw new Error("This playlist does not have enough Spotify tracks to build a tournament.");
       }
