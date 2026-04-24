@@ -708,13 +708,10 @@
     }
 
     .vote-choice {
-      width: 100%;
       border-radius: 18px;
       border: 1px solid rgba(12,18,24,0.1);
       background: rgba(255,255,255,0.94);
       padding: 16px;
-      text-align: left;
-      cursor: pointer;
       display: grid;
       gap: 14px;
       transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
@@ -730,6 +727,20 @@
       border-color: rgba(29,185,84,0.5);
       background: rgba(29,185,84,0.12);
       box-shadow: 0 12px 24px rgba(29,185,84,0.12);
+    }
+
+    .vote-choice-select {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      margin: 0;
+      text-align: left;
+      cursor: pointer;
+      display: grid;
+      gap: 14px;
+      color: inherit;
+      font: inherit;
     }
 
     .vote-hotkey {
@@ -801,6 +812,32 @@
       text-transform: uppercase;
     }
 
+    .vote-preview {
+      display: grid;
+      gap: 8px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(12,18,24,0.08);
+    }
+
+    .vote-preview-label {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(16,21,28,0.64);
+    }
+
+    .vote-preview audio {
+      width: 100%;
+      height: 36px;
+    }
+
+    .vote-preview-note {
+      font-size: 13px;
+      color: rgba(16,21,28,0.68);
+      line-height: 1.45;
+    }
+
     .vote-nav {
       display: flex;
       justify-content: space-between;
@@ -863,6 +900,10 @@
       .hero-metrics {
         grid-template-columns: 1fr;
       }
+
+      .vote-matchup {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-width: 768px) {
@@ -900,8 +941,17 @@
         grid-template-columns: 1fr;
       }
 
-      .bracket-board {
-        grid-auto-columns: minmax(220px, 240px);
+      .vote-choice-body {
+        grid-template-columns: 88px minmax(0, 1fr);
+      }
+
+      .vote-cover {
+        width: 88px;
+        height: 88px;
+      }
+
+      .vote-title {
+        font-size: 18px;
       }
 
       .footer {
@@ -959,7 +1009,7 @@
         <div class="hero-side">
           <h2>What this page does</h2>
           <p>Connect your Spotify account, paste a playlist link, and we’ll load the tracks, fetch their Spotify popularity scores, then seed the highest-ranked songs into a bracket.</p>
-          <p>You can use public playlists or playlists you personally have access to. For private playlists, you’ll need to authorize Spotify access with playlist-read scopes.</p>
+          <p>Spotify playlist importing works most reliably for playlists you own or collaborate on. For private playlists, you’ll need to authorize Spotify access with playlist-read scopes.</p>
           <p class="tiny-note">To make this work, create a Spotify app and add <code>https://paiden.com/tournaments/</code> as a redirect URI in the Spotify developer dashboard.</p>
         </div>
       </section>
@@ -1108,6 +1158,6 @@
   <script src="/shared-app-header.js?v=20260421b"></script>
   <script src="/account-menu.js?v=20260420c"></script>
   <script src="/shared-footer.js?v=20260417a"></script>
-  <script src="/tournaments/tournaments-page.js?v=20260423g"></script>
+  <script src="/tournaments/tournaments-page.js?v=20260423h"></script>
 </body>
 </html>

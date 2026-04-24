@@ -669,6 +669,10 @@
     return `${info.completedSelections}/${info.selectionTotal} picks locked in.`;
   }
 
+  function formatPopularityLabel(entry) {
+    return `Spotify popularity ${Number(entry?.popularity) || 0}/100`;
+  }
+
   function renderPlaylistPreview() {
     if (!state.playlist || !state.entrants.length || !state.mainDrawSize) {
       playlistPreview.innerHTML = `<div class="empty-state">No playlist loaded yet. Once you build a tournament, this panel will show the playlist cover, owner, seeds, and round structure.</div>`;
@@ -773,22 +777,38 @@
       return `<div class="empty-state">No competitor is available in this slot.</div>`;
     }
     const hotkey = side === "left" ? "1 / A / ←" : "2 / D / →";
+    const previewMarkup = entry.previewUrl
+      ? `
+        <div class="vote-preview">
+          <div class="vote-preview-label">Song Snippet</div>
+          <audio controls preload="none" src="${entry.previewUrl}"></audio>
+        </div>
+      `
+      : `
+        <div class="vote-preview">
+          <div class="vote-preview-label">Song Snippet</div>
+          <div class="vote-preview-note">Spotify did not provide a preview clip for this song.</div>
+        </div>
+      `;
     return `
-      <button class="vote-choice${selected ? " selected" : ""}" type="button" data-vote-side="${side}">
-        <span class="vote-hotkey">${hotkey}</span>
-        <div class="vote-choice-body">
-          ${entry.image ? `<img class="vote-cover" src="${entry.image}" alt="">` : `<div class="vote-cover" aria-hidden="true"></div>`}
-          <div class="vote-copy">
-            <h4 class="vote-title">${escapeHtml(entry.name)}</h4>
-            <p class="vote-artist">${escapeHtml(entry.artists.join(", "))}</p>
-            <div class="vote-meta">
-              <span>Seed ${entry.seed}</span>
-              <span>${escapeHtml(entry.year)}</span>
-              <span>Pop ${entry.popularity}</span>
+      <article class="vote-choice${selected ? " selected" : ""}">
+        <button class="vote-choice-select" type="button" data-vote-side="${side}">
+          <span class="vote-hotkey">${hotkey}</span>
+          <div class="vote-choice-body">
+            ${entry.image ? `<img class="vote-cover" src="${entry.image}" alt="">` : `<div class="vote-cover" aria-hidden="true"></div>`}
+            <div class="vote-copy">
+              <h4 class="vote-title">${escapeHtml(entry.name)}</h4>
+              <p class="vote-artist">${escapeHtml(entry.artists.join(", "))}</p>
+              <div class="vote-meta">
+                <span>Seed ${entry.seed}</span>
+                <span>${escapeHtml(entry.year)}</span>
+                <span>${escapeHtml(formatPopularityLabel(entry))}</span>
+              </div>
             </div>
           </div>
-        </div>
-      </button>
+        </button>
+        ${previewMarkup}
+      </article>
     `;
   }
 
@@ -1044,6 +1064,10 @@
 
   document.addEventListener("keydown", (event) => {
     if (!voteModal.classList.contains("open")) return;
+    const activeTag = document.activeElement?.tagName || "";
+    if (activeTag === "AUDIO" || activeTag === "INPUT" || activeTag === "TEXTAREA" || activeTag === "SELECT" || document.activeElement?.closest?.("audio")) {
+      return;
+    }
     if (event.key === "Escape") {
       event.preventDefault();
       closeVoteModal();
