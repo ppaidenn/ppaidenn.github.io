@@ -2,6 +2,7 @@
   const CLIENT_ID_KEY = "paiden_spotify_client_id";
   const AUTH_KEY = "paiden_spotify_auth";
   const VERIFIER_KEY = "paiden_spotify_pkce_verifier";
+  const CONTACT_ENDPOINT = "https://irauuqhqqkctcwulqzsw.supabase.co/functions/v1/contact-message";
   const SCOPES = ["playlist-read-private", "playlist-read-collaborative"].join(" ");
   const REDIRECT_URI = `${window.location.origin}/tournaments/`;
   const SPOTIFY_ACCOUNTS = "https://accounts.spotify.com";
@@ -32,6 +33,7 @@
     activeSelectionCursor: 0,
     activeTournament: null,
     friends: [],
+    tournamentRequestTurnstileToken: "",
     builderMode: "",
     authRedirectProcessing: false,
     lastHandledAuthUrl: "",
@@ -202,6 +204,14 @@
     state.auth = null;
     localStorage.removeItem(AUTH_KEY);
     localStorage.removeItem(VERIFIER_KEY);
+  }
+
+  function setTournamentRequestSubmitting(submitting) {
+    if (!sendPaidenRequestBtn) return;
+    sendPaidenRequestBtn.disabled = !!submitting;
+    sendPaidenRequestBtn.innerHTML = submitting
+      ? `<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Sending...</span>`
+      : `<i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Send Request</span>`;
   }
 
   function updateSpotifyAuthUi() {
@@ -1112,6 +1122,14 @@
     renderVoteModal();
   }
 
+  window.onTurnstileTournamentRequest = function onTurnstileTournamentRequest(token) {
+    state.tournamentRequestTurnstileToken = String(token || "");
+  };
+
+  window.onTurnstileTournamentRequestExpired = function onTurnstileTournamentRequestExpired() {
+    state.tournamentRequestTurnstileToken = "";
+  };
+
   function openRoundModal(roundIndex) {
     const info = getRoundInfo(roundIndex);
     if (!info || !info.ready) return;
@@ -1379,7 +1397,7 @@
   }
 
   if (sendPaidenRequestBtn) {
-    sendPaidenRequestBtn.addEventListener("click", () => {
+    sendPaidenRequestBtn.addEventListener("click", async () => {
       const requester = String(requestNameInput?.value || "").trim();
       const requestBracketName = String(requestBracketNameInput?.value || "").trim();
       const collabLink = String(requestCollabLinkInput?.value || "").trim();
@@ -1399,17 +1417,55 @@
         requestCollabLinkInput?.focus();
         return;
       }
-      const subject = `Bracket request: ${requestBracketName}`;
-      const body = [
-        `Name or paiden.com account: ${requester}`,
+      if (!state.tournamentRequestTurnstileToken) {
+        setStatus("Please complete the anti-spam check before sending the request.", "error");
+        return;
+      }
+      const message = [
+        `Bracket request from: ${requester}`,
         `Tournament name: ${requestBracketName}`,
         `Spotify collaboration invite link: ${collabLink}`,
         "",
         "Other info:",
         extra || "(none)",
       ].join("\n");
-      window.location.href = `mailto:pen@paiden.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      setStatus("Your email app should open with the bracket request filled in.", "success");
+      const payload = {
+        name: requester,
+        message,
+        turnstile_token: state.tournamentRequestTurnstileToken,
+      };
+      if (state.paidenUser?.email) payload.email = state.paidenUser.email;
+
+      setTournamentRequestSubmitting(true);
+      try {
+        const resp = await fetch(CONTACT_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!resp.ok) {
+          let errJson = null;
+          try {
+            errJson = await resp.json();
+          } catch (_) {
+            // Ignore non-JSON error responses.
+          }
+          setStatus(errJson?.message || errJson?.error || "Could not send request. Please try again.", "error");
+          return;
+        }
+        if (requestBracketNameInput) requestBracketNameInput.value = "";
+        if (requestCollabLinkInput) requestCollabLinkInput.value = "";
+        if (requestOtherInfoInput) requestOtherInfoInput.value = "";
+        state.tournamentRequestTurnstileToken = "";
+        if (window.turnstile && window.turnstile.reset) {
+          window.turnstile.reset();
+        }
+        setStatus("Bracket request sent to Paiden.", "success");
+      } catch (errorObj) {
+        setStatus(errorObj.message || "Could not send request. Please try again.", "error");
+      } finally {
+        setTournamentRequestSubmitting(false);
+      }
     });
   }
 
