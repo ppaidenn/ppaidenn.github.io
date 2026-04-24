@@ -22,6 +22,7 @@ as $$
       'tournaments',
       'bracket-builder',
       'all-tournaments',
+      'spotify-app-setup',
       'tomi-p-shrine',
       'notifications',
       'news',

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Spotify App Setup | paiden.com</title>
+  <meta name="description" content="How to create a Spotify developer app for bracket building on paiden.com.">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="apple-touch-icon" href="/images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="/account-menu.css?v=20260420d">
+  <link rel="stylesheet" href="/shared-footer.css?v=20260417a">
+  <link rel="stylesheet" href="/shared-app-header.css?v=20260421b">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; font-family: Arial, sans-serif; background: radial-gradient(circle at top left, rgba(29,185,84,.08), transparent 25%), linear-gradient(180deg,#dfe2db 0%, #d8ddd4 100%); color: #10151c; }
+    .content-wrap { flex: 1 0 auto; padding: clamp(22px,4vh,40px) 0 calc(30px + env(safe-area-inset-bottom,0px)); }
+    .content-inner { margin: 0 10vw; border-radius: 22px; border: 1px solid rgba(11,17,22,.1); padding: clamp(18px,2.2vw,32px); background: radial-gradient(circle at top left, rgba(29,185,84,.1), transparent 34%), linear-gradient(180deg, rgba(255,255,255,.84), rgba(242,245,239,.78)); box-shadow: 0 12px 32px rgba(0,0,0,.08); }
+    .hero, .step-card, .notice-card { border: 1px solid rgba(11,17,22,.1); border-radius: 18px; background: rgba(255,255,255,.82); padding: clamp(16px,1.8vw,24px); box-shadow: inset 0 1px 0 rgba(255,255,255,.45); }
+    .hero { margin-bottom: 18px; }
+    .step-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px; }
+    .kicker { letter-spacing: .18em; font-size: 12px; font-weight: 800; color: rgba(17,44,29,.78); margin-bottom: 10px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px,4vw,52px); line-height: .98; }
+    h2 { margin: 0 0 10px; font-size: clamp(20px,2vw,28px); line-height: 1.08; }
+    p, li { font-size: clamp(15px,1.08vw,18px); line-height: 1.55; color: rgba(16,21,28,.86); }
+    p { margin: 0 0 12px; }
+    ol, ul { margin: 0; padding-left: 20px; }
+    code { background: rgba(15,21,27,.08); border-radius: 8px; padding: 2px 6px; }
+    .notice-card { margin-top: 18px; background: rgba(247,255,248,.88); }
+    .action-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .btn, .btn-secondary { border-radius: 14px; border: 1px solid rgba(12,18,24,.12); padding: 12px 16px; cursor: pointer; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; }
+    .btn { background: #0f151b; color: #fff; }
+    .btn-secondary { background: rgba(255,255,255,.92); color: #0b1116; }
+    .footer { width: 100%; background: #000; padding: 56px 0 calc(56px + env(safe-area-inset-bottom,0px)); margin-top: auto; flex-shrink: 0; }
+    @media (max-width: 960px) { .step-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { body { padding-top: calc(env(safe-area-inset-top,0px) + 58px); } .top-nav { display: none; } .mobile-fixed-header { display: flex; } .content-inner { margin: 0 5vw; padding: 16px; } .footer { display: none !important; } }
+  </style>
+</head>
+<body>
+  <header class="top-nav" role="navigation" aria-label="Primary site navigation"><div class="top-nav-inner"><a class="brand" href="/">paiden.com</a><nav class="nav-links"><a href="/resume">Resume</a><a href="/photos">Photos</a><a href="/blog">Blog</a><a href="/contactme">Contact Me</a></nav></div></header>
+  <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation"><a class="mobile-fixed-brand" href="/">paiden.com</a><div class="mobile-fixed-nav"><a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a><a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a><a href="/contactme" aria-label="Contact"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a></div></div>
+
+  <main class="content-wrap">
+    <section class="content-inner">
+      <section class="hero">
+        <div class="kicker">SELF-SERVE SPOTIFY</div>
+        <h1>Spotify App Setup</h1>
+        <p>This page walks you through the minimum Spotify developer setup needed for the self-serve bracket builder on paiden.com. You need Spotify Premium for this route.</p>
+        <div class="action-row">
+          <a class="btn" href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i><span>Open Spotify Dashboard</span></a>
+          <a class="btn-secondary" href="/bracket-builder/"><span>Back to Bracket Builder</span></a>
+        </div>
+      </section>
+
+      <section class="step-grid">
+        <article class="step-card">
+          <div class="kicker">STEP 1</div>
+          <h2>Create the app</h2>
+          <ol>
+            <li>Open the Spotify Developer Dashboard.</li>
+            <li>Click <code>Create app</code>.</li>
+            <li>Name it something like <code>paiden bracket builder</code>.</li>
+            <li>Choose the Web API option.</li>
+          </ol>
+        </article>
+
+        <article class="step-card">
+          <div class="kicker">STEP 2</div>
+          <h2>Add the redirect URI</h2>
+          <ol>
+            <li>Open your new app settings.</li>
+            <li>Add this redirect URI exactly: <code>https://paiden.com/tournaments/</code></li>
+            <li>Save the settings.</li>
+          </ol>
+          <p>You can also set the website field to <code>https://paiden.com</code> if Spotify asks for it.</p>
+        </article>
+
+        <article class="step-card">
+          <div class="kicker">STEP 3</div>
+          <h2>Copy the Client ID only</h2>
+          <ol>
+            <li>Copy the app’s <code>Client ID</code>.</li>
+            <li>Go back to <code>/bracket-builder/</code>.</li>
+            <li>Choose the self-serve Spotify option.</li>
+            <li>Paste the Client ID into the builder and click <code>Save</code>.</li>
+          </ol>
+          <p>Do not paste your Spotify Client Secret into the website. The paiden.com builder does not need it.</p>
+        </article>
+
+        <article class="step-card">
+          <div class="kicker">STEP 4</div>
+          <h2>Connect and build</h2>
+          <ol>
+            <li>Click <code>Connect Spotify</code>.</li>
+            <li>Approve the Spotify sign-in screen.</li>
+            <li>Paste a playlist you can access.</li>
+            <li>Name the bracket and save it.</li>
+          </ol>
+        </article>
+      </section>
+
+      <section class="notice-card">
+        <div class="kicker">IMPORTANT</div>
+        <h2>What this route requires</h2>
+        <ul>
+          <li>Spotify Premium on the account you sign in with.</li>
+          <li>Your own Spotify developer app.</li>
+          <li>A playlist that the signed-in Spotify account can read.</li>
+        </ul>
+      </section>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="footer-inner"><div class="footer-left-cluster"><div class="footer-brand-stack"><div class="footer-brand-wrap"><a class="footer-brand" href="/">paiden.com</a></div><div class="footer-meta"><div class="footer-created">Created by Paiden Nicks</div><div class="footer-updated" id="last-updated"></div></div></div><div class="footer-nav"><a href="/resume">Resume</a><a href="/photos">Photos</a><a href="/blog">Blog</a><a href="/contactme">Contact Me</a></div></div><div class="footer-social"><span class="follow-text">Follow Me</span><div class="social-icons"><a href="https://www.linkedin.com/in/paiden" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a><a href="https://www.instagram.com/paiden_26" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="https://snapchat.com/t/m04JWymy" target="_blank" rel="noopener" aria-label="Snapchat"><i class="fab fa-snapchat"></i></a></div></div></div></footer>
+
+  <script>const lastUpdated=document.getElementById("last-updated"); if(lastUpdated) lastUpdated.textContent="Today's Date: "+new Date().toLocaleDateString();</script>
+  <script src="/shared-app-header.js?v=20260421b"></script>
+  <script src="/account-menu.js?v=20260420c"></script>
+  <script src="/shared-footer.js?v=20260417a"></script>
+</body>
+</html>
