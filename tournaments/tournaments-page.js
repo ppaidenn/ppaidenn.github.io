@@ -1,12 +1,13 @@
 ﻿(() => {
-  const DEFAULT_CLIENT_ID = "3a032e0e0d4e4108b6e1e7b581b793df";
   const CLIENT_ID_KEY = "paiden_spotify_client_id";
+  const CLIENT_MODE_KEY = "paiden_spotify_client_mode";
   const AUTH_KEY = "paiden_spotify_auth";
   const VERIFIER_KEY = "paiden_spotify_pkce_verifier";
   const SCOPES = ["playlist-read-private", "playlist-read-collaborative"].join(" ");
   const REDIRECT_URI = `${window.location.origin}/tournaments/`;
   const SPOTIFY_ACCOUNTS = "https://accounts.spotify.com";
   const SPOTIFY_API = "https://api.spotify.com/v1";
+  const SHARED_SPOTIFY_PLAYLIST_API = "/api/spotify/shared/playlist";
 
   const pageMode = document.body.dataset.tournamentView
     || (document.getElementById("tournamentDetailRoot")
@@ -38,6 +39,9 @@
   };
 
   const clientIdInput = document.getElementById("spotifyClientIdInput");
+  const spotifyAppModeShared = document.getElementById("spotifyAppModeShared");
+  const spotifyAppModeCustom = document.getElementById("spotifyAppModeCustom");
+  const spotifyCustomClientWrap = document.getElementById("spotifyCustomClientWrap");
   const saveClientBtn = document.getElementById("saveSpotifyClientBtn");
   const connectBtn = document.getElementById("spotifyConnectBtn");
   const disconnectBtn = document.getElementById("spotifyDisconnectBtn");
@@ -124,11 +128,49 @@
   }
 
   function getStoredClientId() {
-    return localStorage.getItem(CLIENT_ID_KEY) || DEFAULT_CLIENT_ID;
+    return getClientMode() === "custom" ? (localStorage.getItem(CLIENT_ID_KEY) || "") : "";
   }
 
   function saveClientId(clientId) {
     localStorage.setItem(CLIENT_ID_KEY, clientId);
+  }
+
+  function getClientMode() {
+    return localStorage.getItem(CLIENT_MODE_KEY) === "custom" ? "custom" : "shared";
+  }
+
+  function saveClientMode(mode) {
+    localStorage.setItem(CLIENT_MODE_KEY, mode === "custom" ? "custom" : "shared");
+  }
+
+  function maskClientId(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "(missing)";
+    if (raw.length <= 6) return "••••••";
+    return `${"•".repeat(Math.max(0, raw.length - 4))}${raw.slice(-4)}`;
+  }
+
+  function describeClientMode() {
+    const mode = getClientMode();
+    if (mode === "custom") {
+      return `custom client (${maskClientId(localStorage.getItem(CLIENT_ID_KEY) || "")})`;
+    }
+    return "paiden.com shared Spotify account";
+  }
+
+  function isSharedSpotifyMode() {
+    return getClientMode() === "shared";
+  }
+
+  function syncClientModeUi() {
+    const mode = getClientMode();
+    if (spotifyAppModeShared) spotifyAppModeShared.checked = mode === "shared";
+    if (spotifyAppModeCustom) spotifyAppModeCustom.checked = mode === "custom";
+    if (spotifyCustomClientWrap) spotifyCustomClientWrap.hidden = mode !== "custom";
+    if (saveClientBtn) saveClientBtn.disabled = mode !== "custom";
+    if (clientIdInput) {
+      clientIdInput.value = mode === "custom" ? (localStorage.getItem(CLIENT_ID_KEY) || "") : "";
+    }
   }
 
   function loadAuth() {
@@ -153,11 +195,17 @@
 
   function updateSpotifyAuthUi() {
     if (!spotifyAuthPill) return;
+    const sharedMode = isSharedSpotifyMode();
     const connected = !!(state.auth && state.auth.access_token);
-    spotifyAuthPill.classList.toggle("offline", !connected);
-    spotifyAuthPill.innerHTML = connected
-      ? `<i class="fab fa-spotify" aria-hidden="true"></i><span>Spotify connected${state.auth.user_name ? ` as ${escapeHtml(state.auth.user_name)}` : ""}</span>`
-      : `<i class="fa-solid fa-circle" aria-hidden="true"></i><span>Not connected</span>`;
+    spotifyAuthPill.classList.toggle("offline", !(sharedMode || connected));
+    spotifyAuthPill.innerHTML = sharedMode
+      ? `<i class="fab fa-spotify" aria-hidden="true"></i><span>Using paiden.com's shared Spotify account for eligible playlists</span>`
+      : connected
+        ? `<i class="fab fa-spotify" aria-hidden="true"></i><span>Spotify connected${state.auth.user_name ? ` as ${escapeHtml(state.auth.user_name)}` : ""}</span>`
+        : `<i class="fa-solid fa-circle" aria-hidden="true"></i><span>Not connected</span>`;
+
+    if (connectBtn) connectBtn.hidden = sharedMode;
+    if (disconnectBtn) disconnectBtn.hidden = sharedMode;
   }
 
   function updatePaidenAuthUi() {
@@ -299,13 +347,16 @@
   }
 
   async function beginSpotifyAuth() {
-    const clientId = String(clientIdInput?.value || "").trim();
+    if (isSharedSpotifyMode()) {
+      setStatus("Shared account mode does not need a personal Spotify sign-in. Paste a playlist and save the bracket directly.", "success");
+      return;
+    }
+    const clientId = String(getStoredClientId() || "").trim();
     if (!clientId) {
-      setStatus("Save a Spotify Client ID first.", "error");
+      setStatus("Save a Spotify Client ID first if you are using your own Spotify app on this device.", "error");
       clientIdInput?.focus();
       return;
     }
-    saveClientId(clientId);
     const verifier = randomString(64);
     localStorage.setItem(VERIFIER_KEY, verifier);
     const challenge = await createCodeChallenge(verifier);
@@ -405,6 +456,24 @@
     return data;
   }
 
+  async function fetchSharedSpotifyPlaylist(playlistId) {
+    const url = new URL(SHARED_SPOTIFY_PLAYLIST_API, window.location.origin);
+    url.searchParams.set("playlist_id", playlistId);
+    const response = await fetch(url.toString(), {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data?.ok) {
+      const error = new Error(data?.error || "Could not load the playlist through paiden.com's shared Spotify account.");
+      error.spotifyStatus = Number(data?.spotify_status || response.status || 0) || response.status;
+      error.spotifyPayload = data;
+      error.spotifyUrl = data?.spotify_url || url.toString();
+      throw error;
+    }
+    return data;
+  }
+
   async function fetchCurrentUserProfile(accessToken) {
     return spotifyFetch("/me", accessToken);
   }
@@ -478,7 +547,7 @@
 
   async function runPlaylistDiagnostics(playlistId, accessToken) {
     const lines = [
-      `Client ID: ${getStoredClientId() || "(missing)"}`,
+      `Spotify App Mode: ${describeClientMode()}`,
       `Redirect URI: ${REDIRECT_URI}`,
       `Playlist ID: ${playlistId || "(missing)"}`,
       `Scopes requested: ${SCOPES}`,
@@ -1150,24 +1219,33 @@
       return;
     }
 
-    let accessToken;
-    try {
-      accessToken = await getValidAccessToken();
-    } catch (errorObj) {
-      setStatus(errorObj.message || "Connect Spotify first.", "error");
-      setDebug(`Spotify auth is not ready.\nMessage: ${errorObj.message || "Connect Spotify first."}`);
-      return;
-    }
-
     if (buildBracketBtn) {
       buildBracketBtn.disabled = true;
       buildBracketBtn.innerHTML = "Saving...";
     }
 
     try {
-      setStatus("Loading playlist from Spotify...");
-      await runPlaylistDiagnostics(playlistId, accessToken);
-      const { playlist, tracks } = await fetchPlaylistItems(playlistId, accessToken);
+      let playlist;
+      let tracks;
+      if (isSharedSpotifyMode()) {
+        setStatus("Loading playlist through paiden.com's shared Spotify account...");
+        const sharedData = await fetchSharedSpotifyPlaylist(playlistId);
+        playlist = sharedData.playlist || null;
+        tracks = Array.isArray(sharedData.tracks) ? sharedData.tracks : [];
+        setDebug(Array.isArray(sharedData.diagnostics) ? sharedData.diagnostics.join("\n") : `Spotify App Mode: ${describeClientMode()}`);
+      } else {
+        let accessToken;
+        try {
+          accessToken = await getValidAccessToken();
+        } catch (errorObj) {
+          setStatus(errorObj.message || "Connect Spotify first.", "error");
+          setDebug(`Spotify auth is not ready.\nMessage: ${errorObj.message || "Connect Spotify first."}`);
+          return;
+        }
+        setStatus("Loading playlist from Spotify...");
+        await runPlaylistDiagnostics(playlistId, accessToken);
+        ({ playlist, tracks } = await fetchPlaylistItems(playlistId, accessToken));
+      }
       if (tracks.length < 2) throw new Error("This playlist does not have enough Spotify tracks to build a tournament.");
       const { rounds, mainDrawSize } = buildTournamentRounds(tracks);
       const saveResult = await callRpc("upsert_my_music_tournament", {
@@ -1200,9 +1278,19 @@
       if (errorObj?.spotifyStatus === 401) {
         clearAuth();
         updateSpotifyAuthUi();
-        setStatus("Spotify session expired or was rejected. Reconnect Spotify, then try saving the bracket again.", "error");
+        setStatus(
+          isSharedSpotifyMode()
+            ? "The shared Spotify account is not configured correctly right now. Check the worker Spotify secrets, then try again."
+            : "Spotify session expired or was rejected. Reconnect Spotify, then try saving the bracket again.",
+          "error"
+        );
       } else if (errorObj?.spotifyStatus === 403) {
-        setStatus("Spotify denied access to that playlist. Reconnect Spotify and make sure the signed-in Spotify account can open the playlist and its tracks.", "error");
+        setStatus(
+          isSharedSpotifyMode()
+            ? "Spotify denied access through paiden.com's shared account. This shared mode only works for playlists Paiden owns or collaborates on."
+            : "Spotify denied access to that playlist. Reconnect Spotify and make sure the signed-in Spotify account can open the playlist and its tracks.",
+          "error"
+        );
       } else {
         setStatus(errorObj.message || "Could not save the tournament.", "error");
       }
@@ -1224,18 +1312,15 @@
   }
 
   async function initBuilderOrHub() {
-    const initialClientId = getStoredClientId();
-    if (initialClientId && !localStorage.getItem(CLIENT_ID_KEY)) {
-      saveClientId(initialClientId);
-    }
-    if (clientIdInput) clientIdInput.value = initialClientId;
+    syncClientModeUi();
+    updateSpotifyAuthUi();
     if (debugOutput) {
       setDebug([
-        `Client ID: ${initialClientId || "(missing)"}`,
+        `Spotify App Mode: ${describeClientMode()}`,
         `Redirect URI: ${REDIRECT_URI}`,
         `Scopes requested: ${SCOPES}`,
         "",
-        "No diagnostics yet. Save your Spotify client ID, connect Spotify, then build a bracket to inspect the playlist access steps.",
+        "No diagnostics yet. Choose a Spotify mode, then save a bracket to inspect the playlist access steps.",
       ]);
     }
     state.auth = loadAuth();
@@ -1286,6 +1371,10 @@
 
   if (saveClientBtn) {
     saveClientBtn.addEventListener("click", () => {
+      if (getClientMode() !== "custom") {
+        setStatus("Paiden's shared Spotify account mode is already selected. Switch to your own app mode if you want to store a browser-local client ID.", "success");
+        return;
+      }
       const clientId = String(clientIdInput?.value || "").trim();
       if (!clientId) {
         setStatus("Paste a Spotify Client ID before saving.", "error");
@@ -1293,6 +1382,27 @@
       }
       saveClientId(clientId);
       setStatus("Spotify Client ID saved locally in this browser.", "success");
+    });
+  }
+
+  if (spotifyAppModeShared) {
+    spotifyAppModeShared.addEventListener("change", () => {
+      if (!spotifyAppModeShared.checked) return;
+      saveClientMode("shared");
+      syncClientModeUi();
+      updateSpotifyAuthUi();
+      setStatus("Using paiden.com's shared Spotify account mode. Only playlists Paiden owns or collaborates on can be turned into brackets here.", "success");
+    });
+  }
+
+  if (spotifyAppModeCustom) {
+    spotifyAppModeCustom.addEventListener("change", () => {
+      if (!spotifyAppModeCustom.checked) return;
+      saveClientMode("custom");
+      syncClientModeUi();
+      updateSpotifyAuthUi();
+      setStatus("Custom Spotify app mode enabled for this browser.", "success");
+      clientIdInput?.focus();
     });
   }
 
