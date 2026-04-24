@@ -22,7 +22,6 @@
     activeSelectionCursor: 0,
     authRedirectProcessing: false,
     lastHandledAuthUrl: "",
-    lastTrackDetailLines: [],
   };
 
   const clientIdInput = document.getElementById("spotifyClientIdInput");
@@ -365,42 +364,13 @@
     return order;
   }
 
-  async function fetchTrackDetailsMap(trackIds, accessToken) {
-    const detailMap = new Map();
-    const diagnostics = [];
-    for (let index = 0; index < trackIds.length; index += 50) {
-      const chunk = trackIds.slice(index, index + 50).filter(Boolean);
-      if (!chunk.length) continue;
-      const data = await spotifyFetch("/tracks", accessToken, {
-        ids: chunk.join(","),
-      });
-      const tracks = Array.isArray(data?.tracks) ? data.tracks : [];
-      tracks.forEach((track) => {
-        if (!track?.id) return;
-        detailMap.set(track.id, {
-          popularity: Number(track.popularity) || 0,
-          previewUrl: track.preview_url || "",
-          image: track.album?.images?.[0]?.url || "",
-          year: String(track.album?.release_date || "").slice(0, 4) || "Unknown year",
-        });
-      });
-    }
-    const detailedTracks = Array.from(detailMap.values());
-    diagnostics.push("");
-    diagnostics.push(`[OK] /tracks`);
-    diagnostics.push(`Detailed tracks fetched: ${detailMap.size}/${trackIds.length}`);
-    diagnostics.push(`Tracks with popularity > 0: ${detailedTracks.filter((track) => Number(track.popularity) > 0).length}`);
-    diagnostics.push(`Tracks with preview clips: ${detailedTracks.filter((track) => !!track.previewUrl).length}`);
-    return { detailMap, diagnostics };
-  }
-
   async function fetchPlaylistItems(playlistId, accessToken) {
     const playlist = await spotifyFetch(`/playlists/${playlistId}`, accessToken, {
       fields: "id,name,description,owner(display_name,id),images(url),external_urls.spotify,items(total)",
     });
 
     const rawTracks = [];
-    let nextUrl = `${SPOTIFY_API}/playlists/${playlistId}/items?limit=100&offset=0&additional_types=track&fields=items(item(id,name,popularity,artists(name),album(images,release_date),external_urls.spotify,preview_url,is_local,type)),next,total`;
+    let nextUrl = `${SPOTIFY_API}/playlists/${playlistId}/items?limit=100&offset=0&additional_types=track&fields=items(item(id,name,artists(name),album(images,release_date),external_urls.spotify,is_local,type)),next,total`;
 
     while (nextUrl) {
       const data = await spotifyFetchUrl(nextUrl, accessToken);
@@ -412,12 +382,10 @@
           id: track.id,
           playlistOrder: rawTracks.length,
           name: track.name || "Untitled track",
-          popularity: Number(track.popularity) || 0,
           artists: Array.isArray(track.artists) ? track.artists.map((artist) => artist?.name).filter(Boolean) : [],
           image: track.album?.images?.[0]?.url || "",
           year: String(track.album?.release_date || "").slice(0, 4) || "Unknown year",
           spotifyUrl: track.external_urls?.spotify || "",
-          previewUrl: track.preview_url || "",
         });
       });
       nextUrl = data.next || null;
@@ -431,32 +399,12 @@
       deduped.push(track);
     });
 
-    let detailMap = new Map();
-    state.lastTrackDetailLines = [];
-    try {
-      const detailResult = await fetchTrackDetailsMap(deduped.map((track) => track.id), accessToken);
-      detailMap = detailResult.detailMap;
-      state.lastTrackDetailLines = detailResult.diagnostics || [];
-    } catch (errorObj) {
-      state.lastTrackDetailLines = [
-        "",
-        `[FAIL ${errorObj?.spotifyStatus || "?"}] /tracks`,
-        `Message: ${errorObj?.message || "Unknown Spotify error"}`,
-      ];
-    }
-
     const rankedTracks = deduped
       .map((track) => ({
         ...track,
-        popularity: Number(detailMap.get(track.id)?.popularity ?? track.popularity) || 0,
-        previewUrl: detailMap.get(track.id)?.previewUrl || track.previewUrl || "",
-        image: detailMap.get(track.id)?.image || track.image || "",
-        year: detailMap.get(track.id)?.year || track.year || "Unknown year",
+        seed: track.playlistOrder + 1,
       }))
-      .sort((a, b) => {
-        if (b.popularity !== a.popularity) return b.popularity - a.popularity;
-        return a.playlistOrder - b.playlistOrder;
-      });
+      .sort((a, b) => a.playlistOrder - b.playlistOrder);
 
     return { playlist, tracks: rankedTracks };
   }
@@ -483,8 +431,6 @@
       `Scopes requested: ${SCOPES}`,
       "",
     ];
-    state.lastTrackDetailLines = [];
-
     let meData = null;
     try {
       meData = await spotifyFetch("/me", accessToken);
@@ -536,7 +482,7 @@
       return { meData, playlistData, tracksStatus: errorObj?.spotifyStatus || null };
     }
 
-    setDebug(lines.concat(state.lastTrackDetailLines || []));
+    setDebug(lines);
     return { meData, playlistData, tracksStatus: 200 };
   }
 
@@ -727,10 +673,6 @@
     return `${info.completedSelections}/${info.selectionTotal} picks locked in.`;
   }
 
-  function formatPopularityLabel(entry) {
-    return `Spotify popularity ${Number(entry?.popularity) || 0}/100`;
-  }
-
   function renderPlaylistPreview() {
     if (!state.playlist || !state.entrants.length || !state.mainDrawSize) {
       playlistPreview.innerHTML = `<div class="empty-state">No playlist loaded yet. Once you build a tournament, this panel will show the playlist cover, owner, seeds, and round structure.</div>`;
@@ -746,7 +688,7 @@
           <span class="seed-track">${escapeHtml(track.name)}</span>
           <span class="seed-artist">${escapeHtml(track.artists.join(", "))}</span>
         </span>
-        <span class="seed-score">${escapeHtml(track.year)} · ${escapeHtml(formatPopularityLabel(track))}</span>
+        <span class="seed-score">${escapeHtml(track.year)}</span>
       </button>
     `).join("");
 
@@ -834,7 +776,7 @@
     if (!entry) {
       return `<div class="empty-state">No competitor is available in this slot.</div>`;
     }
-    const hotkey = side === "left" ? "1 / A / ←" : "2 / D / →";
+    const hotkey = side === "left" ? "1 / A / â†" : "2 / D / â†’";
     const previewMarkup = entry.spotifyUrl
       ? `
         <div class="vote-preview">
@@ -863,7 +805,6 @@
               <div class="vote-meta">
                 <span>Seed ${entry.seed}</span>
                 <span>${escapeHtml(entry.year)}</span>
-                <span>${escapeHtml(formatPopularityLabel(entry))}</span>
               </div>
             </div>
           </div>
@@ -960,16 +901,11 @@
       setStatus("Loading playlist from Spotify...");
       await runPlaylistDiagnostics(playlistId, accessToken);
       const { playlist, tracks } = await fetchPlaylistItems(playlistId, accessToken);
-      const currentDebug = debugOutput?.textContent ? debugOutput.textContent.split("\n") : [];
-      setDebug(currentDebug.concat(state.lastTrackDetailLines || []));
       if (tracks.length < 2) {
         throw new Error("This playlist does not have enough Spotify tracks to build a tournament.");
       }
 
-      const seededTracks = tracks.map((track, index) => ({
-        ...track,
-        seed: index + 1,
-      }));
+      const seededTracks = tracks;
       const { rounds, mainDrawSize } = buildTournamentRounds(seededTracks);
 
       state.playlist = playlist;
