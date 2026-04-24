@@ -164,7 +164,7 @@ using (
   or exists (
     select 1
     from public.music_tournaments t
-    where t.id = tournament_id
+    where t.id = music_tournament_members.tournament_id
       and (
         t.visibility = 'public'
         or t.owner_id = auth.uid()
@@ -183,7 +183,7 @@ using (
   or exists (
     select 1
     from public.music_tournaments t
-    where t.id = tournament_id
+    where t.id = music_tournament_invites.tournament_id
       and t.owner_id = auth.uid()
   )
 );
@@ -295,11 +295,11 @@ begin
 
     insert into public.music_tournament_members (tournament_id, user_id, role, invited_by)
     values (existing_row.id, me, 'owner', me)
-    on conflict (tournament_id, user_id) do update
+    on conflict on constraint music_tournament_members_pkey do update
       set role = 'owner';
 
     return query
-    select existing_row.id, existing_row.slug, true;
+    select existing_row.id as tournament_id, existing_row.slug as tournament_slug, true as created_new;
     return;
   end if;
 
@@ -323,11 +323,11 @@ begin
 
   insert into public.music_tournament_members (tournament_id, user_id, role, invited_by)
   values (existing_row.id, me, 'owner', me)
-  on conflict (tournament_id, user_id) do update
+  on conflict on constraint music_tournament_members_pkey do update
     set role = 'owner';
 
   return query
-  select existing_row.id, existing_row.slug, false;
+  select existing_row.id as tournament_id, existing_row.slug as tournament_slug, false as created_new;
 end;
 $$;
 
@@ -611,7 +611,7 @@ begin
 
   insert into public.music_tournament_members (tournament_id, user_id, role, invited_by)
   values (target_tournament_id, friend_target, 'participant', me)
-  on conflict (tournament_id, user_id) do update
+  on conflict on constraint music_tournament_members_pkey do update
     set invited_by = excluded.invited_by;
 
   return query
@@ -723,7 +723,7 @@ begin
         and m.user_id = me
     ) then
       return query
-      select tournament_row.id, tournament_row.slug, tournament_row.name;
+      select tournament_row.id as tournament_id, tournament_row.slug as tournament_slug, tournament_row.name as bracket_name;
       return;
     end if;
     raise exception 'Invite link has already been used.';
@@ -735,7 +735,7 @@ begin
 
   insert into public.music_tournament_members (tournament_id, user_id, role, invited_by)
   values (tournament_row.id, me, 'participant', invite_row.created_by)
-  on conflict (tournament_id, user_id) do nothing;
+  on conflict on constraint music_tournament_members_pkey do nothing;
 
   update public.music_tournament_invites
   set status = 'accepted',
@@ -744,7 +744,7 @@ begin
   where id = invite_row.id;
 
   return query
-  select tournament_row.id, tournament_row.slug, tournament_row.name;
+  select tournament_row.id as tournament_id, tournament_row.slug as tournament_slug, tournament_row.name as bracket_name;
 end;
 $$;
 
