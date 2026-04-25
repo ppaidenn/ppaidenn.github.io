@@ -85,6 +85,8 @@
   const detailNoticeText = document.getElementById("detailNoticeText");
   const participantsList = document.getElementById("participantsList");
   const participantSummaryText = document.getElementById("participantSummaryText");
+  const rankingSummaryText = document.getElementById("rankingSummaryText");
+  const rankingList = document.getElementById("rankingList");
   const friendInviteInput = document.getElementById("friendInviteInput");
   const friendInviteSuggestions = document.getElementById("friendInviteSuggestions");
   const inviteFriendBtn = document.getElementById("inviteFriendBtn");
@@ -294,6 +296,13 @@
   function normalizeTournamentDetail(row) {
     if (!row || typeof row !== "object") return null;
     const playlistCover = row.playlist_cover_url || "";
+    const ballots = Array.isArray(row.ballots) ? row.ballots.map((ballot) => ({
+      userId: ballot?.user_id || "",
+      username: ballot?.username || "",
+      avatarUrl: ballot?.avatar_url || "",
+      role: ballot?.role || "participant",
+      picks: ballot?.picks && typeof ballot.picks === "object" ? ballot.picks : {},
+    })) : [];
     return {
       id: row.tournament_id || "",
       slug: row.tournament_slug || "",
@@ -311,7 +320,8 @@
       },
       entrants: Array.isArray(row.entrants) ? row.entrants : [],
       rounds: Array.isArray(row.rounds) ? row.rounds : [],
-      picks: row.picks && typeof row.picks === "object" ? row.picks : {},
+      myPicks: row.my_picks && typeof row.my_picks === "object" ? row.my_picks : {},
+      ballots,
       mainDrawSize: Number(row.main_draw_size) || 0,
       createdAt: row.created_at || "",
       updatedAt: row.updated_at || "",
@@ -328,7 +338,7 @@
     state.entrants = record?.entrants || [];
     state.rounds = record?.rounds || [];
     state.mainDrawSize = record?.mainDrawSize || 0;
-    state.picks = record?.picks || {};
+    state.picks = record?.myPicks || {};
     state.activeRoundIndex = null;
     state.activeSelectionCursor = 0;
   }
@@ -810,22 +820,191 @@
     return `${info.completedSelections}/${info.selectionTotal} picks locked in.`;
   }
 
+  function resolveReferenceForBallot(reference, rounds, picks, cache) {
+    if (!reference) return null;
+    if (reference.type === "entrant") return reference.entry || null;
+    if (reference.type === "winner") return getMatchWinnerForBallot(rounds, picks, reference.roundIndex, reference.matchIndex, cache);
+    return null;
+  }
+
+  function getMatchWinnerForBallot(rounds, picks, roundIndex, matchIndex, cache = new Map()) {
+    const cacheKey = getRoundKey(roundIndex, matchIndex);
+    if (cache.has(cacheKey)) return cache.get(cacheKey);
+    const round = rounds?.[roundIndex];
+    const match = round?.matches?.[matchIndex];
+    if (!match) {
+      cache.set(cacheKey, null);
+      return null;
+    }
+    const leftRef = match.sides?.[0] || null;
+    const rightRef = match.sides?.[1] || null;
+    const left = resolveReferenceForBallot(leftRef, rounds, picks, cache);
+    const right = resolveReferenceForBallot(rightRef, rounds, picks, cache);
+    let winner = null;
+    if (leftRef && !rightRef && left) {
+      winner = left;
+    } else if (rightRef && !leftRef && right) {
+      winner = right;
+    } else {
+      const pick = picks?.[cacheKey];
+      if (pick === "left") winner = left || null;
+      if (pick === "right") winner = right || null;
+    }
+    cache.set(cacheKey, winner);
+    return winner;
+  }
+
+  function computeBallotPoints(rounds, entrants, picks) {
+    const cache = new Map();
+    const eliminationRoundById = {};
+    const bestRoundReachedById = {};
+    const safeRounds = Array.isArray(rounds) ? rounds : [];
+    const safeEntrants = Array.isArray(entrants) ? entrants : [];
+
+    safeRounds.forEach((round, roundIndex) => {
+      (Array.isArray(round?.matches) ? round.matches : []).forEach((match, matchIndex) => {
+        const left = resolveReferenceForBallot(match?.sides?.[0] || null, safeRounds, picks || {}, cache);
+        const right = resolveReferenceForBallot(match?.sides?.[1] || null, safeRounds, picks || {}, cache);
+        const winner = getMatchWinnerForBallot(safeRounds, picks || {}, roundIndex, matchIndex, cache);
+        if (winner?.id) {
+          bestRoundReachedById[winner.id] = Math.max(bestRoundReachedById[winner.id] ?? -1, roundIndex);
+        }
+        if (left && right && winner?.id) {
+          const loser = winner.id === left.id ? right : left;
+          if (loser?.id && eliminationRoundById[loser.id] === undefined) {
+            eliminationRoundById[loser.id] = roundIndex;
+          }
+        }
+      });
+    });
+
+    const champion = safeRounds.length ? getMatchWinnerForBallot(safeRounds, picks || {}, safeRounds.length - 1, 0, cache) : null;
+    const pointsByEntrantId = {};
+    safeEntrants.forEach((entry) => {
+      if (!entry?.id) return;
+      let points = 0;
+      if (champion?.id === entry.id) {
+        points = 2 ** safeRounds.length;
+      } else if (eliminationRoundById[entry.id] !== undefined) {
+        points = 2 ** eliminationRoundById[entry.id];
+      } else if ((bestRoundReachedById[entry.id] ?? -1) >= 0) {
+        points = 2 ** bestRoundReachedById[entry.id];
+      }
+      pointsByEntrantId[entry.id] = points;
+    });
+
+    return {
+      pointsByEntrantId,
+      championId: champion?.id || "",
+    };
+  }
+
+  function getRankingBreakdown(record) {
+    const entrants = Array.isArray(record?.entrants) ? record.entrants : [];
+    const rounds = Array.isArray(record?.rounds) ? record.rounds : [];
+    const ballots = Array.isArray(record?.ballots) ? record.ballots : [];
+    const rankingMap = new Map();
+
+    entrants.forEach((entry) => {
+      if (!entry?.id) return;
+      rankingMap.set(entry.id, {
+        entry,
+        totalPoints: 0,
+        userPoints: [],
+      });
+    });
+
+    ballots.forEach((ballot) => {
+      const picks = ballot?.picks && typeof ballot.picks === "object" ? ballot.picks : {};
+      const hasSelections = Object.keys(picks).length > 0;
+      if (!hasSelections) return;
+      const result = computeBallotPoints(rounds, entrants, picks);
+      entrants.forEach((entry) => {
+        if (!entry?.id) return;
+        const points = Number(result.pointsByEntrantId[entry.id] || 0);
+        const ranking = rankingMap.get(entry.id);
+        if (!ranking) return;
+        ranking.totalPoints += points;
+        if (points > 0 || result.championId === entry.id) {
+          ranking.userPoints.push({
+            userId: ballot.userId,
+            username: ballot.username || "user",
+            avatarUrl: ballot.avatarUrl || "",
+            role: ballot.role || "participant",
+            points,
+            champion: result.championId === entry.id,
+          });
+        }
+      });
+    });
+
+    const rankings = Array.from(rankingMap.values()).sort((left, right) => {
+      if (right.totalPoints !== left.totalPoints) return right.totalPoints - left.totalPoints;
+      if ((right.entry?.seed || 0) !== (left.entry?.seed || 0)) return (left.entry?.seed || 0) - (right.entry?.seed || 0);
+      return String(left.entry?.name || "").localeCompare(String(right.entry?.name || ""));
+    });
+
+    return {
+      rankings,
+      ballotCount: ballots.filter((ballot) => Object.keys(ballot?.picks || {}).length > 0).length,
+      rounds,
+    };
+  }
+
+  function describePointWeights(rounds) {
+    const safeRounds = Array.isArray(rounds) ? rounds : [];
+    const roundWeights = safeRounds.map((round, roundIndex) => `${round.label} ${2 ** roundIndex}`);
+    roundWeights.push(`Champion ${2 ** safeRounds.length}`);
+    return roundWeights.join(" • ");
+  }
+
+  function updateLocalBallot(snapshot) {
+    if (!state.activeTournament) return;
+    state.activeTournament.myPicks = snapshot;
+    const ballots = Array.isArray(state.activeTournament.ballots) ? [...state.activeTournament.ballots] : [];
+    const userId = state.paidenUser?.id || "";
+    const hasSelections = Object.keys(snapshot || {}).length > 0;
+    const existingIndex = ballots.findIndex((ballot) => ballot.userId === userId);
+
+    if (!userId) return;
+
+    if (!hasSelections && existingIndex >= 0) {
+      ballots.splice(existingIndex, 1);
+    } else if (hasSelections) {
+      const nextBallot = {
+        userId,
+        username: state.paidenProfile?.username || state.activeTournament.ownerUsername || "user",
+        avatarUrl: state.paidenProfile?.avatar_url || "",
+        role: state.activeTournament.ownerId === userId ? "owner" : "participant",
+        picks: snapshot,
+      };
+      if (existingIndex >= 0) {
+        ballots[existingIndex] = nextBallot;
+      } else {
+        ballots.push(nextBallot);
+      }
+    }
+
+    state.activeTournament.ballots = ballots;
+  }
+
   async function persistTournamentPicks(previousPicks) {
     if (!state.activeTournament?.id) return;
     const snapshot = JSON.parse(JSON.stringify(state.picks || {}));
     try {
-      const result = await callRpc("set_music_tournament_picks", {
+      const result = await callRpc("set_my_music_tournament_ballot", {
         target_tournament_id: state.activeTournament.id,
         next_picks: snapshot,
       });
       if (result !== true) throw new Error("This account cannot update picks for this tournament.");
-      if (state.activeTournament) state.activeTournament.picks = snapshot;
-      setDetailNotice("Picks saved.", true);
+      updateLocalBallot(snapshot);
+      renderApp();
+      setDetailNotice("Your ballot was saved. The rankings now include your points for this bracket.", true);
     } catch (errorObj) {
       state.picks = previousPicks || {};
-      if (state.activeTournament) state.activeTournament.picks = state.picks;
+      updateLocalBallot(state.picks);
       renderApp();
-      setDetailNotice(errorObj.message || "Could not save tournament picks.", true);
+      setDetailNotice(errorObj.message || "Could not save your ballot.", true);
     }
   }
 
@@ -838,9 +1017,10 @@
     state.picks[getRoundKey(roundIndex, matchIndex)] = side;
     clearLaterRounds(roundIndex + 1);
     if (state.activeTournament) {
-      state.activeTournament.picks = state.picks;
+      state.activeTournament.myPicks = state.picks;
       state.activeTournament.updatedAt = new Date().toISOString();
     }
+    updateLocalBallot(state.picks);
     renderApp();
     persistTournamentPicks(previousPicks);
     if (state.activeRoundIndex === roundIndex) advanceActiveSelection();
@@ -1053,7 +1233,61 @@
       ? "Generate a private invite link here."
       : record?.visibility === "public"
         ? "This bracket is public, so invite links are not needed."
-        : "Only the bracket owner can generate invite links.";
+      : "Only the bracket owner can generate invite links.";
+  }
+
+  function renderRankings(record) {
+    if (!rankingList || !rankingSummaryText) return;
+    const shell = rankingList.closest(".ranking-shell");
+    if (!record) {
+      if (shell) shell.hidden = true;
+      rankingSummaryText.textContent = "";
+      rankingList.innerHTML = "";
+      return;
+    }
+    if (shell) shell.hidden = false;
+    const { rankings, ballotCount, rounds } = getRankingBreakdown(record);
+    if (!ballotCount) {
+      rankingSummaryText.textContent = "No one has saved a ballot for this bracket yet.";
+      rankingList.innerHTML = `<div class="empty-state">Once voters save picks, this page will rank every song by weighted points for this bracket.</div>`;
+      return;
+    }
+
+    rankingSummaryText.textContent = `${ballotCount} ballot${ballotCount === 1 ? "" : "s"} saved. Points increase by round: ${describePointWeights(rounds)}.`;
+    rankingList.innerHTML = rankings.map((item, index) => {
+      const entry = item.entry || {};
+      const userPoints = [...item.userPoints].sort((left, right) => {
+        if (right.points !== left.points) return right.points - left.points;
+        return String(left.username || "").localeCompare(String(right.username || ""));
+      });
+      return `
+        <article class="ranking-card">
+          <div class="ranking-card-head">
+            <div class="ranking-order">#${index + 1}</div>
+            <div class="ranking-entry">
+              ${entry.image ? `<img class="ranking-cover" src="${entry.image}" alt="">` : `<div class="ranking-cover" aria-hidden="true"></div>`}
+              <div class="ranking-copy">
+                <h3>${escapeHtml(entry.name || "Song")}</h3>
+                <p>${escapeHtml(Array.isArray(entry.artists) ? entry.artists.join(", ") : "")}</p>
+                <div class="ranking-meta">
+                  <span class="meta-chip">${escapeHtml(String(entry.year || "Unknown year"))}</span>
+                  <span class="meta-chip">Seed ${escapeHtml(String(entry.seed || "?"))}</span>
+                  <span class="meta-chip">${item.totalPoints} pts</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="ranking-user-points">
+            ${userPoints.map((vote) => `
+              <span class="ranking-voter-pill${vote.champion ? " champion" : ""}">
+                ${vote.avatarUrl ? `<img src="${vote.avatarUrl}" alt="">` : ""}
+                <span>${escapeHtml(vote.username)}: ${vote.points} pt${vote.points === 1 ? "" : "s"}</span>
+              </span>
+            `).join("")}
+          </div>
+        </article>
+      `;
+    }).join("");
   }
 
   function renderFriendSuggestions() {
@@ -1078,7 +1312,7 @@
     detailHeroTitle.textContent = record.name || "Saved Tournament";
     detailHeroMeta.textContent = `${record.ownerUsername ? `Hosted by @${record.ownerUsername}` : "Hosted on paiden.com"}${record.entrants?.length ? ` - ${record.entrants.length} songs` : ""}`;
     detailHeroSubnote.textContent = record.canVote
-      ? "Open a round to vote matchup by matchup. Every pick here updates the saved tournament page immediately."
+      ? "Open a round to vote matchup by matchup. Your ballot is saved to this bracket and folded into the weighted ranking list below."
       : record.visibility === "public"
         ? "You can view this public bracket here. Sign in to paiden.com if you want to vote on it."
         : "This private bracket is only voteable by the owner and invited participants.";
@@ -1112,6 +1346,7 @@
     if (pageMode === "detail") {
       renderDetailHeader(state.activeTournament);
       renderParticipants(state.activeTournament);
+      renderRankings(state.activeTournament);
       renderChampion();
       renderRoundStage();
       renderVoteModal();
