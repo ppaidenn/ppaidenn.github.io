@@ -947,6 +947,7 @@
         entry,
         totalPoints: 0,
         userPoints: [],
+        podiumVotes: [],
       });
     });
 
@@ -955,6 +956,22 @@
       const hasSelections = Object.keys(picks).length > 0;
       if (!hasSelections) return;
       const result = computeBallotPoints(rounds, entrants, picks);
+      const podiumRanks = new Map(
+        entrants
+          .filter((entry) => entry?.id)
+          .map((entry) => ({
+            entry,
+            points: Number(result.pointsByEntrantId[entry.id] || 0),
+          }))
+          .filter((item) => item.points > 0)
+          .sort((left, right) => {
+            if (right.points !== left.points) return right.points - left.points;
+            if ((left.entry?.seed || 0) !== (right.entry?.seed || 0)) return (left.entry?.seed || 0) - (right.entry?.seed || 0);
+            return String(left.entry?.name || "").localeCompare(String(right.entry?.name || ""));
+          })
+          .slice(0, 3)
+          .map((item, index) => [item.entry.id, index + 1])
+      );
       entrants.forEach((entry) => {
         if (!entry?.id) return;
         const points = Number(result.pointsByEntrantId[entry.id] || 0);
@@ -962,14 +979,17 @@
         if (!ranking) return;
         ranking.totalPoints += points;
         if (points > 0 || result.championId === entry.id) {
-          ranking.userPoints.push({
+          const voteRecord = {
             userId: ballot.userId,
             username: ballot.username || "user",
             avatarUrl: ballot.avatarUrl || "",
             role: ballot.role || "participant",
             points,
             champion: result.championId === entry.id,
-          });
+            podiumRank: podiumRanks.get(entry.id) || null,
+          };
+          ranking.userPoints.push(voteRecord);
+          if (voteRecord.podiumRank) ranking.podiumVotes.push(voteRecord);
         }
       });
     });
@@ -992,6 +1012,46 @@
     const roundWeights = safeRounds.map((round, roundIndex) => `${round.label} ${roundIndex + 1}`);
     roundWeights.push(`Champion ${safeRounds.length + 1}`);
     return roundWeights.join(" • ");
+  }
+
+  function getPodiumTone(rank) {
+    if (rank === 1) return "gold";
+    if (rank === 2) return "silver";
+    return "bronze";
+  }
+
+  function getPodiumLabel(rank) {
+    if (rank === 1) return "top song";
+    if (rank === 2) return "second song";
+    return "third song";
+  }
+
+  function getProfileInitial(username) {
+    const cleaned = String(username || "user").replace(/^@+/, "").trim();
+    return cleaned ? cleaned.slice(0, 1).toUpperCase() : "?";
+  }
+
+  function renderVoterPodiumBadge(vote) {
+    const rank = Number(vote?.podiumRank || 0);
+    if (!rank) return "";
+    const tone = getPodiumTone(rank);
+    const username = vote?.username || "user";
+    const label = `${username}'s ${getPodiumLabel(rank)}`;
+    return `
+      <span class="voter-podium-badge ${tone}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
+        <i class="fa-solid fa-star" aria-hidden="true"></i>
+        ${vote?.avatarUrl ? `<img src="${escapeHtml(vote.avatarUrl)}" alt="">` : `<span class="voter-podium-initial">${escapeHtml(getProfileInitial(username))}</span>`}
+      </span>
+    `;
+  }
+
+  function renderPodiumBadgeCluster(votes) {
+    const sortedVotes = [...(Array.isArray(votes) ? votes : [])].sort((left, right) => {
+      if ((left.podiumRank || 0) !== (right.podiumRank || 0)) return (left.podiumRank || 0) - (right.podiumRank || 0);
+      return String(left.username || "").localeCompare(String(right.username || ""));
+    });
+    if (!sortedVotes.length) return "";
+    return `<span class="podium-badge-cluster">${sortedVotes.map(renderVoterPodiumBadge).join("")}</span>`;
   }
 
   function updateLocalBallot(snapshot) {
@@ -1113,10 +1173,102 @@
     `;
   }
 
+  function renderBracketEntrySlot(entry, isWinner) {
+    if (!entry) {
+      return `
+        <span class="bracket-slot empty">
+          <span class="bracket-slot-cover" aria-hidden="true"></span>
+          <span class="bracket-slot-copy">
+            <strong>Awaiting song</strong>
+            <em>Winner feeds in here</em>
+          </span>
+        </span>
+      `;
+    }
+    return `
+      <span class="bracket-slot${isWinner ? " winner" : ""}">
+        ${entry.image ? `<img class="bracket-slot-cover" src="${escapeHtml(entry.image)}" alt="">` : `<span class="bracket-slot-cover" aria-hidden="true"></span>`}
+        <span class="bracket-slot-copy">
+          <strong>${escapeHtml(entry.name || "Song")}</strong>
+          <em>${escapeHtml(Array.isArray(entry.artists) ? entry.artists.join(", ") : "")}</em>
+        </span>
+        <span class="bracket-seed">#${escapeHtml(String(entry.seed || "?"))}</span>
+      </span>
+    `;
+  }
+
+  function renderBracketMatchCard(info, matchInfo, isFinalRound) {
+    const leftWinner = !!(matchInfo.winner?.id && matchInfo.left?.id === matchInfo.winner.id);
+    const rightWinner = !!(matchInfo.winner?.id && matchInfo.right?.id === matchInfo.winner.id);
+    const canOpen = !!(info.ready && matchInfo.requiresVote);
+    const statusLabel = !info.ready
+      ? "Locked"
+      : matchInfo.winner
+        ? "Complete"
+        : matchInfo.requiresVote
+          ? "Pick Needed"
+          : "Auto";
+    const statusClass = !info.ready
+      ? "locked"
+      : matchInfo.winner
+        ? "complete"
+        : matchInfo.requiresVote
+          ? "ready"
+          : "auto";
+    const title = `${info.round.label} matchup ${matchInfo.matchIndex + 1}`;
+    return `
+      <button class="bracket-match-card ${statusClass}${isFinalRound ? " final" : ""}" type="button" data-open-round="${info.roundIndex}" data-open-match="${matchInfo.matchIndex}" ${canOpen ? "" : "disabled"} aria-label="${escapeHtml(`Open ${title}`)}">
+        <span class="bracket-match-topline">
+          <span>${escapeHtml(title)}</span>
+          <strong>${escapeHtml(statusLabel)}</strong>
+        </span>
+        <span class="bracket-match-slots">
+          ${renderBracketEntrySlot(matchInfo.left, leftWinner)}
+          ${renderBracketEntrySlot(matchInfo.right, rightWinner)}
+        </span>
+      </button>
+    `;
+  }
+
+  function renderTraditionalBracketStage() {
+    const columns = state.rounds.map((round, roundIndex) => {
+      const info = getRoundInfo(roundIndex);
+      const roundGap = Math.min(14 * Math.pow(1.75, roundIndex), 140);
+      const isFinalRound = roundIndex === state.rounds.length - 1;
+      return `
+        <section class="bracket-round-column" style="--round-gap: ${roundGap}px;">
+          <header class="bracket-round-header">
+            <div>
+              <span class="kicker">ROUND ${roundIndex + 1}</span>
+              <h3>${escapeHtml(round.label || `Round ${roundIndex + 1}`)}</h3>
+            </div>
+            <span class="round-card-status${!info.ready ? "" : info.completed ? " complete" : " ready"}">${escapeHtml(!info.ready ? "Locked" : info.completed ? "Complete" : "Ready")}</span>
+          </header>
+          <div class="bracket-round-matches">
+            ${info.matchInfos.map((matchInfo) => renderBracketMatchCard(info, matchInfo, isFinalRound)).join("")}
+          </div>
+        </section>
+      `;
+    }).join("");
+
+    roundStage.innerHTML = `
+      <div class="bracket-map-wrap">
+        <div class="bracket-map" aria-label="Traditional tournament bracket">
+          ${columns}
+        </div>
+      </div>
+      <p class="bracket-map-note">Click an unlocked matchup to open the voting popup. Completed cards can be reopened to review or change picks.</p>
+    `;
+  }
+
   function renderRoundStage() {
     if (!roundStage) return;
     if (!state.rounds.length) {
       roundStage.innerHTML = `<div class="empty-state">No bracket is loaded yet.</div>`;
+      return;
+    }
+    if (pageMode === "bracket") {
+      renderTraditionalBracketStage();
       return;
     }
     if (pageMode !== "bracket") {
@@ -1355,9 +1507,15 @@
   function renderFullRankingCard(item, index) {
     const entry = item.entry || {};
     const userPoints = [...item.userPoints].sort((left, right) => {
+      if ((left.podiumRank || 0) !== (right.podiumRank || 0)) {
+        if (!left.podiumRank) return 1;
+        if (!right.podiumRank) return -1;
+        return left.podiumRank - right.podiumRank;
+      }
       if (right.points !== left.points) return right.points - left.points;
       return String(left.username || "").localeCompare(String(right.username || ""));
     });
+    const podiumBadges = renderPodiumBadgeCluster(item.podiumVotes);
     return `
       <article class="ranking-card">
         <div class="ranking-card-head">
@@ -1370,16 +1528,19 @@
               <div class="ranking-meta">
                 <span class="meta-chip">${escapeHtml(String(entry.year || "Unknown year"))}</span>
                 <span class="meta-chip">Seed ${escapeHtml(String(entry.seed || "?"))}</span>
-                <span class="meta-chip">${item.totalPoints} pts</span>
+                <span class="meta-chip ranking-total-chip">${podiumBadges}<span>${item.totalPoints} pts</span></span>
               </div>
             </div>
           </div>
         </div>
         <div class="ranking-user-points">
           ${userPoints.map((vote) => `
-            <span class="ranking-voter-pill${vote.champion ? " champion" : ""}">
-              ${vote.avatarUrl ? `<img src="${escapeHtml(vote.avatarUrl)}" alt="">` : ""}
-              <span>${escapeHtml(vote.username)}: ${vote.points} pt${vote.points === 1 ? "" : "s"}</span>
+            <span class="ranking-voter-pill${vote.champion ? " champion" : ""}${vote.podiumRank ? ` podium ${getPodiumTone(vote.podiumRank)}` : ""}">
+              <span class="ranking-voter-name">${escapeHtml(vote.username)}</span>
+              <span class="ranking-voter-score">
+                ${renderVoterPodiumBadge(vote)}
+                <strong>${vote.points} pt${vote.points === 1 ? "" : "s"}</strong>
+              </span>
             </span>
           `).join("")}
         </div>
@@ -1389,6 +1550,7 @@
 
   function renderRankingPreviewRow(item, index) {
     const entry = item.entry || {};
+    const podiumBadges = renderPodiumBadgeCluster(item.podiumVotes);
     return `
       <div class="ranking-preview-row">
         <span class="ranking-preview-position">#${index + 1}</span>
@@ -1397,7 +1559,7 @@
           <strong>${escapeHtml(entry.name || "Song")}</strong>
           <span>${escapeHtml(Array.isArray(entry.artists) ? entry.artists.join(", ") : "")}</span>
         </span>
-        <span class="ranking-preview-points">${item.totalPoints} pts</span>
+        <span class="ranking-preview-points">${podiumBadges}<span>${item.totalPoints} pts</span></span>
       </div>
     `;
   }
@@ -1543,15 +1705,16 @@
     state.tournamentRequestTurnstileToken = "";
   };
 
-  function openRoundModal(roundIndex) {
+  function openRoundModal(roundIndex, targetMatchIndex = null) {
     const info = getRoundInfo(roundIndex);
     if (!info || !info.ready) return;
     state.activeRoundIndex = roundIndex;
+    const requestedCursor = targetMatchIndex === null ? -1 : info.selectionMatchIndexes.indexOf(targetMatchIndex);
     const firstIncomplete = info.selectionMatchIndexes.findIndex((matchIndex) => {
       const match = info.matchInfos.find((entry) => entry.matchIndex === matchIndex);
       return match && !match.winner;
     });
-    state.activeSelectionCursor = firstIncomplete >= 0 ? firstIncomplete : 0;
+    state.activeSelectionCursor = requestedCursor >= 0 ? requestedCursor : firstIncomplete >= 0 ? firstIncomplete : 0;
     renderVoteModal();
   }
 
@@ -1957,7 +2120,8 @@
       const button = event.target.closest("[data-open-round]");
       if (!button) return;
       const roundIndex = Number(button.getAttribute("data-open-round"));
-      if (Number.isFinite(roundIndex)) openRoundModal(roundIndex);
+      const matchIndex = Number(button.getAttribute("data-open-match"));
+      if (Number.isFinite(roundIndex)) openRoundModal(roundIndex, Number.isFinite(matchIndex) ? matchIndex : null);
     });
   }
 

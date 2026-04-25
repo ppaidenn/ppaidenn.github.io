@@ -83,7 +83,7 @@
     .ranking-preview-copy strong, .ranking-preview-copy span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ranking-preview-copy strong { font-size: 15px; line-height: 1.15; }
     .ranking-preview-copy span { font-size: 13px; color: rgba(16,21,28,.68); }
-    .ranking-preview-points { justify-self: end; border-radius: 999px; padding: 7px 10px; background: rgba(15,21,27,.06); border: 1px solid rgba(15,21,27,.08); font-size: 12px; font-weight: 800; color: rgba(16,21,28,.72); letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; }
+    .ranking-preview-points { justify-self: end; border-radius: 999px; padding: 7px 10px; background: rgba(15,21,27,.06); border: 1px solid rgba(15,21,27,.08); font-size: 12px; font-weight: 800; color: rgba(16,21,28,.72); letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; display: inline-flex; align-items: center; gap: 7px; }
     .ranking-full-link { width: fit-content; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 10px 14px; background: #0f151b; color: #fff; font-size: 14px; font-weight: 800; }
     .ranking-card { border-radius: 16px; border: 1px solid rgba(12,18,24,.08); background: rgba(255,255,255,.86); box-shadow: 0 4px 16px rgba(0,0,0,.05); padding: 16px; display: grid; gap: 12px; }
     .ranking-card-head { display: flex; gap: 14px; align-items: flex-start; }
@@ -94,9 +94,22 @@
     .ranking-copy h3 { margin: 0; font-size: 20px; line-height: 1.08; }
     .ranking-copy p { margin: 0; font-size: 14px; color: rgba(16,21,28,.72); }
     .ranking-meta, .ranking-user-points { display: flex; gap: 8px; flex-wrap: wrap; }
+    .ranking-total-chip, .ranking-voter-score { display: inline-flex; align-items: center; gap: 7px; }
     .ranking-voter-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: rgba(15,21,27,.06); border: 1px solid rgba(15,21,27,.08); font-size: 13px; font-weight: 700; color: #0b1116; }
     .ranking-voter-pill.champion { background: rgba(29,185,84,.12); border-color: rgba(29,185,84,.2); color: #11422b; }
+    .ranking-voter-pill.podium.gold { border-color: rgba(219,169,34,.42); background: rgba(255,222,132,.16); }
+    .ranking-voter-pill.podium.silver { border-color: rgba(147,157,170,.42); background: rgba(222,228,235,.2); }
+    .ranking-voter-pill.podium.bronze { border-color: rgba(177,108,55,.42); background: rgba(218,151,91,.15); }
+    .ranking-voter-name { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ranking-voter-pill img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+    .podium-badge-cluster { display: inline-flex; align-items: center; padding-right: 2px; }
+    .podium-badge-cluster .voter-podium-badge + .voter-podium-badge { margin-left: -8px; }
+    .voter-podium-badge { --podium-color: #dba922; position: relative; width: 30px; height: 30px; display: inline-grid; place-items: center; flex: 0 0 auto; }
+    .voter-podium-badge.gold { --podium-color: #dba922; }
+    .voter-podium-badge.silver { --podium-color: #a5aeb9; }
+    .voter-podium-badge.bronze { --podium-color: #b86d3d; }
+    .voter-podium-badge i { position: absolute; inset: -2px; display: grid; place-items: center; color: var(--podium-color); font-size: 31px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.16)); }
+    .voter-podium-badge img, .voter-podium-initial { position: relative; z-index: 1; width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,.96); object-fit: cover; background: #0f151b; color: #fff; display: inline-grid; place-items: center; font-size: 10px; font-weight: 900; line-height: 1; }
     .vote-modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 28px; background: rgba(7,12,15,.72); z-index: 80; }
     .vote-modal.open { display: flex; }
     .vote-dialog { width: min(1040px, calc(100vw - 36px)); max-height: min(860px, calc(100vh - 36px)); overflow: auto; border-radius: 24px; background: linear-gradient(180deg, rgba(255,255,255,.97), rgba(243,246,239,.96)); border: 1px solid rgba(12,18,24,.12); box-shadow: 0 22px 60px rgba(0,0,0,.24); padding: 22px; display: grid; gap: 18px; }
@@ -145,7 +158,7 @@
   <script src="/shared-footer.js?v=20260417a"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="/auth-client.js?v=20260312c"></script>
-  <script src="/tournaments/tournaments-page.js?v=20260425c"></script>
+  <script src="/tournaments/tournaments-page.js?v=20260425d"></script>
 </body>
 </html>
 

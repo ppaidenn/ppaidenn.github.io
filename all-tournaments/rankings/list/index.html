@@ -50,9 +50,22 @@
     .ranking-copy { min-width: 0; display: grid; gap: 8px; }
     .ranking-copy h3 { margin: 0; font-size: 20px; line-height: 1.08; }
     .ranking-copy p { margin: 0; font-size: 14px; color: rgba(16,21,28,.72); }
+    .ranking-total-chip, .ranking-voter-score { display: inline-flex; align-items: center; gap: 7px; }
     .ranking-voter-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: rgba(15,21,27,.06); border: 1px solid rgba(15,21,27,.08); font-size: 13px; font-weight: 700; color: #0b1116; }
     .ranking-voter-pill.champion { background: rgba(29,185,84,.12); border-color: rgba(29,185,84,.2); color: #11422b; }
+    .ranking-voter-pill.podium.gold { border-color: rgba(219,169,34,.42); background: rgba(255,222,132,.16); }
+    .ranking-voter-pill.podium.silver { border-color: rgba(147,157,170,.42); background: rgba(222,228,235,.2); }
+    .ranking-voter-pill.podium.bronze { border-color: rgba(177,108,55,.42); background: rgba(218,151,91,.15); }
+    .ranking-voter-name { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ranking-voter-pill img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+    .podium-badge-cluster { display: inline-flex; align-items: center; padding-right: 2px; }
+    .podium-badge-cluster .voter-podium-badge + .voter-podium-badge { margin-left: -8px; }
+    .voter-podium-badge { --podium-color: #dba922; position: relative; width: 30px; height: 30px; display: inline-grid; place-items: center; flex: 0 0 auto; }
+    .voter-podium-badge.gold { --podium-color: #dba922; }
+    .voter-podium-badge.silver { --podium-color: #a5aeb9; }
+    .voter-podium-badge.bronze { --podium-color: #b86d3d; }
+    .voter-podium-badge i { position: absolute; inset: -2px; display: grid; place-items: center; color: var(--podium-color); font-size: 31px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.16)); }
+    .voter-podium-badge img, .voter-podium-initial { position: relative; z-index: 1; width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,.96); object-fit: cover; background: #0f151b; color: #fff; display: inline-grid; place-items: center; font-size: 10px; font-weight: 900; line-height: 1; }
     .footer { width: 100%; background: #000; padding: 56px 0 calc(56px + env(safe-area-inset-bottom,0px)); margin-top: auto; flex-shrink: 0; }
     @media (max-width: 1080px) { .hero { grid-template-columns: 1fr; } .hero-actions { justify-content: flex-start; } }
     @media (max-width: 768px) { body { padding-top: calc(env(safe-area-inset-top,0px) + 58px); } .top-nav { display: none; } .mobile-fixed-header { display: flex; } .content-wrap { padding-top: 18px; } .content-inner { margin: 0 5vw; padding: 16px; } .detail-cover { width: 92px; height: 92px; } .ranking-card-head { gap: 10px; } .ranking-entry { grid-template-columns: 56px minmax(0,1fr); gap: 10px; } .ranking-cover { width: 56px; height: 56px; border-radius: 14px; } .footer { display: none !important; } }
@@ -72,6 +85,6 @@
   <script src="/shared-footer.js?v=20260417a"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="/auth-client.js?v=20260312c"></script>
-  <script src="/tournaments/tournaments-page.js?v=20260425c"></script>
+  <script src="/tournaments/tournaments-page.js?v=20260425d"></script>
 </body>
 </html>
