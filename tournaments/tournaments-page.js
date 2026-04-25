@@ -1320,16 +1320,6 @@
         <div class="bracket-round-pills" aria-label="Bracket rounds">
           ${roundPills}
         </div>
-        <div class="bracket-window-actions">
-          <button class="bracket-window-btn" type="button" data-bracket-round-shift="-1" ${leftIndex <= 0 ? "disabled" : ""} aria-label="Previous round pair">
-            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
-            <span>Previous Rounds</span>
-          </button>
-          <button class="bracket-window-btn" type="button" data-bracket-round-shift="1" ${leftIndex >= getMaxBracketPairStart() ? "disabled" : ""} aria-label="Next round pair">
-            <span>Next Rounds</span>
-            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
-          </button>
-        </div>
       </div>
       <div class="bracket-window-summary">
         Showing ${escapeHtml(leftInfo.round.label || `Round ${leftIndex + 1}`)}${rightInfo ? ` into ${escapeHtml(rightInfo.round.label || `Round ${rightIndex + 1}`)}` : ""}.
@@ -1343,6 +1333,16 @@
           </div>
         </div>
       </section>
+      <div class="bracket-window-actions">
+        <button class="bracket-window-btn" type="button" data-bracket-round-shift="-1" ${leftIndex <= 0 ? "disabled" : ""} aria-label="Previous round pair">
+          <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          <span>Previous Rounds</span>
+        </button>
+        <button class="bracket-window-btn" type="button" data-bracket-round-shift="1" ${leftIndex >= getMaxBracketPairStart() ? "disabled" : ""} aria-label="Next round pair">
+          <span>Next Rounds</span>
+          <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+        </button>
+      </div>
       <p class="bracket-map-note">Use Next Rounds to shift the right column onto the left side. Unlocked matchup cards still open the voting popup.</p>
     `;
   }
