@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>paiden.com</title>
+  <meta name="description" content="View the full bracket for a saved music tournament on paiden.com.">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="apple-touch-icon" href="/images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="/account-menu.css?v=20260420d">
+  <link rel="stylesheet" href="/shared-footer.css?v=20260417a">
+  <link rel="stylesheet" href="/shared-app-header.css?v=20260421b">
+  <style>
+    :root { --panel-border: rgba(11,17,22,.1); --panel-bg: rgba(255,255,255,.82); }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; font-family: Arial, sans-serif; background: radial-gradient(circle at top left, rgba(29,185,84,.08), transparent 25%), linear-gradient(180deg,#dfe2db 0%, #d8ddd4 100%); color: #10151c; }
+    .content-wrap { flex: 1 0 auto; padding: clamp(22px,4vh,40px) 0 calc(30px + env(safe-area-inset-bottom,0px)); }
+    .content-inner { margin: 0 10vw; border-radius: 22px; border: 1px solid var(--panel-border); padding: clamp(18px,2.2vw,32px); background: radial-gradient(circle at top left, rgba(29,185,84,.1), transparent 34%), linear-gradient(180deg, rgba(255,255,255,.84), rgba(242,245,239,.78)); box-shadow: 0 12px 32px rgba(0,0,0,.08); }
+    .hero { display: grid; grid-template-columns: 120px minmax(0,1fr) auto; gap: 18px; align-items: center; margin-bottom: 22px; }
+    .detail-cover { width: 120px; height: 120px; border-radius: 22px; object-fit: cover; background: linear-gradient(135deg, rgba(29,185,84,.16), rgba(11,17,22,.12)); border: 1px solid rgba(12,18,24,.08); }
+    .kicker { letter-spacing: .18em; font-size: 12px; font-weight: 800; color: rgba(17,44,29,.78); margin-bottom: 10px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px,4vw,52px); line-height: .98; }
+    h2 { margin: 0 0 10px; font-size: clamp(20px,2vw,28px); line-height: 1.08; }
+    h3 { margin: 0; font-size: 18px; }
+    p { margin: 0 0 10px; font-size: clamp(15px,1.08vw,18px); line-height: 1.5; color: rgba(16,21,28,.86); }
+    .chip-row, .hero-actions, .round-card-meta, .round-actions, .vote-nav { display: flex; gap: 8px; flex-wrap: wrap; }
+    .hero-actions { justify-content: flex-end; }
+    .hero-link, .btn, .btn-secondary { border-radius: 999px; border: 1px solid rgba(12,18,24,.12); padding: 12px 18px; display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 800; cursor: pointer; }
+    .hero-link, .btn { background: #0f151b; color: #fff; }
+    .btn-secondary { background: rgba(255,255,255,.92); color: #0b1116; }
+    .meta-chip, .round-card-status, .round-chip { border-radius: 999px; padding: 8px 12px; border: 1px solid rgba(15,21,27,.1); background: rgba(15,21,27,.06); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: rgba(16,21,28,.7); }
+    .meta-chip.public, .round-card-status.ready { background: rgba(29,185,84,.12); border-color: rgba(29,185,84,.22); color: #11422b; }
+    .meta-chip.private { background: rgba(31,49,70,.08); border-color: rgba(31,49,70,.16); color: #22354b; }
+    .round-card-status.complete { background: rgba(15,21,27,.88); border-color: rgba(15,21,27,.88); color: #fff; }
+    .notice-card, .empty-shell, .bracket-shell { border: 1px solid var(--panel-border); border-radius: 18px; background: var(--panel-bg); padding: clamp(16px,1.8vw,24px); box-shadow: inset 0 1px 0 rgba(255,255,255,.45); }
+    .bracket-shell { display: grid; gap: 16px; }
+    .notice-card, .empty-shell { margin-bottom: 18px; }
+    .notice-card[hidden], .empty-shell[hidden] { display: none !important; }
+    .round-stage { display: grid; gap: 12px; }
+    .round-card { border-radius: 16px; border: 1px solid rgba(12,18,24,.08); background: rgba(255,255,255,.86); box-shadow: 0 4px 16px rgba(0,0,0,.05); padding: 16px; display: grid; gap: 12px; }
+    .round-card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .round-card-title { margin: 0; font-size: 18px; }
+    .round-card-copy { margin: 0; font-size: 14px; color: rgba(16,21,28,.72); }
+    .empty-state { border-radius: 16px; border: 1px dashed rgba(12,18,24,.18); background: rgba(255,255,255,.48); padding: 18px; color: rgba(16,21,28,.72); font-size: 15px; line-height: 1.5; }
+    .vote-modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 28px; background: rgba(7,12,15,.72); z-index: 80; }
+    .vote-modal.open { display: flex; }
+    .vote-dialog { width: min(1040px, calc(100vw - 36px)); max-height: min(860px, calc(100vh - 36px)); overflow: auto; border-radius: 24px; background: linear-gradient(180deg, rgba(255,255,255,.97), rgba(243,246,239,.96)); border: 1px solid rgba(12,18,24,.12); box-shadow: 0 22px 60px rgba(0,0,0,.24); padding: 22px; display: grid; gap: 18px; }
+    .vote-dialog-head, .vote-progress-row { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+    .vote-dialog-copy h3 { margin: 0 0 8px; font-size: clamp(24px,2.6vw,34px); line-height: 1; }
+    .vote-dialog-copy p { margin: 0; font-size: 14px; color: rgba(16,21,28,.72); }
+    .vote-close { width: 46px; height: 46px; border-radius: 50%; border: 1px solid rgba(12,18,24,.12); background: rgba(255,255,255,.92); color: #0b1116; font-size: 18px; font-weight: 800; cursor: pointer; }
+    .vote-progress { font-size: 14px; font-weight: 800; color: rgba(16,21,28,.78); letter-spacing: .08em; text-transform: uppercase; }
+    .vote-shortcuts { font-size: 13px; color: rgba(16,21,28,.68); }
+    .vote-complete { border-radius: 16px; padding: 14px 16px; background: rgba(29,185,84,.12); border: 1px solid rgba(29,185,84,.2); color: #11422b; font-size: 14px; font-weight: 700; }
+    .vote-matchup { display: grid; gap: 14px; }
+    .vote-matchup-frame { display: grid; gap: 14px; }
+    .vote-matchup-label { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; border-radius: 16px; padding: 12px 14px; background: rgba(15,21,27,.06); border: 1px solid rgba(15,21,27,.08); }
+    .vote-matchup-label span { font-size: 12px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: rgba(16,21,28,.64); }
+    .vote-matchup-label strong { font-size: 18px; color: #0b1116; }
+    .vote-choice-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+    .vote-choice { width: 100%; border-radius: 18px; border: 1px solid rgba(12,18,24,.1); background: rgba(255,255,255,.94); padding: 16px; display: grid; gap: 14px; text-align: left; cursor: pointer; color: inherit; font: inherit; transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+    .vote-choice:hover:not(:disabled) { transform: translateY(-2px); border-color: rgba(29,185,84,.36); box-shadow: 0 14px 28px rgba(0,0,0,.08); }
+    .vote-choice.selected { border-color: rgba(29,185,84,.5); background: rgba(29,185,84,.12); box-shadow: 0 12px 24px rgba(29,185,84,.12); }
+    .vote-choice.disabled { opacity: .84; }
+    .vote-hotkey { display: inline-flex; align-items: center; justify-content: center; width: fit-content; min-width: 120px; padding: 7px 14px; border-radius: 999px; background: #0f151b; color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .vote-choice-body { display: grid; grid-template-columns: 112px minmax(0,1fr); gap: 16px; align-items: center; }
+    .vote-cover { width: 112px; height: 112px; border-radius: 18px; object-fit: cover; background: linear-gradient(135deg, rgba(29,185,84,.16), rgba(11,17,22,.12)); border: 1px solid rgba(12,18,24,.08); }
+    .vote-copy { min-width: 0; display: grid; gap: 8px; }
+    .vote-side-label { font-size: 12px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: rgba(16,21,28,.58); }
+    .vote-title { margin: 0; font-size: 22px; line-height: 1.05; }
+    .vote-artist { margin: 0; font-size: 16px; color: rgba(16,21,28,.74); }
+    .vote-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+    .vote-meta span { border-radius: 999px; padding: 7px 10px; background: rgba(15,21,27,.06); border: 1px solid rgba(15,21,27,.08); font-size: 12px; font-weight: 800; color: rgba(16,21,28,.72); letter-spacing: .05em; text-transform: uppercase; }
+    .footer { width: 100%; background: #000; padding: 56px 0 calc(56px + env(safe-area-inset-bottom,0px)); margin-top: auto; flex-shrink: 0; }
+    @media (max-width: 1080px) { .hero { grid-template-columns: 1fr; } .hero-actions { justify-content: flex-start; } .vote-choice-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { body { padding-top: calc(env(safe-area-inset-top,0px) + 58px); } .top-nav { display: none; } .mobile-fixed-header { display: flex; } .content-wrap { padding-top: 18px; } .content-inner { margin: 0 5vw; padding: 16px; } .detail-cover { width: 92px; height: 92px; } .vote-choice-body { grid-template-columns: 88px minmax(0,1fr); } .vote-cover { width: 88px; height: 88px; } .vote-title { font-size: 18px; } .footer { display: none !important; } }
+  </style>
+</head>
+<body data-tournament-view="bracket">
+  <header class="top-nav" role="navigation" aria-label="Primary site navigation"><div class="top-nav-inner"><a class="brand" href="/">paiden.com</a><nav class="nav-links"><a href="/resume">Resume</a><a href="/photos">Photos</a><a href="/blog">Blog</a><a href="/contactme">Contact Me</a></nav></div></header>
+  <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation"><a class="mobile-fixed-brand" href="/">paiden.com</a><div class="mobile-fixed-nav"><a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a><a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a><a href="/contactme" aria-label="Contact"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a></div></div>
+
+  <main class="content-wrap"><section class="content-inner"><section class="hero" id="tournamentDetailRoot"><img class="detail-cover" id="detailHeroCover" alt="" hidden><div><div class="kicker">BRACKET VIEW</div><h1 id="detailHeroTitle">Loading bracket...</h1><div class="chip-row"><span class="meta-chip" id="detailVisibilityChip">Loading</span><span class="meta-chip" id="detailPlaylistChip">Playlist</span></div><p id="detailHeroMeta">Pulling the saved bracket details for this tournament.</p><p id="detailHeroSubnote">This page shows every round in the bracket.</p></div><div class="hero-actions"><a class="hero-link" href="/all-tournaments/"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>All Tournaments</span></a></div></section><section class="notice-card" id="detailNoticeCard" hidden><div class="kicker">NOTICE</div><p id="detailNoticeText">Loading tournament...</p></section><section class="empty-shell" id="detailEmptyState" hidden><div class="empty-state" id="detailEmptyStateText">This tournament could not be found.</div></section><section class="bracket-shell"><div><div class="kicker">FULL BRACKET</div><h2>Round Map</h2><p>Each round card shows whether it is locked, ready, or complete. Open any available round to review picks.</p></div><div class="round-stage" id="roundStage"><div class="empty-state">Loading saved bracket...</div></div></section></section></main>
+
+  <div class="vote-modal" id="voteModal" aria-hidden="true"><div class="vote-dialog" role="dialog" aria-modal="true" aria-labelledby="voteModalTitle"><div class="vote-dialog-head"><div class="vote-dialog-copy"><div class="kicker" id="voteModalKicker">ROUND</div><h3 id="voteModalTitle">The Round</h3><p id="voteModalSubtitle">Open a round to start voting.</p></div><button class="vote-close" id="voteModalCloseBtn" type="button" aria-label="Close round voting">x</button></div><div class="vote-progress-row"><div class="vote-progress" id="voteProgressText">Selection 0 / 0</div><div class="vote-shortcuts">Keys: <strong>1 / A / Left</strong> for the left song, <strong>2 / D / Right</strong> for the right song, <strong>Enter</strong> = next pick or round, <strong>Esc</strong> = close</div></div><div class="vote-complete" id="voteCompleteNote" hidden>All selections in this round are locked in. You can still revisit a matchup and change the result.</div><div class="vote-matchup" id="voteMatchup"><div class="empty-state">Open a round to begin voting.</div></div><div class="vote-nav"><button class="btn-secondary" id="votePrevBtn" type="button">Previous Pick</button><button class="btn-secondary" id="voteNextBtn" type="button">Next Pick</button><button class="btn" id="voteNextRoundBtn" type="button" hidden>Next Round</button></div></div></div>
+
+  <footer class="footer"><div class="footer-inner"><div class="footer-left-cluster"><div class="footer-brand-stack"><div class="footer-brand-wrap"><a class="footer-brand" href="/">paiden.com</a></div><div class="footer-meta"><div class="footer-created">Created by Paiden Nicks</div><div class="footer-updated" id="last-updated"></div></div></div><div class="footer-nav"><a href="/resume">Resume</a><a href="/photos">Photos</a><a href="/blog">Blog</a><a href="/contactme">Contact Me</a></div></div><div class="footer-social"><span class="follow-text">Follow Me</span><div class="social-icons"><a href="https://www.linkedin.com/in/paiden" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a><a href="https://www.instagram.com/paiden_26" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="https://snapchat.com/t/m04JWymy" target="_blank" rel="noopener" aria-label="Snapchat"><i class="fab fa-snapchat"></i></a></div></div></div></footer>
+
+  <script>const lastUpdated=document.getElementById("last-updated"); if(lastUpdated) lastUpdated.textContent="Today's Date: "+new Date().toLocaleDateString();</script>
+  <script src="/shared-app-header.js?v=20260421b"></script>
+  <script src="/account-menu.js?v=20260420c"></script>
+  <script src="/shared-footer.js?v=20260417a"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/auth-client.js?v=20260312c"></script>
+  <script src="/tournaments/tournaments-page.js?v=20260425c"></script>
+</body>
+</html>

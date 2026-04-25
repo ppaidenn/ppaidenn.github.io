@@ -88,6 +88,7 @@
   const rankingSummaryText = document.getElementById("rankingSummaryText");
   const rankingList = document.getElementById("rankingList");
   const resultsShell = document.getElementById("resultsShell");
+  const bracketViewLink = document.getElementById("bracketViewLink");
   const rankingBackLink = document.getElementById("rankingBackLink");
   const friendInviteInput = document.getElementById("friendInviteInput");
   const friendInviteSuggestions = document.getElementById("friendInviteSuggestions");
@@ -823,6 +824,38 @@
     return `${info.completedSelections}/${info.selectionTotal} picks locked in.`;
   }
 
+  function getPrimaryVotingContext() {
+    for (let roundIndex = 0; roundIndex < state.rounds.length; roundIndex += 1) {
+      const info = getRoundInfo(roundIndex);
+      if (!info?.ready) break;
+      if (!info.selectionTotal) continue;
+      if (!info.completed) {
+        const firstOpenIndex = info.selectionMatchIndexes.findIndex((matchIndex) => {
+          const match = info.matchInfos.find((entry) => entry.matchIndex === matchIndex);
+          return match && !match.winner;
+        });
+        return {
+          info,
+          pickNumber: Math.max(firstOpenIndex + 1, 1),
+          isComplete: false,
+        };
+      }
+    }
+
+    for (let roundIndex = state.rounds.length - 1; roundIndex >= 0; roundIndex -= 1) {
+      const info = getRoundInfo(roundIndex);
+      if (info?.ready && info.selectionTotal) {
+        return {
+          info,
+          pickNumber: Math.max(info.selectionTotal, 1),
+          isComplete: true,
+        };
+      }
+    }
+
+    return null;
+  }
+
   function resolveReferenceForBallot(reference, rounds, picks, cache) {
     if (!reference) return null;
     if (reference.type === "entrant") return reference.entry || null;
@@ -1084,6 +1117,38 @@
     if (!roundStage) return;
     if (!state.rounds.length) {
       roundStage.innerHTML = `<div class="empty-state">No bracket is loaded yet.</div>`;
+      return;
+    }
+    if (pageMode !== "bracket") {
+      const votingContext = getPrimaryVotingContext();
+      if (!votingContext) {
+        roundStage.innerHTML = `<div class="empty-state">No manual voting rounds are available for this bracket yet.</div>`;
+        return;
+      }
+      const { info, pickNumber, isComplete } = votingContext;
+      const bracketHref = state.activeTournament?.slug
+        ? `/all-tournaments/bracket/view/?slug=${encodeURIComponent(state.activeTournament.slug)}`
+        : "/all-tournaments/bracket/view/";
+      const voteLabel = isComplete ? "Review Votes" : "Vote Now";
+      const helper = isComplete
+        ? `${info.round.label} is complete. You can reopen it to review or change picks.`
+        : `${info.round.label} - pick ${pickNumber} of ${info.selectionTotal}. ${formatRoundSummary(info)}`;
+      roundStage.innerHTML = `
+        <section class="vote-now-card">
+          <div class="vote-now-copy">
+            <div class="kicker">VOTING</div>
+            <h3>Vote Now</h3>
+            <p>${escapeHtml(helper)}</p>
+          </div>
+          <div class="vote-now-actions">
+            <button class="btn vote-now-btn" type="button" data-open-round="${info.roundIndex}">${escapeHtml(voteLabel)}</button>
+            <a class="btn-secondary" id="bracketViewLink" href="${escapeHtml(bracketHref)}" target="_blank" rel="noopener">
+              <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+              <span>Open Bracket View</span>
+            </a>
+          </div>
+        </section>
+      `;
       return;
     }
     roundStage.innerHTML = state.rounds.map((round, roundIndex) => {
@@ -1406,9 +1471,11 @@
     detailHeroMeta.textContent = `${record.ownerUsername ? `Hosted by @${record.ownerUsername}` : "Hosted on paiden.com"}${record.entrants?.length ? ` - ${record.entrants.length} songs` : ""}`;
     if (pageMode === "rankings") {
       detailHeroSubnote.textContent = "This page shows the full weighted list for the bracket. Open the tournament page to vote or manage access.";
+    } else if (pageMode === "bracket") {
+      detailHeroSubnote.textContent = "This page shows every round in the bracket. Open any available round to review or change picks.";
     } else {
       detailHeroSubnote.textContent = record.canVote
-        ? "Open a round to vote matchup by matchup. Your ballot is saved to this bracket and folded into the top-five standings below."
+        ? "Use the Vote Now card to continue the next pick. Your ballot is saved to this bracket and folded into the top-five standings after completion."
         : record.visibility === "public"
           ? "You can view this public bracket here. Sign in to paiden.com if you want to vote on it."
           : "This private bracket is only voteable by the owner and invited participants.";
@@ -1455,6 +1522,12 @@
     if (pageMode === "rankings") {
       renderDetailHeader(state.activeTournament);
       renderRankings(state.activeTournament);
+      return;
+    }
+    if (pageMode === "bracket") {
+      renderDetailHeader(state.activeTournament);
+      renderRoundStage();
+      renderVoteModal();
       return;
     }
     renderChampion();
@@ -1957,7 +2030,7 @@
       await initLibraryPage();
       return;
     }
-    if (pageMode === "detail" || pageMode === "rankings") {
+    if (pageMode === "detail" || pageMode === "rankings" || pageMode === "bracket") {
       await initDetailPage();
       return;
     }
