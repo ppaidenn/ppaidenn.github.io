@@ -87,6 +87,7 @@
   const participantSummaryText = document.getElementById("participantSummaryText");
   const rankingSummaryText = document.getElementById("rankingSummaryText");
   const rankingList = document.getElementById("rankingList");
+  const resultsShell = document.getElementById("resultsShell");
   const rankingBackLink = document.getElementById("rankingBackLink");
   const friendInviteInput = document.getElementById("friendInviteInput");
   const friendInviteSuggestions = document.getElementById("friendInviteSuggestions");
@@ -104,6 +105,7 @@
   const voteMatchup = document.getElementById("voteMatchup");
   const votePrevBtn = document.getElementById("votePrevBtn");
   const voteNextBtn = document.getElementById("voteNextBtn");
+  const voteNextRoundBtn = document.getElementById("voteNextRoundBtn");
   const voteModalCloseBtn = document.getElementById("voteModalCloseBtn");
 
   function escapeHtml(value) {
@@ -1039,11 +1041,43 @@
     return { info, selectionTotal, matchIndex, match };
   }
 
+  function getNextReadyRoundIndex(roundIndex) {
+    for (let nextIndex = roundIndex + 1; nextIndex < state.rounds.length; nextIndex += 1) {
+      const nextInfo = getRoundInfo(nextIndex);
+      if (nextInfo?.ready) return nextIndex;
+    }
+    return null;
+  }
+
+  function moveToNextRoundFromModal() {
+    const context = getCurrentModalContext();
+    if (!context?.info?.completed) return;
+    const nextRoundIndex = getNextReadyRoundIndex(context.info.roundIndex);
+    if (nextRoundIndex === null) {
+      closeVoteModal();
+      return;
+    }
+    openRoundModal(nextRoundIndex);
+  }
+
   function renderChampion() {
     if (!championChip) return;
     const champion = getFinalWinner();
-    const label = champion ? `${champion.name} - ${champion.artists.join(", ")}` : "No winner selected yet";
-    championChip.innerHTML = `<span>Champion</span><strong>${escapeHtml(label)}</strong>`;
+    if (resultsShell) resultsShell.hidden = !champion;
+    championChip.hidden = !champion;
+    if (!champion) {
+      championChip.innerHTML = "";
+      return;
+    }
+    const artists = Array.isArray(champion.artists) ? champion.artists.join(", ") : "";
+    championChip.innerHTML = `
+      ${champion.image ? `<img class="champion-cover" src="${escapeHtml(champion.image)}" alt="">` : `<div class="champion-cover" aria-hidden="true"></div>`}
+      <div class="champion-copy">
+        <span>Champion</span>
+        <strong>${escapeHtml(champion.name || "Winning song")}</strong>
+        <p>${escapeHtml(artists)}</p>
+      </div>
+    `;
   }
 
   function renderRoundStage() {
@@ -1081,41 +1115,24 @@
   function renderVoteChoice(entry, selected, side) {
     if (!entry) return `<div class="empty-state">No competitor is available in this slot.</div>`;
     const hotkey = side === "left" ? "1 / A / Left" : "2 / D / Right";
+    const sideLabel = side === "left" ? "Left song" : "Right song";
     const canVote = !!state.activeTournament?.canVote;
-    const previewMarkup = entry.spotifyUrl
-      ? `
-        <div class="vote-preview">
-          <div class="vote-preview-label">Full Song</div>
-          <a class="vote-preview-link" href="${entry.spotifyUrl}" target="_blank" rel="noopener">
-            <i class="fab fa-spotify" aria-hidden="true"></i>
-            <span>Listen on Spotify</span>
-          </a>
-        </div>
-      `
-      : `
-        <div class="vote-preview">
-          <div class="vote-preview-label">Full Song</div>
-          <div class="vote-preview-note">Spotify did not provide a direct track link for this song.</div>
-        </div>
-      `;
     return `
-      <article class="vote-choice${selected ? " selected" : ""}${canVote ? "" : " disabled"}">
-        <button class="vote-choice-select" type="button" data-vote-side="${side}" ${canVote ? "" : "disabled"}>
-          <span class="vote-hotkey">${hotkey}</span>
-          <div class="vote-choice-body">
-            ${entry.image ? `<img class="vote-cover" src="${entry.image}" alt="">` : `<div class="vote-cover" aria-hidden="true"></div>`}
-            <div class="vote-copy">
-              <h4 class="vote-title">${escapeHtml(entry.name)}</h4>
-              <p class="vote-artist">${escapeHtml(entry.artists.join(", "))}</p>
-              <div class="vote-meta">
-                <span>${escapeHtml(entry.year)}</span>
-                <span>Seed ${entry.seed}</span>
-              </div>
-            </div>
-          </div>
-        </button>
-        ${previewMarkup}
-      </article>
+      <button class="vote-choice${selected ? " selected" : ""}${canVote ? "" : " disabled"}" type="button" data-vote-side="${side}" ${canVote ? "" : "disabled"} aria-label="Pick ${escapeHtml(entry.name)}">
+        <span class="vote-hotkey">${hotkey}</span>
+        <span class="vote-choice-body">
+          ${entry.image ? `<img class="vote-cover" src="${escapeHtml(entry.image)}" alt="">` : `<span class="vote-cover" aria-hidden="true"></span>`}
+          <span class="vote-copy">
+            <span class="vote-side-label">${sideLabel}</span>
+            <span class="vote-title">${escapeHtml(entry.name)}</span>
+            <span class="vote-artist">${escapeHtml(Array.isArray(entry.artists) ? entry.artists.join(", ") : "")}</span>
+            <span class="vote-meta">
+              <span>${escapeHtml(entry.year)}</span>
+              <span>Seed ${escapeHtml(entry.seed)}</span>
+            </span>
+          </span>
+        </span>
+      </button>
     `;
   }
 
@@ -1128,25 +1145,54 @@
     if (!context) return;
 
     const { info, selectionTotal, match } = context;
+    const pickNumber = Math.min(state.activeSelectionCursor + 1, Math.max(selectionTotal, 1));
+    const nextRoundIndex = info.completed ? getNextReadyRoundIndex(info.roundIndex) : null;
+    const nextRound = nextRoundIndex === null ? null : state.rounds[nextRoundIndex];
     voteModalKicker.textContent = info.round.label.toUpperCase();
-    voteModalTitle.textContent = info.round.label.startsWith("Round") ? `The ${info.round.label}` : info.round.label;
+    voteModalTitle.textContent = info.completed ? `${info.round.label} Complete` : `Pick ${pickNumber} of ${Math.max(selectionTotal, 1)}`;
     const accessSentence = state.activeTournament?.canVote
-      ? (info.selectionTotal ? `${info.selectionTotal} selections need to be made in this round.` : "No manual selections remain in this round.")
+      ? (info.selectionTotal ? `${info.completedSelections}/${info.selectionTotal} selections are locked in for this round.` : "No manual selections remain in this round.")
       : "You can view this round, but only eligible paiden.com accounts can submit picks here.";
     voteModalSubtitle.textContent = `${info.round.description} ${accessSentence}`;
-    voteProgressText.textContent = `Selection ${Math.min(state.activeSelectionCursor + 1, Math.max(selectionTotal, 1))} / ${Math.max(selectionTotal, 1)}`;
+    voteProgressText.textContent = `${info.round.label} - Pick ${pickNumber} / ${Math.max(selectionTotal, 1)}`;
     voteCompleteNote.hidden = !info.completed;
+    if (voteNextRoundBtn) {
+      voteNextRoundBtn.hidden = !info.completed;
+      voteNextRoundBtn.textContent = nextRound ? `Open ${nextRound.label}` : "Close Voting";
+      voteNextRoundBtn.disabled = false;
+    }
 
     if (!match) {
-      voteMatchup.innerHTML = `<div class="empty-state">No manual matchups are left in this round.</div>`;
+      voteMatchup.innerHTML = `
+        <div class="vote-matchup-frame">
+          <div class="vote-matchup-label">
+            <span>${escapeHtml(info.round.label)}</span>
+            <strong>No manual picks left</strong>
+          </div>
+          <div class="empty-state">No manual matchups are left in this round.</div>
+        </div>
+      `;
       votePrevBtn.disabled = true;
       voteNextBtn.disabled = true;
+      voteNextBtn.textContent = "Next Pick";
       return;
     }
 
-    voteMatchup.innerHTML = `${renderVoteChoice(match.left, match.pick === "left", "left")}${renderVoteChoice(match.right, match.pick === "right", "right")}`;
+    voteMatchup.innerHTML = `
+      <div class="vote-matchup-frame">
+        <div class="vote-matchup-label">
+          <span>${escapeHtml(info.round.label)}</span>
+          <strong>Pick ${pickNumber} of ${selectionTotal}</strong>
+        </div>
+        <div class="vote-choice-grid">
+          ${renderVoteChoice(match.left, match.pick === "left", "left")}
+          ${renderVoteChoice(match.right, match.pick === "right", "right")}
+        </div>
+      </div>
+    `;
     votePrevBtn.disabled = state.activeSelectionCursor <= 0;
     voteNextBtn.disabled = state.activeSelectionCursor >= selectionTotal - 1;
+    voteNextBtn.textContent = "Next Pick";
   }
 
   async function loadAccessibleTournaments() {
@@ -1300,6 +1346,12 @@
       rankingList.innerHTML = "";
       return;
     }
+    if (pageMode === "detail" && !getFinalWinner()) {
+      if (shell) shell.hidden = true;
+      rankingSummaryText.textContent = "";
+      rankingList.innerHTML = "";
+      return;
+    }
     if (shell) shell.hidden = false;
     const { rankings, ballotCount, rounds } = getRankingBreakdown(record);
     if (!ballotCount) {
@@ -1347,6 +1399,7 @@
       detailEmptyState.hidden = false;
       roundStage?.setAttribute("hidden", "hidden");
       championChip?.setAttribute("hidden", "hidden");
+      resultsShell?.setAttribute("hidden", "hidden");
       return;
     }
     detailHeroTitle.textContent = record.name || "Saved Tournament";
@@ -1848,6 +1901,7 @@
 
   if (votePrevBtn) votePrevBtn.addEventListener("click", () => advanceActiveSelection(-1));
   if (voteNextBtn) voteNextBtn.addEventListener("click", () => advanceActiveSelection(1));
+  if (voteNextRoundBtn) voteNextRoundBtn.addEventListener("click", () => moveToNextRoundFromModal());
   if (voteModalCloseBtn) voteModalCloseBtn.addEventListener("click", () => closeVoteModal());
   if (voteModal) {
     voteModal.addEventListener("click", (event) => {
@@ -1890,6 +1944,10 @@
     }
     if (event.key === "Enter") {
       event.preventDefault();
+      if (context.info.completed) {
+        moveToNextRoundFromModal();
+        return;
+      }
       advanceActiveSelection(1);
     }
   });
