@@ -165,7 +165,6 @@ export default {
     if (allTournamentMatch && allTournamentMatch[1].toLowerCase() !== "view") {
       const rewritten = new URL(url.toString());
       rewritten.pathname = "/all-tournaments/view/index.html";
-      rewritten.search = "";
       rewritten.searchParams.set("slug", decodeURIComponent(allTournamentMatch[1]));
       return fetch(new Request(rewritten.toString(), request));
     }

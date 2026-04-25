@@ -87,6 +87,7 @@
   const participantSummaryText = document.getElementById("participantSummaryText");
   const rankingSummaryText = document.getElementById("rankingSummaryText");
   const rankingList = document.getElementById("rankingList");
+  const rankingBackLink = document.getElementById("rankingBackLink");
   const friendInviteInput = document.getElementById("friendInviteInput");
   const friendInviteSuggestions = document.getElementById("friendInviteSuggestions");
   const inviteFriendBtn = document.getElementById("inviteFriendBtn");
@@ -884,11 +885,11 @@
       if (!entry?.id) return;
       let points = 0;
       if (champion?.id === entry.id) {
-        points = 2 ** safeRounds.length;
+        points = safeRounds.length + 1;
       } else if (eliminationRoundById[entry.id] !== undefined) {
-        points = 2 ** eliminationRoundById[entry.id];
+        points = eliminationRoundById[entry.id] + 1;
       } else if ((bestRoundReachedById[entry.id] ?? -1) >= 0) {
-        points = 2 ** bestRoundReachedById[entry.id];
+        points = bestRoundReachedById[entry.id] + 1;
       }
       pointsByEntrantId[entry.id] = points;
     });
@@ -953,8 +954,8 @@
 
   function describePointWeights(rounds) {
     const safeRounds = Array.isArray(rounds) ? rounds : [];
-    const roundWeights = safeRounds.map((round, roundIndex) => `${round.label} ${2 ** roundIndex}`);
-    roundWeights.push(`Champion ${2 ** safeRounds.length}`);
+    const roundWeights = safeRounds.map((round, roundIndex) => `${round.label} ${roundIndex + 1}`);
+    roundWeights.push(`Champion ${safeRounds.length + 1}`);
     return roundWeights.join(" • ");
   }
 
@@ -1236,6 +1237,60 @@
       : "Only the bracket owner can generate invite links.";
   }
 
+  function getFullRankingsUrl(record) {
+    return record?.slug ? `/all-tournaments/rankings/list/?slug=${encodeURIComponent(record.slug)}` : "/all-tournaments/rankings/list/";
+  }
+
+  function renderFullRankingCard(item, index) {
+    const entry = item.entry || {};
+    const userPoints = [...item.userPoints].sort((left, right) => {
+      if (right.points !== left.points) return right.points - left.points;
+      return String(left.username || "").localeCompare(String(right.username || ""));
+    });
+    return `
+      <article class="ranking-card">
+        <div class="ranking-card-head">
+          <div class="ranking-order">#${index + 1}</div>
+          <div class="ranking-entry">
+            ${entry.image ? `<img class="ranking-cover" src="${escapeHtml(entry.image)}" alt="">` : `<div class="ranking-cover" aria-hidden="true"></div>`}
+            <div class="ranking-copy">
+              <h3>${escapeHtml(entry.name || "Song")}</h3>
+              <p>${escapeHtml(Array.isArray(entry.artists) ? entry.artists.join(", ") : "")}</p>
+              <div class="ranking-meta">
+                <span class="meta-chip">${escapeHtml(String(entry.year || "Unknown year"))}</span>
+                <span class="meta-chip">Seed ${escapeHtml(String(entry.seed || "?"))}</span>
+                <span class="meta-chip">${item.totalPoints} pts</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ranking-user-points">
+          ${userPoints.map((vote) => `
+            <span class="ranking-voter-pill${vote.champion ? " champion" : ""}">
+              ${vote.avatarUrl ? `<img src="${escapeHtml(vote.avatarUrl)}" alt="">` : ""}
+              <span>${escapeHtml(vote.username)}: ${vote.points} pt${vote.points === 1 ? "" : "s"}</span>
+            </span>
+          `).join("")}
+        </div>
+      </article>
+    `;
+  }
+
+  function renderRankingPreviewRow(item, index) {
+    const entry = item.entry || {};
+    return `
+      <div class="ranking-preview-row">
+        <span class="ranking-preview-position">#${index + 1}</span>
+        ${entry.image ? `<img class="ranking-preview-cover" src="${escapeHtml(entry.image)}" alt="">` : `<span class="ranking-preview-cover" aria-hidden="true"></span>`}
+        <span class="ranking-preview-copy">
+          <strong>${escapeHtml(entry.name || "Song")}</strong>
+          <span>${escapeHtml(Array.isArray(entry.artists) ? entry.artists.join(", ") : "")}</span>
+        </span>
+        <span class="ranking-preview-points">${item.totalPoints} pts</span>
+      </div>
+    `;
+  }
+
   function renderRankings(record) {
     if (!rankingList || !rankingSummaryText) return;
     const shell = rankingList.closest(".ranking-shell");
@@ -1249,45 +1304,30 @@
     const { rankings, ballotCount, rounds } = getRankingBreakdown(record);
     if (!ballotCount) {
       rankingSummaryText.textContent = "No one has saved a ballot for this bracket yet.";
-      rankingList.innerHTML = `<div class="empty-state">Once voters save picks, this page will rank every song by weighted points for this bracket.</div>`;
+      rankingList.innerHTML = `<div class="empty-state">Once voters save picks, this page will rank songs by weighted finish points for this bracket.</div>`;
       return;
     }
 
-    rankingSummaryText.textContent = `${ballotCount} ballot${ballotCount === 1 ? "" : "s"} saved. Points increase by round: ${describePointWeights(rounds)}.`;
-    rankingList.innerHTML = rankings.map((item, index) => {
-      const entry = item.entry || {};
-      const userPoints = [...item.userPoints].sort((left, right) => {
-        if (right.points !== left.points) return right.points - left.points;
-        return String(left.username || "").localeCompare(String(right.username || ""));
-      });
-      return `
-        <article class="ranking-card">
-          <div class="ranking-card-head">
-            <div class="ranking-order">#${index + 1}</div>
-            <div class="ranking-entry">
-              ${entry.image ? `<img class="ranking-cover" src="${entry.image}" alt="">` : `<div class="ranking-cover" aria-hidden="true"></div>`}
-              <div class="ranking-copy">
-                <h3>${escapeHtml(entry.name || "Song")}</h3>
-                <p>${escapeHtml(Array.isArray(entry.artists) ? entry.artists.join(", ") : "")}</p>
-                <div class="ranking-meta">
-                  <span class="meta-chip">${escapeHtml(String(entry.year || "Unknown year"))}</span>
-                  <span class="meta-chip">Seed ${escapeHtml(String(entry.seed || "?"))}</span>
-                  <span class="meta-chip">${item.totalPoints} pts</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="ranking-user-points">
-            ${userPoints.map((vote) => `
-              <span class="ranking-voter-pill${vote.champion ? " champion" : ""}">
-                ${vote.avatarUrl ? `<img src="${vote.avatarUrl}" alt="">` : ""}
-                <span>${escapeHtml(vote.username)}: ${vote.points} pt${vote.points === 1 ? "" : "s"}</span>
-              </span>
-            `).join("")}
-          </div>
-        </article>
-      `;
-    }).join("");
+    if (pageMode === "rankings") {
+      rankingSummaryText.textContent = `${ballotCount} ballot${ballotCount === 1 ? "" : "s"} saved. Points by finish: ${describePointWeights(rounds)}.`;
+      rankingList.innerHTML = rankings.map(renderFullRankingCard).join("");
+      return;
+    }
+
+    const fullUrl = getFullRankingsUrl(record);
+    const previewRankings = rankings.slice(0, 5);
+    rankingSummaryText.textContent = `${ballotCount} ballot${ballotCount === 1 ? "" : "s"} saved. Showing the top 5 here. Points by finish: ${describePointWeights(rounds)}.`;
+    rankingList.innerHTML = `
+      <a class="ranking-preview-link" href="${escapeHtml(fullUrl)}" target="_blank" rel="noopener" aria-label="Open the full ranked list for ${escapeHtml(record.name || "this tournament")}">
+        <div class="ranking-preview-grid">
+          ${previewRankings.map(renderRankingPreviewRow).join("")}
+        </div>
+        <span class="ranking-full-link">
+          <span>Open full ranked list</span>
+          <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+        </span>
+      </a>
+    `;
   }
 
   function renderFriendSuggestions() {
@@ -1311,11 +1351,18 @@
     }
     detailHeroTitle.textContent = record.name || "Saved Tournament";
     detailHeroMeta.textContent = `${record.ownerUsername ? `Hosted by @${record.ownerUsername}` : "Hosted on paiden.com"}${record.entrants?.length ? ` - ${record.entrants.length} songs` : ""}`;
-    detailHeroSubnote.textContent = record.canVote
-      ? "Open a round to vote matchup by matchup. Your ballot is saved to this bracket and folded into the weighted ranking list below."
-      : record.visibility === "public"
-        ? "You can view this public bracket here. Sign in to paiden.com if you want to vote on it."
-        : "This private bracket is only voteable by the owner and invited participants.";
+    if (pageMode === "rankings") {
+      detailHeroSubnote.textContent = "This page shows the full weighted list for the bracket. Open the tournament page to vote or manage access.";
+    } else {
+      detailHeroSubnote.textContent = record.canVote
+        ? "Open a round to vote matchup by matchup. Your ballot is saved to this bracket and folded into the top-five standings below."
+        : record.visibility === "public"
+          ? "You can view this public bracket here. Sign in to paiden.com if you want to vote on it."
+          : "This private bracket is only voteable by the owner and invited participants.";
+    }
+    if (rankingBackLink) {
+      rankingBackLink.href = record.slug ? `/all-tournaments/${encodeURIComponent(record.slug)}` : "/all-tournaments/";
+    }
     detailVisibilityChip.textContent = record.visibility;
     detailVisibilityChip.className = `meta-chip ${record.visibility}`;
     detailPlaylistChip.textContent = record.playlist?.name || "Playlist";
@@ -1350,6 +1397,11 @@
       renderChampion();
       renderRoundStage();
       renderVoteModal();
+      return;
+    }
+    if (pageMode === "rankings") {
+      renderDetailHeader(state.activeTournament);
+      renderRankings(state.activeTournament);
       return;
     }
     renderChampion();
@@ -1847,7 +1899,7 @@
       await initLibraryPage();
       return;
     }
-    if (pageMode === "detail") {
+    if (pageMode === "detail" || pageMode === "rankings") {
       await initDetailPage();
       return;
     }
