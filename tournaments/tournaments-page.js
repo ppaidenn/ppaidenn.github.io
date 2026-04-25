@@ -1245,11 +1245,10 @@
     return info.completed ? "Complete" : "Ready";
   }
 
-  function renderBracketRoundWindowHeader(info, eyebrow) {
+  function renderBracketRoundWindowHeader(info) {
     return `
       <header class="bracket-round-header">
         <div>
-          <span class="kicker">${escapeHtml(eyebrow)}</span>
           <h3>${escapeHtml(info.round.label || `Round ${info.roundIndex + 1}`)}</h3>
         </div>
         <span class="round-card-status${!info.ready ? "" : info.completed ? " complete" : " ready"}">${escapeHtml(getRoundStatusLabel(info))}</span>
@@ -1337,8 +1336,8 @@
       </div>
       <section class="bracket-window" aria-label="Two-round bracket window">
         <div class="bracket-window-grid${rightInfo ? "" : " single"}">
-          <div class="bracket-window-round-head left">${renderBracketRoundWindowHeader(leftInfo, "LEFT SIDE")}</div>
-          ${rightInfo ? `<div class="bracket-window-round-head right">${renderBracketRoundWindowHeader(rightInfo, "RIGHT SIDE")}</div>` : ""}
+          <div class="bracket-window-round-head left">${renderBracketRoundWindowHeader(leftInfo)}</div>
+          ${rightInfo ? `<div class="bracket-window-round-head right">${renderBracketRoundWindowHeader(rightInfo)}</div>` : ""}
           <div class="bracket-pair-rows">
             ${pairRows}
           </div>
