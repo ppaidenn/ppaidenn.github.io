@@ -1231,12 +1231,21 @@
   }
 
   function renderTraditionalBracketStage() {
-    const columns = state.rounds.map((round, roundIndex) => {
+    const roundPills = state.rounds.map((round, roundIndex) => {
       const info = getRoundInfo(roundIndex);
-      const roundGap = Math.min(14 * Math.pow(1.75, roundIndex), 140);
+      const statusLabel = !info.ready ? "Locked" : info.completed ? "Complete" : "Ready";
+      return `
+        <button class="bracket-round-pill${roundIndex === 0 ? " active" : ""}" type="button" data-bracket-round-target="${roundIndex}">
+          <span>${escapeHtml(round.label || `Round ${roundIndex + 1}`)}</span>
+          <strong>${escapeHtml(statusLabel)}</strong>
+        </button>
+      `;
+    }).join("");
+    const slides = state.rounds.map((round, roundIndex) => {
+      const info = getRoundInfo(roundIndex);
       const isFinalRound = roundIndex === state.rounds.length - 1;
       return `
-        <section class="bracket-round-column" style="--round-gap: ${roundGap}px;">
+        <section class="bracket-round-column" data-bracket-round-slide="${roundIndex}">
           <header class="bracket-round-header">
             <div>
               <span class="kicker">ROUND ${roundIndex + 1}</span>
@@ -1252,13 +1261,79 @@
     }).join("");
 
     roundStage.innerHTML = `
-      <div class="bracket-map-wrap">
-        <div class="bracket-map" aria-label="Traditional tournament bracket">
-          ${columns}
+      <div class="bracket-carousel-head">
+        <div class="bracket-round-pills" aria-label="Bracket rounds">
+          ${roundPills}
+        </div>
+        <div class="bracket-carousel-actions">
+          <button class="bracket-carousel-btn" type="button" data-bracket-round-shift="-1" aria-label="Previous round">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+            <span>Previous</span>
+          </button>
+          <button class="bracket-carousel-btn" type="button" data-bracket-round-shift="1" aria-label="Next round">
+            <span>Next</span>
+            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+          </button>
         </div>
       </div>
-      <p class="bracket-map-note">Click an unlocked matchup to open the voting popup. Completed cards can be reopened to review or change picks.</p>
+      <div class="bracket-map-wrap">
+        <div class="bracket-map" aria-label="Swipe through bracket rounds">
+          ${slides}
+        </div>
+      </div>
+      <p class="bracket-map-note">Swipe horizontally or use the controls to move round by round. Click an unlocked matchup to open the voting popup.</p>
     `;
+    updateBracketCarouselControls(0);
+    const wrap = roundStage.querySelector(".bracket-map-wrap");
+    if (wrap) {
+      let queued = false;
+      wrap.addEventListener("scroll", () => {
+        if (queued) return;
+        queued = true;
+        window.requestAnimationFrame(() => {
+          queued = false;
+          updateBracketCarouselControls(getCurrentBracketRoundIndex());
+        });
+      });
+    }
+  }
+
+  function getCurrentBracketRoundIndex() {
+    const wrap = roundStage?.querySelector(".bracket-map-wrap");
+    const slides = Array.from(roundStage?.querySelectorAll("[data-bracket-round-slide]") || []);
+    if (!wrap || !slides.length) return 0;
+    let nearestIndex = 0;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+    slides.forEach((slide, index) => {
+      const distance = Math.abs(slide.offsetLeft - wrap.scrollLeft);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
+    });
+    return nearestIndex;
+  }
+
+  function updateBracketCarouselControls(activeIndex) {
+    const pills = Array.from(roundStage?.querySelectorAll("[data-bracket-round-target]") || []);
+    const previous = roundStage?.querySelector('[data-bracket-round-shift="-1"]');
+    const next = roundStage?.querySelector('[data-bracket-round-shift="1"]');
+    pills.forEach((pill, index) => pill.classList.toggle("active", index === activeIndex));
+    if (previous) previous.disabled = activeIndex <= 0;
+    if (next) next.disabled = activeIndex >= pills.length - 1;
+  }
+
+  function scrollToBracketRound(roundIndex) {
+    const slides = Array.from(roundStage?.querySelectorAll("[data-bracket-round-slide]") || []);
+    const safeIndex = Math.min(Math.max(Number(roundIndex) || 0, 0), Math.max(slides.length - 1, 0));
+    const slide = slides[safeIndex];
+    if (!slide) return;
+    slide.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
+    updateBracketCarouselControls(safeIndex);
+  }
+
+  function shiftBracketRound(step) {
+    scrollToBracketRound(getCurrentBracketRoundIndex() + step);
   }
 
   function renderRoundStage() {
@@ -1634,7 +1709,7 @@
     if (pageMode === "rankings") {
       detailHeroSubnote.textContent = "This page shows the full weighted list for the bracket. Open the tournament page to vote or manage access.";
     } else if (pageMode === "bracket") {
-      detailHeroSubnote.textContent = "This page shows every round in the bracket. Open any available round to review or change picks.";
+      detailHeroSubnote.textContent = "Swipe round by round through the bracket. Open any available matchup to review or change picks.";
     } else {
       detailHeroSubnote.textContent = record.canVote
         ? "Use the Vote Now card to continue the next pick. Your ballot is saved to this bracket and folded into the top-five standings after completion."
@@ -2117,6 +2192,18 @@
 
   if (roundStage) {
     roundStage.addEventListener("click", (event) => {
+      const roundTarget = event.target.closest("[data-bracket-round-target]");
+      if (roundTarget) {
+        const targetIndex = Number(roundTarget.getAttribute("data-bracket-round-target"));
+        if (Number.isFinite(targetIndex)) scrollToBracketRound(targetIndex);
+        return;
+      }
+      const roundShift = event.target.closest("[data-bracket-round-shift]");
+      if (roundShift) {
+        const shift = Number(roundShift.getAttribute("data-bracket-round-shift"));
+        if (Number.isFinite(shift)) shiftBracketRound(shift);
+        return;
+      }
       const button = event.target.closest("[data-open-round]");
       if (!button) return;
       const roundIndex = Number(button.getAttribute("data-open-round"));
