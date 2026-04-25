@@ -46,26 +46,37 @@
     .round-card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
     .round-card-title { margin: 0; font-size: 18px; }
     .round-card-copy { margin: 0; font-size: 14px; color: rgba(16,21,28,.72); }
-    .bracket-carousel-head { display: flex; justify-content: space-between; gap: 14px; align-items: center; flex-wrap: wrap; }
+    .bracket-window-head { display: flex; justify-content: space-between; gap: 14px; align-items: center; flex-wrap: wrap; }
     .bracket-round-pills { min-width: 0; display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-color: rgba(15,21,27,.22) transparent; }
-    .bracket-round-pill, .bracket-carousel-btn { border-radius: 999px; border: 1px solid rgba(12,18,24,.12); background: rgba(255,255,255,.9); color: #0b1116; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font: inherit; font-weight: 800; white-space: nowrap; }
+    .bracket-round-pill, .bracket-window-btn { border-radius: 999px; border: 1px solid rgba(12,18,24,.12); background: rgba(255,255,255,.9); color: #0b1116; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font: inherit; font-weight: 800; white-space: nowrap; }
     .bracket-round-pill { padding: 10px 13px; }
     .bracket-round-pill strong { border-radius: 999px; padding: 5px 7px; background: rgba(15,21,27,.07); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: rgba(16,21,28,.62); }
     .bracket-round-pill.active { background: #0f151b; color: #fff; border-color: #0f151b; }
+    .bracket-round-pill.paired { background: rgba(29,185,84,.12); border-color: rgba(29,185,84,.24); color: #11422b; }
     .bracket-round-pill.active strong { background: rgba(255,255,255,.16); color: rgba(255,255,255,.82); }
-    .bracket-carousel-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .bracket-carousel-btn { padding: 10px 14px; }
-    .bracket-carousel-btn:disabled { opacity: .42; cursor: default; }
-    .bracket-map-wrap { overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; padding: 4px 2px 14px; scrollbar-color: rgba(15,21,27,.28) transparent; }
-    .bracket-map { min-width: 0; width: 100%; display: grid; grid-auto-flow: column; grid-auto-columns: 100%; gap: 16px; align-items: start; }
-    .bracket-round-column { min-width: 0; width: 100%; scroll-snap-align: start; scroll-snap-stop: always; display: grid; grid-template-rows: auto 1fr; gap: 14px; align-self: start; padding: 4px; }
+    .bracket-window-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .bracket-window-btn { padding: 10px 14px; }
+    .bracket-window-btn:disabled { opacity: .42; cursor: default; }
+    .bracket-window-summary { width: fit-content; border-radius: 999px; padding: 8px 12px; background: rgba(15,21,27,.06); border: 1px solid rgba(15,21,27,.08); color: rgba(16,21,28,.72); font-size: 13px; font-weight: 800; }
+    .bracket-window { overflow-x: auto; padding: 4px 2px 14px; scrollbar-color: rgba(15,21,27,.28) transparent; }
+    .bracket-window-grid { min-width: 720px; display: grid; grid-template-columns: minmax(290px,1fr) 72px minmax(290px,1fr); gap: 0; align-items: start; }
+    .bracket-window-grid.single { grid-template-columns: minmax(290px,1fr); min-width: 0; }
+    .bracket-window-round-head.left { grid-column: 1; }
+    .bracket-window-round-head.right { grid-column: 3; }
     .bracket-round-header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; min-height: 64px; padding: 0 4px; }
     .bracket-round-header .kicker { margin-bottom: 6px; }
     .bracket-round-header h3 { font-size: 20px; line-height: 1.05; }
-    .bracket-round-matches { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; align-content: start; min-height: 0; }
+    .bracket-pair-rows { grid-column: 1 / -1; display: grid; gap: 16px; }
+    .bracket-pair-row { display: grid; grid-template-columns: minmax(290px,1fr) 72px minmax(290px,1fr); align-items: stretch; }
+    .bracket-window-grid.single .bracket-pair-row { grid-template-columns: minmax(290px,1fr); }
+    .bracket-left-pair { display: grid; gap: 12px; }
+    .bracket-right-pair { display: grid; align-items: center; position: relative; }
+    .bracket-connector { min-height: 100%; background: linear-gradient(rgba(29,185,84,.38), rgba(29,185,84,.38)) left 25% / 50% 2px no-repeat, linear-gradient(rgba(29,185,84,.38), rgba(29,185,84,.38)) left 75% / 50% 2px no-repeat, linear-gradient(rgba(29,185,84,.38), rgba(29,185,84,.38)) center 50% / 100% 2px no-repeat, linear-gradient(rgba(29,185,84,.38), rgba(29,185,84,.38)) center 50% / 2px 50% no-repeat; }
     .bracket-match-card { position: relative; width: 100%; border: 1px solid rgba(12,18,24,.1); border-radius: 18px; background: rgba(255,255,255,.92); box-shadow: 0 8px 22px rgba(0,0,0,.06); padding: 12px; display: grid; gap: 10px; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+    .bracket-right-pair .bracket-match-card:not(.final):not(.empty)::after { content: ""; position: absolute; top: 50%; right: -38px; width: 38px; height: 2px; transform: translateY(-50%); background: linear-gradient(90deg, rgba(29,185,84,.38), rgba(15,21,27,.16)); }
     .bracket-match-card:hover:not(:disabled) { transform: translateY(-2px); border-color: rgba(29,185,84,.34); box-shadow: 0 16px 28px rgba(0,0,0,.1); }
     .bracket-match-card:disabled { cursor: default; }
+    .bracket-match-card.empty { opacity: .42; pointer-events: none; box-shadow: none; }
     .bracket-match-card.locked { opacity: .62; background: rgba(255,255,255,.62); }
     .bracket-match-card.ready { border-color: rgba(29,185,84,.24); }
     .bracket-match-card.complete { background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(235,246,235,.92)); border-color: rgba(29,185,84,.26); }
@@ -114,14 +125,14 @@
     .vote-meta span { border-radius: 999px; padding: 7px 10px; background: rgba(15,21,27,.06); border: 1px solid rgba(15,21,27,.08); font-size: 12px; font-weight: 800; color: rgba(16,21,28,.72); letter-spacing: .05em; text-transform: uppercase; }
     .footer { width: 100%; background: #000; padding: 56px 0 calc(56px + env(safe-area-inset-bottom,0px)); margin-top: auto; flex-shrink: 0; }
     @media (max-width: 1080px) { .hero { grid-template-columns: 1fr; } .hero-actions { justify-content: flex-start; } .vote-choice-grid { grid-template-columns: 1fr; } }
-    @media (max-width: 768px) { body { padding-top: calc(env(safe-area-inset-top,0px) + 58px); } .top-nav { display: none; } .mobile-fixed-header { display: flex; } .content-wrap { padding-top: 18px; } .content-inner { margin: 0 5vw; padding: 16px; } .detail-cover { width: 92px; height: 92px; } .bracket-carousel-head { align-items: stretch; } .bracket-round-pills { width: 100%; } .bracket-carousel-actions { width: 100%; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); } .bracket-carousel-btn { justify-content: center; } .bracket-round-matches { grid-template-columns: 1fr; } .vote-choice-body { grid-template-columns: 88px minmax(0,1fr); } .vote-cover { width: 88px; height: 88px; } .vote-title { font-size: 18px; } .footer { display: none !important; } }
+    @media (max-width: 768px) { body { padding-top: calc(env(safe-area-inset-top,0px) + 58px); } .top-nav { display: none; } .mobile-fixed-header { display: flex; } .content-wrap { padding-top: 18px; } .content-inner { margin: 0 5vw; padding: 16px; } .detail-cover { width: 92px; height: 92px; } .bracket-window-head { align-items: stretch; } .bracket-round-pills { width: 100%; } .bracket-window-actions { width: 100%; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); } .bracket-window-btn { justify-content: center; } .bracket-window-grid { min-width: 680px; grid-template-columns: minmax(270px,1fr) 56px minmax(270px,1fr); } .bracket-pair-row { grid-template-columns: minmax(270px,1fr) 56px minmax(270px,1fr); } .vote-choice-body { grid-template-columns: 88px minmax(0,1fr); } .vote-cover { width: 88px; height: 88px; } .vote-title { font-size: 18px; } .footer { display: none !important; } }
   </style>
 </head>
 <body data-tournament-view="bracket">
   <header class="top-nav" role="navigation" aria-label="Primary site navigation"><div class="top-nav-inner"><a class="brand" href="/">paiden.com</a><nav class="nav-links"><a href="/resume">Resume</a><a href="/photos">Photos</a><a href="/blog">Blog</a><a href="/contactme">Contact Me</a></nav></div></header>
   <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation"><a class="mobile-fixed-brand" href="/">paiden.com</a><div class="mobile-fixed-nav"><a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a><a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a><a href="/contactme" aria-label="Contact"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a></div></div>
 
-  <main class="content-wrap"><section class="content-inner"><section class="hero" id="tournamentDetailRoot"><img class="detail-cover" id="detailHeroCover" alt="" hidden><div><div class="kicker">BRACKET VIEW</div><h1 id="detailHeroTitle">Loading bracket...</h1><div class="chip-row"><span class="meta-chip" id="detailVisibilityChip">Loading</span><span class="meta-chip" id="detailPlaylistChip">Playlist</span></div><p id="detailHeroMeta">Pulling the saved bracket details for this tournament.</p><p id="detailHeroSubnote">Swipe round by round through the bracket.</p></div><div class="hero-actions"><a class="hero-link" href="/all-tournaments/"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>All Tournaments</span></a></div></section><section class="notice-card" id="detailNoticeCard" hidden><div class="kicker">NOTICE</div><p id="detailNoticeText">Loading tournament...</p></section><section class="empty-shell" id="detailEmptyState" hidden><div class="empty-state" id="detailEmptyStateText">This tournament could not be found.</div></section><section class="bracket-shell"><div><div class="kicker">FULL BRACKET</div><h2>Round Map</h2><p>Swipe or use the controls to move one round at a time. Each round starts at the top, and unlocked matchups still open the voting popup.</p></div><div class="round-stage" id="roundStage"><div class="empty-state">Loading saved bracket...</div></div></section></section></main>
+  <main class="content-wrap"><section class="content-inner"><section class="hero" id="tournamentDetailRoot"><img class="detail-cover" id="detailHeroCover" alt="" hidden><div><div class="kicker">BRACKET VIEW</div><h1 id="detailHeroTitle">Loading bracket...</h1><div class="chip-row"><span class="meta-chip" id="detailVisibilityChip">Loading</span><span class="meta-chip" id="detailPlaylistChip">Playlist</span></div><p id="detailHeroMeta">Pulling the saved bracket details for this tournament.</p><p id="detailHeroSubnote">Move through the bracket two rounds at a time.</p></div><div class="hero-actions"><a class="hero-link" href="/all-tournaments/"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>All Tournaments</span></a></div></section><section class="notice-card" id="detailNoticeCard" hidden><div class="kicker">NOTICE</div><p id="detailNoticeText">Loading tournament...</p></section><section class="empty-shell" id="detailEmptyState" hidden><div class="empty-state" id="detailEmptyStateText">This tournament could not be found.</div></section><section class="bracket-shell"><div><div class="kicker">FULL BRACKET</div><h2>Round Map</h2><p>Use the controls to move through adjacent rounds. The left round feeds into the right round, and unlocked matchups still open the voting popup.</p></div><div class="round-stage" id="roundStage"><div class="empty-state">Loading saved bracket...</div></div></section></section></main>
 
   <div class="vote-modal" id="voteModal" aria-hidden="true"><div class="vote-dialog" role="dialog" aria-modal="true" aria-labelledby="voteModalTitle"><div class="vote-dialog-head"><div class="vote-dialog-copy"><div class="kicker" id="voteModalKicker">ROUND</div><h3 id="voteModalTitle">The Round</h3><p id="voteModalSubtitle">Open a round to start voting.</p></div><button class="vote-close" id="voteModalCloseBtn" type="button" aria-label="Close round voting">x</button></div><div class="vote-progress-row"><div class="vote-progress" id="voteProgressText">Selection 0 / 0</div><div class="vote-shortcuts">Keys: <strong>1 / A / Left</strong> for the left song, <strong>2 / D / Right</strong> for the right song, <strong>Enter</strong> = next pick or round, <strong>Esc</strong> = close</div></div><div class="vote-complete" id="voteCompleteNote" hidden>All selections in this round are locked in. You can still revisit a matchup and change the result.</div><div class="vote-matchup" id="voteMatchup"><div class="empty-state">Open a round to begin voting.</div></div><div class="vote-nav"><button class="btn-secondary" id="votePrevBtn" type="button">Previous Pick</button><button class="btn-secondary" id="voteNextBtn" type="button">Next Pick</button><button class="btn" id="voteNextRoundBtn" type="button" hidden>Next Round</button></div></div></div>
 
@@ -133,6 +144,6 @@
   <script src="/shared-footer.js?v=20260417a"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="/auth-client.js?v=20260312c"></script>
-  <script src="/tournaments/tournaments-page.js?v=20260425e"></script>
+  <script src="/tournaments/tournaments-page.js?v=20260425f"></script>
 </body>
 </html>

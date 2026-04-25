@@ -31,6 +31,7 @@
     picks: {},
     activeRoundIndex: null,
     activeSelectionCursor: 0,
+    bracketPairStartIndex: 0,
     activeTournament: null,
     friends: [],
     tournamentRequestTurnstileToken: "",
@@ -345,6 +346,7 @@
     state.picks = record?.myPicks || {};
     state.activeRoundIndex = null;
     state.activeSelectionCursor = 0;
+    state.bracketPairStartIndex = 0;
   }
 
   function clearTournamentState() {
@@ -1230,110 +1232,131 @@
     `;
   }
 
+  function getMaxBracketPairStart() {
+    return Math.max(state.rounds.length - 2, 0);
+  }
+
+  function clampBracketPairStart(roundIndex) {
+    return Math.min(Math.max(Number(roundIndex) || 0, 0), getMaxBracketPairStart());
+  }
+
+  function getRoundStatusLabel(info) {
+    if (!info?.ready) return "Locked";
+    return info.completed ? "Complete" : "Ready";
+  }
+
+  function renderBracketRoundWindowHeader(info, eyebrow) {
+    return `
+      <header class="bracket-round-header">
+        <div>
+          <span class="kicker">${escapeHtml(eyebrow)}</span>
+          <h3>${escapeHtml(info.round.label || `Round ${info.roundIndex + 1}`)}</h3>
+        </div>
+        <span class="round-card-status${!info.ready ? "" : info.completed ? " complete" : " ready"}">${escapeHtml(getRoundStatusLabel(info))}</span>
+      </header>
+    `;
+  }
+
+  function renderBracketEmptySlot() {
+    return `
+      <div class="bracket-match-card empty" aria-hidden="true">
+        <span class="bracket-match-topline">
+          <span>Waiting</span>
+          <strong>Empty</strong>
+        </span>
+        <span class="bracket-match-slots">
+          ${renderBracketEntrySlot(null, false)}
+        </span>
+      </div>
+    `;
+  }
+
   function renderTraditionalBracketStage() {
+    state.bracketPairStartIndex = clampBracketPairStart(state.bracketPairStartIndex);
+    const leftIndex = state.bracketPairStartIndex;
+    const rightIndex = leftIndex + 1;
+    const leftInfo = getRoundInfo(leftIndex);
+    const rightInfo = rightIndex < state.rounds.length ? getRoundInfo(rightIndex) : null;
+    if (!leftInfo) {
+      roundStage.innerHTML = `<div class="empty-state">No bracket is loaded yet.</div>`;
+      return;
+    }
     const roundPills = state.rounds.map((round, roundIndex) => {
       const info = getRoundInfo(roundIndex);
-      const statusLabel = !info.ready ? "Locked" : info.completed ? "Complete" : "Ready";
+      const statusLabel = getRoundStatusLabel(info);
+      const safeTarget = clampBracketPairStart(roundIndex);
+      const activeClass = roundIndex === leftIndex ? " active" : roundIndex === rightIndex ? " paired" : "";
       return `
-        <button class="bracket-round-pill${roundIndex === 0 ? " active" : ""}" type="button" data-bracket-round-target="${roundIndex}">
+        <button class="bracket-round-pill${activeClass}" type="button" data-bracket-round-target="${safeTarget}">
           <span>${escapeHtml(round.label || `Round ${roundIndex + 1}`)}</span>
           <strong>${escapeHtml(statusLabel)}</strong>
         </button>
       `;
     }).join("");
-    const slides = state.rounds.map((round, roundIndex) => {
-      const info = getRoundInfo(roundIndex);
-      const isFinalRound = roundIndex === state.rounds.length - 1;
+    const pairCount = rightInfo
+      ? Math.max(rightInfo.matchInfos.length || 0, Math.ceil(leftInfo.matchInfos.length / 2), 1)
+      : Math.max(leftInfo.matchInfos.length, 1);
+    const pairRows = Array.from({ length: pairCount }, (_, pairIndex) => {
+      const firstLeft = leftInfo.matchInfos[rightInfo ? pairIndex * 2 : pairIndex] || null;
+      const secondLeft = rightInfo ? leftInfo.matchInfos[pairIndex * 2 + 1] || null : null;
+      const rightMatch = rightInfo?.matchInfos[pairIndex] || null;
       return `
-        <section class="bracket-round-column" data-bracket-round-slide="${roundIndex}">
-          <header class="bracket-round-header">
-            <div>
-              <span class="kicker">ROUND ${roundIndex + 1}</span>
-              <h3>${escapeHtml(round.label || `Round ${roundIndex + 1}`)}</h3>
-            </div>
-            <span class="round-card-status${!info.ready ? "" : info.completed ? " complete" : " ready"}">${escapeHtml(!info.ready ? "Locked" : info.completed ? "Complete" : "Ready")}</span>
-          </header>
-          <div class="bracket-round-matches">
-            ${info.matchInfos.map((matchInfo) => renderBracketMatchCard(info, matchInfo, isFinalRound)).join("")}
+        <div class="bracket-pair-row">
+          <div class="bracket-left-pair">
+            ${firstLeft ? renderBracketMatchCard(leftInfo, firstLeft, !rightInfo) : renderBracketEmptySlot()}
+            ${rightInfo ? (secondLeft ? renderBracketMatchCard(leftInfo, secondLeft, false) : renderBracketEmptySlot()) : ""}
           </div>
-        </section>
+          ${rightInfo ? `<div class="bracket-connector" aria-hidden="true"></div>` : ""}
+          ${rightInfo ? `
+            <div class="bracket-right-pair">
+              ${rightMatch ? renderBracketMatchCard(rightInfo, rightMatch, rightIndex === state.rounds.length - 1) : renderBracketEmptySlot()}
+            </div>
+          ` : ""}
+        </div>
       `;
     }).join("");
 
     roundStage.innerHTML = `
-      <div class="bracket-carousel-head">
+      <div class="bracket-window-head">
         <div class="bracket-round-pills" aria-label="Bracket rounds">
           ${roundPills}
         </div>
-        <div class="bracket-carousel-actions">
-          <button class="bracket-carousel-btn" type="button" data-bracket-round-shift="-1" aria-label="Previous round">
+        <div class="bracket-window-actions">
+          <button class="bracket-window-btn" type="button" data-bracket-round-shift="-1" ${leftIndex <= 0 ? "disabled" : ""} aria-label="Previous round pair">
             <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
-            <span>Previous</span>
+            <span>Previous Rounds</span>
           </button>
-          <button class="bracket-carousel-btn" type="button" data-bracket-round-shift="1" aria-label="Next round">
-            <span>Next</span>
+          <button class="bracket-window-btn" type="button" data-bracket-round-shift="1" ${leftIndex >= getMaxBracketPairStart() ? "disabled" : ""} aria-label="Next round pair">
+            <span>Next Rounds</span>
             <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
           </button>
         </div>
       </div>
-      <div class="bracket-map-wrap">
-        <div class="bracket-map" aria-label="Swipe through bracket rounds">
-          ${slides}
-        </div>
+      <div class="bracket-window-summary">
+        Showing ${escapeHtml(leftInfo.round.label || `Round ${leftIndex + 1}`)}${rightInfo ? ` into ${escapeHtml(rightInfo.round.label || `Round ${rightIndex + 1}`)}` : ""}.
       </div>
-      <p class="bracket-map-note">Swipe horizontally or use the controls to move round by round. Click an unlocked matchup to open the voting popup.</p>
+      <section class="bracket-window" aria-label="Two-round bracket window">
+        <div class="bracket-window-grid${rightInfo ? "" : " single"}">
+          <div class="bracket-window-round-head left">${renderBracketRoundWindowHeader(leftInfo, "LEFT SIDE")}</div>
+          ${rightInfo ? `<div class="bracket-window-round-head right">${renderBracketRoundWindowHeader(rightInfo, "RIGHT SIDE")}</div>` : ""}
+          <div class="bracket-pair-rows">
+            ${pairRows}
+          </div>
+        </div>
+      </section>
+      <p class="bracket-map-note">Use Next Rounds to shift the right column onto the left side. Unlocked matchup cards still open the voting popup.</p>
     `;
-    updateBracketCarouselControls(0);
-    const wrap = roundStage.querySelector(".bracket-map-wrap");
-    if (wrap) {
-      let queued = false;
-      wrap.addEventListener("scroll", () => {
-        if (queued) return;
-        queued = true;
-        window.requestAnimationFrame(() => {
-          queued = false;
-          updateBracketCarouselControls(getCurrentBracketRoundIndex());
-        });
-      });
-    }
   }
 
-  function getCurrentBracketRoundIndex() {
-    const wrap = roundStage?.querySelector(".bracket-map-wrap");
-    const slides = Array.from(roundStage?.querySelectorAll("[data-bracket-round-slide]") || []);
-    if (!wrap || !slides.length) return 0;
-    let nearestIndex = 0;
-    let nearestDistance = Number.POSITIVE_INFINITY;
-    slides.forEach((slide, index) => {
-      const distance = Math.abs(slide.offsetLeft - wrap.scrollLeft);
-      if (distance < nearestDistance) {
-        nearestDistance = distance;
-        nearestIndex = index;
-      }
-    });
-    return nearestIndex;
-  }
-
-  function updateBracketCarouselControls(activeIndex) {
-    const pills = Array.from(roundStage?.querySelectorAll("[data-bracket-round-target]") || []);
-    const previous = roundStage?.querySelector('[data-bracket-round-shift="-1"]');
-    const next = roundStage?.querySelector('[data-bracket-round-shift="1"]');
-    pills.forEach((pill, index) => pill.classList.toggle("active", index === activeIndex));
-    if (previous) previous.disabled = activeIndex <= 0;
-    if (next) next.disabled = activeIndex >= pills.length - 1;
-  }
-
-  function scrollToBracketRound(roundIndex) {
-    const slides = Array.from(roundStage?.querySelectorAll("[data-bracket-round-slide]") || []);
-    const safeIndex = Math.min(Math.max(Number(roundIndex) || 0, 0), Math.max(slides.length - 1, 0));
-    const slide = slides[safeIndex];
-    if (!slide) return;
-    slide.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
-    updateBracketCarouselControls(safeIndex);
+  function setBracketWindowStart(roundIndex) {
+    const nextStart = clampBracketPairStart(roundIndex);
+    if (state.bracketPairStartIndex === nextStart) return;
+    state.bracketPairStartIndex = nextStart;
+    renderRoundStage();
   }
 
   function shiftBracketRound(step) {
-    scrollToBracketRound(getCurrentBracketRoundIndex() + step);
+    setBracketWindowStart(state.bracketPairStartIndex + step);
   }
 
   function renderRoundStage() {
@@ -1709,7 +1732,7 @@
     if (pageMode === "rankings") {
       detailHeroSubnote.textContent = "This page shows the full weighted list for the bracket. Open the tournament page to vote or manage access.";
     } else if (pageMode === "bracket") {
-      detailHeroSubnote.textContent = "Swipe round by round through the bracket. Open any available matchup to review or change picks.";
+      detailHeroSubnote.textContent = "Move through adjacent bracket rounds two at a time. Open any available matchup to review or change picks.";
     } else {
       detailHeroSubnote.textContent = record.canVote
         ? "Use the Vote Now card to continue the next pick. Your ballot is saved to this bracket and folded into the top-five standings after completion."
@@ -2195,7 +2218,7 @@
       const roundTarget = event.target.closest("[data-bracket-round-target]");
       if (roundTarget) {
         const targetIndex = Number(roundTarget.getAttribute("data-bracket-round-target"));
-        if (Number.isFinite(targetIndex)) scrollToBracketRound(targetIndex);
+        if (Number.isFinite(targetIndex)) setBracketWindowStart(targetIndex);
         return;
       }
       const roundShift = event.target.closest("[data-bracket-round-shift]");
