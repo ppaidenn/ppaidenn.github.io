@@ -447,14 +447,6 @@ as $$
         )
       ) as can_vote
     from public.music_tournaments t
-    where t.visibility = 'public'
-       or auth.uid() = t.owner_id
-       or exists (
-         select 1
-         from public.music_tournament_members m
-         where m.tournament_id = t.id
-           and m.user_id = auth.uid()
-       )
   )
   select
     a.id as tournament_id,
@@ -477,6 +469,8 @@ as $$
 $$;
 
 grant execute on function public.get_accessible_music_tournaments() to anon, authenticated;
+
+drop function if exists public.get_music_tournament_detail_by_slug(text);
 
 create or replace function public.get_music_tournament_detail_by_slug(target_slug text)
 returns table (
@@ -533,16 +527,6 @@ as $$
       ) as can_vote
     from public.music_tournaments t
     where t.slug = trim(coalesce(target_slug, ''))
-      and (
-        t.visibility = 'public'
-        or auth.uid() = t.owner_id
-        or exists (
-          select 1
-          from public.music_tournament_members m
-          where m.tournament_id = t.id
-            and m.user_id = auth.uid()
-        )
-      )
     limit 1
   ),
   member_rows as (
@@ -628,18 +612,21 @@ as $$
     target.is_owner,
     target.is_member,
     target.can_vote,
-    coalesce((
-      select jsonb_agg(
-        jsonb_build_object(
-          'user_id', m.user_id,
-          'username', m.username,
-          'avatar_url', m.avatar_url,
-          'role', m.role
+    case
+      when target.visibility = 'private' and target.can_vote is not true and target.is_owner is not true and target.is_member is not true then '[]'::jsonb
+      else coalesce((
+        select jsonb_agg(
+          jsonb_build_object(
+            'user_id', m.user_id,
+            'username', m.username,
+            'avatar_url', m.avatar_url,
+            'role', m.role
+          )
+          order by case when m.role = 'owner' then 0 else 1 end, lower(m.username), m.username
         )
-        order by case when m.role = 'owner' then 0 else 1 end, lower(m.username), m.username
-      )
-      from member_rows m
-    ), '[]'::jsonb) as participants,
+        from member_rows m
+      ), '[]'::jsonb)
+    end as participants,
     coalesce((
       select jsonb_agg(
         jsonb_build_object(

@@ -1166,7 +1166,6 @@
   function renderChampion() {
     if (!championChip) return;
     const champion = getFinalWinner();
-    if (resultsShell) resultsShell.hidden = !champion;
     championChip.hidden = !champion;
     if (!champion) {
       championChip.innerHTML = "";
@@ -1372,6 +1371,10 @@
       roundStage.innerHTML = `<div class="empty-state">No bracket is loaded yet.</div>`;
       return;
     }
+    if (state.activeTournament?.visibility === "private" && !state.activeTournament?.canVote) {
+      roundStage.innerHTML = `<div class="empty-state">This private bracket is in preview mode here. Rankings stay visible, but voting and participant access are limited to the owner and invited paiden.com accounts.</div>`;
+      return;
+    }
     if (pageMode === "bracket") {
       renderTraditionalBracketStage();
       return;
@@ -1460,6 +1463,11 @@
 
   function renderVoteModal() {
     if (!voteModal || !voteModalKicker || !voteModalTitle || !voteModalSubtitle || !voteProgressText || !voteCompleteNote || !voteMatchup || !votePrevBtn || !voteNextBtn) return;
+    if (state.activeTournament?.visibility === "private" && !state.activeTournament?.canVote) {
+      voteModal.classList.remove("open");
+      voteModal.setAttribute("aria-hidden", "true");
+      return;
+    }
     const context = getCurrentModalContext();
     const isOpen = !!context;
     voteModal.classList.toggle("open", isOpen);
@@ -1537,7 +1545,7 @@
       return;
     }
     savedTournamentTitle.textContent = `${record.name} saved`;
-    savedTournamentCopy.textContent = `${record.visibility === "public" ? "Public" : "Private"} bracket saved for ${record.playlist.name}. Open it to manage invites or start voting.`;
+    savedTournamentCopy.textContent = `${record.visibility === "public" ? "Public" : "Private"} bracket saved for ${record.playlist.name}. Open it to review rankings, manage access, or keep voting.`;
     savedTournamentOpenLink.href = `/all-tournaments/${encodeURIComponent(record.slug)}`;
     savedTournamentCard.hidden = false;
   }
@@ -1551,7 +1559,7 @@
     if (!tournaments.length) {
       tournamentLibraryList.innerHTML = `
         <div class="empty-state">
-          No accessible tournaments are saved yet. Build one from <a href="/bracket-builder/">Bracket Builder</a> or sign in to see your private/member brackets.
+          No tournaments are saved yet. Build one from <a href="/bracket-builder/">Bracket Builder</a>.
         </div>
       `;
       return;
@@ -1559,7 +1567,14 @@
 
     tournamentLibraryList.innerHTML = tournaments.map((entry) => {
       const href = `/all-tournaments/${encodeURIComponent(entry.slug)}`;
-      const ownership = entry.isOwner ? "You own this bracket" : entry.isMember ? "You can participate" : `Owner: ${entry.ownerUsername || "paiden.com user"}`;
+      const canSeePrivateAccess = canViewBracketAccess(entry);
+      const ownership = entry.isOwner
+        ? "You own this bracket"
+        : entry.isMember
+          ? "You can participate"
+          : entry.visibility === "private"
+            ? "Private bracket preview. Rankings are visible, but voting stays invite-only."
+            : `Owner: ${entry.ownerUsername || "paiden.com user"}`;
       return `
         <a class="tournament-list-card" href="${href}">
           ${entry.cover ? `<img class="tournament-list-cover" src="${entry.cover}" alt="">` : `<div class="tournament-list-cover" aria-hidden="true"></div>`}
@@ -1569,7 +1584,7 @@
             <div class="tournament-list-meta">
               <span class="meta-chip ${entry.visibility}">${escapeHtml(entry.visibility)}</span>
               <span class="meta-chip">${entry.entrantCount} songs</span>
-              <span class="meta-chip">${entry.participantCount} participants</span>
+              ${canSeePrivateAccess ? `<span class="meta-chip">${entry.participantCount} participants</span>` : ""}
               ${entry.updatedAt ? `<span class="meta-chip">Updated ${escapeHtml(formatDate(entry.updatedAt))}</span>` : ""}
             </div>
             <p>${escapeHtml(ownership)}</p>
@@ -1605,10 +1620,26 @@
     });
   }
 
+  function canViewBracketAccess(record) {
+    if (!record) return false;
+    if (record.visibility === "public") return true;
+    return !!(record.canVote || record.isOwner || record.isMember);
+  }
+
   function renderParticipants(record) {
     if (!participantsList || !participantSummaryText || !inviteLinkOutput) return;
     const participants = Array.isArray(record?.participants) ? record.participants : [];
     const isPublic = record?.visibility === "public";
+    const canViewAccess = canViewBracketAccess(record);
+    if (!canViewAccess) {
+      if (participantSectionKicker) participantSectionKicker.textContent = "PRIVATE";
+      if (participantSectionTitle) participantSectionTitle.textContent = "Voting Access";
+      participantSummaryText.textContent = "This private bracket hides participant access and voting details unless the owner invites you.";
+      participantsList.innerHTML = `<div class="empty-state">Only the bracket owner and invited paiden.com participants can view who is eligible to vote here.</div>`;
+      if (ownerToolsBlock) ownerToolsBlock.hidden = true;
+      inviteLinkOutput.textContent = "";
+      return;
+    }
     const visiblePeople = isPublic ? getBracketVoters(record) : participants;
     if (participantSectionKicker) participantSectionKicker.textContent = isPublic ? "VOTERS" : "PARTICIPANTS";
     if (participantSectionTitle) participantSectionTitle.textContent = isPublic ? "Who Has Voted" : "Bracket Access";
@@ -1761,17 +1792,13 @@
     const shell = rankingList.closest(".ranking-shell");
     if (!record) {
       if (shell) shell.hidden = true;
-      rankingSummaryText.textContent = "";
-      rankingList.innerHTML = "";
-      return;
-    }
-    if (pageMode === "detail" && !getFinalWinner()) {
-      if (shell) shell.hidden = true;
+      if (resultsShell) resultsShell.hidden = true;
       rankingSummaryText.textContent = "";
       rankingList.innerHTML = "";
       return;
     }
     if (shell) shell.hidden = false;
+    if (pageMode === "detail" && resultsShell) resultsShell.hidden = false;
     const { rankings, ballotCount, rounds } = getRankingBreakdown(record);
     if (!ballotCount) {
       rankingSummaryText.textContent = "No one has saved a ballot for this bracket yet.";
@@ -1826,13 +1853,15 @@
     if (pageMode === "rankings") {
       detailHeroSubnote.textContent = "This page shows the full weighted list for the bracket. Open the tournament page to vote or manage access.";
     } else if (pageMode === "bracket") {
-      detailHeroSubnote.textContent = "Move through adjacent bracket rounds two at a time. Open any available matchup to review or change picks.";
+      detailHeroSubnote.textContent = record.visibility === "private" && !record.canVote
+        ? "This private bracket keeps round-by-round voting behind invite-only access. Open the tournament page to review rankings instead."
+        : "Move through adjacent bracket rounds two at a time. Open any available matchup to review or change picks.";
     } else {
       detailHeroSubnote.textContent = record.canVote
         ? "Use the Vote Now card to continue the next pick. Your ballot is saved to this bracket and folded into the top-five standings after completion."
         : record.visibility === "public"
           ? "You can view this public bracket here. Sign in to paiden.com if you want to vote on it."
-          : "This private bracket is only voteable by the owner and invited participants.";
+          : "This private bracket is view-only here. Voting and participant access stay limited to the owner and invited participants.";
     }
     if (rankingBackLink) {
       rankingBackLink.href = record.slug ? `/all-tournaments/${encodeURIComponent(record.slug)}` : "/all-tournaments/";
@@ -1898,6 +1927,7 @@
   };
 
   function openRoundModal(roundIndex, targetMatchIndex = null) {
+    if (state.activeTournament?.visibility === "private" && !state.activeTournament?.canVote) return;
     const info = getRoundInfo(roundIndex);
     if (!info || !info.ready) return;
     state.activeRoundIndex = roundIndex;
@@ -2097,8 +2127,8 @@
     await loadAccessibleTournaments();
     setLibraryNotice(
       state.paidenProfile
-        ? `Showing public tournaments plus any private brackets you own or were invited into as @${state.paidenProfile.username}.`
-        : "Showing public tournaments. Sign in to see your private or invited brackets too.",
+        ? `Showing every saved tournament. You can vote on public brackets plus any private brackets you own or were invited into as @${state.paidenProfile.username}.`
+        : "Showing every saved tournament. Sign in to vote on public brackets or access private invite-only brackets.",
       true
     );
     renderTournamentLibrary();

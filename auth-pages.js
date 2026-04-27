@@ -85,17 +85,17 @@
       event.preventDefault();
       if (!window.PaidenAuth) return setStatus("Auth service unavailable.", true);
 
-      const username = (document.getElementById("signin-username")?.value || "").trim();
+      const identifier = (document.getElementById("signin-username")?.value || "").trim();
       const password = document.getElementById("password")?.value || "";
       const submitBtn = document.getElementById("signInSubmit");
 
-      if (!username || !password) {
-        return setStatus("Please enter your username and password.", true);
+      if (!identifier || !password) {
+        return setStatus("Please enter your email or username and password.", true);
       }
 
       setButtonPending(submitBtn, true, "Sign In");
       setStatus("");
-      const res = await window.PaidenAuth.signIn({ username, password });
+      const res = await window.PaidenAuth.signIn({ username: identifier, password });
       setButtonPending(submitBtn, false, "Sign In");
 
       if (!res.ok) return setStatus(res.error || "Could not sign in.", true);
