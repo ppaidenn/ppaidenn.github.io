@@ -33,6 +33,7 @@
     activeSelectionCursor: 0,
     bracketPairStartIndex: 0,
     activeTournament: null,
+    activeTournamentAccessRequestStatus: "",
     friends: [],
     tournamentRequestTurnstileToken: "",
     builderMode: "",
@@ -347,6 +348,7 @@
 
   function applyTournamentRecord(record) {
     state.activeTournament = record || null;
+    state.activeTournamentAccessRequestStatus = "";
     state.playlist = record?.playlist || null;
     state.entrants = record?.entrants || [];
     state.rounds = record?.rounds || [];
@@ -1538,6 +1540,19 @@
     return record;
   }
 
+  async function loadActiveTournamentAccessRequestStatus() {
+    state.activeTournamentAccessRequestStatus = "";
+    if (!state.paidenUser || !state.activeTournament?.id || !canRequestVotingAccess(state.activeTournament)) return;
+    try {
+      const status = await callRpc("get_my_music_tournament_access_request_status", {
+        target_tournament_id: state.activeTournament.id,
+      });
+      state.activeTournamentAccessRequestStatus = String(status || "").trim().toLowerCase();
+    } catch (_) {
+      state.activeTournamentAccessRequestStatus = "";
+    }
+  }
+
   function renderSavedTournamentCard(record) {
     if (!savedTournamentCard || !savedTournamentTitle || !savedTournamentCopy || !savedTournamentOpenLink) return;
     if (!record) {
@@ -1626,16 +1641,49 @@
     return !!(record.canVote || record.isOwner || record.isMember);
   }
 
+  function canRequestVotingAccess(record) {
+    if (!record) return false;
+    return record.visibility === "private"
+      && !record.canVote
+      && !record.isOwner
+      && !record.isMember;
+  }
+
+  function getSignInHrefWithReturn() {
+    const next = `${window.location.pathname}${window.location.search}`;
+    return `/signin?next=${encodeURIComponent(next)}`;
+  }
+
   function renderParticipants(record) {
     if (!participantsList || !participantSummaryText || !inviteLinkOutput) return;
     const participants = Array.isArray(record?.participants) ? record.participants : [];
     const isPublic = record?.visibility === "public";
     const canViewAccess = canViewBracketAccess(record);
     if (!canViewAccess) {
+      const ownerLabel = record?.ownerUsername ? `@${escapeHtml(record.ownerUsername)}` : "the bracket owner";
+      const requestPending = state.activeTournamentAccessRequestStatus === "pending";
+      const requestMarkup = !state.paidenUser
+        ? `
+          <div class="invite-output">Sign in to request voting access from ${ownerLabel}.</div>
+          <div class="owner-actions">
+            <a class="btn" href="${getSignInHrefWithReturn()}">Sign In to Request Access</a>
+          </div>
+        `
+        : canRequestVotingAccess(record)
+          ? `
+            <div class="invite-output">${requestPending ? `Your request is waiting for ${ownerLabel}.` : `${ownerLabel} can invite you after they see your request notification.`}</div>
+            <div class="owner-actions">
+              <button class="btn" type="button" data-request-voting-access ${requestPending ? "disabled" : ""}>${requestPending ? "Request Sent" : "Request Voting Access"}</button>
+            </div>
+          `
+          : "";
       if (participantSectionKicker) participantSectionKicker.textContent = "PRIVATE";
       if (participantSectionTitle) participantSectionTitle.textContent = "Voting Access";
       participantSummaryText.textContent = "This private bracket hides participant access and voting details unless the owner invites you.";
-      participantsList.innerHTML = `<div class="empty-state">Only the bracket owner and invited paiden.com participants can view who is eligible to vote here.</div>`;
+      participantsList.innerHTML = `
+        <div class="empty-state">Only the bracket owner and invited paiden.com participants can view who is eligible to vote here.</div>
+        ${requestMarkup}
+      `;
       if (ownerToolsBlock) ownerToolsBlock.hidden = true;
       inviteLinkOutput.textContent = "";
       return;
@@ -2150,6 +2198,7 @@
       await loadTournamentDetailBySlug(slug);
       if (inviteAccepted) setDetailNotice("Invite accepted. This bracket is now linked to your paiden.com account.", true);
       await loadFriendsForOwner();
+      await loadActiveTournamentAccessRequestStatus();
       renderApp();
     } catch (errorObj) {
       applyTournamentRecord(null);
@@ -2339,6 +2388,26 @@
         setDetailNotice("Invite link created. Share it with someone who should join this private bracket.", true);
       } catch (errorObj) {
         setDetailNotice(errorObj.message || "Could not create an invite link.", true);
+      }
+    });
+  }
+
+  if (participantsList) {
+    participantsList.addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-request-voting-access]");
+      if (!button || !state.activeTournament?.id || !state.paidenUser || !canRequestVotingAccess(state.activeTournament)) return;
+      button.disabled = true;
+      button.textContent = "Sending...";
+      try {
+        const status = await callRpc("request_music_tournament_access", {
+          target_tournament_id: state.activeTournament.id,
+        });
+        state.activeTournamentAccessRequestStatus = String(status || "pending").trim().toLowerCase() || "pending";
+        renderApp();
+        setDetailNotice(`Access request sent to ${state.activeTournament.ownerUsername ? `@${state.activeTournament.ownerUsername}` : "the bracket owner"}.`, true);
+      } catch (errorObj) {
+        renderApp();
+        setDetailNotice(errorObj.message || "Could not send the access request.", true);
       }
     });
   }

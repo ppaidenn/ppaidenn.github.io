@@ -94,7 +94,33 @@ create index if not exists music_tournament_invites_tournament_idx
 create index if not exists music_tournament_invites_code_status_idx
   on public.music_tournament_invites (code, status);
 
+create table if not exists public.music_tournament_access_requests (
+  tournament_id uuid not null references public.music_tournaments(id) on delete cascade,
+  requester_id uuid not null references auth.users(id) on delete cascade,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  status text not null default 'pending' check (status in ('pending', 'approved', 'declined')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (tournament_id, requester_id)
+);
+
+create index if not exists music_tournament_access_requests_owner_idx
+  on public.music_tournament_access_requests (owner_id, status, created_at desc);
+
+create index if not exists music_tournament_access_requests_requester_idx
+  on public.music_tournament_access_requests (requester_id, updated_at desc);
+
 create or replace function public.set_music_tournaments_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+create or replace function public.set_music_tournament_access_requests_updated_at()
 returns trigger
 language plpgsql
 as $$
@@ -109,6 +135,12 @@ create trigger trg_music_tournaments_updated_at
 before update on public.music_tournaments
 for each row
 execute function public.set_music_tournaments_updated_at();
+
+drop trigger if exists trg_music_tournament_access_requests_updated_at on public.music_tournament_access_requests;
+create trigger trg_music_tournament_access_requests_updated_at
+before update on public.music_tournament_access_requests
+for each row
+execute function public.set_music_tournament_access_requests_updated_at();
 
 create or replace function public.normalize_music_tournament_slug(value text)
 returns text
@@ -128,6 +160,7 @@ alter table public.music_tournaments enable row level security;
 alter table public.music_tournament_members enable row level security;
 alter table public.music_tournament_ballots enable row level security;
 alter table public.music_tournament_invites enable row level security;
+alter table public.music_tournament_access_requests enable row level security;
 
 drop policy if exists "music_tournaments_select_accessible" on public.music_tournaments;
 create policy "music_tournaments_select_accessible"
@@ -256,6 +289,124 @@ with check (
       )
   )
 );
+
+drop policy if exists "music_tournament_access_requests_select_owner_or_requester" on public.music_tournament_access_requests;
+create policy "music_tournament_access_requests_select_owner_or_requester"
+on public.music_tournament_access_requests
+for select
+to authenticated
+using (auth.uid() = owner_id or auth.uid() = requester_id);
+
+create or replace function public.get_my_music_tournament_access_request_status(target_tournament_id uuid)
+returns text
+language sql
+security definer
+set search_path = public
+as $$
+  select r.status
+  from public.music_tournament_access_requests r
+  where r.tournament_id = target_tournament_id
+    and r.requester_id = auth.uid()
+  limit 1;
+$$;
+
+grant execute on function public.get_my_music_tournament_access_request_status(uuid) to authenticated;
+
+create or replace function public.request_music_tournament_access(target_tournament_id uuid)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  me uuid := auth.uid();
+  tournament_row public.music_tournaments%rowtype;
+  actor_username text;
+  existing_status text;
+begin
+  if me is null then
+    raise exception 'Not signed in.';
+  end if;
+
+  select *
+    into tournament_row
+  from public.music_tournaments
+  where id = target_tournament_id
+  limit 1;
+
+  if tournament_row.id is null then
+    raise exception 'Tournament not found.';
+  end if;
+  if tournament_row.visibility <> 'private' then
+    raise exception 'This bracket is already public.';
+  end if;
+  if tournament_row.owner_id = me then
+    return 'approved';
+  end if;
+  if exists (
+    select 1
+    from public.music_tournament_members m
+    where m.tournament_id = tournament_row.id
+      and m.user_id = me
+  ) then
+    return 'approved';
+  end if;
+
+  select p.username
+    into actor_username
+  from public.profiles p
+  where p.id = me
+  limit 1;
+
+  select r.status
+    into existing_status
+  from public.music_tournament_access_requests r
+  where r.tournament_id = tournament_row.id
+    and r.requester_id = me
+  limit 1;
+
+  insert into public.music_tournament_access_requests (tournament_id, requester_id, owner_id, status)
+  values (tournament_row.id, me, tournament_row.owner_id, 'pending')
+  on conflict (tournament_id, requester_id)
+  do update set owner_id = excluded.owner_id,
+                status = 'pending',
+                updated_at = now();
+
+  if coalesce(existing_status, '') <> 'pending'
+     and to_regclass('public.notifications_inbox') is not null then
+    insert into public.notifications_inbox (
+      user_id,
+      type,
+      title,
+      body,
+      link_url,
+      actor_user_id,
+      actor_username,
+      entity_type,
+      entity_id
+    )
+    values (
+      tournament_row.owner_id,
+      'tournament_access_request',
+      'paiden.com',
+      format(
+        'Bracket Access Request\n%s requested voting access to your private bracket "%s".',
+        coalesce(nullif(actor_username, ''), 'Someone'),
+        coalesce(nullif(tournament_row.name, ''), 'Untitled Bracket')
+      ),
+      format('/all-tournaments/%s', tournament_row.slug),
+      me,
+      actor_username,
+      'music_tournament',
+      tournament_row.id::text
+    );
+  end if;
+
+  return 'pending';
+end;
+$$;
+
+grant execute on function public.request_music_tournament_access(uuid) to authenticated;
 
 create or replace function public.upsert_my_music_tournament(
   target_tournament_id uuid default null,
@@ -771,6 +922,13 @@ begin
   on conflict on constraint music_tournament_members_pkey do update
     set invited_by = excluded.invited_by;
 
+  update public.music_tournament_access_requests
+  set owner_id = me,
+      status = 'approved',
+      updated_at = now()
+  where tournament_id = target_tournament_id
+    and requester_id = friend_target;
+
   return query
   select friend_target, friend_name;
 end;
@@ -893,6 +1051,13 @@ begin
   insert into public.music_tournament_members (tournament_id, user_id, role, invited_by)
   values (tournament_row.id, me, 'participant', invite_row.created_by)
   on conflict on constraint music_tournament_members_pkey do nothing;
+
+  update public.music_tournament_access_requests
+  set owner_id = tournament_row.owner_id,
+      status = 'approved',
+      updated_at = now()
+  where tournament_id = tournament_row.id
+    and requester_id = me;
 
   update public.music_tournament_invites
   set status = 'accepted',

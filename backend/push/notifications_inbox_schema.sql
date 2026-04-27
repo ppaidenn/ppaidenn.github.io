@@ -3,7 +3,7 @@ create extension if not exists pgcrypto;
 create table if not exists public.notifications_inbox (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  type text not null check (type in ('friend_request', 'event_invite', 'event_update', 'event_reminder', 'friend_removed')),
+  type text not null check (type in ('friend_request', 'event_invite', 'event_update', 'event_reminder', 'friend_removed', 'tournament_access_request')),
   title text not null,
   body text not null,
   link_url text,
@@ -15,6 +15,13 @@ create table if not exists public.notifications_inbox (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.notifications_inbox
+  drop constraint if exists notifications_inbox_type_check;
+
+alter table public.notifications_inbox
+  add constraint notifications_inbox_type_check
+  check (type in ('friend_request', 'event_invite', 'event_update', 'event_reminder', 'friend_removed', 'tournament_access_request'));
 
 create index if not exists notifications_inbox_user_created_idx
   on public.notifications_inbox (user_id, created_at desc);
