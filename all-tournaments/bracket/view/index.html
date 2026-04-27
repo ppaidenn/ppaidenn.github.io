@@ -47,7 +47,7 @@
     .round-card-title { margin: 0; font-size: 18px; }
     .round-card-copy { margin: 0; font-size: 14px; color: rgba(16,21,28,.72); }
     .bracket-shell { min-width: 0; overflow: hidden; }
-    .bracket-window-head { min-width: 0; display: block; }
+    .bracket-window-head { min-width: 0; display: grid; gap: 10px; }
     .bracket-round-pills { min-width: 0; max-width: 100%; display: flex; gap: 8px; overflow-x: auto; overscroll-behavior-x: contain; padding: 2px 2px 8px; scrollbar-color: rgba(15,21,27,.22) transparent; }
     .bracket-round-pill, .bracket-window-btn { border-radius: 999px; border: 1px solid rgba(12,18,24,.12); background: rgba(255,255,255,.9); color: #0b1116; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font: inherit; font-weight: 800; white-space: nowrap; }
     .bracket-round-pill { padding: 10px 13px; }
@@ -55,7 +55,7 @@
     .bracket-round-pill.active { background: #0f151b; color: #fff; border-color: #0f151b; }
     .bracket-round-pill.paired { background: rgba(29,185,84,.12); border-color: rgba(29,185,84,.24); color: #11422b; }
     .bracket-round-pill.active strong { background: rgba(255,255,255,.16); color: rgba(255,255,255,.82); }
-    .bracket-window-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; padding-top: 2px; }
+    .bracket-window-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; padding-top: 2px; }
     .bracket-window-btn { padding: 10px 14px; }
     .bracket-window-btn:disabled { opacity: .42; cursor: default; }
     .bracket-window-summary { width: fit-content; border-radius: 999px; padding: 8px 12px; background: rgba(15,21,27,.06); border: 1px solid rgba(15,21,27,.08); color: rgba(16,21,28,.72); font-size: 13px; font-weight: 800; }
@@ -126,7 +126,7 @@
     .vote-meta span { border-radius: 999px; padding: 7px 10px; background: rgba(15,21,27,.06); border: 1px solid rgba(15,21,27,.08); font-size: 12px; font-weight: 800; color: rgba(16,21,28,.72); letter-spacing: .05em; text-transform: uppercase; }
     .footer { width: 100%; background: #000; padding: 56px 0 calc(56px + env(safe-area-inset-bottom,0px)); margin-top: auto; flex-shrink: 0; }
     @media (max-width: 1080px) { .hero { grid-template-columns: 1fr; } .hero-actions { justify-content: flex-start; } .vote-choice-grid { grid-template-columns: 1fr; } }
-    @media (max-width: 768px) { body { padding-top: calc(env(safe-area-inset-top,0px) + 58px); } .top-nav { display: none; } .mobile-fixed-header { display: flex; } .content-wrap { padding-top: 18px; } .content-inner { margin: 0 5vw; padding: 16px; } .detail-cover { width: 92px; height: 92px; } .bracket-round-pills { width: 100%; } .bracket-window-actions { width: 100%; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); } .bracket-window-btn { justify-content: center; } .bracket-window-grid { min-width: 560px; grid-template-columns: minmax(0,1fr) 40px minmax(0,1fr); } .bracket-pair-row { grid-template-columns: minmax(0,1fr) 40px minmax(0,1fr); } .vote-choice-body { grid-template-columns: 88px minmax(0,1fr); } .vote-cover { width: 88px; height: 88px; } .vote-title { font-size: 18px; } .footer { display: none !important; } }
+    @media (max-width: 768px) { body { padding-top: calc(env(safe-area-inset-top,0px) + 58px); } .top-nav { display: none; } .mobile-fixed-header { display: flex; } .content-wrap { padding-top: 18px; } .content-inner { margin: 0 5vw; padding: 16px; } .detail-cover { width: 92px; height: 92px; } .bracket-round-pills { width: 100%; } .bracket-window-actions { width: 100%; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); justify-content: stretch; } .bracket-window-btn { justify-content: center; } .bracket-window-grid { min-width: 560px; grid-template-columns: minmax(0,1fr) 40px minmax(0,1fr); } .bracket-pair-row { grid-template-columns: minmax(0,1fr) 40px minmax(0,1fr); } .vote-choice-body { grid-template-columns: 88px minmax(0,1fr); } .vote-cover { width: 88px; height: 88px; } .vote-title { font-size: 18px; } .footer { display: none !important; } }
   </style>
 </head>
 <body data-tournament-view="bracket">
