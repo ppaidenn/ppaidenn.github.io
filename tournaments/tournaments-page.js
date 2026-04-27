@@ -84,6 +84,8 @@
   const detailEmptyStateText = document.getElementById("detailEmptyStateText");
   const detailNoticeCard = document.getElementById("detailNoticeCard");
   const detailNoticeText = document.getElementById("detailNoticeText");
+  const participantSectionKicker = document.getElementById("participantSectionKicker");
+  const participantSectionTitle = document.getElementById("participantSectionTitle");
   const participantsList = document.getElementById("participantsList");
   const participantSummaryText = document.getElementById("participantSummaryText");
   const rankingSummaryText = document.getElementById("rankingSummaryText");
@@ -93,6 +95,12 @@
   const rankingBackLink = document.getElementById("rankingBackLink");
   const friendInviteInput = document.getElementById("friendInviteInput");
   const friendInviteSuggestions = document.getElementById("friendInviteSuggestions");
+  const ownerToolsBlock = document.getElementById("ownerToolsBlock");
+  const ownerToolsIntro = document.getElementById("ownerToolsIntro");
+  const detailVisibilitySelect = document.getElementById("detailVisibilitySelect");
+  const saveVisibilityBtn = document.getElementById("saveVisibilityBtn");
+  const privateInviteField = document.getElementById("privateInviteField");
+  const privateInviteActions = document.getElementById("privateInviteActions");
   const inviteFriendBtn = document.getElementById("inviteFriendBtn");
   const createInviteLinkBtn = document.getElementById("createInviteLinkBtn");
   const inviteLinkOutput = document.getElementById("inviteLinkOutput");
@@ -1572,29 +1580,116 @@
     }).join("");
   }
 
+  function getBracketVoters(record) {
+    const ballots = Array.isArray(record?.ballots) ? record.ballots : [];
+    const voters = [];
+    const seen = new Set();
+    ballots.forEach((ballot) => {
+      const picks = ballot?.picks && typeof ballot.picks === "object" ? ballot.picks : {};
+      if (!Object.keys(picks).length) return;
+      const userId = String(ballot?.userId || "").trim();
+      const username = String(ballot?.username || "user").trim();
+      const dedupeKey = userId || username.toLowerCase();
+      if (!dedupeKey || seen.has(dedupeKey)) return;
+      seen.add(dedupeKey);
+      voters.push({
+        user_id: userId,
+        username,
+        avatar_url: ballot?.avatarUrl || "",
+        role: ballot?.role || "participant",
+      });
+    });
+    return voters.sort((left, right) => {
+      if ((left.role === "owner") !== (right.role === "owner")) return left.role === "owner" ? -1 : 1;
+      return String(left.username || "").localeCompare(String(right.username || ""));
+    });
+  }
+
   function renderParticipants(record) {
     if (!participantsList || !participantSummaryText || !inviteLinkOutput) return;
     const participants = Array.isArray(record?.participants) ? record.participants : [];
-    participantSummaryText.textContent = participants.length
-      ? `${participants.length} paiden.com participant${participants.length === 1 ? "" : "s"} currently have access to this bracket.`
-      : "No participants are linked to this bracket yet.";
-    participantsList.innerHTML = participants.length
-      ? participants.map((person) => `
+    const isPublic = record?.visibility === "public";
+    const visiblePeople = isPublic ? getBracketVoters(record) : participants;
+    if (participantSectionKicker) participantSectionKicker.textContent = isPublic ? "VOTERS" : "PARTICIPANTS";
+    if (participantSectionTitle) participantSectionTitle.textContent = isPublic ? "Who Has Voted" : "Bracket Access";
+    participantSummaryText.textContent = isPublic
+      ? (visiblePeople.length
+          ? `${visiblePeople.length} paiden.com voter${visiblePeople.length === 1 ? "" : "s"} ${visiblePeople.length === 1 ? "has" : "have"} submitted picks on this public bracket.`
+          : "No one has voted on this public bracket yet.")
+      : (participants.length
+          ? `${participants.length} paiden.com participant${participants.length === 1 ? "" : "s"} currently have access to this bracket.`
+          : "No participants are linked to this bracket yet.");
+    participantsList.innerHTML = visiblePeople.length
+      ? visiblePeople.map((person) => `
           <span class="participant-pill">
             ${person.avatar_url ? `<img src="${person.avatar_url}" alt="">` : ""}
             <span>${escapeHtml(person.username || "user")}${person.role === "owner" ? " (owner)" : ""}</span>
           </span>
         `).join("")
-      : `<div class="empty-state">No participants are linked to this tournament yet.</div>`;
+      : `<div class="empty-state">${isPublic ? "No one has voted on this tournament yet." : "No participants are linked to this tournament yet."}</div>`;
 
-    const ownerToolsBlock = friendInviteInput?.closest(".owner-panel-block");
     const canManageInvites = !!(record?.isOwner && record.visibility === "private");
-    if (ownerToolsBlock) ownerToolsBlock.hidden = !canManageInvites;
+    if (ownerToolsBlock) ownerToolsBlock.hidden = !record?.isOwner;
+    if (detailVisibilitySelect) detailVisibilitySelect.value = isPublic ? "public" : "private";
+    if (privateInviteField) privateInviteField.hidden = !canManageInvites;
+    if (privateInviteActions) privateInviteActions.hidden = !canManageInvites;
+    if (ownerToolsIntro) {
+      ownerToolsIntro.textContent = isPublic
+        ? "This bracket is public. Switch it back to private any time if you want invites and access control again."
+        : "You can switch this bracket between public and private, then manage private invites below.";
+    }
     inviteLinkOutput.textContent = canManageInvites
       ? "Generate a private invite link here."
-      : record?.visibility === "public"
+      : isPublic
         ? "This bracket is public, so invite links are not needed."
-      : "Only the bracket owner can generate invite links.";
+        : "Only the bracket owner can generate invite links.";
+  }
+
+  async function updateActiveTournamentVisibility(nextVisibility) {
+    if (!state.activeTournament?.id || !state.activeTournament?.isOwner) return;
+    const record = state.activeTournament;
+    const normalizedVisibility = String(nextVisibility || "private").toLowerCase() === "public" ? "public" : "private";
+    if (detailVisibilitySelect) detailVisibilitySelect.value = normalizedVisibility;
+    if (record.visibility === normalizedVisibility) {
+      setDetailNotice(`This bracket is already ${normalizedVisibility}.`, true);
+      return;
+    }
+
+    if (saveVisibilityBtn) {
+      saveVisibilityBtn.disabled = true;
+      saveVisibilityBtn.textContent = "Saving...";
+    }
+    if (detailVisibilitySelect) detailVisibilitySelect.disabled = true;
+
+    try {
+      await callRpc("upsert_my_music_tournament", {
+        target_tournament_id: record.id,
+        target_name: record.name,
+        target_visibility: normalizedVisibility,
+        target_playlist_id: record.playlist?.id || null,
+        target_playlist_name: record.playlist?.name || null,
+        target_playlist_cover_url: record.playlist?.images?.[0]?.url || null,
+        target_spotify_playlist_url: record.playlist?.external_urls?.spotify || null,
+        target_playlist_owner_name: record.playlist?.owner?.display_name || null,
+        target_entrants: record.entrants || [],
+        target_rounds: record.rounds || [],
+        target_picks: record.myPicks || {},
+        target_main_draw_size: record.mainDrawSize || 0,
+      });
+      await loadTournamentDetailBySlug(record.slug);
+      await loadAccessibleTournaments();
+      renderApp();
+      setDetailNotice(`Bracket visibility updated to ${normalizedVisibility}.`, true);
+    } catch (errorObj) {
+      if (detailVisibilitySelect) detailVisibilitySelect.value = record.visibility === "public" ? "public" : "private";
+      setDetailNotice(errorObj.message || "Could not update bracket visibility.", true);
+    } finally {
+      if (saveVisibilityBtn) {
+        saveVisibilityBtn.disabled = false;
+        saveVisibilityBtn.textContent = "Save Visibility";
+      }
+      if (detailVisibilitySelect) detailVisibilitySelect.disabled = false;
+    }
   }
 
   function getFullRankingsUrl(record) {
@@ -2167,6 +2262,12 @@
   if (resetBracketBtn) {
     resetBracketBtn.addEventListener("click", () => {
       resetBracketBuilder();
+    });
+  }
+
+  if (saveVisibilityBtn) {
+    saveVisibilityBtn.addEventListener("click", async () => {
+      await updateActiveTournamentVisibility(detailVisibilitySelect?.value || "private");
     });
   }
 
