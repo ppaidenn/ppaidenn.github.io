@@ -109,39 +109,48 @@
       line-height: 1.05;
       color: #0e1116;
     }
+    .accounts-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+      gap: 20px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+    .accounts-copy {
+      min-width: 0;
+    }
     .summary {
-      margin: 0 0 16px;
+      margin: 0;
       font-size: clamp(15px, 1.05vw, 18px);
       color: rgba(16,21,28,0.8);
     }
     .invite-panel {
       display: grid;
-      gap: 12px;
-      margin: 0 0 18px;
-      padding: 16px 18px;
+      gap: 10px;
+      margin: 0;
+      padding: 14px 16px;
       border: 1px solid rgba(0,0,0,0.1);
       border-radius: 16px;
       background: rgba(255,255,255,0.82);
       box-shadow: 0 8px 18px rgba(0,0,0,0.04);
+      justify-self: end;
+      width: min(100%, 360px);
     }
     .invite-panel h2 {
       margin: 0;
-      font-size: clamp(20px, 2vw, 28px);
+      font-size: clamp(17px, 1.5vw, 22px);
       color: #0e1116;
     }
     .invite-panel p {
       margin: 0;
-      font-size: 14px;
+      font-size: 13px;
       color: rgba(16,21,28,0.76);
     }
     .invite-link-row {
-      display: flex;
-      align-items: center;
+      display: grid;
       gap: 10px;
-      flex-wrap: wrap;
     }
     .invite-link-output {
-      flex: 1 1 320px;
       min-height: 44px;
       border: 1px solid rgba(0,0,0,0.14);
       border-radius: 12px;
@@ -151,8 +160,12 @@
       color: #10151c;
       word-break: break-all;
     }
+    .invite-link-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
     .invite-action-btn {
-      flex: 0 0 auto;
       border: 1px solid rgba(0,0,0,0.12);
       border-radius: 999px;
       padding: 9px 13px;
@@ -162,6 +175,7 @@
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
+      width: 100%;
     }
     .invite-action-btn.alt {
       background: rgba(16,21,28,0.08);
@@ -333,6 +347,13 @@
       }
       .footer { display: none !important; }
       .content-inner { border-radius: 16px; }
+      .accounts-head {
+        grid-template-columns: 1fr;
+      }
+      .invite-panel {
+        justify-self: stretch;
+        width: 100%;
+      }
       .accounts-grid { grid-template-columns: 1fr; }
       .account-card {
         align-items: start;
@@ -373,19 +394,25 @@
 
   <main class="content-wrap">
     <section class="content-inner">
-      <div class="kicker">COMMUNITY</div>
-      <h1>All Accounts</h1>
-      <p class="summary" id="accountsSummary">Loading accounts...</p>
-      <section class="invite-panel" aria-label="Invite users to paiden.com">
-        <div class="kicker">INVITE</div>
-        <h2>Invite Someone to paiden.com</h2>
-        <p>Generate a direct link to the create-account page so someone new can join the site.</p>
-        <div class="invite-link-row">
-          <div class="invite-link-output" id="accountInviteLinkOutput">Loading invite link...</div>
-          <button class="invite-action-btn alt" id="copyAccountInviteBtn" type="button">Copy Invite Link</button>
-          <button class="invite-action-btn" id="shareAccountInviteBtn" type="button">Share Invite Link</button>
+      <div class="accounts-head">
+        <div class="accounts-copy">
+          <div class="kicker">COMMUNITY</div>
+          <h1>All Accounts</h1>
+          <p class="summary" id="accountsSummary">Loading accounts...</p>
         </div>
-      </section>
+        <section class="invite-panel" aria-label="Invite users to paiden.com">
+          <div class="kicker">INVITE</div>
+          <h2>Invite to paiden.com</h2>
+          <p>Send someone straight to account creation.</p>
+          <div class="invite-link-row">
+            <div class="invite-link-output" id="accountInviteLinkOutput">Loading invite link...</div>
+            <div class="invite-link-actions">
+              <button class="invite-action-btn alt" id="copyAccountInviteBtn" type="button">Copy Link</button>
+              <button class="invite-action-btn" id="shareAccountInviteBtn" type="button">Share</button>
+            </div>
+          </div>
+        </section>
+      </div>
       <div class="accounts-grid" id="accountsGrid"></div>
       <div class="status" id="accountsStatus"></div>
     </section>
