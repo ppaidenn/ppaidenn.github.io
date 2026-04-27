@@ -114,6 +114,59 @@
       font-size: clamp(15px, 1.05vw, 18px);
       color: rgba(16,21,28,0.8);
     }
+    .invite-panel {
+      display: grid;
+      gap: 12px;
+      margin: 0 0 18px;
+      padding: 16px 18px;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.82);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.04);
+    }
+    .invite-panel h2 {
+      margin: 0;
+      font-size: clamp(20px, 2vw, 28px);
+      color: #0e1116;
+    }
+    .invite-panel p {
+      margin: 0;
+      font-size: 14px;
+      color: rgba(16,21,28,0.76);
+    }
+    .invite-link-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .invite-link-output {
+      flex: 1 1 320px;
+      min-height: 44px;
+      border: 1px solid rgba(0,0,0,0.14);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.95);
+      padding: 11px 12px;
+      font-size: 14px;
+      color: #10151c;
+      word-break: break-all;
+    }
+    .invite-action-btn {
+      flex: 0 0 auto;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 999px;
+      padding: 9px 13px;
+      min-height: 40px;
+      background: #111;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .invite-action-btn.alt {
+      background: rgba(16,21,28,0.08);
+      color: #111;
+    }
     .accounts-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -323,6 +376,16 @@
       <div class="kicker">COMMUNITY</div>
       <h1>All Accounts</h1>
       <p class="summary" id="accountsSummary">Loading accounts...</p>
+      <section class="invite-panel" aria-label="Invite users to paiden.com">
+        <div class="kicker">INVITE</div>
+        <h2>Invite Someone to paiden.com</h2>
+        <p>Generate a direct link to the create-account page so someone new can join the site.</p>
+        <div class="invite-link-row">
+          <div class="invite-link-output" id="accountInviteLinkOutput">Loading invite link...</div>
+          <button class="invite-action-btn alt" id="copyAccountInviteBtn" type="button">Copy Invite Link</button>
+          <button class="invite-action-btn" id="shareAccountInviteBtn" type="button">Share Invite Link</button>
+        </div>
+      </section>
       <div class="accounts-grid" id="accountsGrid"></div>
       <div class="status" id="accountsStatus"></div>
     </section>
@@ -360,10 +423,14 @@
     const accountsGrid = document.getElementById("accountsGrid");
     const accountsSummary = document.getElementById("accountsSummary");
     const accountsStatus = document.getElementById("accountsStatus");
+    const accountInviteLinkOutput = document.getElementById("accountInviteLinkOutput");
+    const copyAccountInviteBtn = document.getElementById("copyAccountInviteBtn");
+    const shareAccountInviteBtn = document.getElementById("shareAccountInviteBtn");
     let currentUserId = "";
     let currentUsernameLower = "";
     let friendUsernames = new Set();
     let pendingOutgoingUsernames = new Set();
+    const accountInviteUrl = `${window.location.origin}/create-account/`;
 
     function escapeHTML(str) {
       return String(str || "").replace(/[&<>"']/g, (s) => ({
@@ -379,6 +446,38 @@
       if (!accountsStatus) return;
       accountsStatus.textContent = message || "";
       accountsStatus.style.color = isError ? "#a10000" : "rgba(16,21,28,0.72)";
+    }
+
+    async function copyInviteLink() {
+      if (!accountInviteUrl) return;
+      try {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+          await navigator.clipboard.writeText(accountInviteUrl);
+          setStatus("Invite link copied.", false);
+          return;
+        }
+      } catch (_) {
+        // Fallback below.
+      }
+      window.prompt("Copy this paiden.com invite link:", accountInviteUrl);
+    }
+
+    async function shareInviteLink() {
+      if (!accountInviteUrl) return;
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: "Join paiden.com",
+            text: "Create your paiden.com account here.",
+            url: accountInviteUrl,
+          });
+          setStatus("Invite link shared.", false);
+          return;
+        } catch (error) {
+          if (error && error.name === "AbortError") return;
+        }
+      }
+      await copyInviteLink();
     }
 
     async function loadAccounts() {
@@ -499,6 +598,23 @@
       btn.textContent = "Requested";
       setStatus("Friend request sent.", false);
     });
+
+    if (accountInviteLinkOutput) {
+      accountInviteLinkOutput.textContent = accountInviteUrl;
+    }
+    if (copyAccountInviteBtn) {
+      copyAccountInviteBtn.addEventListener("click", async () => {
+        await copyInviteLink();
+      });
+    }
+    if (shareAccountInviteBtn) {
+      if (!navigator.share) {
+        shareAccountInviteBtn.textContent = "Copy Invite Link";
+      }
+      shareAccountInviteBtn.addEventListener("click", async () => {
+        await shareInviteLink();
+      });
+    }
 
     const lastUpdated = document.getElementById("last-updated");
     if (lastUpdated) lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();
