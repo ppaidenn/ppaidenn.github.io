@@ -128,10 +128,10 @@
     .vote-matchup-label span { font-size: 12px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: rgba(16,21,28,.64); }
     .vote-matchup-label strong { font-size: 18px; color: #0b1116; }
     .vote-choice-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
-    .vote-choice { --swipe-progress: 0; position: relative; overflow: hidden; width: 100%; border-radius: 18px; border: 1px solid rgba(12,18,24,.1); background: rgba(255,255,255,.94); padding: 16px; display: grid; gap: 14px; text-align: left; cursor: pointer; color: inherit; font: inherit; touch-action: pan-y; transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+    .vote-choice { --swipe-progress: 0; --swipe-shift: 0px; position: relative; overflow: hidden; width: 100%; border-radius: 18px; border: 1px solid rgba(12,18,24,.1); background: rgba(255,255,255,.94); padding: 16px; display: grid; gap: 14px; text-align: left; cursor: pointer; color: inherit; font: inherit; touch-action: pan-y; transform: translate3d(var(--swipe-shift), 0, 0); transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
     .vote-choice > * { position: relative; z-index: 1; }
     .vote-choice::after { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(29,185,84,.12), rgba(29,185,84,.42)); opacity: var(--swipe-progress); pointer-events: none; transition: opacity .08s linear; }
-    .vote-choice:hover:not(:disabled) { transform: translateY(-2px); border-color: rgba(29,185,84,.36); box-shadow: 0 14px 28px rgba(0,0,0,.08); }
+    .vote-choice:hover:not(:disabled) { transform: translate3d(var(--swipe-shift), -2px, 0); border-color: rgba(29,185,84,.36); box-shadow: 0 14px 28px rgba(0,0,0,.08); }
     .vote-choice.selected { border-color: rgba(29,185,84,.5); background: rgba(29,185,84,.12); box-shadow: 0 12px 24px rgba(29,185,84,.12); }
     .vote-choice.swipe-preview { border-color: rgba(29,185,84,.52); box-shadow: 0 16px 30px rgba(29,185,84,.14); }
     .vote-choice.disabled { opacity: .84; }
@@ -161,7 +161,7 @@
   <script src="/shared-footer.js?v=20260417a"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="/auth-client.js?v=20260312c"></script>
-  <script src="/tournaments/tournaments-page.js?v=20260427c"></script>
+  <script src="/tournaments/tournaments-page.js?v=20260427d"></script>
 </body>
 </html>
 

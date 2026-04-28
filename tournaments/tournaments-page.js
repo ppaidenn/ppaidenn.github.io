@@ -1553,16 +1553,19 @@
     voteMatchup.querySelectorAll(".vote-choice").forEach((button) => {
       button.classList.remove("swipe-preview");
       button.style.setProperty("--swipe-progress", "0");
+      button.style.setProperty("--swipe-shift", "0px");
     });
   }
 
-  function updateVoteSwipePreview(side, progress) {
+  function updateVoteSwipePreview(side, progress, deltaX = 0) {
     if (!voteMatchup) return;
     const clamped = Math.max(0, Math.min(Number(progress) || 0, 1));
+    const shift = Math.max(-42, Math.min(Number(deltaX) || 0, 42));
     voteMatchup.querySelectorAll(".vote-choice").forEach((button) => {
       const isTarget = button.getAttribute("data-vote-side") === side && clamped > 0;
       button.classList.toggle("swipe-preview", isTarget);
       button.style.setProperty("--swipe-progress", isTarget ? clamped.toFixed(3) : "0");
+      button.style.setProperty("--swipe-shift", isTarget ? `${shift.toFixed(1)}px` : "0px");
     });
   }
 
@@ -2547,7 +2550,7 @@
         return;
       }
       if (event.cancelable) event.preventDefault();
-      updateVoteSwipePreview(dx < 0 ? "left" : "right", progress);
+      updateVoteSwipePreview(dx < 0 ? "left" : "right", progress, dx);
     }, { passive: false });
     voteMatchup.addEventListener("touchend", () => {
       if (!voteSwipeState.active) return;
