@@ -100,6 +100,11 @@
   const ownerToolsIntro = document.getElementById("ownerToolsIntro");
   const detailVisibilitySelect = document.getElementById("detailVisibilitySelect");
   const saveVisibilityBtn = document.getElementById("saveVisibilityBtn");
+  const transferOwnerField = document.getElementById("transferOwnerField");
+  const transferOwnerSelect = document.getElementById("transferOwnerSelect");
+  const transferOwnerActions = document.getElementById("transferOwnerActions");
+  const transferOwnerBtn = document.getElementById("transferOwnerBtn");
+  const transferOwnerOutput = document.getElementById("transferOwnerOutput");
   const privateInviteField = document.getElementById("privateInviteField");
   const privateInviteActions = document.getElementById("privateInviteActions");
   const inviteFriendBtn = document.getElementById("inviteFriendBtn");
@@ -1688,6 +1693,29 @@
     });
   }
 
+  function getBracketTransferCandidates(record) {
+    const ownerId = String(record?.ownerId || "").trim();
+    const participants = Array.isArray(record?.participants) ? record.participants : [];
+    const combined = [...participants, ...getBracketVoters(record)];
+    const seen = new Set();
+    const candidates = [];
+    combined.forEach((person) => {
+      const userId = String(person?.user_id || person?.userId || "").trim();
+      const username = String(person?.username || "user").trim() || "user";
+      if (!userId || userId === ownerId || seen.has(userId)) return;
+      seen.add(userId);
+      candidates.push({
+        userId,
+        username,
+        role: person?.role || "participant",
+      });
+    });
+    return candidates.sort((left, right) => {
+      if ((left.role === "owner") !== (right.role === "owner")) return left.role === "owner" ? -1 : 1;
+      return left.username.localeCompare(right.username);
+    });
+  }
+
   function canViewBracketAccess(record) {
     if (!record) return false;
     if (record.visibility === "public") return true;
@@ -1771,20 +1799,37 @@
       : `<div class="empty-state">${isPublic ? "No one has voted on this tournament yet." : "No participants are linked to this tournament yet."}</div>`;
 
     const canManageInvites = !!(record?.isOwner && record.visibility === "private");
+    const transferCandidates = record?.isOwner ? getBracketTransferCandidates(record) : [];
     if (ownerToolsBlock) ownerToolsBlock.hidden = !record?.isOwner;
     if (detailVisibilitySelect) detailVisibilitySelect.value = isPublic ? "public" : "private";
+    if (transferOwnerField) transferOwnerField.hidden = !record?.isOwner;
+    if (transferOwnerActions) transferOwnerActions.hidden = !record?.isOwner;
+    if (transferOwnerSelect) {
+      transferOwnerSelect.innerHTML = transferCandidates.length
+        ? `<option value="">Choose an eligible person</option>${transferCandidates.map((person) => `<option value="${escapeHtml(person.userId)}">${escapeHtml(person.username)}</option>`).join("")}`
+        : `<option value="">No eligible people yet</option>`;
+      transferOwnerSelect.disabled = !record?.isOwner || !transferCandidates.length;
+    }
+    if (transferOwnerBtn) transferOwnerBtn.disabled = !record?.isOwner || !transferCandidates.length;
+    if (transferOwnerOutput) {
+      transferOwnerOutput.hidden = !record?.isOwner;
+      transferOwnerOutput.textContent = isPublic
+        ? (transferCandidates.length
+            ? "Choose one of the current voters or participants to become the new bracket owner."
+            : "No eligible transfer target is available yet. Another paiden.com user needs to vote or join first.")
+        : (transferCandidates.length
+            ? "Choose one of the current bracket participants to become the new owner."
+            : "Invite another paiden.com user first if you want to transfer this private bracket.");
+    }
     if (privateInviteField) privateInviteField.hidden = !canManageInvites;
     if (privateInviteActions) privateInviteActions.hidden = !canManageInvites;
     if (ownerToolsIntro) {
       ownerToolsIntro.textContent = isPublic
-        ? "This bracket is public. Switch it back to private any time if you want invites and access control again."
-        : "You can switch this bracket between public and private, then manage private invites below.";
+        ? "This bracket is public. You can switch it back to private any time or hand ownership to another current voter or participant."
+        : "You can switch this bracket between public and private, transfer ownership, then manage private invites below.";
     }
-    inviteLinkOutput.textContent = canManageInvites
-      ? "Generate a private invite link here."
-      : isPublic
-        ? "This bracket is public, so invite links are not needed."
-        : "Only the bracket owner can generate invite links.";
+    inviteLinkOutput.hidden = !canManageInvites;
+    inviteLinkOutput.textContent = canManageInvites ? "Generate a private invite link here." : "";
   }
 
   async function updateActiveTournamentVisibility(nextVisibility) {
@@ -2416,6 +2461,46 @@
   if (saveVisibilityBtn) {
     saveVisibilityBtn.addEventListener("click", async () => {
       await updateActiveTournamentVisibility(detailVisibilitySelect?.value || "private");
+    });
+  }
+
+  if (transferOwnerBtn) {
+    transferOwnerBtn.addEventListener("click", async () => {
+      if (!state.activeTournament?.id || !state.activeTournament?.isOwner) return;
+      const targetUserId = String(transferOwnerSelect?.value || "").trim();
+      if (!targetUserId) {
+        setDetailNotice("Choose who should become the new bracket owner first.", true);
+        transferOwnerSelect?.focus();
+        return;
+      }
+      const targetLabel = String(transferOwnerSelect?.selectedOptions?.[0]?.textContent || "this user").trim();
+      const confirmed = typeof window.confirm === "function"
+        ? window.confirm(`Transfer this bracket to ${targetLabel}? They will become the new owner immediately.`)
+        : true;
+      if (!confirmed) return;
+      transferOwnerBtn.disabled = true;
+      transferOwnerBtn.textContent = "Transferring...";
+      if (transferOwnerSelect) transferOwnerSelect.disabled = true;
+      try {
+        const result = await callRpc("transfer_music_tournament_owner", {
+          target_tournament_id: state.activeTournament.id,
+          target_user_id: targetUserId,
+        });
+        const row = Array.isArray(result) ? result[0] : null;
+        await loadTournamentDetailBySlug(state.activeTournament.slug);
+        await loadAccessibleTournaments();
+        await loadFriendsForOwner();
+        renderApp();
+        setDetailNotice(row?.next_owner_username ? `Bracket ownership transferred to @${row.next_owner_username}.` : "Bracket ownership transferred.", true);
+      } catch (errorObj) {
+        setDetailNotice(errorObj.message || "Could not transfer bracket ownership.", true);
+      } finally {
+        if (transferOwnerBtn) {
+          transferOwnerBtn.disabled = false;
+          transferOwnerBtn.textContent = "Transfer Ownership";
+        }
+        if (transferOwnerSelect) transferOwnerSelect.disabled = false;
+      }
     });
   }
 

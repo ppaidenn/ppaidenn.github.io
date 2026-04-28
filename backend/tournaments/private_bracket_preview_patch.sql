@@ -408,6 +408,113 @@ $$;
 
 grant execute on function public.request_music_tournament_access(uuid) to authenticated;
 
+create or replace function public.transfer_music_tournament_owner(target_tournament_id uuid, target_user_id uuid)
+returns table (
+  next_owner_user_id uuid,
+  next_owner_username text,
+  tournament_slug text
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  me uuid := auth.uid();
+  tournament_row public.music_tournaments%rowtype;
+  target_username text;
+begin
+  if me is null then
+    raise exception 'Not signed in.';
+  end if;
+  if target_tournament_id is null or target_user_id is null then
+    raise exception 'Choose a bracket and a paiden.com user first.';
+  end if;
+
+  select *
+    into tournament_row
+  from public.music_tournaments
+  where id = target_tournament_id
+    and owner_id = me
+  limit 1;
+
+  if tournament_row.id is null then
+    raise exception 'Only the bracket owner can reassign ownership.';
+  end if;
+  if target_user_id = me then
+    raise exception 'You already own this bracket.';
+  end if;
+
+  select p.username
+    into target_username
+  from public.profiles p
+  where p.id = target_user_id
+  limit 1;
+
+  if target_username is null then
+    raise exception 'That paiden.com account could not be found.';
+  end if;
+
+  if not exists (
+    select 1
+    from public.music_tournament_members m
+    where m.tournament_id = tournament_row.id
+      and m.user_id = target_user_id
+  ) and not exists (
+    select 1
+    from public.music_tournament_ballots b
+    where b.tournament_id = tournament_row.id
+      and b.user_id = target_user_id
+  ) then
+    raise exception 'Choose someone who already participates in or has voted on this bracket.';
+  end if;
+
+  if tournament_row.picks <> '{}'::jsonb then
+    insert into public.music_tournament_ballots (tournament_id, user_id, picks)
+    values (tournament_row.id, me, tournament_row.picks)
+    on conflict (tournament_id, user_id) do update
+      set picks = excluded.picks,
+          updated_at = now();
+  end if;
+
+  update public.music_tournaments
+  set owner_id = target_user_id,
+      picks = coalesce(
+        (
+          select b.picks
+          from public.music_tournament_ballots b
+          where b.tournament_id = tournament_row.id
+            and b.user_id = target_user_id
+          limit 1
+        ),
+        '{}'::jsonb
+      ),
+      updated_at = now()
+  where id = tournament_row.id;
+
+  insert into public.music_tournament_members (tournament_id, user_id, role, invited_by)
+  values (tournament_row.id, target_user_id, 'owner', me)
+  on conflict on constraint music_tournament_members_pkey do update
+    set role = 'owner',
+        invited_by = excluded.invited_by;
+
+  update public.music_tournament_members
+  set role = 'participant'
+  where tournament_id = tournament_row.id
+    and user_id = me
+    and user_id <> target_user_id;
+
+  update public.music_tournament_access_requests
+  set owner_id = target_user_id,
+      updated_at = now()
+  where tournament_id = tournament_row.id;
+
+  return query
+  select target_user_id, target_username, tournament_row.slug;
+end;
+$$;
+
+grant execute on function public.transfer_music_tournament_owner(uuid, uuid) to authenticated;
+
 create or replace function public.invite_friend_to_music_tournament(target_tournament_id uuid, target_friend_username text)
 returns table (
   participant_user_id uuid,
