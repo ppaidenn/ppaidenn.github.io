@@ -23,6 +23,7 @@
     auth: null,
     paidenUser: null,
     paidenProfile: null,
+    publicProfiles: [],
     library: [],
     playlist: null,
     entrants: [],
@@ -105,6 +106,7 @@
   const transferOwnerActions = document.getElementById("transferOwnerActions");
   const transferOwnerBtn = document.getElementById("transferOwnerBtn");
   const transferOwnerOutput = document.getElementById("transferOwnerOutput");
+  const privateInviteBlock = document.getElementById("privateInviteBlock");
   const privateInviteField = document.getElementById("privateInviteField");
   const privateInviteActions = document.getElementById("privateInviteActions");
   const inviteFriendBtn = document.getElementById("inviteFriendBtn");
@@ -1695,12 +1697,13 @@
 
   function getBracketTransferCandidates(record) {
     const ownerId = String(record?.ownerId || "").trim();
-    const participants = Array.isArray(record?.participants) ? record.participants : [];
-    const combined = [...participants, ...getBracketVoters(record)];
+    const combined = Array.isArray(state.publicProfiles) && state.publicProfiles.length
+      ? state.publicProfiles
+      : [...(Array.isArray(record?.participants) ? record.participants : []), ...getBracketVoters(record)];
     const seen = new Set();
     const candidates = [];
     combined.forEach((person) => {
-      const userId = String(person?.user_id || person?.userId || "").trim();
+      const userId = String(person?.id || person?.user_id || person?.userId || "").trim();
       const username = String(person?.username || "user").trim() || "user";
       if (!userId || userId === ownerId || seen.has(userId)) return;
       seen.add(userId);
@@ -1806,26 +1809,26 @@
     if (transferOwnerActions) transferOwnerActions.hidden = !record?.isOwner;
     if (transferOwnerSelect) {
       transferOwnerSelect.innerHTML = transferCandidates.length
-        ? `<option value="">Choose an eligible person</option>${transferCandidates.map((person) => `<option value="${escapeHtml(person.userId)}">${escapeHtml(person.username)}</option>`).join("")}`
-        : `<option value="">No eligible people yet</option>`;
+        ? `<option value="">Choose a paiden.com account</option>${transferCandidates.map((person) => `<option value="${escapeHtml(person.userId)}">${escapeHtml(person.username)}</option>`).join("")}`
+        : `<option value="">No other accounts available</option>`;
       transferOwnerSelect.disabled = !record?.isOwner || !transferCandidates.length;
     }
     if (transferOwnerBtn) transferOwnerBtn.disabled = !record?.isOwner || !transferCandidates.length;
     if (transferOwnerOutput) {
       transferOwnerOutput.hidden = !record?.isOwner;
-      transferOwnerOutput.textContent = isPublic
-        ? (transferCandidates.length
-            ? "Choose one of the current voters or participants to become the new bracket owner."
-            : "No eligible transfer target is available yet. Another paiden.com user needs to vote or join first.")
-        : (transferCandidates.length
-            ? "Choose one of the current bracket participants to become the new owner."
-            : "Invite another paiden.com user first if you want to transfer this private bracket.");
+      transferOwnerOutput.textContent = transferCandidates.length
+        ? "Choose any paiden.com account to become the new owner."
+        : "No other paiden.com accounts are available to receive this bracket yet.";
+    }
+    if (privateInviteBlock) {
+      privateInviteBlock.hidden = !canManageInvites;
+      privateInviteBlock.style.display = canManageInvites ? "" : "none";
     }
     if (privateInviteField) privateInviteField.hidden = !canManageInvites;
     if (privateInviteActions) privateInviteActions.hidden = !canManageInvites;
     if (ownerToolsIntro) {
       ownerToolsIntro.textContent = isPublic
-        ? "This bracket is public. You can switch it back to private any time or hand ownership to another current voter or participant."
+        ? "This bracket is public. You can switch it back to private any time or hand ownership to another paiden.com account."
         : "You can switch this bracket between public and private, transfer ownership, then manage private invites below.";
     }
     inviteLinkOutput.hidden = !canManageInvites;
@@ -1865,6 +1868,7 @@
       });
       await loadTournamentDetailBySlug(record.slug);
       await loadAccessibleTournaments();
+      await loadPublicProfilesForOwnerTransfer();
       renderApp();
       setDetailNotice(`Bracket visibility updated to ${normalizedVisibility}.`, true);
     } catch (errorObj) {
@@ -2168,6 +2172,20 @@
     }
   }
 
+  async function loadPublicProfilesForOwnerTransfer() {
+    if (!state.activeTournament?.isOwner) {
+      state.publicProfiles = [];
+      return;
+    }
+    try {
+      const data = await callRpc("get_all_public_profiles");
+      state.publicProfiles = (Array.isArray(data) ? data : [])
+        .filter((row) => row && String(row.username || "").trim());
+    } catch (_) {
+      state.publicProfiles = [];
+    }
+  }
+
   async function buildBracketFromPlaylist() {
     if (!isCustomSpotifyMode()) {
       setStatus("Choose the self-serve Spotify path before trying to save a bracket yourself.", "error");
@@ -2312,6 +2330,7 @@
       await loadTournamentDetailBySlug(slug);
       if (inviteAccepted) setDetailNotice("Invite accepted. This bracket is now linked to your paiden.com account.", true);
       await loadFriendsForOwner();
+      await loadPublicProfilesForOwnerTransfer();
       await loadActiveTournamentAccessRequestStatus();
       renderApp();
     } catch (errorObj) {
@@ -2490,6 +2509,7 @@
         await loadTournamentDetailBySlug(state.activeTournament.slug);
         await loadAccessibleTournaments();
         await loadFriendsForOwner();
+        await loadPublicProfilesForOwnerTransfer();
         renderApp();
         setDetailNotice(row?.next_owner_username ? `Bracket ownership transferred to @${row.next_owner_username}.` : "Bracket ownership transferred.", true);
       } catch (errorObj) {
@@ -2523,6 +2543,7 @@
         friendInviteInput.value = "";
         await loadTournamentDetailBySlug(state.activeTournament.slug);
         await loadFriendsForOwner();
+        await loadPublicProfilesForOwnerTransfer();
         renderApp();
       } catch (errorObj) {
         setDetailNotice(errorObj.message || "Could not invite that friend.", true);

@@ -454,20 +454,6 @@ begin
     raise exception 'That paiden.com account could not be found.';
   end if;
 
-  if not exists (
-    select 1
-    from public.music_tournament_members m
-    where m.tournament_id = tournament_row.id
-      and m.user_id = target_user_id
-  ) and not exists (
-    select 1
-    from public.music_tournament_ballots b
-    where b.tournament_id = tournament_row.id
-      and b.user_id = target_user_id
-  ) then
-    raise exception 'Choose someone who already participates in or has voted on this bracket.';
-  end if;
-
   if tournament_row.picks <> '{}'::jsonb then
     insert into public.music_tournament_ballots (tournament_id, user_id, picks)
     values (tournament_row.id, me, tournament_row.picks)
