@@ -118,6 +118,15 @@
   const voteNextBtn = document.getElementById("voteNextBtn");
   const voteNextRoundBtn = document.getElementById("voteNextRoundBtn");
   const voteModalCloseBtn = document.getElementById("voteModalCloseBtn");
+  const voteSwipeState = {
+    active: false,
+    horizontal: false,
+    startX: 0,
+    startY: 0,
+    lastDx: 0,
+    roundIndex: null,
+    matchIndex: null,
+  };
 
   function escapeHtml(value) {
     return String(value || "")
@@ -1118,7 +1127,7 @@
 
   function setMatchWinner(roundIndex, matchIndex, side) {
     if (!state.activeTournament?.canVote) {
-      setDetailNotice("You need access to this tournament through a paiden.com account before you can vote.", true);
+      setDetailNotice(getVoteAccessMessage(), true);
       return;
     }
     const previousPicks = JSON.parse(JSON.stringify(state.picks || {}));
@@ -1211,7 +1220,7 @@
   function renderBracketMatchCard(info, matchInfo, isFinalRound) {
     const leftWinner = !!(matchInfo.winner?.id && matchInfo.left?.id === matchInfo.winner.id);
     const rightWinner = !!(matchInfo.winner?.id && matchInfo.right?.id === matchInfo.winner.id);
-    const canOpen = !!(info.ready && matchInfo.requiresVote);
+    const canOpen = !!(info.ready && matchInfo.requiresVote && state.activeTournament?.canVote);
     const statusLabel = !info.ready
       ? "Locked"
       : matchInfo.winner
@@ -1324,6 +1333,9 @@
       `;
     }).join("");
 
+    const interactionNote = needsSignInToVote()
+      ? "Sign in or create a paiden.com account to open matchups and vote on this public bracket."
+      : "Use Next Rounds to shift the right column onto the left side. Unlocked matchup cards still open the voting popup.";
     roundStage.innerHTML = `
       <div class="bracket-window-head">
         <div class="bracket-window-actions">
@@ -1352,7 +1364,7 @@
           </div>
         </div>
       </section>
-      <p class="bracket-map-note">Use Next Rounds to shift the right column onto the left side. Unlocked matchup cards still open the voting popup.</p>
+      <p class="bracket-map-note">${escapeHtml(interactionNote)}</p>
     `;
   }
 
@@ -1391,10 +1403,15 @@
       const bracketHref = state.activeTournament?.slug
         ? `/all-tournaments/bracket/view/?slug=${encodeURIComponent(state.activeTournament.slug)}`
         : "/all-tournaments/bracket/view/";
-      const voteLabel = isComplete ? "Review Votes" : "Vote Now";
-      const helper = isComplete
-        ? `${info.round.label} is complete. You can reopen it to review or change picks.`
-        : `${info.round.label} - pick ${pickNumber} of ${info.selectionTotal}. ${formatRoundSummary(info)}`;
+      const canVoteNow = !!state.activeTournament?.canVote;
+      const voteLabel = canVoteNow
+        ? (isComplete ? "Review Votes" : "Vote Now")
+        : "Sign In or Create Account to Vote";
+      const helper = canVoteNow
+        ? (isComplete
+            ? `${info.round.label} is complete. You can reopen it to review or change picks.`
+            : `${info.round.label} - pick ${pickNumber} of ${info.selectionTotal}. ${formatRoundSummary(info)}`)
+        : `This public bracket is viewable now, but you need to sign in or create a paiden.com account before you can vote in ${info.round.label}.`;
       roundStage.innerHTML = `
         <section class="vote-now-card">
           <div class="vote-now-copy">
@@ -1403,7 +1420,7 @@
             <p>${escapeHtml(helper)}</p>
           </div>
           <div class="vote-now-actions">
-            <button class="btn vote-now-btn" type="button" data-open-round="${info.roundIndex}">${escapeHtml(voteLabel)}</button>
+            <button class="btn vote-now-btn" type="button" data-open-round="${info.roundIndex}" ${canVoteNow ? "" : "disabled"}>${escapeHtml(voteLabel)}</button>
             <a class="btn-secondary" id="bracketViewLink" href="${escapeHtml(bracketHref)}" target="_blank" rel="noopener">
               <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
               <span>Open Bracket View</span>
@@ -1432,7 +1449,7 @@
             <div class="round-chip">${escapeHtml(helper)}</div>
           </div>
           <div class="round-actions">
-            <button class="btn round-open-btn" type="button" data-open-round="${roundIndex}" ${info.ready ? "" : "disabled"}>Open ${escapeHtml(round.label)}</button>
+            <button class="btn round-open-btn" type="button" data-open-round="${roundIndex}" ${info.ready && state.activeTournament?.canVote ? "" : "disabled"}>Open ${escapeHtml(round.label)}</button>
           </div>
         </section>
       `;
@@ -1441,12 +1458,10 @@
 
   function renderVoteChoice(entry, selected, side) {
     if (!entry) return `<div class="empty-state">No competitor is available in this slot.</div>`;
-    const hotkey = side === "left" ? "1 / A / Left" : "2 / D / Right";
     const sideLabel = side === "left" ? "Left song" : "Right song";
     const canVote = !!state.activeTournament?.canVote;
     return `
       <button class="vote-choice${selected ? " selected" : ""}${canVote ? "" : " disabled"}" type="button" data-vote-side="${side}" ${canVote ? "" : "disabled"} aria-label="Pick ${escapeHtml(entry.name)}">
-        <span class="vote-hotkey">${hotkey}</span>
         <span class="vote-choice-body">
           ${entry.image ? `<img class="vote-cover" src="${escapeHtml(entry.image)}" alt="">` : `<span class="vote-cover" aria-hidden="true"></span>`}
           <span class="vote-copy">
@@ -1465,7 +1480,8 @@
 
   function renderVoteModal() {
     if (!voteModal || !voteModalKicker || !voteModalTitle || !voteModalSubtitle || !voteProgressText || !voteCompleteNote || !voteMatchup || !votePrevBtn || !voteNextBtn) return;
-    if (state.activeTournament?.visibility === "private" && !state.activeTournament?.canVote) {
+    if (!state.activeTournament?.canVote) {
+      resetVoteSwipeSession();
       voteModal.classList.remove("open");
       voteModal.setAttribute("aria-hidden", "true");
       return;
@@ -1474,7 +1490,10 @@
     const isOpen = !!context;
     voteModal.classList.toggle("open", isOpen);
     voteModal.setAttribute("aria-hidden", isOpen ? "false" : "true");
-    if (!context) return;
+    if (!context) {
+      resetVoteSwipeSession();
+      return;
+    }
 
     const { info, selectionTotal, match } = context;
     const pickNumber = Math.min(state.activeSelectionCursor + 1, Math.max(selectionTotal, 1));
@@ -1507,6 +1526,7 @@
       votePrevBtn.disabled = true;
       voteNextBtn.disabled = true;
       voteNextBtn.textContent = "Next Pick";
+      resetVoteSwipeSession();
       return;
     }
 
@@ -1525,6 +1545,36 @@
     votePrevBtn.disabled = state.activeSelectionCursor <= 0;
     voteNextBtn.disabled = state.activeSelectionCursor >= selectionTotal - 1;
     voteNextBtn.textContent = "Next Pick";
+    resetVoteSwipeSession();
+  }
+
+  function clearVoteSwipePreview() {
+    if (!voteMatchup) return;
+    voteMatchup.querySelectorAll(".vote-choice").forEach((button) => {
+      button.classList.remove("swipe-preview");
+      button.style.setProperty("--swipe-progress", "0");
+    });
+  }
+
+  function updateVoteSwipePreview(side, progress) {
+    if (!voteMatchup) return;
+    const clamped = Math.max(0, Math.min(Number(progress) || 0, 1));
+    voteMatchup.querySelectorAll(".vote-choice").forEach((button) => {
+      const isTarget = button.getAttribute("data-vote-side") === side && clamped > 0;
+      button.classList.toggle("swipe-preview", isTarget);
+      button.style.setProperty("--swipe-progress", isTarget ? clamped.toFixed(3) : "0");
+    });
+  }
+
+  function resetVoteSwipeSession() {
+    voteSwipeState.active = false;
+    voteSwipeState.horizontal = false;
+    voteSwipeState.startX = 0;
+    voteSwipeState.startY = 0;
+    voteSwipeState.lastDx = 0;
+    voteSwipeState.roundIndex = null;
+    voteSwipeState.matchIndex = null;
+    clearVoteSwipePreview();
   }
 
   async function loadAccessibleTournaments() {
@@ -1639,6 +1689,16 @@
     if (!record) return false;
     if (record.visibility === "public") return true;
     return !!(record.canVote || record.isOwner || record.isMember);
+  }
+
+  function needsSignInToVote(record = state.activeTournament) {
+    return !!(record && record.visibility === "public" && !state.paidenUser);
+  }
+
+  function getVoteAccessMessage(record = state.activeTournament) {
+    if (needsSignInToVote(record)) return "Sign in or create a paiden.com account to vote on this bracket.";
+    if (record?.visibility === "private") return "This private bracket only accepts votes from the owner and invited participants.";
+    return "You need access to this tournament through a paiden.com account before you can vote.";
   }
 
   function canRequestVotingAccess(record) {
@@ -1903,7 +1963,9 @@
     } else if (pageMode === "bracket") {
       detailHeroSubnote.textContent = record.visibility === "private" && !record.canVote
         ? "This private bracket keeps round-by-round voting behind invite-only access. Open the tournament page to review rankings instead."
-        : "Move through adjacent bracket rounds two at a time. Open any available matchup to review or change picks.";
+        : record.visibility === "public" && !record.canVote
+          ? "You can browse this public bracket here. Sign in or create a paiden.com account to open matchups and vote."
+          : "Move through adjacent bracket rounds two at a time. Open any available matchup to review or change picks.";
     } else {
       detailHeroSubnote.textContent = record.canVote
         ? "Use the Vote Now card to continue the next pick. Your ballot is saved to this bracket and folded into the top-five standings after completion."
@@ -1975,7 +2037,10 @@
   };
 
   function openRoundModal(roundIndex, targetMatchIndex = null) {
-    if (state.activeTournament?.visibility === "private" && !state.activeTournament?.canVote) return;
+    if (!state.activeTournament?.canVote) {
+      setDetailNotice(getVoteAccessMessage(), true);
+      return;
+    }
     const info = getRoundInfo(roundIndex);
     if (!info || !info.ready) return;
     state.activeRoundIndex = roundIndex;
@@ -1989,6 +2054,7 @@
   }
 
   function closeVoteModal() {
+    resetVoteSwipeSession();
     state.activeRoundIndex = null;
     state.activeSelectionCursor = 0;
     renderVoteModal();
@@ -2442,6 +2508,63 @@
       const context = getCurrentModalContext();
       if (!context || context.matchIndex === null || (side !== "left" && side !== "right")) return;
       setMatchWinner(state.activeRoundIndex, context.matchIndex, side);
+    });
+    voteMatchup.addEventListener("touchstart", (event) => {
+      if (!state.activeTournament?.canVote || event.touches.length !== 1) return;
+      const context = getCurrentModalContext();
+      if (!context || context.matchIndex === null) return;
+      const touch = event.touches[0];
+      voteSwipeState.active = true;
+      voteSwipeState.horizontal = false;
+      voteSwipeState.startX = touch.clientX;
+      voteSwipeState.startY = touch.clientY;
+      voteSwipeState.lastDx = 0;
+      voteSwipeState.roundIndex = state.activeRoundIndex;
+      voteSwipeState.matchIndex = context.matchIndex;
+      clearVoteSwipePreview();
+    }, { passive: true });
+    voteMatchup.addEventListener("touchmove", (event) => {
+      if (!voteSwipeState.active || !state.activeTournament?.canVote || event.touches.length !== 1) return;
+      if (voteSwipeState.roundIndex !== state.activeRoundIndex) {
+        resetVoteSwipeSession();
+        return;
+      }
+      const touch = event.touches[0];
+      const dx = touch.clientX - voteSwipeState.startX;
+      const dy = touch.clientY - voteSwipeState.startY;
+      if (!voteSwipeState.horizontal) {
+        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+        if (Math.abs(dy) > Math.abs(dx) * 1.1) {
+          resetVoteSwipeSession();
+          return;
+        }
+        voteSwipeState.horizontal = true;
+      }
+      voteSwipeState.lastDx = dx;
+      const progress = Math.min(Math.abs(dx) / 180, 1);
+      if (progress <= 0.02) {
+        clearVoteSwipePreview();
+        return;
+      }
+      if (event.cancelable) event.preventDefault();
+      updateVoteSwipePreview(dx < 0 ? "left" : "right", progress);
+    }, { passive: false });
+    voteMatchup.addEventListener("touchend", () => {
+      if (!voteSwipeState.active) return;
+      const roundIndex = voteSwipeState.roundIndex;
+      const matchIndex = voteSwipeState.matchIndex;
+      const dx = voteSwipeState.lastDx;
+      const shouldCommit = voteSwipeState.horizontal
+        && roundIndex === state.activeRoundIndex
+        && Math.abs(dx) >= 72
+        && matchIndex !== null;
+      resetVoteSwipeSession();
+      if (shouldCommit && roundIndex !== null) {
+        setMatchWinner(roundIndex, matchIndex, dx < 0 ? "left" : "right");
+      }
+    });
+    voteMatchup.addEventListener("touchcancel", () => {
+      resetVoteSwipeSession();
     });
   }
 
