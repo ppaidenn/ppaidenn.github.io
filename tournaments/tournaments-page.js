@@ -1629,12 +1629,12 @@
     if (!tournamentLibraryList) return;
     const tournaments = [...state.library].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     if (libraryCount) {
-      libraryCount.textContent = tournaments.length ? `${tournaments.length} saved tournament${tournaments.length === 1 ? "" : "s"}` : "No saved tournaments yet";
+      libraryCount.textContent = tournaments.length ? `${tournaments.length} tournament${tournaments.length === 1 ? "" : "s"}` : "No tournaments yet";
     }
     if (!tournaments.length) {
       tournamentLibraryList.innerHTML = `
         <div class="empty-state">
-          No tournaments are saved yet. Build one from <a href="/bracket-builder/">Bracket Builder</a>.
+          No tournaments yet. Start one in <a href="/bracket-builder/">Bracket Builder</a>.
         </div>
       `;
       return;
@@ -1642,7 +1642,6 @@
 
     tournamentLibraryList.innerHTML = tournaments.map((entry) => {
       const href = `/all-tournaments/${encodeURIComponent(entry.slug)}`;
-      const canSeePrivateAccess = canViewBracketAccess(entry);
       const ownership = entry.isOwner
         ? "You own this bracket"
         : entry.isMember
@@ -1659,8 +1658,6 @@
             <div class="tournament-list-meta">
               <span class="meta-chip ${entry.visibility}">${escapeHtml(entry.visibility)}</span>
               <span class="meta-chip">${entry.entrantCount} songs</span>
-              ${canSeePrivateAccess ? `<span class="meta-chip">${entry.participantCount} participants</span>` : ""}
-              ${entry.updatedAt ? `<span class="meta-chip">Updated ${escapeHtml(formatDate(entry.updatedAt))}</span>` : ""}
             </div>
             <p>${escapeHtml(ownership)}</p>
           </div>
@@ -2305,12 +2302,7 @@
   async function initLibraryPage() {
     await loadCurrentPaidenProfile();
     await loadAccessibleTournaments();
-    setLibraryNotice(
-      state.paidenProfile
-        ? `Showing every saved tournament. You can vote on public brackets plus any private brackets you own or were invited into as @${state.paidenProfile.username}.`
-        : "Showing every saved tournament. Sign in to vote on public brackets or access private invite-only brackets.",
-      true
-    );
+    setLibraryNotice("", false);
     renderTournamentLibrary();
   }
 
