@@ -59,6 +59,9 @@
   const disconnectBtn = document.getElementById("spotifyDisconnectBtn");
   const spotifyAuthPill = document.getElementById("spotifyAuthPill");
   const paidenAuthPill = document.getElementById("paidenAuthPill");
+  const selfServePaidenAuthCard = document.getElementById("selfServePaidenAuthCard");
+  const selfServePaidenAuthCopy = document.getElementById("selfServePaidenAuthCopy");
+  const selfServePaidenAuthLinks = document.getElementById("selfServePaidenAuthLinks");
   const bracketNameInput = document.getElementById("bracketNameInput");
   const tournamentVisibilitySelect = document.getElementById("tournamentVisibilitySelect");
   const playlistInput = document.getElementById("playlistInput");
@@ -259,10 +262,19 @@
     if (!paidenAuthPill) return;
     const profile = state.paidenProfile;
     const connected = !!(state.paidenUser && profile);
+    paidenAuthPill.hidden = !connected;
     paidenAuthPill.classList.toggle("offline", !connected);
+    paidenAuthPill.classList.toggle("secondary", !connected);
     paidenAuthPill.innerHTML = connected
       ? `<i class="fa-solid fa-user-check" aria-hidden="true"></i><span>Signed in to paiden.com as ${escapeHtml(profile.username || profile.full_name || "account")}</span>`
       : `<i class="fa-solid fa-circle" aria-hidden="true"></i><span>Not signed in to paiden.com</span>`;
+    if (selfServePaidenAuthCopy) {
+      selfServePaidenAuthCopy.textContent = connected
+        ? "This is the paiden.com account that will own any bracket you save from this device."
+        : "Please log in or make a paiden.com account before saving a bracket.";
+    }
+    if (selfServePaidenAuthLinks) selfServePaidenAuthLinks.hidden = connected;
+    if (selfServePaidenAuthCard) selfServePaidenAuthCard.hidden = false;
   }
 
   function getPaidenAuth() {
