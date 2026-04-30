@@ -988,6 +988,9 @@
       justify-items: start;
       align-content: start;
     }
+    .profile-photo-controls input[type="file"] {
+      display: none;
+    }
     .profile-photo-controls .avatar-file-btn {
       margin: 0;
     }
@@ -1308,7 +1311,7 @@
             <div class="requests-wrap" id="adminAvatarManagerCard" hidden>
               <div class="requests-title">Private Avatar Manager</div>
               <div class="admin-avatar-card">
-                <p class="admin-avatar-note">This tool is visible only to your account. Pick any paiden.com account, then choose a site image or type a custom avatar path.</p>
+                <p class="admin-avatar-note">This tool is visible only to your account. Pick any paiden.com account, then choose a photo the same way you normally do, or use a site image path if you want.</p>
                 <div class="field">
                   <label for="adminAvatarTargetSelect">Account</label>
                   <select id="adminAvatarTargetSelect">
@@ -1316,7 +1319,15 @@
                   </select>
                 </div>
                 <div class="field">
-                  <label for="adminAvatarPathInput">Avatar Path</label>
+                  <label>Choose Photo</label>
+                  <div class="profile-photo-controls">
+                    <label for="adminAvatarFileInput" class="avatar-file-btn">Choose Photo</label>
+                    <div class="profile-photo-note">Pick an image from your files and it will be compressed and saved for the selected account.</div>
+                    <input id="adminAvatarFileInput" type="file" accept="image/*">
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="adminAvatarPathInput">Or Set Avatar Path Manually</label>
                   <input id="adminAvatarPathInput" type="text" placeholder="/images/braden.jpg or ellacase.png">
                 </div>
                 <div class="field">
@@ -1564,7 +1575,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="/auth-client.js?v=20260312c"></script>
   <script src="/notifications.js?v=20260312c"></script>
-  <script src="/profile-page.js?v=20260429a"></script>
+  <script src="/profile-page.js?v=20260429b"></script>
   <script>
     const lastUpdated = document.getElementById("last-updated");
     if (lastUpdated) lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();

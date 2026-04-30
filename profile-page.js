@@ -23,6 +23,7 @@
   const profileModalStatusEl = document.getElementById("profileModalStatus");
   const adminAvatarManagerCard = document.getElementById("adminAvatarManagerCard");
   const adminAvatarTargetSelect = document.getElementById("adminAvatarTargetSelect");
+  const adminAvatarFileInput = document.getElementById("adminAvatarFileInput");
   const adminAvatarPathInput = document.getElementById("adminAvatarPathInput");
   const adminAvatarPresetGrid = document.getElementById("adminAvatarPresetGrid");
   const adminAvatarPreviewImg = document.getElementById("adminAvatarPreviewImg");
@@ -117,6 +118,7 @@
   let currentProfile = null;
   let currentUserId = "";
   let adminAvatarProfiles = [];
+  let adminAvatarPendingDataUrl = "";
   let adminAvatarSaveInFlight = false;
 
   let calendarMonthDate = new Date();
@@ -276,6 +278,17 @@
     return `/images/${trimmed.replace(/^\/+/, "")}`;
   }
 
+  function isManagedAvatarDataUrl(value) {
+    return /^data:image\//i.test(String(value || "").trim());
+  }
+
+  function describeManagedAvatar(value) {
+    const trimmed = String(value || "").trim();
+    if (!trimmed) return "default avatar";
+    if (isManagedAvatarDataUrl(trimmed)) return "uploaded photo";
+    return normalizeManagedAvatarPath(trimmed);
+  }
+
   function getAdminAvatarSelectedProfile() {
     if (!adminAvatarTargetSelect) return null;
     const targetId = String(adminAvatarTargetSelect.value || "").trim();
@@ -298,11 +311,13 @@
     }).join("");
   }
 
-  function updateAdminAvatarPreview(nextPath) {
+  function updateAdminAvatarPreview(nextPath, customMessage = "") {
     const normalizedPath = normalizeManagedAvatarPath(nextPath);
     if (adminAvatarPreviewImg) adminAvatarPreviewImg.src = normalizedPath;
-    if (adminAvatarPreviewCopy) adminAvatarPreviewCopy.textContent = `Previewing ${normalizedPath}`;
-    renderAdminAvatarPresetGrid(normalizedPath);
+    if (adminAvatarPreviewCopy) {
+      adminAvatarPreviewCopy.textContent = customMessage || `Previewing ${describeManagedAvatar(nextPath)}.`;
+    }
+    renderAdminAvatarPresetGrid(isManagedAvatarDataUrl(nextPath) ? "" : normalizedPath);
   }
 
   function renderAdminAvatarTargetOptions(selectedId = "") {
@@ -324,8 +339,15 @@
   function syncAdminAvatarControlsFromSelection() {
     const selectedProfile = getAdminAvatarSelectedProfile();
     const avatarPath = selectedProfile ? (String(selectedProfile.avatar_url || "").trim() || DEFAULT_AVATAR) : DEFAULT_AVATAR;
-    if (adminAvatarPathInput) adminAvatarPathInput.value = avatarPath;
-    updateAdminAvatarPreview(avatarPath);
+    adminAvatarPendingDataUrl = "";
+    if (adminAvatarFileInput) adminAvatarFileInput.value = "";
+    if (adminAvatarPathInput) adminAvatarPathInput.value = isManagedAvatarDataUrl(avatarPath) ? "" : avatarPath;
+    const previewMessage = selectedProfile
+      ? (isManagedAvatarDataUrl(avatarPath)
+        ? `Loaded @${selectedProfile.username}. Current avatar is an uploaded photo.`
+        : `Loaded @${selectedProfile.username}.`)
+      : "Choose an account to load its current avatar, then save a new one.";
+    updateAdminAvatarPreview(avatarPath, previewMessage);
     setAdminAvatarStatus(selectedProfile ? `Loaded @${selectedProfile.username}.` : "");
   }
 
@@ -367,7 +389,7 @@
       setAdminAvatarStatus("Choose an account first.", true);
       return;
     }
-    const normalizedAvatarPath = normalizeManagedAvatarPath(adminAvatarPathInput ? adminAvatarPathInput.value : "");
+    const normalizedAvatarPath = adminAvatarPendingDataUrl || normalizeManagedAvatarPath(adminAvatarPathInput ? adminAvatarPathInput.value : "");
     adminAvatarSaveInFlight = true;
     adminAvatarSaveBtn.disabled = true;
     adminAvatarSaveBtn.textContent = "Saving...";
@@ -395,8 +417,15 @@
           : entry
       ));
       renderAdminAvatarTargetOptions(updatedProfileId);
-      if (adminAvatarPathInput) adminAvatarPathInput.value = updatedAvatarUrl;
-      updateAdminAvatarPreview(updatedAvatarUrl);
+      adminAvatarPendingDataUrl = "";
+      if (adminAvatarFileInput) adminAvatarFileInput.value = "";
+      if (adminAvatarPathInput) adminAvatarPathInput.value = isManagedAvatarDataUrl(updatedAvatarUrl) ? "" : updatedAvatarUrl;
+      updateAdminAvatarPreview(
+        updatedAvatarUrl,
+        isManagedAvatarDataUrl(updatedAvatarUrl)
+          ? `Previewing uploaded photo for @${row.username}.`
+          : `Previewing ${describeManagedAvatar(updatedAvatarUrl)} for @${row.username}.`
+      );
       if (updatedProfileId === currentUserId) {
         currentProfile = { ...(currentProfile || {}), avatar_url: updatedAvatarUrl };
         renderProfileDisplay(currentProfile, currentUserEmail);
@@ -1494,8 +1523,31 @@
     });
   }
 
+  if (adminAvatarFileInput) {
+    adminAvatarFileInput.addEventListener("change", async () => {
+      const file = adminAvatarFileInput.files && adminAvatarFileInput.files[0] ? adminAvatarFileInput.files[0] : null;
+      if (!file) return;
+      try {
+        const previewDataUrl = await downscaleImageToJpegDataUrl(file);
+        if (previewDataUrl.length > 1024 * 1024 * 1.2) {
+          adminAvatarPendingDataUrl = "";
+          return setAdminAvatarStatus("Profile image is too large after compression.", true);
+        }
+        adminAvatarPendingDataUrl = previewDataUrl;
+        if (adminAvatarPathInput) adminAvatarPathInput.value = "";
+        updateAdminAvatarPreview(previewDataUrl, "Uploaded photo ready to save.");
+        setAdminAvatarStatus("Photo ready to save.");
+      } catch (_) {
+        adminAvatarPendingDataUrl = "";
+        setAdminAvatarStatus("Could not preview selected image.", true);
+      }
+    });
+  }
+
   if (adminAvatarPathInput) {
     adminAvatarPathInput.addEventListener("input", () => {
+      adminAvatarPendingDataUrl = "";
+      if (adminAvatarFileInput) adminAvatarFileInput.value = "";
       updateAdminAvatarPreview(adminAvatarPathInput.value);
       setAdminAvatarStatus("");
     });
@@ -1506,6 +1558,8 @@
       const button = event.target instanceof Element ? event.target.closest("[data-admin-avatar-path]") : null;
       if (!button) return;
       const nextPath = String(button.getAttribute("data-admin-avatar-path") || "").trim();
+      adminAvatarPendingDataUrl = "";
+      if (adminAvatarFileInput) adminAvatarFileInput.value = "";
       if (adminAvatarPathInput) adminAvatarPathInput.value = nextPath;
       updateAdminAvatarPreview(nextPath);
       setAdminAvatarStatus("");
