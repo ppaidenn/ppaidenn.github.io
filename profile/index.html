@@ -305,6 +305,67 @@
       font-weight: 700;
       cursor: pointer;
     }
+    .auth-tools-menu {
+      width: 100%;
+      position: relative;
+    }
+    .auth-tools-summary {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      cursor: pointer;
+    }
+    .auth-tools-summary::-webkit-details-marker {
+      display: none;
+    }
+    .auth-tools-summary-copy {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .auth-tools-caret {
+      transition: transform 140ms ease;
+    }
+    .auth-tools-menu[open] .auth-tools-caret {
+      transform: rotate(180deg);
+    }
+    .auth-tools-dropdown-panel {
+      margin-top: 8px;
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid rgba(20, 43, 31, 0.12);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 10px 20px rgba(17,17,17,0.06);
+    }
+    .auth-tools-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: #111;
+      font-size: 14px;
+      font-weight: 800;
+      background: rgba(17,17,17,0.05);
+      border: 1px solid rgba(17,17,17,0.08);
+    }
+    .auth-tools-link:hover {
+      background: rgba(17,17,17,0.09);
+    }
+    .auth-tools-note {
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(17,17,17,0.6);
+      line-height: 1.4;
+    }
     .friends-dropdown {
       margin-top: 8px;
       border: 1px solid rgba(0,0,0,0.14);
@@ -1269,6 +1330,19 @@
                 </div>
                 <button class="btn edit-profile-btn" id="profileEditBtn" type="button"><i class="fa-solid fa-pen" aria-hidden="true"></i> Edit Profile</button>
                 <button class="btn-secondary edit-profile-btn" id="notificationSettingsBtn" type="button"><i class="fa-solid fa-bell" aria-hidden="true"></i> Customize Notifications</button>
+                <details class="auth-tools-menu" id="authToolsMenu" hidden>
+                  <summary class="btn-secondary edit-profile-btn auth-tools-summary">
+                    <span class="auth-tools-summary-copy"><i class="fa-solid fa-user-shield" aria-hidden="true"></i> Access as Auth</span>
+                    <i class="fa-solid fa-caret-down auth-tools-caret" aria-hidden="true"></i>
+                  </summary>
+                  <div class="auth-tools-dropdown-panel">
+                    <a class="auth-tools-link" href="/auth-tools/" target="_blank" rel="noopener noreferrer">
+                      <span>PFP Manager</span>
+                      <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                    </a>
+                    <div class="auth-tools-note">More private auth tools can live here later.</div>
+                  </div>
+                </details>
               </div>
               <div class="profile-summary-card">
                 <div class="profile-display-name" id="profileDisplayName">Loading...</div>
@@ -1307,44 +1381,6 @@
               </div>
               <div class="inbox-list" id="notificationInboxList"></div>
               <div class="inbox-note">Account notifications are saved here even if push delivery is missed.</div>
-            </div>
-            <div class="requests-wrap" id="adminAvatarManagerCard" hidden>
-              <div class="requests-title">Private Avatar Manager</div>
-              <div class="admin-avatar-card">
-                <p class="admin-avatar-note">This tool is visible only to your account. Pick any paiden.com account, then choose a photo the same way you normally do, or use a site image path if you want.</p>
-                <div class="field">
-                  <label for="adminAvatarTargetSelect">Account</label>
-                  <select id="adminAvatarTargetSelect">
-                    <option value="">Choose an account</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label>Choose Photo</label>
-                  <div class="profile-photo-controls">
-                    <label for="adminAvatarFileInput" class="avatar-file-btn">Choose Photo</label>
-                    <div class="profile-photo-note">Pick an image from your files and it will be compressed and saved for the selected account.</div>
-                    <input id="adminAvatarFileInput" type="file" accept="image/*">
-                  </div>
-                </div>
-                <div class="field">
-                  <label for="adminAvatarPathInput">Or Set Avatar Path Manually</label>
-                  <input id="adminAvatarPathInput" type="text" placeholder="/images/braden.jpg or ellacase.png">
-                </div>
-                <div class="field">
-                  <label>Quick Picks</label>
-                  <div class="admin-avatar-preset-grid" id="adminAvatarPresetGrid"></div>
-                </div>
-                <div class="admin-avatar-preview-row">
-                  <div class="admin-avatar-preview">
-                    <img id="adminAvatarPreviewImg" alt="Avatar preview" src="/images/default_pfp.jpg">
-                  </div>
-                  <div class="admin-avatar-preview-copy" id="adminAvatarPreviewCopy">Choose an account to load its current avatar, then save a new one.</div>
-                </div>
-                <div class="status" id="adminAvatarStatus"></div>
-                <div class="admin-avatar-actions">
-                  <button class="btn" id="adminAvatarSaveBtn" type="button">Update Account Avatar</button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -1575,7 +1611,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="/auth-client.js?v=20260312c"></script>
   <script src="/notifications.js?v=20260312c"></script>
-  <script src="/profile-page.js?v=20260429b"></script>
+  <script src="/profile-page.js?v=20260430a"></script>
   <script>
     const lastUpdated = document.getElementById("last-updated");
     if (lastUpdated) lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();

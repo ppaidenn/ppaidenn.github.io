@@ -21,6 +21,7 @@
   const profileModalDoneBtn = document.getElementById("profileModalDoneBtn");
   const profileModalSaveBtn = document.getElementById("profileModalSaveBtn");
   const profileModalStatusEl = document.getElementById("profileModalStatus");
+  const authToolsMenu = document.getElementById("authToolsMenu");
   const adminAvatarManagerCard = document.getElementById("adminAvatarManagerCard");
   const adminAvatarTargetSelect = document.getElementById("adminAvatarTargetSelect");
   const adminAvatarFileInput = document.getElementById("adminAvatarFileInput");
@@ -1462,6 +1463,10 @@
     if (bioEl) bioEl.value = profile.bio || "";
     if (profileLinksInputEl) profileLinksInputEl.value = Array.isArray(profile.personal_links) ? profile.personal_links.join("\n") : "";
     renderProfileDisplay(profile, currentUserEmail);
+    if (authToolsMenu) {
+      authToolsMenu.hidden = !canAccessAdminAvatarManager(profile);
+      if (authToolsMenu.hidden) authToolsMenu.removeAttribute("open");
+    }
     await initializeAdminAvatarManager(profile);
 
     renderCalendarSelectors();

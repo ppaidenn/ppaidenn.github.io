@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>paiden.com</title>
+  <meta name="description" content="Private auth tools for paiden.com">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="apple-touch-icon" href="/images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+  <link rel="stylesheet" href="/account-menu.css?v=20260420d">
+  <style>
+    :root {
+      --side-margin: 10vw;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --brand-font-size: 2.5vw;
+      --nav-font-size: 1.2vw;
+      --spacing-small: 0.5vw;
+      --spacing-large: 1.5vw;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #dfe4df;
+      color: #111;
+      overflow-x: hidden;
+    }
+    [hidden] { display: none !important; }
+    .top-nav {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      background: #000;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+    .top-nav-inner {
+      margin: 0 var(--side-margin);
+      min-height: calc(64px + var(--safe-top));
+      padding-top: var(--safe-top);
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-start;
+    }
+    .brand {
+      color: #fff;
+      text-decoration: none;
+      font-size: var(--brand-font-size);
+      font-weight: bold;
+      padding-bottom: var(--spacing-small);
+      padding-right: var(--spacing-large);
+      border-right: 0.1vw solid #fff;
+      margin-right: var(--spacing-large);
+    }
+    .nav-links { display: flex; align-items: flex-end; gap: 0; }
+    .nav-links a {
+      color: #fff;
+      text-decoration: none;
+      font-size: var(--nav-font-size);
+      font-weight: bold;
+      margin-right: var(--spacing-large);
+      padding-bottom: var(--spacing-small);
+    }
+    .nav-links a:last-child { margin-right: 0; }
+    .mobile-fixed-header { display: none; }
+    .content-wrap {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      padding: clamp(24px, 4.5vh, 42px) 0 calc(30px + var(--safe-bottom));
+    }
+    .content-inner {
+      width: min(1040px, calc(100vw - (2 * var(--side-margin))));
+      margin: 0 auto;
+      background:
+        radial-gradient(circle at top left, rgba(198, 229, 213, 0.42), transparent 32%),
+        linear-gradient(180deg, rgba(250,252,249,0.97), rgba(235,240,234,0.92));
+      border: 1px solid rgba(22, 40, 31, 0.1);
+      border-radius: 24px;
+      box-shadow: 0 18px 42px rgba(0,0,0,0.1);
+      padding: clamp(18px, 2.4vw, 32px);
+    }
+    .tool-hero {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .tool-kicker {
+      letter-spacing: 0.18em;
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(32, 59, 44, 0.72);
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.04;
+    }
+    .tool-copy {
+      margin: 0;
+      font-size: clamp(15px, 1.55vw, 19px);
+      line-height: 1.55;
+      color: rgba(17,17,17,0.78);
+      max-width: 760px;
+    }
+    .tool-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.76);
+      border: 1px solid rgba(20, 43, 31, 0.12);
+      font-size: 13px;
+      font-weight: 800;
+      color: #133b2a;
+    }
+    .tool-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .tool-grid {
+      display: grid;
+      gap: 18px;
+    }
+    .tool-panel {
+      border: 1px solid rgba(22, 40, 31, 0.12);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.84), rgba(239,244,239,0.74));
+      padding: clamp(16px, 2vw, 24px);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.5),
+        0 10px 24px rgba(21, 32, 25, 0.08);
+    }
+    .tool-panel-title {
+      margin: 0 0 6px;
+      font-size: clamp(24px, 2.8vw, 34px);
+      font-weight: 800;
+      color: #111;
+    }
+    .tool-panel-copy {
+      margin: 0 0 14px;
+      font-size: 15px;
+      line-height: 1.55;
+      color: rgba(17,17,17,0.72);
+      max-width: 720px;
+    }
+    .btn,
+    .btn-secondary,
+    .avatar-file-btn {
+      border: 1px solid rgba(0,0,0,0.2);
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      font-family: inherit;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn,
+    .avatar-file-btn {
+      background: #111;
+      color: #fff;
+    }
+    .btn-secondary {
+      background: #fff;
+      color: #111;
+    }
+    .field { margin-bottom: 12px; }
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 800;
+      font-size: 15px;
+    }
+    .field input,
+    .field select {
+      width: 100%;
+      border: 1px solid rgba(0,0,0,0.2);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 15px;
+      background: #fff;
+      font-family: inherit;
+    }
+    .profile-photo-edit-row {
+      display: grid;
+      grid-template-columns: 124px minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .profile-photo-preview {
+      border: 1px solid rgba(0,0,0,0.14);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.9);
+      padding: 10px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+    .profile-photo-preview img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      display: block;
+      border-radius: 10px;
+      border: 1px solid rgba(0,0,0,0.12);
+      background: #fff;
+    }
+    .profile-photo-controls {
+      display: grid;
+      gap: 8px;
+      justify-items: start;
+      align-content: start;
+    }
+    .profile-photo-controls input[type="file"] {
+      display: none;
+    }
+    .profile-photo-note {
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(17,17,17,0.64);
+      line-height: 1.45;
+    }
+    .admin-avatar-note {
+      margin: 0 0 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(17,17,17,0.72);
+      line-height: 1.5;
+    }
+    .admin-avatar-preset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
+      gap: 10px;
+    }
+    .admin-avatar-preset {
+      border: 1px solid rgba(20, 43, 31, 0.14);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.88);
+      padding: 10px;
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    }
+    .admin-avatar-preset:hover {
+      transform: translateY(-1px);
+      border-color: rgba(24, 78, 44, 0.3);
+      box-shadow: 0 10px 20px rgba(17,17,17,0.08);
+    }
+    .admin-avatar-preset.active {
+      border-color: rgba(24, 78, 44, 0.52);
+      background: rgba(223, 241, 229, 0.98);
+      box-shadow: 0 12px 22px rgba(36, 86, 56, 0.14);
+    }
+    .admin-avatar-preset img {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      object-fit: cover;
+      border: 1px solid rgba(0,0,0,0.12);
+      background: #fff;
+    }
+    .admin-avatar-preset-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #111;
+      text-align: center;
+      line-height: 1.25;
+    }
+    .admin-avatar-preview-row {
+      display: grid;
+      grid-template-columns: 86px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid rgba(20, 43, 31, 0.12);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.7);
+    }
+    .admin-avatar-preview {
+      width: 86px;
+      height: 86px;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.12);
+      background: #fff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+    }
+    .admin-avatar-preview img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+    .admin-avatar-preview-copy {
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(17,17,17,0.72);
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .admin-avatar-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+    .admin-avatar-actions .btn {
+      width: 100%;
+    }
+    .status {
+      margin-top: 12px;
+      min-height: 20px;
+      font-weight: 700;
+    }
+    @media (max-width: 768px) {
+      body { padding-top: calc(var(--safe-top) + 58px); }
+      .top-nav { display: none; }
+      .mobile-fixed-header {
+        position: fixed; top: 0; left: 0; right: 0;
+        height: calc(var(--safe-top) + 58px);
+        padding-top: var(--safe-top);
+        padding-left: 5vw; padding-right: 5vw;
+        display: flex; align-items: center; justify-content: space-between;
+        background: #000; z-index: 10000;
+      }
+      .mobile-fixed-brand { color: #fff; text-decoration: none; font-weight: 800; font-size: clamp(22px, 6.4vw, 30px); line-height: 1; }
+      .mobile-fixed-nav { display: flex; align-items: center; gap: 18px; padding-left: 16px; }
+      .mobile-fixed-nav a { color: #fff; text-decoration: none; font-size: 22px; line-height: 1; }
+      .content-inner {
+        width: calc(100vw - 10vw);
+      }
+      .profile-photo-edit-row,
+      .admin-avatar-preview-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="/shared-app-header.css?v=20260421b">
+</head>
+<body>
+  <header class="top-nav" role="navigation" aria-label="Primary site navigation">
+    <div class="top-nav-inner">
+      <a class="brand" href="/">paiden.com</a>
+      <nav class="nav-links">
+        <a href="/resume">Resume</a>
+        <a href="/photos">Photos</a>
+        <a href="/blog">Blog</a>
+        <a href="/contactme">Contact Me</a>
+      </nav>
+    </div>
+  </header>
+  <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation">
+    <a class="mobile-fixed-brand" href="/">paiden.com</a>
+    <div class="mobile-fixed-nav">
+      <a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a>
+      <a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a>
+      <a href="/contactme" aria-label="Contact"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a>
+    </div>
+  </div>
+  <main class="content-wrap">
+    <section class="content-inner">
+      <div class="tool-hero">
+        <div class="tool-kicker">PRIVATE AUTH TOOL</div>
+        <h1>PFP Manager</h1>
+        <p class="tool-copy">This page is the private profile-photo manager for paiden.com. It is reserved for <strong>@paiden</strong> and is opened from the auth dropdown on your profile page.</p>
+        <div class="tool-meta" id="authToolsCurrentUser"><i class="fa-solid fa-user-shield" aria-hidden="true"></i> Checking account...</div>
+        <div class="tool-actions">
+          <a class="btn-secondary" href="/profile/"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back to Profile</a>
+        </div>
+      </div>
+
+      <div class="tool-grid">
+        <section class="tool-panel" id="adminAvatarBlockedCard" hidden>
+          <h2 class="tool-panel-title">Private Access Only</h2>
+          <p class="tool-panel-copy">This page is only available to the paiden auth account. If you reached it by accident, you will be sent back to your profile page.</p>
+        </section>
+
+        <section class="tool-panel" id="adminAvatarManagerCard" hidden>
+          <h2 class="tool-panel-title">Manage Profile Photos</h2>
+          <p class="tool-panel-copy">Pick any paiden.com account, then choose a photo from your files, a quick-pick image, or a manual image path.</p>
+          <p class="admin-avatar-note">Uploaded photos are compressed the same way as the normal profile editor before they are saved.</p>
+
+          <div class="field">
+            <label for="adminAvatarTargetSelect">Account</label>
+            <select id="adminAvatarTargetSelect">
+              <option value="">Choose an account</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Choose Photo</label>
+            <div class="profile-photo-edit-row">
+              <div class="profile-photo-preview">
+                <img id="adminAvatarPreviewImg" alt="Avatar preview" src="/images/default_pfp.jpg">
+              </div>
+              <div class="profile-photo-controls">
+                <label for="adminAvatarFileInput" class="avatar-file-btn">Choose Photo</label>
+                <div class="profile-photo-note">Pick an image from your files and it will be compressed and saved for the selected account.</div>
+                <input id="adminAvatarFileInput" type="file" accept="image/*">
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="adminAvatarPathInput">Or Set Avatar Path Manually</label>
+            <input id="adminAvatarPathInput" type="text" placeholder="/images/braden.jpg or ellacase.png">
+          </div>
+
+          <div class="field">
+            <label>Quick Picks</label>
+            <div class="admin-avatar-preset-grid" id="adminAvatarPresetGrid"></div>
+          </div>
+
+          <div class="admin-avatar-preview-row">
+            <div class="admin-avatar-preview">
+              <img id="adminAvatarPreviewMirrorImg" alt="Avatar preview detail" src="/images/default_pfp.jpg">
+            </div>
+            <div class="admin-avatar-preview-copy" id="adminAvatarPreviewCopy">Choose an account to load its current avatar, then save a new one.</div>
+          </div>
+
+          <div class="status" id="adminAvatarStatus"></div>
+          <div class="admin-avatar-actions">
+            <button class="btn" id="adminAvatarSaveBtn" type="button">Update Account Avatar</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="status" id="pageStatus"></div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/auth-client.js?v=20260312c"></script>
+  <script src="/auth-tools/auth-tools-page.js?v=20260430a"></script>
+  <script src="/shared-app-header.js?v=20260421b"></script>
+  <script src="/account-menu.js?v=20260420c"></script>
+</body>
+</html>
