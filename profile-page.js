@@ -21,6 +21,14 @@
   const profileModalDoneBtn = document.getElementById("profileModalDoneBtn");
   const profileModalSaveBtn = document.getElementById("profileModalSaveBtn");
   const profileModalStatusEl = document.getElementById("profileModalStatus");
+  const adminAvatarManagerCard = document.getElementById("adminAvatarManagerCard");
+  const adminAvatarTargetSelect = document.getElementById("adminAvatarTargetSelect");
+  const adminAvatarPathInput = document.getElementById("adminAvatarPathInput");
+  const adminAvatarPresetGrid = document.getElementById("adminAvatarPresetGrid");
+  const adminAvatarPreviewImg = document.getElementById("adminAvatarPreviewImg");
+  const adminAvatarPreviewCopy = document.getElementById("adminAvatarPreviewCopy");
+  const adminAvatarStatusEl = document.getElementById("adminAvatarStatus");
+  const adminAvatarSaveBtn = document.getElementById("adminAvatarSaveBtn");
   const changePasswordBtn = document.getElementById("changePasswordBtn");
   const passwordModalOverlay = document.getElementById("passwordModalOverlay");
   const passwordModalEl = passwordModalOverlay ? passwordModalOverlay.querySelector(".event-modal") : null;
@@ -94,8 +102,22 @@
   const eventInvitesList = document.getElementById("eventInvitesList");
 
   const DEFAULT_AVATAR = "/images/default_pfp.jpg";
+  const ADMIN_AVATAR_MANAGER_USERNAME = "paiden";
+  const ADMIN_AVATAR_LIBRARY = [
+    { label: "Default", path: "/images/default_pfp.jpg" },
+    { label: "Braden", path: "/images/braden.jpg" },
+    { label: "Colin Patrick", path: "/images/colinpatrick.jpg" },
+    { label: "Ella Case", path: "/images/ellacase.png" },
+    { label: "Hailey Face", path: "/images/haileyface.png" },
+    { label: "Duck", path: "/images/duck.png" },
+    { label: "Duck WebP", path: "/images/duck.webp" },
+  ];
   let friendsDropdownOpen = false;
   let friendsCache = [];
+  let currentProfile = null;
+  let currentUserId = "";
+  let adminAvatarProfiles = [];
+  let adminAvatarSaveInFlight = false;
 
   let calendarMonthDate = new Date();
   calendarMonthDate = new Date(calendarMonthDate.getFullYear(), calendarMonthDate.getMonth(), 1);
@@ -181,6 +203,12 @@
     profileModalStatusEl.style.color = isError ? "#a10000" : "rgba(17,17,17,0.78)";
   }
 
+  function setAdminAvatarStatus(message, isError = false) {
+    if (!adminAvatarStatusEl) return;
+    adminAvatarStatusEl.textContent = message || "";
+    adminAvatarStatusEl.style.color = isError ? "#a10000" : "rgba(17,17,17,0.78)";
+  }
+
   function setStatus(message, isError = false) {
     if (!statusEl) return;
     statusEl.textContent = message || "";
@@ -234,6 +262,155 @@
     renderProfileLinks(profile.personal_links);
     if (avatarImgEl) avatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
     if (profileModalAvatarImgEl) profileModalAvatarImgEl.src = profile.avatar_url || DEFAULT_AVATAR;
+  }
+
+  function canAccessAdminAvatarManager(profile = {}) {
+    return String(profile.username || "").trim().toLowerCase() === ADMIN_AVATAR_MANAGER_USERNAME;
+  }
+
+  function normalizeManagedAvatarPath(value) {
+    const trimmed = String(value || "").trim();
+    if (!trimmed) return DEFAULT_AVATAR;
+    if (/^(https?:\/\/|data:image\/|\/)/i.test(trimmed)) return trimmed;
+    if (/^images\//i.test(trimmed)) return `/${trimmed}`;
+    return `/images/${trimmed.replace(/^\/+/, "")}`;
+  }
+
+  function getAdminAvatarSelectedProfile() {
+    if (!adminAvatarTargetSelect) return null;
+    const targetId = String(adminAvatarTargetSelect.value || "").trim();
+    if (!targetId) return null;
+    return adminAvatarProfiles.find((row) => String(row.id || "").trim() === targetId) || null;
+  }
+
+  function renderAdminAvatarPresetGrid(selectedPath = DEFAULT_AVATAR) {
+    if (!adminAvatarPresetGrid) return;
+    const normalizedSelectedPath = normalizeManagedAvatarPath(selectedPath);
+    adminAvatarPresetGrid.innerHTML = ADMIN_AVATAR_LIBRARY.map((avatar) => {
+      const normalizedPath = normalizeManagedAvatarPath(avatar.path);
+      const activeClass = normalizedPath === normalizedSelectedPath ? " active" : "";
+      return `
+        <button class="admin-avatar-preset${activeClass}" type="button" data-admin-avatar-path="${escapeHTML(normalizedPath)}">
+          <img src="${escapeHTML(normalizedPath)}" alt="${escapeHTML(avatar.label)} avatar option">
+          <span class="admin-avatar-preset-label">${escapeHTML(avatar.label)}</span>
+        </button>
+      `;
+    }).join("");
+  }
+
+  function updateAdminAvatarPreview(nextPath) {
+    const normalizedPath = normalizeManagedAvatarPath(nextPath);
+    if (adminAvatarPreviewImg) adminAvatarPreviewImg.src = normalizedPath;
+    if (adminAvatarPreviewCopy) adminAvatarPreviewCopy.textContent = `Previewing ${normalizedPath}`;
+    renderAdminAvatarPresetGrid(normalizedPath);
+  }
+
+  function renderAdminAvatarTargetOptions(selectedId = "") {
+    if (!adminAvatarTargetSelect) return;
+    const normalizedSelectedId = String(selectedId || "").trim();
+    const options = ['<option value="">Choose an account</option>'];
+    adminAvatarProfiles.forEach((row) => {
+      const profileId = String(row.id || "").trim();
+      const username = String(row.username || "").trim();
+      if (!profileId || !username) return;
+      const fullName = String(row.full_name || "").trim();
+      const label = fullName ? `${fullName} (@${username})` : `@${username}`;
+      const selected = profileId === normalizedSelectedId ? " selected" : "";
+      options.push(`<option value="${escapeHTML(profileId)}"${selected}>${escapeHTML(label)}</option>`);
+    });
+    adminAvatarTargetSelect.innerHTML = options.join("");
+  }
+
+  function syncAdminAvatarControlsFromSelection() {
+    const selectedProfile = getAdminAvatarSelectedProfile();
+    const avatarPath = selectedProfile ? (String(selectedProfile.avatar_url || "").trim() || DEFAULT_AVATAR) : DEFAULT_AVATAR;
+    if (adminAvatarPathInput) adminAvatarPathInput.value = avatarPath;
+    updateAdminAvatarPreview(avatarPath);
+    setAdminAvatarStatus(selectedProfile ? `Loaded @${selectedProfile.username}.` : "");
+  }
+
+  async function loadAdminAvatarProfiles(selectedId = "") {
+    if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") return false;
+    const client = window.PaidenAuth.getClient();
+    const { data, error } = await client.rpc("get_all_public_profiles");
+    if (error) {
+      setAdminAvatarStatus(error.message || "Could not load account list.", true);
+      return false;
+    }
+    adminAvatarProfiles = Array.isArray(data) ? data : [];
+    renderAdminAvatarTargetOptions(String(selectedId || "").trim() || currentUserId);
+    syncAdminAvatarControlsFromSelection();
+    return true;
+  }
+
+  async function initializeAdminAvatarManager(profile = {}) {
+    if (!adminAvatarManagerCard) return;
+    const allowed = canAccessAdminAvatarManager(profile);
+    adminAvatarManagerCard.hidden = !allowed;
+    if (!allowed) {
+      adminAvatarProfiles = [];
+      return;
+    }
+    setAdminAvatarStatus("");
+    renderAdminAvatarPresetGrid(DEFAULT_AVATAR);
+    await loadAdminAvatarProfiles(currentUserId);
+  }
+
+  async function saveAdminAvatarSelection() {
+    if (!adminAvatarSaveBtn || adminAvatarSaveInFlight) return;
+    if (!window.PaidenAuth || typeof window.PaidenAuth.getClient !== "function") {
+      setAdminAvatarStatus("Auth service unavailable.", true);
+      return;
+    }
+    const selectedProfile = getAdminAvatarSelectedProfile();
+    if (!selectedProfile) {
+      setAdminAvatarStatus("Choose an account first.", true);
+      return;
+    }
+    const normalizedAvatarPath = normalizeManagedAvatarPath(adminAvatarPathInput ? adminAvatarPathInput.value : "");
+    adminAvatarSaveInFlight = true;
+    adminAvatarSaveBtn.disabled = true;
+    adminAvatarSaveBtn.textContent = "Saving...";
+    setAdminAvatarStatus("Saving...");
+    try {
+      const client = window.PaidenAuth.getClient();
+      const { data, error } = await client.rpc("admin_set_profile_avatar", {
+        target_profile_id: selectedProfile.id,
+        next_avatar_url: normalizedAvatarPath,
+      });
+      if (error) {
+        setAdminAvatarStatus(error.message || "Could not update avatar.", true);
+        return;
+      }
+      const row = Array.isArray(data) ? data[0] : null;
+      if (!row) {
+        setAdminAvatarStatus("Could not update avatar.", true);
+        return;
+      }
+      const updatedProfileId = String(row.profile_id || "").trim();
+      const updatedAvatarUrl = String(row.avatar_url || "").trim() || DEFAULT_AVATAR;
+      adminAvatarProfiles = adminAvatarProfiles.map((entry) => (
+        String(entry.id || "").trim() === updatedProfileId
+          ? { ...entry, avatar_url: updatedAvatarUrl }
+          : entry
+      ));
+      renderAdminAvatarTargetOptions(updatedProfileId);
+      if (adminAvatarPathInput) adminAvatarPathInput.value = updatedAvatarUrl;
+      updateAdminAvatarPreview(updatedAvatarUrl);
+      if (updatedProfileId === currentUserId) {
+        currentProfile = { ...(currentProfile || {}), avatar_url: updatedAvatarUrl };
+        renderProfileDisplay(currentProfile, currentUserEmail);
+      }
+      await loadFriends();
+      await loadFriendRequests();
+      setAdminAvatarStatus(`Updated @${row.username} avatar.`);
+    } catch (_) {
+      setAdminAvatarStatus("Could not update avatar.", true);
+    } finally {
+      adminAvatarSaveInFlight = false;
+      adminAvatarSaveBtn.disabled = false;
+      adminAvatarSaveBtn.textContent = "Update Account Avatar";
+    }
   }
 
   function formatPostDate(iso) {
@@ -442,6 +619,7 @@
         return false;
       }
       const profile = res.profile || {};
+      currentProfile = profile;
       if (fullNameEl) fullNameEl.value = profile.full_name || "";
       if (usernameEl) usernameEl.value = profile.username || "";
       if (bioEl) bioEl.value = profile.bio || "";
@@ -450,6 +628,7 @@
       if (avatarInputEl) avatarInputEl.value = "";
       setProfileModalStatus("Profile saved.");
       setStatus("Profile saved.");
+      await initializeAdminAvatarManager(profile);
       await loadFriends();
       await loadFriendRequests();
       return true;
@@ -1246,12 +1425,15 @@
       return;
     }
     const profile = res.profile || {};
+    currentProfile = profile;
+    currentUserId = String(res.user.id || "").trim();
     currentUserEmail = res.user.email || "";
     if (fullNameEl) fullNameEl.value = profile.full_name || "";
     if (usernameEl) usernameEl.value = profile.username || "";
     if (bioEl) bioEl.value = profile.bio || "";
     if (profileLinksInputEl) profileLinksInputEl.value = Array.isArray(profile.personal_links) ? profile.personal_links.join("\n") : "";
     renderProfileDisplay(profile, currentUserEmail);
+    await initializeAdminAvatarManager(profile);
 
     renderCalendarSelectors();
     renderWeekdays();
@@ -1259,7 +1441,7 @@
     await loadFriendRequests();
     await loadNotificationInbox();
     await loadNotificationPreferences();
-    await loadAccountPosts(String(res.user.id || ""));
+    await loadAccountPosts(currentUserId);
     await loadCalendarEventsForMonth();
     await loadPendingEventInvites();
     const shareState = getEventShareFlowState();
@@ -1303,6 +1485,36 @@
   if (profileEditBtn) {
     profileEditBtn.addEventListener("click", () => {
       openProfileModal();
+    });
+  }
+
+  if (adminAvatarTargetSelect) {
+    adminAvatarTargetSelect.addEventListener("change", () => {
+      syncAdminAvatarControlsFromSelection();
+    });
+  }
+
+  if (adminAvatarPathInput) {
+    adminAvatarPathInput.addEventListener("input", () => {
+      updateAdminAvatarPreview(adminAvatarPathInput.value);
+      setAdminAvatarStatus("");
+    });
+  }
+
+  if (adminAvatarPresetGrid) {
+    adminAvatarPresetGrid.addEventListener("click", (event) => {
+      const button = event.target instanceof Element ? event.target.closest("[data-admin-avatar-path]") : null;
+      if (!button) return;
+      const nextPath = String(button.getAttribute("data-admin-avatar-path") || "").trim();
+      if (adminAvatarPathInput) adminAvatarPathInput.value = nextPath;
+      updateAdminAvatarPreview(nextPath);
+      setAdminAvatarStatus("");
+    });
+  }
+
+  if (adminAvatarSaveBtn) {
+    adminAvatarSaveBtn.addEventListener("click", async () => {
+      await saveAdminAvatarSelection();
     });
   }
 

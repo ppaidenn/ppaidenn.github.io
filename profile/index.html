@@ -191,7 +191,8 @@
       font-size: 15px;
     }
     .field input,
-    .field textarea {
+    .field textarea,
+    .field select {
       width: 100%;
       border: 1px solid rgba(0,0,0,0.2);
       border-radius: 12px;
@@ -1059,6 +1060,104 @@
       font-size: 15px;
       cursor: pointer;
     }
+    .admin-avatar-card {
+      border: 1px solid rgba(22, 40, 31, 0.12);
+      border-radius: 16px;
+      padding: 14px;
+      background:
+        linear-gradient(180deg, rgba(241, 248, 243, 0.98), rgba(229, 240, 232, 0.9));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.56),
+        0 10px 24px rgba(21, 32, 25, 0.08);
+    }
+    .admin-avatar-note {
+      margin: 0 0 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(17,17,17,0.72);
+      line-height: 1.5;
+    }
+    .admin-avatar-preset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
+      gap: 10px;
+    }
+    .admin-avatar-preset {
+      border: 1px solid rgba(20, 43, 31, 0.14);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.88);
+      padding: 10px;
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    }
+    .admin-avatar-preset:hover {
+      transform: translateY(-1px);
+      border-color: rgba(24, 78, 44, 0.3);
+      box-shadow: 0 10px 20px rgba(17,17,17,0.08);
+    }
+    .admin-avatar-preset.active {
+      border-color: rgba(24, 78, 44, 0.52);
+      background: rgba(223, 241, 229, 0.98);
+      box-shadow: 0 12px 22px rgba(36, 86, 56, 0.14);
+    }
+    .admin-avatar-preset img {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      object-fit: cover;
+      border: 1px solid rgba(0,0,0,0.12);
+      background: #fff;
+    }
+    .admin-avatar-preset-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #111;
+      text-align: center;
+      line-height: 1.25;
+    }
+    .admin-avatar-preview-row {
+      display: grid;
+      grid-template-columns: 86px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid rgba(20, 43, 31, 0.12);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.7);
+    }
+    .admin-avatar-preview {
+      width: 86px;
+      height: 86px;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.12);
+      background: #fff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+    }
+    .admin-avatar-preview img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+    .admin-avatar-preview-copy {
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(17,17,17,0.72);
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .admin-avatar-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+    .admin-avatar-actions .btn {
+      width: 100%;
+    }
     .status { margin-top: 12px; min-height: 20px; font-weight: 700; }
     .footer {
       width: 100vw;
@@ -1205,6 +1304,36 @@
               </div>
               <div class="inbox-list" id="notificationInboxList"></div>
               <div class="inbox-note">Account notifications are saved here even if push delivery is missed.</div>
+            </div>
+            <div class="requests-wrap" id="adminAvatarManagerCard" hidden>
+              <div class="requests-title">Private Avatar Manager</div>
+              <div class="admin-avatar-card">
+                <p class="admin-avatar-note">This tool is visible only to your account. Pick any paiden.com account, then choose a site image or type a custom avatar path.</p>
+                <div class="field">
+                  <label for="adminAvatarTargetSelect">Account</label>
+                  <select id="adminAvatarTargetSelect">
+                    <option value="">Choose an account</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="adminAvatarPathInput">Avatar Path</label>
+                  <input id="adminAvatarPathInput" type="text" placeholder="/images/braden.jpg or ellacase.png">
+                </div>
+                <div class="field">
+                  <label>Quick Picks</label>
+                  <div class="admin-avatar-preset-grid" id="adminAvatarPresetGrid"></div>
+                </div>
+                <div class="admin-avatar-preview-row">
+                  <div class="admin-avatar-preview">
+                    <img id="adminAvatarPreviewImg" alt="Avatar preview" src="/images/default_pfp.jpg">
+                  </div>
+                  <div class="admin-avatar-preview-copy" id="adminAvatarPreviewCopy">Choose an account to load its current avatar, then save a new one.</div>
+                </div>
+                <div class="status" id="adminAvatarStatus"></div>
+                <div class="admin-avatar-actions">
+                  <button class="btn" id="adminAvatarSaveBtn" type="button">Update Account Avatar</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1435,7 +1564,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="/auth-client.js?v=20260312c"></script>
   <script src="/notifications.js?v=20260312c"></script>
-  <script src="/profile-page.js?v=20260416a"></script>
+  <script src="/profile-page.js?v=20260429a"></script>
   <script>
     const lastUpdated = document.getElementById("last-updated");
     if (lastUpdated) lastUpdated.innerText = "Today's Date: " + new Date().toLocaleDateString();
