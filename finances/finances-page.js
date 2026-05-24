@@ -124,8 +124,10 @@
     financesForm: document.getElementById("financesForm"),
     spendingModeFiles: document.getElementById("spendingModeFiles"),
     spendingModeManual: document.getElementById("spendingModeManual"),
+    spendingModeGuide: document.getElementById("spendingModeGuide"),
     fileUploadSection: document.getElementById("fileUploadSection"),
     manualExpenseSection: document.getElementById("manualExpenseSection"),
+    budgetOnlySection: document.getElementById("budgetOnlySection"),
     statementFilesInput: document.getElementById("statementFilesInput"),
     statementFileList: document.getElementById("statementFileList"),
     amountStyleSelect: document.getElementById("amountStyleSelect"),
@@ -147,17 +149,21 @@
     rangeStartSelect: document.getElementById("rangeStartSelect"),
     rangeEndSelect: document.getElementById("rangeEndSelect"),
     runAnotherImportBtn: document.getElementById("runAnotherImportBtn"),
+    selectedSpendingLabel: document.getElementById("selectedSpendingLabel"),
     selectedSpendingValue: document.getElementById("selectedSpendingValue"),
     selectedSpendingSub: document.getElementById("selectedSpendingSub"),
+    monthlyExpensesLabel: document.getElementById("monthlyExpensesLabel"),
     monthlyExpensesValue: document.getElementById("monthlyExpensesValue"),
     monthlyExpensesSub: document.getElementById("monthlyExpensesSub"),
     monthlyGrossValue: document.getElementById("monthlyGrossValue"),
     weeklyGrossSub: document.getElementById("weeklyGrossSub"),
     monthlyNetValue: document.getElementById("monthlyNetValue"),
     weeklyNetSub: document.getElementById("weeklyNetSub"),
+    expensesChartHeading: document.getElementById("expensesChartHeading"),
     expensesChartCanvas: document.getElementById("expensesChartCanvas"),
     budgetGuideChartCanvas: document.getElementById("budgetGuideChartCanvas"),
     expensesChartNote: document.getElementById("expensesChartNote"),
+    comparisonSection: document.getElementById("comparisonSection"),
     comparisonTableBody: document.getElementById("comparisonTableBody"),
     recommendationBanner: document.getElementById("recommendationBanner"),
     recommendationSummary: document.getElementById("recommendationSummary"),
@@ -170,6 +176,7 @@
     parsedTransactions: [],
     monthlyOptions: [],
     incomeProfile: null,
+    spendingMode: "files",
     charts: {
       actual: null,
       guide: null,
@@ -257,6 +264,7 @@
     });
     dom.spendingModeFiles.addEventListener("change", updateSpendingMode);
     dom.spendingModeManual.addEventListener("change", updateSpendingMode);
+    dom.spendingModeGuide.addEventListener("change", updateSpendingMode);
     dom.statementFilesInput.addEventListener("change", handleFilesChosen);
     dom.amountStyleSelect.addEventListener("change", clearStatus);
     dom.incomeModeAnnual.addEventListener("change", updateIncomeMode);
@@ -293,10 +301,12 @@
   }
 
   function updateSpendingMode() {
-    const fileMode = dom.spendingModeFiles.checked;
-    dom.fileUploadSection.hidden = !fileMode;
-    dom.manualExpenseSection.hidden = fileMode;
-    if (!fileMode && dom.manualExpenseInputs.length) {
+    const spendingMode = getSpendingMode();
+    appState.spendingMode = spendingMode;
+    dom.fileUploadSection.hidden = spendingMode !== "files";
+    dom.manualExpenseSection.hidden = spendingMode !== "manual";
+    dom.budgetOnlySection.hidden = spendingMode !== "guide";
+    if (spendingMode === "manual" && dom.manualExpenseInputs.length) {
       window.requestAnimationFrame(function () {
         dom.manualExpenseInputs[0].focus();
       });
@@ -358,31 +368,46 @@
     }
 
     const incomeProfile = buildIncomeProfile();
+    const spendingMode = getSpendingMode();
     showWizardStep("loadingStep");
-    updateLoadingStep(0, dom.spendingModeFiles.checked ? "Reading your uploaded statement files locally..." : "Reading your manually entered monthly expenses...");
+    updateLoadingStep(
+      0,
+      spendingMode === "files"
+        ? "Reading your uploaded statement files locally..."
+        : (spendingMode === "manual"
+          ? "Reading your manually entered monthly expenses..."
+          : "Building a recommended budget from your income...")
+    );
 
     try {
       await nextFrame();
-      const rawTransactions = dom.spendingModeFiles.checked
+      const rawTransactions = spendingMode === "files"
         ? await readAndParseFiles(appState.files, dom.amountStyleSelect.value)
-        : buildManualTransactions();
-      updateLoadingStep(1, "Sorting transactions chronologically and cleaning duplicate rows...");
+        : (spendingMode === "manual" ? buildManualTransactions() : []);
+      updateLoadingStep(1, spendingMode === "guide"
+        ? "Preparing a monthly budget window..."
+        : "Sorting transactions chronologically and cleaning duplicate rows...");
       await pause(90);
       const mergedTransactions = finalizeTransactions(rawTransactions);
-      if (!mergedTransactions.length) {
+      if (spendingMode !== "guide" && !mergedTransactions.length) {
         throw new Error("I could not find any usable transactions in those files. Try a CSV, TSV, OFX, QFX, or plain-text export with a date, description, and amount.");
       }
 
-      updateLoadingStep(2, "Categorizing each transaction locally in the browser...");
+      updateLoadingStep(2, spendingMode === "guide"
+        ? "Building standard category targets..."
+        : "Categorizing each transaction locally in the browser...");
       await pause(90);
       mergedTransactions.forEach(enrichTransaction);
 
       updateLoadingStep(3, "Calculating weekly and monthly income estimates...");
       await pause(90);
       appState.incomeProfile = incomeProfile;
+      appState.spendingMode = spendingMode;
       appState.parsedTransactions = mergedTransactions;
-      appState.monthlyOptions = listAvailableMonths(mergedTransactions);
-      if (!appState.monthlyOptions.length) {
+      appState.monthlyOptions = spendingMode === "guide"
+        ? [getCurrentMonthKey()]
+        : listAvailableMonths(mergedTransactions);
+      if (spendingMode !== "guide" && !appState.monthlyOptions.length) {
         throw new Error("The imported files were read, but no dated transactions were available for charting.");
       }
       populateRangeSelectors();
@@ -503,6 +528,20 @@
         categorySource: "manual",
       });
     }).filter(Boolean);
+  }
+
+  function getSpendingMode() {
+    if (dom.spendingModeManual.checked) {
+      return "manual";
+    }
+    if (dom.spendingModeGuide.checked) {
+      return "guide";
+    }
+    return "files";
+  }
+
+  function getCurrentMonthKey() {
+    return toMonthKey(new Date());
   }
 
   function parseStatementFile(params) {
@@ -1073,6 +1112,7 @@
   function renderResults() {
     const startMonth = dom.rangeStartSelect.value;
     const endMonth = dom.rangeEndSelect.value;
+    const spendingMode = appState.spendingMode || getSpendingMode();
     if (!startMonth || !endMonth) {
       return;
     }
@@ -1094,39 +1134,72 @@
     const expenseByCategory = scaleGroupedMoney(groupMoneyBy(expenseTransactions, "category"), 1 / activeMonthCount);
     const actualBudgetMix = scaleGroupedMoney(groupMoneyBy(expenseTransactions, "budgetBucket"), 1 / activeMonthCount);
     const suggestedBudgetMix = buildSuggestedBudgetMix(appState.incomeProfile.monthlyNet);
+    const suggestedBudgetTotal = roundMoney(sum(suggestedBudgetMix.map(function (entry) {
+      return entry.amount;
+    })));
     const comparisonRows = buildComparisonRows(actualBudgetMix, suggestedBudgetMix);
     const recommendation = buildRecommendation({
+      spendingMode: spendingMode,
       averageMonthlySpending: averageMonthlySpending,
       totalSpending: totalSpending,
       comparisonRows: comparisonRows,
       importedMonthCount: activeMonthCount,
       monthlyNet: appState.incomeProfile.monthlyNet,
+      suggestedBudgetMix: suggestedBudgetMix,
     });
 
-    dom.resultsHeading.textContent = activeMonthCount > 1 ? "Average Monthly Snapshot" : "Monthly Snapshot";
-    dom.resultsRangeNote.textContent = activeMonthCount > 1
-      ? formatMonthLabel(startMonth) + " to " + formatMonthLabel(endMonth)
-      : formatMonthLabel(startMonth);
-    dom.selectedSpendingValue.textContent = formatCurrency(averageMonthlySpending);
-    dom.selectedSpendingSub.textContent = activeMonthCount > 1
-      ? "Avg across " + activeMonthCount + " months."
-      : (dom.spendingModeManual.checked ? "Your current monthly snapshot." : "This month.");
-    dom.monthlyExpensesValue.textContent = formatCurrency(totalSpending);
-    dom.monthlyExpensesSub.textContent = activeMonthCount > 1
-      ? "Total across " + activeMonthCount + " months."
-      : "Total in the selected month.";
+    if (spendingMode === "guide") {
+      dom.resultsHeading.textContent = "Recommended Budget";
+      dom.resultsRangeNote.textContent = "Based on your income inputs.";
+      dom.selectedSpendingLabel.textContent = "Current spending";
+      dom.selectedSpendingValue.textContent = formatCurrency(0);
+      dom.selectedSpendingSub.textContent = "No expenses added.";
+      dom.monthlyExpensesLabel.textContent = "Suggested budget";
+      dom.monthlyExpensesValue.textContent = formatCurrency(suggestedBudgetTotal);
+      dom.monthlyExpensesSub.textContent = "Monthly take-home budget target.";
+      dom.expensesChartHeading.textContent = "Recommended Spending Plan";
+      dom.expensesChartNote.textContent = "Built from estimated monthly take-home pay.";
+      dom.comparisonSection.hidden = true;
+      renderActualChart(buildChartGroupFromGuide(suggestedBudgetMix));
+    } else {
+      dom.resultsHeading.textContent = activeMonthCount > 1 ? "Average Monthly Snapshot" : "Monthly Snapshot";
+      dom.resultsRangeNote.textContent = activeMonthCount > 1
+        ? formatMonthLabel(startMonth) + " to " + formatMonthLabel(endMonth)
+        : formatMonthLabel(startMonth);
+      dom.selectedSpendingLabel.textContent = "Monthly average";
+      dom.selectedSpendingValue.textContent = formatCurrency(averageMonthlySpending);
+      dom.selectedSpendingSub.textContent = activeMonthCount > 1
+        ? "Avg across " + activeMonthCount + " months."
+        : (spendingMode === "manual" ? "Your current monthly snapshot." : "This month.");
+      dom.monthlyExpensesLabel.textContent = "Range total";
+      dom.monthlyExpensesValue.textContent = formatCurrency(totalSpending);
+      dom.monthlyExpensesSub.textContent = activeMonthCount > 1
+        ? "Total across " + activeMonthCount + " months."
+        : "Total in the selected month.";
+      dom.expensesChartHeading.textContent = "Expense Pie Chart";
+      dom.expensesChartNote.textContent = activeMonthCount > 1
+        ? "Avg monthly mix across " + activeMonthCount + " months."
+        : "Showing expense categories for " + formatMonthLabel(startMonth) + ".";
+      dom.comparisonSection.hidden = false;
+      renderActualChart(expenseByCategory);
+      renderComparisonTable(comparisonRows);
+    }
+
     dom.monthlyGrossValue.textContent = formatCurrency(appState.incomeProfile.monthlyGross);
     dom.weeklyGrossSub.textContent = "Weekly gross: " + formatCurrency(appState.incomeProfile.weeklyGross);
     dom.monthlyNetValue.textContent = formatCurrency(appState.incomeProfile.monthlyNet);
     dom.weeklyNetSub.textContent = "Weekly est.: " + formatCurrency(appState.incomeProfile.weeklyNet);
-    dom.expensesChartNote.textContent = activeMonthCount > 1
-      ? "Avg monthly mix across " + activeMonthCount + " months."
-      : "Showing expense categories for " + formatMonthLabel(startMonth) + ".";
-
-    renderActualChart(expenseByCategory);
     renderGuideChart(suggestedBudgetMix);
-    renderComparisonTable(comparisonRows);
     renderRecommendation(recommendation);
+  }
+
+  function buildChartGroupFromGuide(suggestedBudgetMix) {
+    return suggestedBudgetMix.reduce(function (grouped, entry) {
+      if (entry.amount > 0) {
+        grouped[entry.key] = entry.amount;
+      }
+      return grouped;
+    }, {});
   }
 
   function buildSuggestedBudgetMix(monthlyNet) {
@@ -1162,6 +1235,32 @@
   }
 
   function buildRecommendation(input) {
+    if (input.spendingMode === "guide") {
+      if (input.monthlyNet <= 0) {
+        return {
+          bannerClass: "bad",
+          bannerLabel: "Needs Review",
+          summary: "Income estimate needs a second look.",
+          lines: ["Check your income and state tax inputs."],
+        };
+      }
+      const guideByKey = input.suggestedBudgetMix.reduce(function (acc, entry) {
+        acc[entry.key] = entry.amount;
+        return acc;
+      }, {});
+      return {
+        bannerClass: "good",
+        bannerLabel: "Budget Ready",
+        summary: "This plan was built from your estimated monthly take-home pay.",
+        lines: [
+          "Keep total monthly spending at or below " + formatCurrency(input.monthlyNet) + ".",
+          "Try to hold housing near " + formatCurrency(guideByKey.Housing || 0) + ".",
+          "Plan about " + formatCurrency(guideByKey.Food || 0) + " for food each month.",
+          "Keep around " + formatCurrency(guideByKey["Savings, Debt & Taxes"] || 0) + " for savings, debt, and taxes.",
+        ],
+      };
+    }
+
     const monthlyNet = input.monthlyNet;
     const monthlySpend = input.averageMonthlySpending;
     const coverageRatio = monthlyNet > 0 ? monthlySpend / monthlyNet : 1;
@@ -1217,6 +1316,8 @@
   function renderActualChart(expenseByCategory) {
     const entries = Object.keys(expenseByCategory).map(function (key) {
       return { key: key, value: expenseByCategory[key] };
+    }).filter(function (entry) {
+      return entry.value > 0;
     }).sort(function (a, b) {
       return b.value - a.value;
     });
@@ -1342,6 +1443,7 @@
     appState.parsedTransactions = [];
     appState.monthlyOptions = [];
     appState.incomeProfile = null;
+    appState.spendingMode = "files";
     if (appState.charts.actual) {
       appState.charts.actual.destroy();
       appState.charts.actual = null;

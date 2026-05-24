@@ -319,7 +319,7 @@
     }
     .segmented {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 8px;
       width: 100%;
     }
@@ -714,7 +714,7 @@
           <div class="hero-copy">
             <div class="hero-eyebrow">Local only</div>
             <h1>Finances</h1>
-            <p class="hero-sub">Upload statements or enter one monthly snapshot.</p>
+            <p class="hero-sub">Upload statements, enter monthly amounts, or build a budget from income.</p>
           </div>
         </div>
       </section>
@@ -744,6 +744,8 @@
                     <label for="spendingModeFiles">Upload statements</label>
                     <input id="spendingModeManual" type="radio" name="spendingMode" value="manual">
                     <label for="spendingModeManual">Enter monthly amounts</label>
+                    <input id="spendingModeGuide" type="radio" name="spendingMode" value="guide">
+                    <label for="spendingModeGuide">Recommended budget only</label>
                   </div>
                 </div>
                 <div id="fileUploadSection">
@@ -812,6 +814,13 @@
                         <label for="manualMiscInput">Miscellaneous</label>
                         <input id="manualMiscInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Miscellaneous" data-manual-bucket="Shopping &amp; Personal">
                       </div>
+                    </div>
+                  </div>
+                </div>
+                <div id="budgetOnlySection" hidden>
+                  <div class="upload-box">
+                    <div class="upload-copy">
+                      <strong>No spending data needed.</strong>
                     </div>
                   </div>
                 </div>
@@ -911,12 +920,12 @@
 
         <div class="metrics-grid">
           <div class="metric-card">
-            <div class="metric-label">Monthly average</div>
+            <div class="metric-label" id="selectedSpendingLabel">Monthly average</div>
             <div class="metric-value" id="selectedSpendingValue">$0</div>
             <div class="metric-sub" id="selectedSpendingSub">Average in the selected range.</div>
           </div>
           <div class="metric-card">
-            <div class="metric-label">Range total</div>
+            <div class="metric-label" id="monthlyExpensesLabel">Range total</div>
             <div class="metric-value" id="monthlyExpensesValue">$0</div>
             <div class="metric-sub" id="monthlyExpensesSub">Total in the selected range.</div>
           </div>
@@ -935,7 +944,7 @@
         <div class="chart-grid">
           <div class="chart-card">
             <div>
-              <h3>Expense Pie Chart</h3>
+              <h3 id="expensesChartHeading">Expense Pie Chart</h3>
             </div>
             <div class="chart-wrap">
               <canvas id="expensesChartCanvas" aria-label="Expense pie chart"></canvas>
@@ -954,7 +963,7 @@
           </div>
         </div>
 
-        <div class="table-card">
+        <div class="table-card" id="comparisonSection">
           <div>
             <h3>How your current spending compares</h3>
           </div>
@@ -1022,6 +1031,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="/shared-app-header.js?v=20260421b"></script>
   <script src="/shared-footer.js?v=20260417a"></script>
-  <script src="/finances/finances-page.js?v=20260524b"></script>
+  <script src="/finances/finances-page.js?v=20260524c"></script>
 </body>
 </html>
