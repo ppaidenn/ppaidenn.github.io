@@ -168,7 +168,9 @@
       border-radius: 15px;
       padding: 14px 18px;
       font-size: 15px;
-      font-weight: 800;
+      font-weight: 700;
+      line-height: 1.15;
+      text-align: center;
       font-family: inherit;
       cursor: pointer;
       text-decoration: none;
@@ -277,7 +279,7 @@
     }
     .field label {
       font-size: 14px;
-      font-weight: 800;
+      font-weight: 650;
       color: #10151c;
     }
     .field input,
@@ -313,11 +315,12 @@
       border-radius: 999px;
       padding: 10px 14px;
       font-size: 14px;
-      font-weight: 800;
+      font-weight: 650;
       color: #10151c;
       background: rgba(255,255,255,0.86);
       cursor: pointer;
       transition: background .14s ease, border-color .14s ease, color .14s ease;
+      text-align: center;
     }
     .segmented input:checked + label {
       background: linear-gradient(135deg, #10151c, #1d4e37);
@@ -358,6 +361,7 @@
     .upload-copy strong {
       font-size: 18px;
       color: #153927;
+      font-weight: 700;
     }
     .upload-copy span {
       font-size: 14px;
@@ -389,7 +393,7 @@
     }
     .file-pill-name {
       font-size: 14px;
-      font-weight: 800;
+      font-weight: 700;
       color: #10151c;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -414,7 +418,7 @@
     }
     .status {
       min-height: 22px;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--ink-soft);
     }
     .status.error {
@@ -454,7 +458,7 @@
       background: rgba(255,255,255,0.9);
       border: 1px solid rgba(12,18,24,0.08);
       font-size: 14px;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--ink-soft);
       text-align: left;
     }
@@ -499,7 +503,7 @@
       font-size: 12px;
       letter-spacing: .08em;
       text-transform: uppercase;
-      font-weight: 800;
+      font-weight: 700;
       color: rgba(16,21,28,0.64);
     }
     .metric-value {
@@ -555,6 +559,7 @@
       letter-spacing: .08em;
       text-transform: uppercase;
       color: rgba(16,21,28,0.62);
+      font-weight: 700;
     }
     .comparison-delta.good {
       color: var(--good);
@@ -576,7 +581,7 @@
       padding: 10px 13px;
       border-radius: 999px;
       font-size: 13px;
-      font-weight: 800;
+      font-weight: 700;
       letter-spacing: .06em;
       text-transform: uppercase;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
@@ -991,6 +996,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="/shared-app-header.js?v=20260421b"></script>
   <script src="/shared-footer.js?v=20260417a"></script>
-  <script src="/finances/finances-page.js?v=20260524a"></script>
+  <script src="/finances/finances-page.js?v=20260524b"></script>
 </body>
 </html>

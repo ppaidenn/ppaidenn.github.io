@@ -296,6 +296,11 @@
     const fileMode = dom.spendingModeFiles.checked;
     dom.fileUploadSection.hidden = !fileMode;
     dom.manualExpenseSection.hidden = fileMode;
+    if (!fileMode && dom.manualExpenseInputs.length) {
+      window.requestAnimationFrame(function () {
+        dom.manualExpenseInputs[0].focus();
+      });
+    }
     clearStatus();
   }
 
@@ -1050,8 +1055,9 @@
       return '<option value="' + monthKey + '">' + escapeHtml(formatMonthLabel(monthKey)) + "</option>";
     }).join("");
     dom.rangeEndSelect.innerHTML = dom.rangeStartSelect.innerHTML;
+    const firstMonth = appState.monthlyOptions[0];
     const latestMonth = appState.monthlyOptions[appState.monthlyOptions.length - 1];
-    dom.rangeStartSelect.value = latestMonth;
+    dom.rangeStartSelect.value = firstMonth;
     dom.rangeEndSelect.value = latestMonth;
   }
 
