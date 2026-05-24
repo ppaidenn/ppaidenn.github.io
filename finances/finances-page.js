@@ -1097,22 +1097,24 @@
       monthlyNet: appState.incomeProfile.monthlyNet,
     });
 
-    dom.resultsHeading.textContent = activeMonthCount > 1 ? "Expense Snapshot" : "Most Recent Month";
+    dom.resultsHeading.textContent = activeMonthCount > 1 ? "Average Monthly Snapshot" : "Monthly Snapshot";
     dom.resultsRangeNote.textContent = activeMonthCount > 1
-      ? "Showing " + formatMonthLabel(startMonth) + " through " + formatMonthLabel(endMonth) + "."
-      : "Showing " + formatMonthLabel(startMonth) + ".";
-    dom.selectedSpendingValue.textContent = formatCurrency(totalSpending);
+      ? formatMonthLabel(startMonth) + " to " + formatMonthLabel(endMonth)
+      : formatMonthLabel(startMonth);
+    dom.selectedSpendingValue.textContent = formatCurrency(averageMonthlySpending);
     dom.selectedSpendingSub.textContent = activeMonthCount > 1
-      ? "Across " + activeMonthCount + " imported month" + (activeMonthCount === 1 ? "" : "s") + " in the selected range."
-      : (dom.spendingModeManual.checked ? "From your manually entered monthly expense snapshot." : "Across the selected date range.");
-    dom.monthlyExpensesValue.textContent = formatCurrency(averageMonthlySpending);
-    dom.monthlyExpensesSub.textContent = "Average per month across the imported data in this range.";
+      ? "Avg across " + activeMonthCount + " months."
+      : (dom.spendingModeManual.checked ? "Your current monthly snapshot." : "This month.");
+    dom.monthlyExpensesValue.textContent = formatCurrency(totalSpending);
+    dom.monthlyExpensesSub.textContent = activeMonthCount > 1
+      ? "Total across " + activeMonthCount + " months."
+      : "Total in the selected month.";
     dom.monthlyGrossValue.textContent = formatCurrency(appState.incomeProfile.monthlyGross);
     dom.weeklyGrossSub.textContent = "Weekly gross: " + formatCurrency(appState.incomeProfile.weeklyGross);
     dom.monthlyNetValue.textContent = formatCurrency(appState.incomeProfile.monthlyNet);
-    dom.weeklyNetSub.textContent = "Weekly net estimate: " + formatCurrency(appState.incomeProfile.weeklyNet) + " - " + FEDERAL_YEAR + " federal estimate + your state rate";
+    dom.weeklyNetSub.textContent = "Weekly est.: " + formatCurrency(appState.incomeProfile.weeklyNet);
     dom.expensesChartNote.textContent = activeMonthCount > 1
-      ? "Showing the average monthly expense mix across " + activeMonthCount + " selected months."
+      ? "Avg monthly mix across " + activeMonthCount + " months."
       : "Showing expense categories for " + formatMonthLabel(startMonth) + ".";
 
     renderActualChart(expenseByCategory);
@@ -1164,37 +1166,37 @@
     const lines = [];
     let bannerClass = "good";
     let bannerLabel = "All Clear";
-    let summary = "Your selected spending is sitting in a manageable range against the estimated monthly take-home number.";
+    let summary = "Your monthly spending looks manageable.";
 
     if (monthlyNet <= 0) {
       bannerClass = "bad";
       bannerLabel = "Needs Review";
-      summary = "I could not build a reliable take-home estimate from the income numbers you entered.";
-      lines.push("Double-check your income and state tax inputs so the gross and net estimate is meaningful.");
+      summary = "Income estimate needs a second look.";
+      lines.push("Check your income and state tax inputs.");
     } else {
       if (coverageRatio > 1) {
         bannerClass = "bad";
         bannerLabel = "Reduce Spending";
-        summary = "Your current average monthly spending is above the estimated monthly take-home pay from this setup.";
-        lines.push("Bring monthly spending down by at least " + formatCurrency(monthlySpend - monthlyNet) + " to move back under estimated take-home pay.");
+        summary = "Monthly spending is above estimated take-home pay.";
+        lines.push("Cut about " + formatCurrency(monthlySpend - monthlyNet) + " per month.");
       } else if (coverageRatio > 0.88 || overTargetRows.length >= 3) {
         bannerClass = "bad";
         bannerLabel = "Tight Margin";
-        summary = "You are still under the estimated net number, but the cushion looks thin and a few categories are running hot.";
+        summary = "You are close to your monthly limit.";
       }
 
       if (!lines.length && coverageRatio <= 0.7) {
-        lines.push("You are using about " + Math.round(coverageRatio * 100) + "% of estimated monthly take-home pay in the selected range, which leaves room for savings or debt payoff.");
+        lines.push("Using about " + Math.round(coverageRatio * 100) + "% of estimated monthly take-home pay.");
       } else {
-        lines.push("Your selected spending uses about " + Math.round(coverageRatio * 100) + "% of estimated monthly take-home pay.");
+        lines.push("Using about " + Math.round(coverageRatio * 100) + "% of estimated monthly take-home pay.");
       }
 
       overTargetRows.slice(0, 3).forEach(function (row) {
-        lines.push(row.key + " is running about " + formatCurrency(row.delta) + " above the suggested monthly mix.");
+        lines.push(row.key + " is about " + formatCurrency(row.delta) + " over the guide.");
       });
 
       if (overTargetRows.length === 0) {
-        lines.push("No major budget bucket is materially above the simple guideline used on this page.");
+        lines.push("No major category is above the guide.");
       }
     }
 

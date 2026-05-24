@@ -16,12 +16,14 @@
   <link rel="stylesheet" href="/shared-app-header.css?v=20260421b">
   <style>
     :root {
-      --panel-border: rgba(11, 17, 22, 0.1);
-      --panel-bg: rgba(255, 255, 255, 0.84);
-      --panel-soft: rgba(246, 249, 246, 0.92);
-      --ink-soft: rgba(16, 21, 28, 0.72);
-      --mint: #2d7b54;
-      --mint-soft: rgba(45, 123, 84, 0.12);
+      --panel-border: rgba(11, 17, 22, 0.08);
+      --panel-bg: rgba(255, 255, 255, 0.88);
+      --panel-soft: rgba(247, 250, 246, 0.96);
+      --ink-soft: rgba(16, 21, 28, 0.68);
+      --mint: #256e4c;
+      --mint-soft: rgba(37, 110, 76, 0.12);
+      --mint-deep: #163b2a;
+      --gold-soft: rgba(215, 191, 117, 0.16);
       --danger: #a10000;
       --good: #11422b;
     }
@@ -31,10 +33,11 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      font-family: Arial, sans-serif;
+      font-family: "Avenir Next", "Segoe UI", Arial, sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(58, 137, 94, 0.12), transparent 24%),
-        linear-gradient(180deg, #dde2da 0%, #d5dcd4 100%);
+        radial-gradient(circle at top left, rgba(58, 137, 94, 0.18), transparent 24%),
+        radial-gradient(circle at top right, rgba(217, 191, 117, 0.12), transparent 28%),
+        linear-gradient(180deg, #e3e7dd 0%, #d6ddd3 100%);
       color: #10151c;
     }
     [hidden] { display: none !important; }
@@ -43,19 +46,64 @@
       padding: clamp(22px, 4vh, 40px) 0 calc(30px + env(safe-area-inset-bottom, 0px));
     }
     .content-inner {
-      margin: 0 10vw;
-      border-radius: 24px;
+      width: min(1180px, calc(100vw - 10vw));
+      margin: 0 auto;
+      border-radius: 30px;
       border: 1px solid var(--panel-border);
-      padding: clamp(18px, 2.2vw, 32px);
+      padding: clamp(18px, 2.4vw, 34px);
       background:
-        radial-gradient(circle at top left, rgba(58, 137, 94, 0.1), transparent 34%),
-        linear-gradient(180deg, rgba(255,255,255,0.88), rgba(243,246,240,0.8));
-      box-shadow: 0 14px 36px rgba(0,0,0,0.09);
+        radial-gradient(circle at top left, rgba(58, 137, 94, 0.12), transparent 34%),
+        linear-gradient(180deg, rgba(255,255,255,0.92), rgba(242,246,240,0.86));
+      box-shadow: 0 18px 48px rgba(0,0,0,0.08);
     }
     .hero {
+      margin-bottom: 24px;
+    }
+    .hero-card {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      border: 1px solid rgba(11, 17, 22, 0.08);
+      border-radius: 24px;
+      padding: clamp(16px, 2vw, 24px);
+      background:
+        linear-gradient(135deg, rgba(22, 59, 42, 0.94), rgba(37, 110, 76, 0.9)),
+        linear-gradient(180deg, rgba(255,255,255,0.92), rgba(241,246,242,0.88));
+      color: #fff;
+      box-shadow: 0 16px 34px rgba(12, 28, 20, 0.18);
+    }
+    .hero-mark {
+      width: 62px;
+      height: 62px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 62px;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.18);
+      font-size: 24px;
+    }
+    .hero-copy {
       display: grid;
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 6px;
+      min-width: 0;
+    }
+    .hero-eyebrow {
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.16);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .hero-sub {
+      margin: 0;
+      color: rgba(255,255,255,0.82);
+      font-size: 15px;
     }
     .kicker {
       letter-spacing: .18em;
@@ -88,10 +136,10 @@
     }
     .panel {
       border: 1px solid var(--panel-border);
-      border-radius: 18px;
+      border-radius: 24px;
       background: var(--panel-bg);
       padding: clamp(16px, 1.9vw, 24px);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.48);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.52), 0 8px 24px rgba(18, 28, 22, 0.04);
     }
     .panel h2 {
       margin: 0 0 10px;
@@ -136,7 +184,7 @@
       box-shadow: 0 10px 22px rgba(0,0,0,0.08);
     }
     .btn {
-      background: #10151c;
+      background: linear-gradient(135deg, #10151c, #193225);
       color: #fff;
     }
     .btn-large {
@@ -146,8 +194,35 @@
       border-radius: 18px;
     }
     .btn-secondary {
-      background: rgba(255,255,255,0.92);
+      background: rgba(255,255,255,0.96);
       color: #10151c;
+    }
+    .intro-panel {
+      display: grid;
+      justify-items: center;
+      text-align: center;
+      gap: 14px;
+      padding: clamp(26px, 5vw, 52px);
+      background:
+        radial-gradient(circle at top, rgba(37, 110, 76, 0.1), transparent 46%),
+        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(244,248,243,0.9));
+    }
+    .intro-icon {
+      width: 74px;
+      height: 74px;
+      border-radius: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(37,110,76,0.16), rgba(215,191,117,0.18));
+      color: var(--mint-deep);
+      font-size: 30px;
+      border: 1px solid rgba(37,110,76,0.12);
+      box-shadow: 0 14px 28px rgba(37,110,76,0.08);
+    }
+    .intro-panel h2 {
+      max-width: 640px;
+      margin-bottom: 0;
     }
     .privacy-grid {
       display: grid;
@@ -184,11 +259,17 @@
     }
     .section-card {
       border: 1px solid rgba(12, 18, 24, 0.08);
-      border-radius: 18px;
-      background: var(--panel-soft);
-      padding: 16px;
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.92), rgba(245,249,244,0.92));
+      padding: 18px;
       display: grid;
       gap: 12px;
+      box-shadow: 0 10px 26px rgba(16, 21, 28, 0.04);
+    }
+    .section-card h3 {
+      margin-bottom: 2px;
+      font-size: 22px;
     }
     .field {
       display: grid;
@@ -228,7 +309,7 @@
       pointer-events: none;
     }
     .segmented label {
-      border: 1px solid rgba(12, 18, 24, 0.14);
+      border: 1px solid rgba(12, 18, 24, 0.1);
       border-radius: 999px;
       padding: 10px 14px;
       font-size: 14px;
@@ -239,9 +320,10 @@
       transition: background .14s ease, border-color .14s ease, color .14s ease;
     }
     .segmented input:checked + label {
-      background: #10151c;
+      background: linear-gradient(135deg, #10151c, #1d4e37);
       border-color: #10151c;
       color: #fff;
+      box-shadow: 0 10px 20px rgba(16,21,28,0.12);
     }
     .manual-expense-grid {
       display: grid;
@@ -254,12 +336,13 @@
       color: var(--ink-soft);
     }
     .upload-box {
-      border: 1.5px dashed rgba(45, 123, 84, 0.38);
-      border-radius: 20px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(236,245,238,0.76));
+      border: 1px solid rgba(37, 110, 76, 0.16);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(236,245,238,0.92));
       padding: 18px;
       display: grid;
       gap: 12px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.48);
     }
     .upload-head {
       display: flex;
@@ -368,7 +451,7 @@
       gap: 10px;
       padding: 12px 14px;
       border-radius: 14px;
-      background: rgba(255,255,255,0.88);
+      background: rgba(255,255,255,0.9);
       border: 1px solid rgba(12,18,24,0.08);
       font-size: 14px;
       font-weight: 700;
@@ -404,11 +487,13 @@
     }
     .metric-card {
       border: 1px solid rgba(12,18,24,0.08);
-      border-radius: 18px;
-      background: rgba(255,255,255,0.92);
-      padding: 15px;
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(244,248,243,0.92));
+      padding: 16px;
       display: grid;
       gap: 8px;
+      box-shadow: 0 10px 24px rgba(16,21,28,0.04);
     }
     .metric-label {
       font-size: 12px;
@@ -437,11 +522,12 @@
     .table-card,
     .recommendation-card {
       border: 1px solid rgba(12,18,24,0.08);
-      border-radius: 20px;
-      background: rgba(255,255,255,0.92);
-      padding: 16px;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.94);
+      padding: 18px;
       display: grid;
       gap: 12px;
+      box-shadow: 0 10px 26px rgba(16,21,28,0.05);
     }
     .chart-wrap {
       position: relative;
@@ -493,6 +579,7 @@
       font-weight: 800;
       letter-spacing: .06em;
       text-transform: uppercase;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
     }
     .recommendation-banner.good {
       background: rgba(45,123,84,0.12);
@@ -542,7 +629,10 @@
       .top-nav { display: none; }
       .mobile-fixed-header { display: flex; }
       .content-wrap { padding-top: 18px; }
-      .content-inner { margin: 0 5vw; padding: 16px; }
+      .content-inner { width: auto; margin: 0 5vw; padding: 16px; }
+      .hero-card {
+        align-items: flex-start;
+      }
       .form-grid,
       .chart-grid,
       .metrics-grid {
@@ -589,11 +679,19 @@
   <main class="content-wrap">
     <section class="content-inner">
       <section class="hero">
-        <h1>Finances</h1>
+        <div class="hero-card">
+          <div class="hero-mark"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i></div>
+          <div class="hero-copy">
+            <div class="hero-eyebrow">Local only</div>
+            <h1>Finances</h1>
+            <p class="hero-sub">Upload statements or enter one monthly snapshot.</p>
+          </div>
+        </div>
       </section>
 
       <section class="wizard-step is-active" id="introStep">
-        <div class="panel">
+        <div class="panel intro-panel">
+          <div class="intro-icon"><i class="fa-solid fa-shield-heart" aria-hidden="true"></i></div>
           <h2>paiden.com will not store your financial data.</h2>
           <div class="btn-row">
             <button class="btn btn-large" id="introContinueBtn" type="button"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>Continue</span></button>
@@ -609,7 +707,7 @@
               <div class="section-card">
                 <h3>Spending</h3>
                 <div class="field">
-                  <label>How do you want to enter spending?</label>
+                  <label>Mode</label>
                   <div class="segmented">
                     <input id="spendingModeFiles" type="radio" name="spendingMode" value="files" checked>
                     <label for="spendingModeFiles">Upload statements</label>
@@ -629,7 +727,7 @@
                     </div>
                     <input class="file-input" id="statementFilesInput" type="file" accept=".csv,.tsv,.txt,.ofx,.qfx" multiple>
                     <div class="field">
-                      <label for="amountStyleSelect">Amount Style Override</label>
+                      <label for="amountStyleSelect">Amount format</label>
                       <select id="amountStyleSelect">
                         <option value="auto">Auto detect</option>
                         <option value="expenses-positive">Expenses are positive numbers</option>
@@ -691,7 +789,7 @@
               <div class="section-card">
                 <h3>Income</h3>
                 <div class="field">
-                  <label>Income Input Mode</label>
+                  <label>Mode</label>
                   <div class="segmented">
                     <input id="incomeModeAnnual" type="radio" name="incomeMode" value="annual" checked>
                     <label for="incomeModeAnnual">Annual salary</label>
@@ -714,7 +812,7 @@
                   </div>
                 </div>
                 <div class="field">
-                  <label for="filingStatusSelect">Filing status for net-income estimate</label>
+                  <label for="filingStatusSelect">Filing status</label>
                   <select id="filingStatusSelect">
                     <option value="single">Single</option>
                     <option value="marriedJoint">Married filing jointly</option>
@@ -727,7 +825,7 @@
                   <select id="stateSelect"></select>
                 </div>
                 <div class="field">
-                  <label for="stateTaxRateInput">Estimated state and local tax rate (%)</label>
+                  <label for="stateTaxRateInput">State tax (%)</label>
                   <input id="stateTaxRateInput" type="number" min="0" max="20" step="0.1" inputmode="decimal" placeholder="4.5">
                 </div>
               </div>
@@ -766,15 +864,15 @@
             </div>
             <div class="range-controls">
               <div class="field">
-                <label for="rangeStartSelect">Start month</label>
+                <label for="rangeStartSelect">Start</label>
                 <select id="rangeStartSelect"></select>
               </div>
               <div class="field">
-                <label for="rangeEndSelect">End month</label>
+                <label for="rangeEndSelect">End</label>
                 <select id="rangeEndSelect"></select>
               </div>
               <div class="btn-row" style="margin-top:0;">
-                <button class="btn-secondary" id="runAnotherImportBtn" type="button"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span>Import Again</span></button>
+                <button class="btn-secondary" id="runAnotherImportBtn" type="button"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span>Start Over</span></button>
               </div>
             </div>
           </div>
@@ -782,22 +880,22 @@
 
         <div class="metrics-grid">
           <div class="metric-card">
-            <div class="metric-label">Selected spending</div>
+            <div class="metric-label">Monthly average</div>
             <div class="metric-value" id="selectedSpendingValue">$0</div>
-            <div class="metric-sub" id="selectedSpendingSub">Across the selected date range.</div>
+            <div class="metric-sub" id="selectedSpendingSub">Average in the selected range.</div>
           </div>
           <div class="metric-card">
-            <div class="metric-label">Monthly expenses</div>
+            <div class="metric-label">Range total</div>
             <div class="metric-value" id="monthlyExpensesValue">$0</div>
-            <div class="metric-sub" id="monthlyExpensesSub">Average per month in the selected range.</div>
+            <div class="metric-sub" id="monthlyExpensesSub">Total in the selected range.</div>
           </div>
           <div class="metric-card">
-            <div class="metric-label">Gross income</div>
+            <div class="metric-label">Monthly gross</div>
             <div class="metric-value" id="monthlyGrossValue">$0</div>
             <div class="metric-sub" id="weeklyGrossSub">Weekly gross: $0</div>
           </div>
           <div class="metric-card">
-            <div class="metric-label">Net income estimate</div>
+            <div class="metric-label">Monthly net</div>
             <div class="metric-value" id="monthlyNetValue">$0</div>
             <div class="metric-sub" id="weeklyNetSub">Weekly net estimate: $0</div>
           </div>
@@ -841,7 +939,7 @@
               </thead>
               <tbody id="comparisonTableBody">
                 <tr>
-                  <td colspan="4" class="results-empty">Add statement data or manual monthly expenses to see the comparison table.</td>
+                  <td colspan="4" class="results-empty">Add spending data to compare it.</td>
                 </tr>
               </tbody>
             </table>
@@ -852,9 +950,9 @@
           <div>
             <div class="recommendation-banner good" id="recommendationBanner"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span>All Clear</span></div>
           </div>
-          <div id="recommendationSummary" class="panel-copy">Import your files to see a spending summary.</div>
+          <div id="recommendationSummary" class="panel-copy">Your summary appears here.</div>
           <ul class="recommendation-list" id="recommendationList">
-            <li>Recommendations will appear here after your statements are processed.</li>
+            <li>Recommendations appear here after processing.</li>
           </ul>
         </div>
       </section>
