@@ -1674,6 +1674,10 @@
     return year + "-" + month + "-" + day;
   }
 
+  function toMonthKey(date) {
+    return formatIsoDate(date).slice(0, 7);
+  }
+
   function roundMoney(value) {
     return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
   }
