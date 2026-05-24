@@ -161,12 +161,14 @@
       flex-wrap: wrap;
       gap: 12px;
       margin-top: 10px;
+      align-items: stretch;
     }
     .btn,
     .btn-secondary {
       border: 1px solid rgba(12, 18, 24, 0.14);
       border-radius: 15px;
-      padding: 14px 18px;
+      min-height: 52px;
+      padding: 14px 20px;
       font-size: 15px;
       font-weight: 700;
       line-height: 1.15;
@@ -178,7 +180,15 @@
       align-items: center;
       justify-content: center;
       gap: 9px;
+      vertical-align: middle;
       transition: transform .14s ease, box-shadow .14s ease, background .14s ease;
+    }
+    .btn > span,
+    .btn-secondary > span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100%;
     }
     .btn:hover,
     .btn-secondary:hover {
@@ -225,6 +235,13 @@
     .intro-panel h2 {
       max-width: 640px;
       margin-bottom: 0;
+    }
+    .intro-note {
+      max-width: 620px;
+      margin: 0;
+      color: rgba(16, 21, 28, 0.74);
+      font-size: 15px;
+      line-height: 1.55;
     }
     .privacy-grid {
       display: grid;
@@ -301,9 +318,10 @@
       border-color: rgba(45, 123, 84, 0.36);
     }
     .segmented {
-      display: inline-flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
+      width: 100%;
     }
     .segmented input {
       position: absolute;
@@ -313,7 +331,8 @@
     .segmented label {
       border: 1px solid rgba(12, 18, 24, 0.1);
       border-radius: 999px;
-      padding: 10px 14px;
+      min-height: 50px;
+      padding: 12px 16px;
       font-size: 14px;
       font-weight: 650;
       color: #10151c;
@@ -321,6 +340,9 @@
       cursor: pointer;
       transition: background .14s ease, border-color .14s ease, color .14s ease;
       text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .segmented input:checked + label {
       background: linear-gradient(135deg, #10151c, #1d4e37);
@@ -646,6 +668,9 @@
       .manual-expense-grid {
         grid-template-columns: 1fr;
       }
+      .segmented {
+        grid-template-columns: 1fr;
+      }
       .range-controls {
         width: 100%;
       }
@@ -698,6 +723,7 @@
         <div class="panel intro-panel">
           <div class="intro-icon"><i class="fa-solid fa-shield-heart" aria-hidden="true"></i></div>
           <h2>paiden.com will not store your financial data.</h2>
+          <p class="intro-note">Everything stays local in Chrome for this page and is cleared when the page refreshes.</p>
           <div class="btn-row">
             <button class="btn btn-large" id="introContinueBtn" type="button"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>Continue</span></button>
           </div>
