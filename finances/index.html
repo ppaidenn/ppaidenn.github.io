@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>paiden.com</title>
+  <meta name="description" content="Analyze spending locally in your browser on paiden.com.">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="apple-touch-icon" href="/images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="/shared-footer.css?v=20260417a">
+  <link rel="stylesheet" href="/shared-app-header.css?v=20260421b">
+  <style>
+    :root {
+      --panel-border: rgba(11, 17, 22, 0.1);
+      --panel-bg: rgba(255, 255, 255, 0.84);
+      --panel-soft: rgba(246, 249, 246, 0.92);
+      --ink-soft: rgba(16, 21, 28, 0.72);
+      --mint: #2d7b54;
+      --mint-soft: rgba(45, 123, 84, 0.12);
+      --danger: #a10000;
+      --good: #11422b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(58, 137, 94, 0.12), transparent 24%),
+        linear-gradient(180deg, #dde2da 0%, #d5dcd4 100%);
+      color: #10151c;
+    }
+    [hidden] { display: none !important; }
+    .content-wrap {
+      flex: 1 0 auto;
+      padding: clamp(22px, 4vh, 40px) 0 calc(30px + env(safe-area-inset-bottom, 0px));
+    }
+    .content-inner {
+      margin: 0 10vw;
+      border-radius: 24px;
+      border: 1px solid var(--panel-border);
+      padding: clamp(18px, 2.2vw, 32px);
+      background:
+        radial-gradient(circle at top left, rgba(58, 137, 94, 0.1), transparent 34%),
+        linear-gradient(180deg, rgba(255,255,255,0.88), rgba(243,246,240,0.8));
+      box-shadow: 0 14px 36px rgba(0,0,0,0.09);
+    }
+    .hero {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .kicker {
+      letter-spacing: .18em;
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(17, 44, 29, 0.78);
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 4.1vw, 52px);
+      line-height: 0.98;
+    }
+    p {
+      margin: 0 0 12px;
+      font-size: clamp(15px, 1.08vw, 18px);
+      line-height: 1.5;
+      color: rgba(16, 21, 28, 0.86);
+    }
+    .tiny-note {
+      font-size: 13px;
+      line-height: 1.45;
+      color: rgba(16, 21, 28, 0.66);
+    }
+    .wizard-step {
+      display: none;
+      gap: 18px;
+    }
+    .wizard-step.is-active {
+      display: grid;
+    }
+    .panel {
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      background: var(--panel-bg);
+      padding: clamp(16px, 1.9vw, 24px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.48);
+    }
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: clamp(22px, 2.4vw, 34px);
+      line-height: 1.08;
+    }
+    .panel h3 {
+      margin: 0 0 8px;
+      font-size: clamp(18px, 1.8vw, 24px);
+      line-height: 1.1;
+    }
+    .panel-copy {
+      margin-bottom: 14px;
+      max-width: 760px;
+      color: var(--ink-soft);
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .btn,
+    .btn-secondary {
+      border: 1px solid rgba(12, 18, 24, 0.14);
+      border-radius: 15px;
+      padding: 14px 18px;
+      font-size: 15px;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      transition: transform .14s ease, box-shadow .14s ease, background .14s ease;
+    }
+    .btn:hover,
+    .btn-secondary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.08);
+    }
+    .btn {
+      background: #10151c;
+      color: #fff;
+    }
+    .btn-large {
+      width: min(100%, 420px);
+      padding: 18px 22px;
+      font-size: 18px;
+      border-radius: 18px;
+    }
+    .btn-secondary {
+      background: rgba(255,255,255,0.92);
+      color: #10151c;
+    }
+    .privacy-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 10px 0 14px;
+    }
+    .privacy-chip {
+      border-radius: 16px;
+      border: 1px solid rgba(16, 21, 28, 0.08);
+      background: rgba(255,255,255,0.92);
+      padding: 12px;
+      display: grid;
+      gap: 6px;
+    }
+    .privacy-chip strong {
+      font-size: 14px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #153927;
+    }
+    .privacy-chip span {
+      font-size: 14px;
+      color: var(--ink-soft);
+      line-height: 1.4;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .form-grid.single {
+      grid-template-columns: 1fr;
+    }
+    .section-card {
+      border: 1px solid rgba(12, 18, 24, 0.08);
+      border-radius: 18px;
+      background: var(--panel-soft);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+    .field label {
+      font-size: 14px;
+      font-weight: 800;
+      color: #10151c;
+    }
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1px solid rgba(12, 18, 24, 0.16);
+      border-radius: 14px;
+      padding: 12px 13px;
+      background: #fff;
+      font-size: 15px;
+      font-family: inherit;
+      color: #10151c;
+    }
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      outline: 2px solid rgba(45, 123, 84, 0.18);
+      border-color: rgba(45, 123, 84, 0.36);
+    }
+    .segmented {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .segmented input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .segmented label {
+      border: 1px solid rgba(12, 18, 24, 0.14);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #10151c;
+      background: rgba(255,255,255,0.86);
+      cursor: pointer;
+      transition: background .14s ease, border-color .14s ease, color .14s ease;
+    }
+    .segmented input:checked + label {
+      background: #10151c;
+      border-color: #10151c;
+      color: #fff;
+    }
+    .upload-box {
+      border: 1.5px dashed rgba(45, 123, 84, 0.38);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(236,245,238,0.76));
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+    .upload-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .upload-copy {
+      display: grid;
+      gap: 6px;
+    }
+    .upload-copy strong {
+      font-size: 18px;
+      color: #153927;
+    }
+    .upload-copy span {
+      font-size: 14px;
+      color: var(--ink-soft);
+      line-height: 1.45;
+      max-width: 560px;
+    }
+    .file-input {
+      display: none;
+    }
+    .file-list {
+      display: grid;
+      gap: 10px;
+    }
+    .file-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 11px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.94);
+      border: 1px solid rgba(12,18,24,0.08);
+    }
+    .file-pill-main {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+    .file-pill-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: #10151c;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-pill-meta {
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid rgba(12,18,24,0.12);
+      background: #fff;
+      color: #10151c;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 36px;
+    }
+    .status {
+      min-height: 22px;
+      font-weight: 700;
+      color: var(--ink-soft);
+    }
+    .status.error {
+      color: var(--danger);
+    }
+    .loading-box {
+      min-height: 320px;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: 14px;
+      text-align: center;
+    }
+    .spinner {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 6px solid rgba(45, 123, 84, 0.14);
+      border-top-color: var(--mint);
+      animation: spin 0.95s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .loading-steps {
+      width: min(100%, 560px);
+      display: grid;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .loading-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.88);
+      border: 1px solid rgba(12,18,24,0.08);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink-soft);
+      text-align: left;
+    }
+    .loading-step.is-active {
+      border-color: rgba(45,123,84,0.24);
+      color: #153927;
+      background: rgba(227,241,231,0.92);
+    }
+    .results-toolbar {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .range-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: end;
+    }
+    .range-controls .field {
+      min-width: 190px;
+      margin: 0;
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .metric-card {
+      border: 1px solid rgba(12,18,24,0.08);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.92);
+      padding: 15px;
+      display: grid;
+      gap: 8px;
+    }
+    .metric-label {
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-weight: 800;
+      color: rgba(16,21,28,0.64);
+    }
+    .metric-value {
+      font-size: clamp(22px, 2.2vw, 34px);
+      font-weight: 800;
+      line-height: 1;
+      color: #10151c;
+    }
+    .metric-sub {
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--ink-soft);
+    }
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .chart-card,
+    .table-card,
+    .recommendation-card {
+      border: 1px solid rgba(12,18,24,0.08);
+      border-radius: 20px;
+      background: rgba(255,255,255,0.92);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .chart-wrap {
+      position: relative;
+      min-height: 320px;
+    }
+    .legend-note {
+      font-size: 13px;
+      color: var(--ink-soft);
+      line-height: 1.45;
+    }
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .comparison-table th,
+    .comparison-table td {
+      padding: 11px 10px;
+      border-bottom: 1px solid rgba(12,18,24,0.08);
+      text-align: left;
+      vertical-align: top;
+    }
+    .comparison-table th {
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: rgba(16,21,28,0.62);
+    }
+    .comparison-delta.good {
+      color: var(--good);
+      font-weight: 800;
+    }
+    .comparison-delta.warn {
+      color: #8a4d00;
+      font-weight: 800;
+    }
+    .comparison-delta.bad {
+      color: var(--danger);
+      font-weight: 800;
+    }
+    .recommendation-banner {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 10px 13px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .recommendation-banner.good {
+      background: rgba(45,123,84,0.12);
+      color: var(--good);
+      border: 1px solid rgba(45,123,84,0.18);
+    }
+    .recommendation-banner.bad {
+      background: rgba(161,0,0,0.08);
+      color: var(--danger);
+      border: 1px solid rgba(161,0,0,0.12);
+    }
+    .recommendation-list {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 10px;
+      color: rgba(16,21,28,0.84);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .results-empty {
+      font-size: 14px;
+      color: var(--ink-soft);
+      line-height: 1.45;
+    }
+    .footer {
+      width: 100%;
+      background: #000;
+      padding: 56px 0 calc(56px + env(safe-area-inset-bottom,0px));
+      margin-top: auto;
+      flex-shrink: 0;
+    }
+    @media (max-width: 1080px) {
+      .form-grid,
+      .chart-grid,
+      .metrics-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .privacy-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 768px) {
+      body {
+        padding-top: calc(env(safe-area-inset-top, 0px) + 58px);
+      }
+      .top-nav { display: none; }
+      .mobile-fixed-header { display: flex; }
+      .content-wrap { padding-top: 18px; }
+      .content-inner { margin: 0 5vw; padding: 16px; }
+      .form-grid,
+      .chart-grid,
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+      .range-controls {
+        width: 100%;
+      }
+      .range-controls .field {
+        min-width: 0;
+        width: 100%;
+      }
+      .upload-head {
+        align-items: start;
+      }
+      .footer { display: none !important; }
+    }
+  </style>
+</head>
+<body data-finances-view="local-only">
+  <header class="top-nav" role="navigation" aria-label="Primary site navigation">
+    <div class="top-nav-inner">
+      <a class="brand" href="/">paiden.com</a>
+      <nav class="nav-links">
+        <a href="/resume">Resume</a>
+        <a href="/photos">Photos</a>
+        <a href="/blog">Blog</a>
+        <a href="/contactme">Contact Me</a>
+      </nav>
+    </div>
+  </header>
+  <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation">
+    <a class="mobile-fixed-brand" href="/">paiden.com</a>
+    <div class="mobile-fixed-nav">
+      <a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a>
+      <a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a>
+      <a href="/contactme" aria-label="Contact"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a>
+    </div>
+  </div>
+
+  <main class="content-wrap">
+    <section class="content-inner">
+      <section class="hero">
+        <div class="kicker">LOCAL FINANCE TOOL</div>
+        <h1>Finances</h1>
+        <p>Bring in statement exports from your cards or bank, let the browser sort and categorize the transactions locally, and then review charts and take-home estimates without sending financial data to paiden.com storage.</p>
+        <p class="tiny-note">This page is built for temporary browser-only analysis. Refreshing the page clears the imported files and processed results.</p>
+      </section>
+
+      <section class="wizard-step is-active" id="introStep">
+        <div class="panel">
+          <div class="kicker">BROWSER-ONLY NOTICE</div>
+          <h2>Your financial files stay temporary in this browser session.</h2>
+          <p class="panel-copy">This page is designed to process statement files locally on your device. paiden.com should not collect, save, or sync your financial data from this tool. If you refresh the page or close the tab, the imported data is gone.</p>
+          <div class="privacy-grid">
+            <div class="privacy-chip">
+              <strong>Temporary</strong>
+              <span>No local storage or Supabase save is used for the statement data in this flow.</span>
+            </div>
+            <div class="privacy-chip">
+              <strong>Local Parsing</strong>
+              <span>Files are read directly in the browser and categorized in JavaScript on the page.</span>
+            </div>
+            <div class="privacy-chip">
+              <strong>Estimate Only</strong>
+              <span>Income and tax results are rough planning estimates, not tax, legal, or accounting advice.</span>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-large" id="introContinueBtn" type="button"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>Continue</span></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="wizard-step" id="inputStep">
+        <div class="panel">
+          <div class="kicker">SETUP</div>
+          <h2>Bring in your statement files and income details.</h2>
+          <p class="panel-copy">Best results come from CSV, TSV, QFX, OFX, or plain-text exports. Discover and Veridian exports should be workable here, but the parser is also built to try generic files from many other institutions.</p>
+          <form id="financesForm" novalidate>
+            <div class="form-grid">
+              <div class="section-card">
+                <h3>Statement Files</h3>
+                <div class="upload-box">
+                  <div class="upload-head">
+                    <div class="upload-copy">
+                      <strong>Upload statement exports</strong>
+                      <span>Use credit card exports, debit card reports, bank transactions, or other spending exports. Multiple files are okay and they will be merged chronologically.</span>
+                    </div>
+                    <div class="btn-row" style="margin-top:0;">
+                      <label class="btn-secondary" for="statementFilesInput"><i class="fa-solid fa-upload" aria-hidden="true"></i><span>Choose Files</span></label>
+                    </div>
+                  </div>
+                  <input class="file-input" id="statementFilesInput" type="file" accept=".csv,.tsv,.txt,.ofx,.qfx" multiple>
+                  <div class="field">
+                    <label for="amountStyleSelect">Amount Style Override</label>
+                    <select id="amountStyleSelect">
+                      <option value="auto">Auto detect</option>
+                      <option value="expenses-positive">Expenses are positive numbers</option>
+                      <option value="expenses-negative">Expenses are negative numbers</option>
+                    </select>
+                  </div>
+                  <div class="file-list" id="statementFileList">
+                    <div class="results-empty">No files selected yet.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section-card">
+                <h3>Income Details</h3>
+                <div class="field">
+                  <label>Income Input Mode</label>
+                  <div class="segmented">
+                    <input id="incomeModeAnnual" type="radio" name="incomeMode" value="annual" checked>
+                    <label for="incomeModeAnnual">Annual salary</label>
+                    <input id="incomeModeHourly" type="radio" name="incomeMode" value="hourly">
+                    <label for="incomeModeHourly">Hourly wage</label>
+                  </div>
+                </div>
+                <div class="field" id="annualSalaryField">
+                  <label for="annualSalaryInput">Annual salary</label>
+                  <input id="annualSalaryInput" type="number" min="0" step="100" inputmode="decimal" placeholder="65000">
+                </div>
+                <div class="form-grid single" id="hourlyFields" hidden>
+                  <div class="field">
+                    <label for="hourlyWageInput">Hourly wage</label>
+                    <input id="hourlyWageInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="25.00">
+                  </div>
+                  <div class="field">
+                    <label for="hoursPerWeekInput">Hours worked per week</label>
+                    <input id="hoursPerWeekInput" type="number" min="0" max="168" step="0.25" inputmode="decimal" placeholder="40">
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="filingStatusSelect">Filing status for net-income estimate</label>
+                  <select id="filingStatusSelect">
+                    <option value="single">Single</option>
+                    <option value="marriedJoint">Married filing jointly</option>
+                    <option value="headOfHousehold">Head of household</option>
+                    <option value="marriedSeparate">Married filing separately</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="stateSelect">State</label>
+                  <select id="stateSelect"></select>
+                </div>
+                <div class="field">
+                  <label for="stateTaxRateInput">Estimated state and local tax rate (%)</label>
+                  <input id="stateTaxRateInput" type="number" min="0" max="20" step="0.1" inputmode="decimal" placeholder="4.5">
+                </div>
+                <p class="tiny-note">The state rate is a rough planning default you can edit. This page uses it only for take-home estimates.</p>
+              </div>
+            </div>
+
+            <div class="status" id="inputStatus"></div>
+            <div class="btn-row">
+              <button class="btn-secondary" id="backToIntroBtn" type="button"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Back</span></button>
+              <button class="btn" id="processFinancesBtn" type="submit"><i class="fa-solid fa-play" aria-hidden="true"></i><span>Continue</span></button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="wizard-step" id="loadingStep">
+        <div class="panel loading-box">
+          <div class="spinner" aria-hidden="true"></div>
+          <div class="kicker">PROCESSING</div>
+          <h2>Organizing your finances locally.</h2>
+          <p class="panel-copy" id="loadingHeadline">Reading your uploaded files in the browser...</p>
+          <div class="loading-steps" id="loadingStepsList">
+            <div class="loading-step is-active">Reading statement files</div>
+            <div class="loading-step">Sorting transactions chronologically</div>
+            <div class="loading-step">Categorizing expenses</div>
+            <div class="loading-step">Calculating income estimates</div>
+            <div class="loading-step">Building charts</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="wizard-step" id="resultsStep">
+        <div class="panel">
+          <div class="results-toolbar">
+            <div>
+              <div class="kicker">RESULTS</div>
+              <h2 id="resultsHeading">Expense Snapshot</h2>
+              <p class="tiny-note" id="resultsRangeNote">Showing the most recent data that was imported.</p>
+            </div>
+            <div class="range-controls">
+              <div class="field">
+                <label for="rangeStartSelect">Start month</label>
+                <select id="rangeStartSelect"></select>
+              </div>
+              <div class="field">
+                <label for="rangeEndSelect">End month</label>
+                <select id="rangeEndSelect"></select>
+              </div>
+              <div class="btn-row" style="margin-top:0;">
+                <button class="btn-secondary" id="runAnotherImportBtn" type="button"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span>Import Again</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">Selected spending</div>
+            <div class="metric-value" id="selectedSpendingValue">$0</div>
+            <div class="metric-sub" id="selectedSpendingSub">Across the selected date range.</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Monthly expenses</div>
+            <div class="metric-value" id="monthlyExpensesValue">$0</div>
+            <div class="metric-sub" id="monthlyExpensesSub">Average per month in the selected range.</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Gross income</div>
+            <div class="metric-value" id="monthlyGrossValue">$0</div>
+            <div class="metric-sub" id="weeklyGrossSub">Weekly gross: $0</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Net income estimate</div>
+            <div class="metric-value" id="monthlyNetValue">$0</div>
+            <div class="metric-sub" id="weeklyNetSub">Weekly net estimate: $0</div>
+          </div>
+        </div>
+
+        <div class="chart-grid">
+          <div class="chart-card">
+            <div>
+              <div class="kicker">ACTUAL</div>
+              <h3>Expense Pie Chart</h3>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="expensesChartCanvas" aria-label="Expense pie chart"></canvas>
+            </div>
+            <div class="legend-note" id="expensesChartNote">Showing expense categories only for the selected months.</div>
+          </div>
+
+          <div class="chart-card">
+            <div>
+              <div class="kicker">GUIDELINE</div>
+              <h3>Suggested Monthly Budget Mix</h3>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="budgetGuideChartCanvas" aria-label="Budget guideline pie chart"></canvas>
+            </div>
+            <div class="legend-note">This chart is a rule-of-thumb comparison against your estimated monthly net income, not a legal or tax planning statement.</div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div>
+            <div class="kicker">COMPARISON</div>
+            <h3>How your current spending compares</h3>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Current monthly</th>
+                  <th>Suggested monthly</th>
+                  <th>Delta</th>
+                </tr>
+              </thead>
+              <tbody id="comparisonTableBody">
+                <tr>
+                  <td colspan="4" class="results-empty">Import statements to see the comparison table.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="recommendation-card">
+          <div>
+            <div class="kicker">BOTTOM LINE</div>
+            <div class="recommendation-banner good" id="recommendationBanner"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span>All Clear</span></div>
+          </div>
+          <div id="recommendationSummary" class="panel-copy">Import your files to see a spending summary.</div>
+          <ul class="recommendation-list" id="recommendationList">
+            <li>Recommendations will appear here after your statements are processed.</li>
+          </ul>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-left-cluster">
+        <div class="footer-brand-stack">
+          <div class="footer-brand-wrap"><a class="footer-brand" href="/">paiden.com</a></div>
+          <div class="footer-meta">
+            <div class="footer-created">Created by Paiden Nicks</div>
+            <div class="footer-updated" id="last-updated"></div>
+          </div>
+        </div>
+        <div class="footer-nav">
+          <a href="/resume">Resume</a>
+          <a href="/photos">Photos</a>
+          <a href="/blog">Blog</a>
+          <a href="/contactme">Contact Me</a>
+        </div>
+      </div>
+      <div class="footer-social">
+        <span class="follow-text">Follow Me</span>
+        <div class="social-icons">
+          <a href="https://www.linkedin.com/in/paiden" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          <a href="https://www.instagram.com/paiden_26" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="https://snapchat.com/t/m04JWymy" target="_blank" rel="noopener" aria-label="Snapchat"><i class="fab fa-snapchat"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>const lastUpdated=document.getElementById("last-updated"); if(lastUpdated) lastUpdated.textContent="Today's Date: "+new Date().toLocaleDateString();</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="/shared-app-header.js?v=20260421b"></script>
+  <script src="/shared-footer.js?v=20260417a"></script>
+  <script src="/finances/finances-page.js?v=20260524a"></script>
+</body>
+</html>
