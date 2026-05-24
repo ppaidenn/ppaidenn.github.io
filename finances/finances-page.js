@@ -96,6 +96,24 @@
     { category: "Income", bucket: "Savings, Debt & Taxes", keywords: ["payroll", "direct deposit", "salary", "paycheck", "wages", "adp ", "paycom", "gusto", "square payroll", "deposit payroll"] },
     { category: "Transfers & Payments", bucket: "Savings, Debt & Taxes", keywords: ["payment thank you", "discover epayment", "discover e-payment", "online payment", "ach payment", "payment received", "mobile transfer", "online transfer", "external transfer", "internal transfer", "zelle", "venmo", "cash app", "paypal transfer", "transfer to", "transfer from", "xfer", "autopay"] },
   ];
+  const EXPLICIT_CATEGORY_RULES = [
+    { kind: "income", category: "Income", bucket: "Savings, Debt & Taxes", keywords: ["income", "salary", "payroll", "paycheck", "direct deposit", "deposit"] },
+    { kind: "transfer", category: "Transfers & Payments", bucket: "Savings, Debt & Taxes", keywords: ["payment", "payments", "credit card payment", "autopay", "transfer", "online payment", "payment received"] },
+    { kind: "refund", category: "Refunds & Credits", bucket: "Shopping & Personal", keywords: ["refund", "returned purchase", "return", "credit", "credits"] },
+    { kind: "expense", category: "Housing", bucket: "Housing", keywords: ["housing", "rent", "mortgage", "home"] },
+    { kind: "expense", category: "Groceries", bucket: "Food", keywords: ["grocery", "groceries", "supermarket"] },
+    { kind: "expense", category: "Dining & Coffee", bucket: "Food", keywords: ["restaurant", "restaurants", "dining", "coffee", "fast food"] },
+    { kind: "expense", category: "Transportation", bucket: "Transportation", keywords: ["transportation", "gas", "gasoline", "fuel", "parking", "toll", "automotive", "auto"] },
+    { kind: "expense", category: "Utilities & Bills", bucket: "Utilities & Bills", keywords: ["utilities", "utility", "internet", "phone", "wireless", "streaming", "services", "service"] },
+    { kind: "expense", category: "Healthcare", bucket: "Healthcare & Insurance", keywords: ["health", "healthcare", "medical", "pharmacy", "drug store"] },
+    { kind: "expense", category: "Insurance", bucket: "Healthcare & Insurance", keywords: ["insurance"] },
+    { kind: "expense", category: "Shopping", bucket: "Shopping & Personal", keywords: ["shopping", "merchandise", "department store", "clothing", "personal"] },
+    { kind: "expense", category: "Entertainment", bucket: "Entertainment & Travel", keywords: ["entertainment", "recreation"] },
+    { kind: "expense", category: "Travel", bucket: "Entertainment & Travel", keywords: ["travel", "airfare", "hotel", "lodging"] },
+    { kind: "expense", category: "Education", bucket: "Shopping & Personal", keywords: ["education", "tuition", "school"] },
+    { kind: "expense", category: "Fees & Cash", bucket: "Shopping & Personal", keywords: ["fees", "fee", "finance charge", "cash advance", "atm"] },
+    { kind: "expense", category: "Taxes & Government", bucket: "Savings, Debt & Taxes", keywords: ["tax", "government", "dmv"] },
+  ];
   const dom = {
     introStep: document.getElementById("introStep"),
     inputStep: document.getElementById("inputStep"),
@@ -104,6 +122,10 @@
     introContinueBtn: document.getElementById("introContinueBtn"),
     backToIntroBtn: document.getElementById("backToIntroBtn"),
     financesForm: document.getElementById("financesForm"),
+    spendingModeFiles: document.getElementById("spendingModeFiles"),
+    spendingModeManual: document.getElementById("spendingModeManual"),
+    fileUploadSection: document.getElementById("fileUploadSection"),
+    manualExpenseSection: document.getElementById("manualExpenseSection"),
     statementFilesInput: document.getElementById("statementFilesInput"),
     statementFileList: document.getElementById("statementFileList"),
     amountStyleSelect: document.getElementById("amountStyleSelect"),
@@ -140,6 +162,7 @@
     recommendationBanner: document.getElementById("recommendationBanner"),
     recommendationSummary: document.getElementById("recommendationSummary"),
     recommendationList: document.getElementById("recommendationList"),
+    manualExpenseInputs: Array.from(document.querySelectorAll("[data-manual-expense]")),
   };
   const wizardStepIds = ["introStep", "inputStep", "loadingStep", "resultsStep"];
   const appState = {
@@ -217,6 +240,7 @@
   function init() {
     populateStates();
     wireEvents();
+    updateSpendingMode();
     updateIncomeMode();
     renderFileList();
     showWizardStep("introStep");
@@ -231,6 +255,8 @@
       showWizardStep("introStep");
       clearStatus();
     });
+    dom.spendingModeFiles.addEventListener("change", updateSpendingMode);
+    dom.spendingModeManual.addEventListener("change", updateSpendingMode);
     dom.statementFilesInput.addEventListener("change", handleFilesChosen);
     dom.amountStyleSelect.addEventListener("change", clearStatus);
     dom.incomeModeAnnual.addEventListener("change", updateIncomeMode);
@@ -266,6 +292,13 @@
     dom.hourlyFields.hidden = annualMode;
   }
 
+  function updateSpendingMode() {
+    const fileMode = dom.spendingModeFiles.checked;
+    dom.fileUploadSection.hidden = !fileMode;
+    dom.manualExpenseSection.hidden = fileMode;
+    clearStatus();
+  }
+
   function handleFilesChosen(event) {
     const nextFiles = Array.from(event.target.files || []);
     nextFiles.forEach(function (file) {
@@ -292,7 +325,7 @@
         '<div class="file-pill">',
         '<div class="file-pill-main">',
         '<div class="file-pill-name">' + escapeHtml(file.name) + "</div>",
-        '<div class="file-pill-meta">' + formatBytes(file.size) + " • " + escapeHtml(extensionLabel(file.name)) + "</div>",
+        '<div class="file-pill-meta">' + formatBytes(file.size) + " - " + escapeHtml(extensionLabel(file.name)) + "</div>",
         "</div>",
         '<button class="icon-btn" type="button" data-remove-file="' + index + '" aria-label="Remove ' + escapeHtml(file.name) + '"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>',
         "</div>",
@@ -321,11 +354,13 @@
 
     const incomeProfile = buildIncomeProfile();
     showWizardStep("loadingStep");
-    updateLoadingStep(0, "Reading your uploaded statement files locally...");
+    updateLoadingStep(0, dom.spendingModeFiles.checked ? "Reading your uploaded statement files locally..." : "Reading your manually entered monthly expenses...");
 
     try {
       await nextFrame();
-      const rawTransactions = await readAndParseFiles(appState.files, dom.amountStyleSelect.value);
+      const rawTransactions = dom.spendingModeFiles.checked
+        ? await readAndParseFiles(appState.files, dom.amountStyleSelect.value)
+        : buildManualTransactions();
       updateLoadingStep(1, "Sorting transactions chronologically and cleaning duplicate rows...");
       await pause(90);
       const mergedTransactions = finalizeTransactions(rawTransactions);
@@ -358,8 +393,16 @@
   }
 
   function validateInputs() {
-    if (!appState.files.length) {
+    if (dom.spendingModeFiles.checked && !appState.files.length) {
       return { ok: false, message: "Choose at least one statement export before continuing." };
+    }
+    if (dom.spendingModeManual.checked) {
+      const manualTotal = sum(dom.manualExpenseInputs.map(function (input) {
+        return Math.max(Number(input.value) || 0, 0);
+      }));
+      if (manualTotal <= 0) {
+        return { ok: false, message: "Enter at least one monthly expense amount before continuing." };
+      }
     }
     if (!dom.stateSelect.value) {
       return { ok: false, message: "Choose the state you live in so the net-income estimate has a starting point." };
@@ -436,6 +479,25 @@
       output.push.apply(output, parsed);
     }
     return output;
+  }
+
+  function buildManualTransactions() {
+    const today = new Date();
+    return dom.manualExpenseInputs.map(function (input) {
+      const amount = Math.max(Number(input.value) || 0, 0);
+      if (!amount) {
+        return null;
+      }
+      return createTransactionRecord({
+        date: new Date(today.getFullYear(), today.getMonth(), 1),
+        description: "Manual monthly expense - " + String(input.getAttribute("data-manual-expense") || "Miscellaneous"),
+        signedAmount: -amount,
+        sourceFile: "manual-entry",
+        category: String(input.getAttribute("data-manual-expense") || "Miscellaneous"),
+        budgetBucket: String(input.getAttribute("data-manual-bucket") || "Shopping & Personal"),
+        categorySource: "manual",
+      });
+    }).filter(Boolean);
   }
 
   function parseStatementFile(params) {
@@ -562,6 +624,9 @@
       if (/\b(description|merchant|payee|details|memo|name)\b/.test(label)) {
         score += 2;
       }
+      if (/\b(category|merchant category|broad category|subcategory)\b/.test(label)) {
+        score += 1;
+      }
       if (/\b(amount|debit|credit|withdrawal|deposit|charge|payment)\b/.test(label)) {
         score += 1;
       }
@@ -582,6 +647,8 @@
     let typeIndex = -1;
     let memoIndex = -1;
     let balanceIndex = -1;
+    let categoryIndex = -1;
+    let subcategoryIndex = -1;
 
     normalized.forEach(function (label, index) {
       if (dateIndex === -1 && /\b(transaction date|post date|posted date|date)\b/.test(label)) {
@@ -594,6 +661,14 @@
       }
       if (memoIndex === -1 && /\b(memo|notes?)\b/.test(label)) {
         memoIndex = index;
+        return;
+      }
+      if (categoryIndex === -1 && /\b(category|merchant category|broad category|spending category)\b/.test(label)) {
+        categoryIndex = index;
+        return;
+      }
+      if (subcategoryIndex === -1 && /\b(subcategory|sub category|detailed category)\b/.test(label)) {
+        subcategoryIndex = index;
         return;
       }
       if (debitIndex === -1 && /\b(debit|withdrawal|charge|purchases?)\b/.test(label)) {
@@ -626,6 +701,8 @@
       dateIndex: dateIndex,
       descriptionIndex: descriptionIndex,
       memoIndex: memoIndex,
+      categoryIndex: categoryIndex,
+      subcategoryIndex: subcategoryIndex,
       amountIndex: amountIndex,
       debitIndex: debitIndex,
       creditIndex: creditIndex,
@@ -640,6 +717,8 @@
       dateIndex: firstRow.length > 0 ? 0 : -1,
       descriptionIndex: firstRow.length > 1 ? 1 : -1,
       memoIndex: -1,
+      categoryIndex: -1,
+      subcategoryIndex: -1,
       amountIndex: firstRow.length > 2 ? firstRow.length - 1 : -1,
       debitIndex: -1,
       creditIndex: -1,
@@ -652,6 +731,7 @@
   function buildTransactionFromCells(cells, map, fileName, amountStyle) {
     const rawDate = getCell(cells, map.dateIndex);
     const rawDescription = [getCell(cells, map.descriptionIndex), getCell(cells, map.memoIndex)].filter(Boolean).join(" ").trim();
+    const rawCategory = [getCell(cells, map.categoryIndex), getCell(cells, map.subcategoryIndex)].filter(Boolean).join(" / ").trim();
     const parsedDate = parseLooseDate(rawDate);
     if (!parsedDate || !rawDescription) {
       return null;
@@ -680,6 +760,7 @@
       description: rawDescription,
       signedAmount: signedAmount,
       sourceFile: fileName,
+      statementCategoryRaw: rawCategory,
     });
   }
 
@@ -834,8 +915,10 @@
       normalizedDescription: normalizeMerchant(input.description),
       signedAmount: roundMoney(input.signedAmount),
       sourceFile: input.sourceFile,
-      category: "Miscellaneous",
-      budgetBucket: "Shopping & Personal",
+      statementCategoryRaw: String(input.statementCategoryRaw || "").trim(),
+      category: input.category || "Miscellaneous",
+      budgetBucket: input.budgetBucket || "Shopping & Personal",
+      categorySource: input.categorySource || "",
       cashFlowType: "expense",
       includeInSpending: true,
       spendAmount: 0,
@@ -864,6 +947,15 @@
 
   function enrichTransaction(transaction) {
     const normalized = transaction.normalizedDescription;
+    const explicitCategoryMatch = mapExternalCategory(transaction.statementCategoryRaw);
+
+    if (transaction.categorySource === "manual") {
+      transaction.cashFlowType = "expense";
+      transaction.includeInSpending = true;
+      transaction.spendAmount = Math.abs(transaction.signedAmount);
+      return transaction;
+    }
+
     if (isTransferKeyword(normalized)) {
       transaction.category = "Transfers & Payments";
       transaction.budgetBucket = "Savings, Debt & Taxes";
@@ -891,25 +983,46 @@
       return transaction;
     }
 
-    const match = KEYWORD_CATEGORY_RULES.find(function (rule) {
-      return rule.keywords.some(function (keyword) {
-        return normalized.indexOf(keyword) !== -1;
-      });
-    });
+    if (explicitCategoryMatch) {
+      transaction.category = explicitCategoryMatch.category;
+      transaction.budgetBucket = explicitCategoryMatch.bucket;
+      transaction.categorySource = "statement";
 
-    if (match) {
-      transaction.category = match.category;
-      transaction.budgetBucket = match.bucket;
-    } else if (transaction.signedAmount > 0) {
-      transaction.category = "Refunds & Credits";
-      transaction.budgetBucket = "Shopping & Personal";
-      transaction.cashFlowType = "refund";
-      transaction.includeInSpending = false;
-      transaction.spendAmount = 0;
-      return transaction;
+      if (explicitCategoryMatch.kind === "income") {
+        transaction.cashFlowType = "income";
+        transaction.includeInSpending = false;
+        transaction.spendAmount = 0;
+        return transaction;
+      }
+      if (explicitCategoryMatch.kind === "transfer") {
+        transaction.cashFlowType = "transfer";
+        transaction.includeInSpending = false;
+        transaction.spendAmount = 0;
+        return transaction;
+      }
+      if (explicitCategoryMatch.kind === "refund") {
+        transaction.cashFlowType = "refund";
+        transaction.includeInSpending = false;
+        transaction.spendAmount = 0;
+        return transaction;
+      }
+    } else {
+      const match = KEYWORD_CATEGORY_RULES.find(function (rule) {
+        return rule.keywords.some(function (keyword) {
+          return normalized.indexOf(keyword) !== -1;
+        });
+      });
+
+      if (match) {
+        transaction.category = match.category;
+        transaction.budgetBucket = match.bucket;
+        transaction.categorySource = "keyword";
+      }
     }
 
     if (transaction.signedAmount >= 0) {
+      transaction.category = transaction.categorySource ? transaction.category : "Credits & Deposits";
+      transaction.budgetBucket = transaction.categorySource ? transaction.budgetBucket : "Savings, Debt & Taxes";
       transaction.cashFlowType = "credit";
       transaction.includeInSpending = false;
       transaction.spendAmount = 0;
@@ -972,8 +1085,8 @@
     })));
     const activeMonthCount = Math.max(importedMonthsWithData.length, 1);
     const averageMonthlySpending = totalSpending / activeMonthCount;
-    const expenseByCategory = groupMoneyBy(expenseTransactions, "category");
-    const actualBudgetMix = groupMoneyBy(expenseTransactions, "budgetBucket");
+    const expenseByCategory = scaleGroupedMoney(groupMoneyBy(expenseTransactions, "category"), 1 / activeMonthCount);
+    const actualBudgetMix = scaleGroupedMoney(groupMoneyBy(expenseTransactions, "budgetBucket"), 1 / activeMonthCount);
     const suggestedBudgetMix = buildSuggestedBudgetMix(appState.incomeProfile.monthlyNet);
     const comparisonRows = buildComparisonRows(actualBudgetMix, suggestedBudgetMix);
     const recommendation = buildRecommendation({
@@ -991,14 +1104,16 @@
     dom.selectedSpendingValue.textContent = formatCurrency(totalSpending);
     dom.selectedSpendingSub.textContent = activeMonthCount > 1
       ? "Across " + activeMonthCount + " imported month" + (activeMonthCount === 1 ? "" : "s") + " in the selected range."
-      : "Across the selected date range.";
+      : (dom.spendingModeManual.checked ? "From your manually entered monthly expense snapshot." : "Across the selected date range.");
     dom.monthlyExpensesValue.textContent = formatCurrency(averageMonthlySpending);
     dom.monthlyExpensesSub.textContent = "Average per month across the imported data in this range.";
     dom.monthlyGrossValue.textContent = formatCurrency(appState.incomeProfile.monthlyGross);
     dom.weeklyGrossSub.textContent = "Weekly gross: " + formatCurrency(appState.incomeProfile.weeklyGross);
     dom.monthlyNetValue.textContent = formatCurrency(appState.incomeProfile.monthlyNet);
-    dom.weeklyNetSub.textContent = "Weekly net estimate: " + formatCurrency(appState.incomeProfile.weeklyNet) + " • " + FEDERAL_YEAR + " federal estimate + your state rate";
-    dom.expensesChartNote.textContent = "Showing expense categories only for " + (activeMonthCount > 1 ? "the selected months." : formatMonthLabel(startMonth) + ".");
+    dom.weeklyNetSub.textContent = "Weekly net estimate: " + formatCurrency(appState.incomeProfile.weeklyNet) + " - " + FEDERAL_YEAR + " federal estimate + your state rate";
+    dom.expensesChartNote.textContent = activeMonthCount > 1
+      ? "Showing the average monthly expense mix across " + activeMonthCount + " selected months."
+      : "Showing expense categories for " + formatMonthLabel(startMonth) + ".";
 
     renderActualChart(expenseByCategory);
     renderGuideChart(suggestedBudgetMix);
@@ -1232,6 +1347,7 @@
     dom.stateSelect.selectedIndex = 0;
     dom.stateTaxRateInput.value = "";
     appState.stateRateTouched = false;
+    updateSpendingMode();
     updateIncomeMode();
     renderFileList();
     clearStatus();
@@ -1394,10 +1510,29 @@
     return /\b(payment thank you|discover e payment|discover epayment|online payment|ach payment|payment received|internal transfer|external transfer|mobile transfer|online transfer|zelle|venmo|cash app|paypal transfer|xfer|transfer to|transfer from|autopay|automatic payment)\b/.test(normalized);
   }
 
+  function mapExternalCategory(rawCategory) {
+    const normalized = normalizeLabel(rawCategory);
+    if (!normalized) {
+      return null;
+    }
+    return EXPLICIT_CATEGORY_RULES.find(function (rule) {
+      return rule.keywords.some(function (keyword) {
+        return normalized.indexOf(keyword) !== -1;
+      });
+    }) || null;
+  }
+
   function groupMoneyBy(transactions, key) {
     return transactions.reduce(function (accumulator, transaction) {
       const groupKey = transaction[key] || "Other";
       accumulator[groupKey] = roundMoney((accumulator[groupKey] || 0) + transaction.spendAmount);
+      return accumulator;
+    }, {});
+  }
+
+  function scaleGroupedMoney(grouped, multiplier) {
+    return Object.keys(grouped).reduce(function (accumulator, key) {
+      accumulator[key] = roundMoney((grouped[key] || 0) * multiplier);
       return accumulator;
     }, {});
   }

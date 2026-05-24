@@ -243,6 +243,16 @@
       border-color: #10151c;
       color: #fff;
     }
+    .manual-expense-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .manual-expense-note {
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--ink-soft);
+    }
     .upload-box {
       border: 1.5px dashed rgba(45, 123, 84, 0.38);
       border-radius: 20px;
@@ -538,6 +548,9 @@
       .metrics-grid {
         grid-template-columns: 1fr;
       }
+      .manual-expense-grid {
+        grid-template-columns: 1fr;
+      }
       .range-controls {
         width: 100%;
       }
@@ -576,31 +589,12 @@
   <main class="content-wrap">
     <section class="content-inner">
       <section class="hero">
-        <div class="kicker">LOCAL FINANCE TOOL</div>
         <h1>Finances</h1>
-        <p>Bring in statement exports from your cards or bank, let the browser sort and categorize the transactions locally, and then review charts and take-home estimates without sending financial data to paiden.com storage.</p>
-        <p class="tiny-note">This page is built for temporary browser-only analysis. Refreshing the page clears the imported files and processed results.</p>
       </section>
 
       <section class="wizard-step is-active" id="introStep">
         <div class="panel">
-          <div class="kicker">BROWSER-ONLY NOTICE</div>
-          <h2>Your financial files stay temporary in this browser session.</h2>
-          <p class="panel-copy">This page is designed to process statement files locally on your device. paiden.com should not collect, save, or sync your financial data from this tool. If you refresh the page or close the tab, the imported data is gone.</p>
-          <div class="privacy-grid">
-            <div class="privacy-chip">
-              <strong>Temporary</strong>
-              <span>No local storage or Supabase save is used for the statement data in this flow.</span>
-            </div>
-            <div class="privacy-chip">
-              <strong>Local Parsing</strong>
-              <span>Files are read directly in the browser and categorized in JavaScript on the page.</span>
-            </div>
-            <div class="privacy-chip">
-              <strong>Estimate Only</strong>
-              <span>Income and tax results are rough planning estimates, not tax, legal, or accounting advice.</span>
-            </div>
-          </div>
+          <h2>paiden.com will not store your financial data.</h2>
           <div class="btn-row">
             <button class="btn btn-large" id="introContinueBtn" type="button"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>Continue</span></button>
           </div>
@@ -609,40 +603,93 @@
 
       <section class="wizard-step" id="inputStep">
         <div class="panel">
-          <div class="kicker">SETUP</div>
-          <h2>Bring in your statement files and income details.</h2>
-          <p class="panel-copy">Best results come from CSV, TSV, QFX, OFX, or plain-text exports. Discover and Veridian exports should be workable here, but the parser is also built to try generic files from many other institutions.</p>
+          <h2>Enter your finances.</h2>
           <form id="financesForm" novalidate>
             <div class="form-grid">
               <div class="section-card">
-                <h3>Statement Files</h3>
-                <div class="upload-box">
-                  <div class="upload-head">
+                <h3>Spending</h3>
+                <div class="field">
+                  <label>How do you want to enter spending?</label>
+                  <div class="segmented">
+                    <input id="spendingModeFiles" type="radio" name="spendingMode" value="files" checked>
+                    <label for="spendingModeFiles">Upload statements</label>
+                    <input id="spendingModeManual" type="radio" name="spendingMode" value="manual">
+                    <label for="spendingModeManual">Enter monthly amounts</label>
+                  </div>
+                </div>
+                <div id="fileUploadSection">
+                  <div class="upload-box">
+                    <div class="upload-head">
+                      <div class="upload-copy">
+                        <strong>Upload statement exports</strong>
+                      </div>
+                      <div class="btn-row" style="margin-top:0;">
+                        <label class="btn-secondary" for="statementFilesInput"><i class="fa-solid fa-upload" aria-hidden="true"></i><span>Choose Files</span></label>
+                      </div>
+                    </div>
+                    <input class="file-input" id="statementFilesInput" type="file" accept=".csv,.tsv,.txt,.ofx,.qfx" multiple>
+                    <div class="field">
+                      <label for="amountStyleSelect">Amount Style Override</label>
+                      <select id="amountStyleSelect">
+                        <option value="auto">Auto detect</option>
+                        <option value="expenses-positive">Expenses are positive numbers</option>
+                        <option value="expenses-negative">Expenses are negative numbers</option>
+                      </select>
+                    </div>
+                    <div class="file-list" id="statementFileList">
+                      <div class="results-empty">No files selected yet.</div>
+                    </div>
+                  </div>
+                </div>
+                <div id="manualExpenseSection" hidden>
+                  <div class="upload-box">
                     <div class="upload-copy">
-                      <strong>Upload statement exports</strong>
-                      <span>Use credit card exports, debit card reports, bank transactions, or other spending exports. Multiple files are okay and they will be merged chronologically.</span>
+                      <strong>Enter current monthly expenses</strong>
                     </div>
-                    <div class="btn-row" style="margin-top:0;">
-                      <label class="btn-secondary" for="statementFilesInput"><i class="fa-solid fa-upload" aria-hidden="true"></i><span>Choose Files</span></label>
+                    <div class="manual-expense-grid">
+                      <div class="field">
+                        <label for="manualHousingInput">Housing</label>
+                        <input id="manualHousingInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Housing" data-manual-bucket="Housing">
+                      </div>
+                      <div class="field">
+                        <label for="manualFoodInput">Food</label>
+                        <input id="manualFoodInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Food" data-manual-bucket="Food">
+                      </div>
+                      <div class="field">
+                        <label for="manualTransportationInput">Transportation</label>
+                        <input id="manualTransportationInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Transportation" data-manual-bucket="Transportation">
+                      </div>
+                      <div class="field">
+                        <label for="manualUtilitiesInput">Utilities &amp; Bills</label>
+                        <input id="manualUtilitiesInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Utilities &amp; Bills" data-manual-bucket="Utilities &amp; Bills">
+                      </div>
+                      <div class="field">
+                        <label for="manualHealthcareInput">Healthcare &amp; Insurance</label>
+                        <input id="manualHealthcareInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Healthcare &amp; Insurance" data-manual-bucket="Healthcare &amp; Insurance">
+                      </div>
+                      <div class="field">
+                        <label for="manualShoppingInput">Shopping &amp; Personal</label>
+                        <input id="manualShoppingInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Shopping &amp; Personal" data-manual-bucket="Shopping &amp; Personal">
+                      </div>
+                      <div class="field">
+                        <label for="manualEntertainmentInput">Entertainment &amp; Travel</label>
+                        <input id="manualEntertainmentInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Entertainment &amp; Travel" data-manual-bucket="Entertainment &amp; Travel">
+                      </div>
+                      <div class="field">
+                        <label for="manualSavingsDebtInput">Savings, Debt &amp; Taxes</label>
+                        <input id="manualSavingsDebtInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Savings, Debt &amp; Taxes" data-manual-bucket="Savings, Debt &amp; Taxes">
+                      </div>
+                      <div class="field">
+                        <label for="manualMiscInput">Miscellaneous</label>
+                        <input id="manualMiscInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Miscellaneous" data-manual-bucket="Shopping &amp; Personal">
+                      </div>
                     </div>
-                  </div>
-                  <input class="file-input" id="statementFilesInput" type="file" accept=".csv,.tsv,.txt,.ofx,.qfx" multiple>
-                  <div class="field">
-                    <label for="amountStyleSelect">Amount Style Override</label>
-                    <select id="amountStyleSelect">
-                      <option value="auto">Auto detect</option>
-                      <option value="expenses-positive">Expenses are positive numbers</option>
-                      <option value="expenses-negative">Expenses are negative numbers</option>
-                    </select>
-                  </div>
-                  <div class="file-list" id="statementFileList">
-                    <div class="results-empty">No files selected yet.</div>
                   </div>
                 </div>
               </div>
 
               <div class="section-card">
-                <h3>Income Details</h3>
+                <h3>Income</h3>
                 <div class="field">
                   <label>Income Input Mode</label>
                   <div class="segmented">
@@ -683,7 +730,6 @@
                   <label for="stateTaxRateInput">Estimated state and local tax rate (%)</label>
                   <input id="stateTaxRateInput" type="number" min="0" max="20" step="0.1" inputmode="decimal" placeholder="4.5">
                 </div>
-                <p class="tiny-note">The state rate is a rough planning default you can edit. This page uses it only for take-home estimates.</p>
               </div>
             </div>
 
@@ -699,11 +745,10 @@
       <section class="wizard-step" id="loadingStep">
         <div class="panel loading-box">
           <div class="spinner" aria-hidden="true"></div>
-          <div class="kicker">PROCESSING</div>
-          <h2>Organizing your finances locally.</h2>
+          <h2>Processing your finances.</h2>
           <p class="panel-copy" id="loadingHeadline">Reading your uploaded files in the browser...</p>
           <div class="loading-steps" id="loadingStepsList">
-            <div class="loading-step is-active">Reading statement files</div>
+            <div class="loading-step is-active">Reading your inputs</div>
             <div class="loading-step">Sorting transactions chronologically</div>
             <div class="loading-step">Categorizing expenses</div>
             <div class="loading-step">Calculating income estimates</div>
@@ -716,7 +761,6 @@
         <div class="panel">
           <div class="results-toolbar">
             <div>
-              <div class="kicker">RESULTS</div>
               <h2 id="resultsHeading">Expense Snapshot</h2>
               <p class="tiny-note" id="resultsRangeNote">Showing the most recent data that was imported.</p>
             </div>
@@ -762,7 +806,6 @@
         <div class="chart-grid">
           <div class="chart-card">
             <div>
-              <div class="kicker">ACTUAL</div>
               <h3>Expense Pie Chart</h3>
             </div>
             <div class="chart-wrap">
@@ -773,19 +816,17 @@
 
           <div class="chart-card">
             <div>
-              <div class="kicker">GUIDELINE</div>
               <h3>Suggested Monthly Budget Mix</h3>
             </div>
             <div class="chart-wrap">
               <canvas id="budgetGuideChartCanvas" aria-label="Budget guideline pie chart"></canvas>
             </div>
-            <div class="legend-note">This chart is a rule-of-thumb comparison against your estimated monthly net income, not a legal or tax planning statement.</div>
+            <div class="legend-note">Rule-of-thumb monthly budget mix.</div>
           </div>
         </div>
 
         <div class="table-card">
           <div>
-            <div class="kicker">COMPARISON</div>
             <h3>How your current spending compares</h3>
           </div>
           <div style="overflow-x:auto;">
@@ -800,7 +841,7 @@
               </thead>
               <tbody id="comparisonTableBody">
                 <tr>
-                  <td colspan="4" class="results-empty">Import statements to see the comparison table.</td>
+                  <td colspan="4" class="results-empty">Add statement data or manual monthly expenses to see the comparison table.</td>
                 </tr>
               </tbody>
             </table>
@@ -809,7 +850,6 @@
 
         <div class="recommendation-card">
           <div>
-            <div class="kicker">BOTTOM LINE</div>
             <div class="recommendation-banner good" id="recommendationBanner"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span>All Clear</span></div>
           </div>
           <div id="recommendationSummary" class="panel-copy">Import your files to see a spending summary.</div>
