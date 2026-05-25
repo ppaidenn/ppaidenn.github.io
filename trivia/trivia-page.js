@@ -77,6 +77,7 @@
     difficultyGrid: document.getElementById("difficultyGrid"),
     difficultyBackBtn: document.getElementById("difficultyBackBtn"),
     difficultyContinueBtn: document.getElementById("difficultyContinueBtn"),
+    gameDifficultySwitcher: document.getElementById("gameDifficultySwitcher"),
     categoryBank: document.getElementById("categoryBank"),
     categoriesStatus: document.getElementById("categoriesStatus"),
     categoriesBackBtn: document.getElementById("categoriesBackBtn"),
@@ -227,6 +228,16 @@
       button.addEventListener("click", function () {
         state.difficulty = String(button.getAttribute("data-difficulty") || "medium");
         renderDifficultyCards();
+      });
+    });
+    Array.from(dom.gameDifficultySwitcher.querySelectorAll("[data-game-difficulty]")).forEach(function (button) {
+      button.addEventListener("click", function () {
+        state.difficulty = String(button.getAttribute("data-game-difficulty") || "medium");
+        renderDifficultyCards();
+        renderGameDifficultySwitcher();
+        if (!state.spinning) {
+          renderQuestionPanel();
+        }
       });
     });
     dom.difficultyBackBtn.addEventListener("click", function () {
@@ -441,6 +452,12 @@
     scheduleFitActiveStep();
   }
 
+  function renderGameDifficultySwitcher() {
+    Array.from(dom.gameDifficultySwitcher.querySelectorAll("[data-game-difficulty]")).forEach(function (button) {
+      button.classList.toggle("is-selected", String(button.getAttribute("data-game-difficulty")) === state.difficulty);
+    });
+  }
+
   function renderCategoryBank() {
     dom.categoryBank.innerHTML = state.categories.map(function (category) {
       return [
@@ -562,6 +579,7 @@
   }
 
   function renderGame() {
+    renderGameDifficultySwitcher();
     renderScoreboard();
     renderQuestionPanel();
     drawWheel();
@@ -1061,6 +1079,7 @@
     renderPlayerSetup();
     renderModeCards();
     renderDifficultyCards();
+    renderGameDifficultySwitcher();
     renderCategoryBank();
     renderOrderList();
     renderGame();
