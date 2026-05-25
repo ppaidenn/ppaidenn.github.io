@@ -65,6 +65,9 @@
     { key: "Entertainment & Travel", pct: 0.09, color: "#d5efda" },
     { key: "Savings, Debt & Taxes", pct: 0.15, color: "#edf7ef" },
   ];
+  const EDITABLE_BUDGET_CATEGORIES = BUDGET_GUIDE.map(function (entry) {
+    return entry.key;
+  }).concat(["Miscellaneous"]);
   const ACTUAL_CHART_COLORS = [
     "#20563e",
     "#2c7b55",
@@ -128,6 +131,8 @@
     fileUploadSection: document.getElementById("fileUploadSection"),
     manualExpenseSection: document.getElementById("manualExpenseSection"),
     budgetOnlySection: document.getElementById("budgetOnlySection"),
+    manualExpenseList: document.getElementById("manualExpenseList"),
+    addManualExpenseRowBtn: document.getElementById("addManualExpenseRowBtn"),
     statementFilesInput: document.getElementById("statementFilesInput"),
     statementFileList: document.getElementById("statementFileList"),
     amountStyleSelect: document.getElementById("amountStyleSelect"),
@@ -159,6 +164,10 @@
     weeklyGrossSub: document.getElementById("weeklyGrossSub"),
     monthlyNetValue: document.getElementById("monthlyNetValue"),
     weeklyNetSub: document.getElementById("weeklyNetSub"),
+    budgetEditorNote: document.getElementById("budgetEditorNote"),
+    budgetTargetInput: document.getElementById("budgetTargetInput"),
+    budgetEntryList: document.getElementById("budgetEntryList"),
+    addBudgetEntryRowBtn: document.getElementById("addBudgetEntryRowBtn"),
     expensesChartHeading: document.getElementById("expensesChartHeading"),
     expensesChartCanvas: document.getElementById("expensesChartCanvas"),
     budgetGuideChartCanvas: document.getElementById("budgetGuideChartCanvas"),
@@ -168,7 +177,6 @@
     recommendationBanner: document.getElementById("recommendationBanner"),
     recommendationSummary: document.getElementById("recommendationSummary"),
     recommendationList: document.getElementById("recommendationList"),
-    manualExpenseInputs: Array.from(document.querySelectorAll("[data-manual-expense]")),
   };
   const wizardStepIds = ["introStep", "inputStep", "loadingStep", "resultsStep"];
   const appState = {
@@ -177,6 +185,11 @@
     monthlyOptions: [],
     incomeProfile: null,
     spendingMode: "files",
+    manualExpenseEntries: [],
+    nextManualExpenseId: 1,
+    budgetEditorEntries: [],
+    budgetEditorSourceKey: "",
+    nextBudgetEditorId: 1,
     charts: {
       actual: null,
       guide: null,
@@ -245,8 +258,10 @@
   init();
 
   function init() {
+    resetManualExpenseEntries();
     populateStates();
     wireEvents();
+    renderManualExpenseRows();
     updateSpendingMode();
     updateIncomeMode();
     renderFileList();
@@ -265,6 +280,11 @@
     dom.spendingModeFiles.addEventListener("change", updateSpendingMode);
     dom.spendingModeManual.addEventListener("change", updateSpendingMode);
     dom.spendingModeGuide.addEventListener("change", updateSpendingMode);
+    dom.addManualExpenseRowBtn.addEventListener("click", function () {
+      addManualExpenseEntry();
+      renderManualExpenseRows();
+      clearStatus();
+    });
     dom.statementFilesInput.addEventListener("change", handleFilesChosen);
     dom.amountStyleSelect.addEventListener("change", clearStatus);
     dom.incomeModeAnnual.addEventListener("change", updateIncomeMode);
@@ -276,6 +296,11 @@
     dom.financesForm.addEventListener("submit", handleProcessSubmit);
     dom.rangeStartSelect.addEventListener("change", handleRangeChange);
     dom.rangeEndSelect.addEventListener("change", handleRangeChange);
+    dom.budgetTargetInput.addEventListener("change", handleBudgetTargetChange);
+    dom.addBudgetEntryRowBtn.addEventListener("click", function () {
+      addBudgetEditorEntry();
+      renderResults();
+    });
     dom.runAnotherImportBtn.addEventListener("click", resetToImport);
   }
 
@@ -306,12 +331,129 @@
     dom.fileUploadSection.hidden = spendingMode !== "files";
     dom.manualExpenseSection.hidden = spendingMode !== "manual";
     dom.budgetOnlySection.hidden = spendingMode !== "guide";
-    if (spendingMode === "manual" && dom.manualExpenseInputs.length) {
+    if (spendingMode === "manual" && appState.manualExpenseEntries.length) {
       window.requestAnimationFrame(function () {
-        dom.manualExpenseInputs[0].focus();
+        const firstInput = dom.manualExpenseSection.querySelector("input[type='number']");
+        if (firstInput) {
+          firstInput.focus();
+        }
       });
     }
     clearStatus();
+  }
+
+  function resetManualExpenseEntries() {
+    appState.manualExpenseEntries = [
+      createManualExpenseEntry({ category: "Housing", amount: 0 }),
+      createManualExpenseEntry({ category: "Food", amount: 0 }),
+    ];
+  }
+
+  function createManualExpenseEntry(input) {
+    return {
+      id: appState.nextManualExpenseId++,
+      category: input && input.category ? input.category : getNextEditableCategory([]),
+      amount: roundMoney(Number(input && input.amount) || 0),
+    };
+  }
+
+  function addManualExpenseEntry() {
+    appState.manualExpenseEntries.push(createManualExpenseEntry({
+      category: getNextEditableCategory(appState.manualExpenseEntries.map(function (entry) {
+        return entry.category;
+      })),
+      amount: 0,
+    }));
+  }
+
+  function renderManualExpenseRows() {
+    if (!dom.manualExpenseList) {
+      return;
+    }
+    if (!appState.manualExpenseEntries.length) {
+      addManualExpenseEntry();
+    }
+
+    dom.manualExpenseList.innerHTML = appState.manualExpenseEntries.map(function (entry) {
+      return [
+        '<div class="entry-row" data-manual-entry-id="' + entry.id + '">',
+        '<div class="field">',
+        '<label for="manualCategory-' + entry.id + '">Category</label>',
+        '<select id="manualCategory-' + entry.id + '" data-manual-category="' + entry.id + '">',
+        buildBudgetCategoryOptions(entry.category),
+        "</select>",
+        "</div>",
+        '<div class="field">',
+        '<label for="manualAmount-' + entry.id + '">Monthly amount</label>',
+        '<input id="manualAmount-' + entry.id + '" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" value="' + escapeHtml(entry.amount > 0 ? String(entry.amount) : "") + '" data-manual-amount="' + entry.id + '">',
+        "</div>",
+        '<button class="icon-btn" type="button" data-remove-manual-entry="' + entry.id + '" aria-label="Remove category"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>',
+        "</div>",
+      ].join("");
+    }).join("");
+
+    Array.from(dom.manualExpenseList.querySelectorAll("[data-manual-category]")).forEach(function (select) {
+      select.addEventListener("change", function () {
+        const entry = findManualExpenseEntry(select.getAttribute("data-manual-category"));
+        if (entry) {
+          entry.category = select.value || getNextEditableCategory([]);
+        }
+        clearStatus();
+      });
+    });
+    Array.from(dom.manualExpenseList.querySelectorAll("[data-manual-amount]")).forEach(function (input) {
+      input.addEventListener("change", function () {
+        const entry = findManualExpenseEntry(input.getAttribute("data-manual-amount"));
+        if (entry) {
+          entry.amount = roundMoney(Math.max(Number(input.value) || 0, 0));
+        }
+        clearStatus();
+      });
+    });
+    Array.from(dom.manualExpenseList.querySelectorAll("[data-remove-manual-entry]")).forEach(function (button) {
+      button.addEventListener("click", function () {
+        const id = String(button.getAttribute("data-remove-manual-entry"));
+        appState.manualExpenseEntries = appState.manualExpenseEntries.filter(function (entry) {
+          return String(entry.id) !== id;
+        });
+        renderManualExpenseRows();
+        clearStatus();
+      });
+    });
+  }
+
+  function findManualExpenseEntry(id) {
+    return appState.manualExpenseEntries.find(function (entry) {
+      return String(entry.id) === String(id);
+    }) || null;
+  }
+
+  function getManualExpenseEntries() {
+    return appState.manualExpenseEntries
+      .map(function (entry) {
+        return {
+          category: entry.category,
+          amount: roundMoney(Math.max(Number(entry.amount) || 0, 0)),
+        };
+      })
+      .filter(function (entry) {
+        return entry.amount > 0;
+      });
+  }
+
+  function buildBudgetCategoryOptions(selectedValue) {
+    return EDITABLE_BUDGET_CATEGORIES.map(function (category) {
+      const selected = category === selectedValue ? " selected" : "";
+      return '<option value="' + escapeHtml(category) + '"' + selected + ">" + escapeHtml(category) + "</option>";
+    }).join("");
+  }
+
+  function getNextEditableCategory(existingCategories) {
+    const used = new Set((existingCategories || []).filter(Boolean));
+    const next = EDITABLE_BUDGET_CATEGORIES.find(function (category) {
+      return !used.has(category);
+    });
+    return next || EDITABLE_BUDGET_CATEGORIES[0];
   }
 
   function handleFilesChosen(event) {
@@ -427,8 +569,8 @@
       return { ok: false, message: "Choose at least one statement export before continuing." };
     }
     if (dom.spendingModeManual.checked) {
-      const manualTotal = sum(dom.manualExpenseInputs.map(function (input) {
-        return Math.max(Number(input.value) || 0, 0);
+      const manualTotal = sum(getManualExpenseEntries().map(function (entry) {
+        return entry.amount;
       }));
       if (manualTotal <= 0) {
         return { ok: false, message: "Enter at least one monthly expense amount before continuing." };
@@ -513,21 +655,17 @@
 
   function buildManualTransactions() {
     const today = new Date();
-    return dom.manualExpenseInputs.map(function (input) {
-      const amount = Math.max(Number(input.value) || 0, 0);
-      if (!amount) {
-        return null;
-      }
+    return getManualExpenseEntries().map(function (entry) {
       return createTransactionRecord({
         date: new Date(today.getFullYear(), today.getMonth(), 1),
-        description: "Manual monthly expense - " + String(input.getAttribute("data-manual-expense") || "Miscellaneous"),
-        signedAmount: -amount,
+        description: "Manual monthly expense - " + entry.category,
+        signedAmount: -entry.amount,
         sourceFile: "manual-entry",
-        category: String(input.getAttribute("data-manual-expense") || "Miscellaneous"),
-        budgetBucket: String(input.getAttribute("data-manual-bucket") || "Shopping & Personal"),
+        category: entry.category,
+        budgetBucket: entry.category,
         categorySource: "manual",
       });
-    }).filter(Boolean);
+    });
   }
 
   function getSpendingMode() {
@@ -543,6 +681,148 @@
   function getCurrentMonthKey() {
     const today = new Date();
     return today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0");
+  }
+
+  function createBudgetEditorEntry(input) {
+    return {
+      id: appState.nextBudgetEditorId++,
+      category: input && input.category ? input.category : getNextEditableCategory([]),
+      amount: roundMoney(Math.max(Number(input && input.amount) || 0, 0)),
+    };
+  }
+
+  function addBudgetEntryRow() {
+    const usedCategories = appState.budgetEditorEntries.map(function (entry) {
+      return entry.category;
+    });
+    appState.budgetEditorEntries.push(createBudgetEditorEntry({
+      category: getNextEditableCategory(usedCategories),
+      amount: 0,
+    }));
+  }
+
+  function buildMixFromEntries(entries) {
+    return (entries || []).reduce(function (grouped, entry) {
+      const key = String(entry.category || "").trim();
+      const amount = roundMoney(Math.max(Number(entry.amount) || 0, 0));
+      if (!key || amount <= 0) {
+        return grouped;
+      }
+      grouped[key] = roundMoney((grouped[key] || 0) + amount);
+      return grouped;
+    }, {});
+  }
+
+  function buildBudgetEditorEntriesFromMix(mix, spendingMode) {
+    const positiveKeys = Object.keys(mix || {}).filter(function (key) {
+      return Number(mix[key]) > 0;
+    });
+    const seedKeys = positiveKeys.length
+      ? positiveKeys
+      : (spendingMode === "guide" ? EDITABLE_BUDGET_CATEGORIES.slice(0, BUDGET_GUIDE.length) : [getNextEditableCategory([])]);
+    return seedKeys.map(function (key) {
+      return createBudgetEditorEntry({
+        category: key,
+        amount: roundMoney(Number(mix[key]) || 0),
+      });
+    });
+  }
+
+  function ensureBudgetEditorState(sourceMix, sourceKey, spendingMode) {
+    if (appState.budgetEditorSourceKey !== sourceKey) {
+      appState.budgetEditorEntries = buildBudgetEditorEntriesFromMix(sourceMix, spendingMode);
+      appState.budgetEditorSourceKey = sourceKey;
+    }
+    if (!appState.budgetEditorEntries.length) {
+      addBudgetEntryRow();
+    }
+  }
+
+  function renderBudgetEditor(options) {
+    const entries = appState.budgetEditorEntries;
+    const monthlyTotal = sum(entries.map(function (entry) {
+      return Math.max(Number(entry.amount) || 0, 0);
+    }));
+    dom.budgetEditorNote.textContent = options.spendingMode === "guide"
+      ? "Change the monthly target or edit categories directly."
+      : "Edit your monthly categories and update the charts below.";
+    dom.budgetTargetInput.value = monthlyTotal > 0 ? String(roundMoney(monthlyTotal)) : "";
+
+    dom.budgetEntryList.innerHTML = entries.map(function (entry) {
+      return [
+        '<div class="entry-row" data-budget-entry-id="' + entry.id + '">',
+        '<div class="field">',
+        '<label for="budgetCategory-' + entry.id + '">Category</label>',
+        '<select id="budgetCategory-' + entry.id + '" data-budget-category="' + entry.id + '">',
+        buildBudgetCategoryOptions(entry.category),
+        "</select>",
+        "</div>",
+        '<div class="field">',
+        '<label for="budgetAmount-' + entry.id + '">Monthly amount</label>',
+        '<input id="budgetAmount-' + entry.id + '" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" value="' + escapeHtml(entry.amount > 0 ? String(entry.amount) : "") + '" data-budget-amount="' + entry.id + '">',
+        "</div>",
+        '<button class="icon-btn" type="button" data-remove-budget-entry="' + entry.id + '" aria-label="Remove category"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>',
+        "</div>",
+      ].join("");
+    }).join("");
+
+    Array.from(dom.budgetEntryList.querySelectorAll("[data-budget-category]")).forEach(function (select) {
+      select.addEventListener("change", function () {
+        const entry = findBudgetEditorEntry(select.getAttribute("data-budget-category"));
+        if (entry) {
+          entry.category = select.value || getNextEditableCategory([]);
+          renderResults();
+        }
+      });
+    });
+    Array.from(dom.budgetEntryList.querySelectorAll("[data-budget-amount]")).forEach(function (input) {
+      input.addEventListener("change", function () {
+        const entry = findBudgetEditorEntry(input.getAttribute("data-budget-amount"));
+        if (entry) {
+          entry.amount = roundMoney(Math.max(Number(input.value) || 0, 0));
+          renderResults();
+        }
+      });
+    });
+    Array.from(dom.budgetEntryList.querySelectorAll("[data-remove-budget-entry]")).forEach(function (button) {
+      button.addEventListener("click", function () {
+        const id = String(button.getAttribute("data-remove-budget-entry"));
+        appState.budgetEditorEntries = appState.budgetEditorEntries.filter(function (entry) {
+          return String(entry.id) !== id;
+        });
+        if (!appState.budgetEditorEntries.length) {
+          addBudgetEntryRow();
+        }
+        renderResults();
+      });
+    });
+  }
+
+  function findBudgetEditorEntry(id) {
+    return appState.budgetEditorEntries.find(function (entry) {
+      return String(entry.id) === String(id);
+    }) || null;
+  }
+
+  function handleBudgetTargetChange() {
+    const target = roundMoney(Math.max(Number(dom.budgetTargetInput.value) || 0, 0));
+    const currentMix = buildMixFromEntries(appState.budgetEditorEntries);
+    const currentTotal = sum(Object.keys(currentMix).map(function (key) {
+      return currentMix[key];
+    }));
+    let nextMix = {};
+
+    if (currentTotal > 0) {
+      Object.keys(currentMix).forEach(function (key) {
+        nextMix[key] = roundMoney(currentMix[key] * (target / currentTotal));
+      });
+    } else {
+      const guideMix = buildChartGroupFromGuide(buildSuggestedBudgetMix(target));
+      nextMix = guideMix;
+    }
+
+    appState.budgetEditorEntries = buildBudgetEditorEntriesFromMix(nextMix, appState.spendingMode);
+    renderResults();
   }
 
   function parseStatementFile(params) {
@@ -1131,37 +1411,50 @@
       return transaction.monthKey;
     })));
     const activeMonthCount = Math.max(importedMonthsWithData.length, 1);
-    const averageMonthlySpending = totalSpending / activeMonthCount;
-    const expenseByCategory = scaleGroupedMoney(groupMoneyBy(expenseTransactions, "category"), 1 / activeMonthCount);
     const actualBudgetMix = scaleGroupedMoney(groupMoneyBy(expenseTransactions, "budgetBucket"), 1 / activeMonthCount);
     const suggestedBudgetMix = buildSuggestedBudgetMix(appState.incomeProfile.monthlyNet);
+    const sourceMix = spendingMode === "guide"
+      ? buildChartGroupFromGuide(suggestedBudgetMix)
+      : actualBudgetMix;
+    const sourceKey = [spendingMode, startMonth, endMonth].join("|");
+    ensureBudgetEditorState(sourceMix, sourceKey, spendingMode);
+
+    const editableBudgetMix = buildMixFromEntries(appState.budgetEditorEntries);
+    const averageMonthlySpending = roundMoney(sum(Object.keys(editableBudgetMix).map(function (key) {
+      return editableBudgetMix[key];
+    })));
+    const effectiveRangeTotal = roundMoney(averageMonthlySpending * activeMonthCount);
     const suggestedBudgetTotal = roundMoney(sum(suggestedBudgetMix.map(function (entry) {
       return entry.amount;
     })));
-    const comparisonRows = buildComparisonRows(actualBudgetMix, suggestedBudgetMix);
+    const comparisonRows = buildComparisonRows(editableBudgetMix, suggestedBudgetMix);
     const recommendation = buildRecommendation({
       spendingMode: spendingMode,
       averageMonthlySpending: averageMonthlySpending,
-      totalSpending: totalSpending,
+      totalSpending: effectiveRangeTotal,
       comparisonRows: comparisonRows,
       importedMonthCount: activeMonthCount,
       monthlyNet: appState.incomeProfile.monthlyNet,
       suggestedBudgetMix: suggestedBudgetMix,
     });
 
+    renderBudgetEditor({
+      spendingMode: spendingMode,
+    });
+
     if (spendingMode === "guide") {
       dom.resultsHeading.textContent = "Recommended Budget";
       dom.resultsRangeNote.textContent = "Based on your income inputs.";
-      dom.selectedSpendingLabel.textContent = "Current spending";
-      dom.selectedSpendingValue.textContent = formatCurrency(0);
-      dom.selectedSpendingSub.textContent = "No expenses added.";
+      dom.selectedSpendingLabel.textContent = "Monthly plan";
+      dom.selectedSpendingValue.textContent = formatCurrency(averageMonthlySpending);
+      dom.selectedSpendingSub.textContent = "Editable on this page.";
       dom.monthlyExpensesLabel.textContent = "Suggested budget";
       dom.monthlyExpensesValue.textContent = formatCurrency(suggestedBudgetTotal);
       dom.monthlyExpensesSub.textContent = "Monthly take-home budget target.";
-      dom.expensesChartHeading.textContent = "Recommended Spending Plan";
-      dom.expensesChartNote.textContent = "Built from estimated monthly take-home pay.";
-      dom.comparisonSection.hidden = true;
-      renderActualChart(buildChartGroupFromGuide(suggestedBudgetMix));
+      dom.expensesChartHeading.textContent = "Planned Spending Mix";
+      dom.expensesChartNote.textContent = "Adjust the monthly target to rebalance categories.";
+      dom.comparisonSection.hidden = false;
+      renderActualChart(editableBudgetMix);
     } else {
       dom.resultsHeading.textContent = activeMonthCount > 1 ? "Average Monthly Snapshot" : "Monthly Snapshot";
       dom.resultsRangeNote.textContent = activeMonthCount > 1
@@ -1170,20 +1463,17 @@
       dom.selectedSpendingLabel.textContent = "Monthly average";
       dom.selectedSpendingValue.textContent = formatCurrency(averageMonthlySpending);
       dom.selectedSpendingSub.textContent = activeMonthCount > 1
-        ? "Avg across " + activeMonthCount + " months."
-        : (spendingMode === "manual" ? "Your current monthly snapshot." : "This month.");
+        ? "Editable avg across " + activeMonthCount + " months."
+        : "Editable monthly snapshot.";
       dom.monthlyExpensesLabel.textContent = "Range total";
-      dom.monthlyExpensesValue.textContent = formatCurrency(totalSpending);
+      dom.monthlyExpensesValue.textContent = formatCurrency(effectiveRangeTotal);
       dom.monthlyExpensesSub.textContent = activeMonthCount > 1
-        ? "Total across " + activeMonthCount + " months."
+        ? "Edited total across " + activeMonthCount + " months."
         : "Total in the selected month.";
-      dom.expensesChartHeading.textContent = "Expense Pie Chart";
-      dom.expensesChartNote.textContent = activeMonthCount > 1
-        ? "Avg monthly mix across " + activeMonthCount + " months."
-        : "Showing expense categories for " + formatMonthLabel(startMonth) + ".";
+      dom.expensesChartHeading.textContent = "Monthly Spending Mix";
+      dom.expensesChartNote.textContent = "Change category amounts above to update this chart.";
       dom.comparisonSection.hidden = false;
-      renderActualChart(expenseByCategory);
-      renderComparisonTable(comparisonRows);
+      renderActualChart(editableBudgetMix);
     }
 
     dom.monthlyGrossValue.textContent = formatCurrency(appState.incomeProfile.monthlyGross);
@@ -1191,6 +1481,7 @@
     dom.monthlyNetValue.textContent = formatCurrency(appState.incomeProfile.monthlyNet);
     dom.weeklyNetSub.textContent = "Weekly est.: " + formatCurrency(appState.incomeProfile.weeklyNet);
     renderGuideChart(suggestedBudgetMix);
+    renderComparisonTable(comparisonRows);
     renderRecommendation(recommendation);
   }
 
@@ -1216,22 +1507,30 @@
   }
 
   function buildComparisonRows(actualBudgetMix, suggestedBudgetMix) {
-    return suggestedBudgetMix.map(function (guideEntry) {
-      const current = roundMoney(actualBudgetMix[guideEntry.key] || 0);
-      const delta = roundMoney(current - guideEntry.amount);
+    const suggestedMap = suggestedBudgetMix.reduce(function (acc, entry) {
+      acc[entry.key] = roundMoney(entry.amount);
+      return acc;
+    }, {});
+    const keys = Array.from(new Set(Object.keys(actualBudgetMix).concat(Object.keys(suggestedMap))));
+    return keys.map(function (key) {
+      const current = roundMoney(actualBudgetMix[key] || 0);
+      const suggested = roundMoney(suggestedMap[key] || 0);
+      const delta = roundMoney(current - suggested);
       let level = "good";
-      if (delta > Math.max(guideEntry.amount * 0.35, 100)) {
+      if (delta > Math.max(suggested * 0.35, suggested > 0 ? 100 : 60)) {
         level = "bad";
-      } else if (delta > Math.max(guideEntry.amount * 0.1, 40)) {
+      } else if (delta > Math.max(suggested * 0.1, suggested > 0 ? 40 : 20)) {
         level = "warn";
       }
       return {
-        key: guideEntry.key,
+        key: key,
         current: current,
-        suggested: guideEntry.amount,
+        suggested: suggested,
         delta: delta,
         level: level,
       };
+    }).sort(function (a, b) {
+      return b.current - a.current;
     });
   }
 
@@ -1249,16 +1548,36 @@
         acc[entry.key] = entry.amount;
         return acc;
       }, {});
+      const overTargetRows = input.comparisonRows
+        .filter(function (row) { return row.delta > 0; })
+        .sort(function (a, b) { return b.delta - a.delta; });
+      const lines = [];
+      let bannerClass = "good";
+      let bannerLabel = "Budget Ready";
+      let summary = "This plan fits inside your estimated monthly take-home pay.";
+
+      if (input.averageMonthlySpending > input.monthlyNet) {
+        bannerClass = "bad";
+        bannerLabel = "Reduce Spending";
+        summary = "Your current plan is above estimated take-home pay.";
+        lines.push("Cut about " + formatCurrency(input.averageMonthlySpending - input.monthlyNet) + " per month.");
+      } else {
+        lines.push("Planned spending uses about " + Math.round((input.averageMonthlySpending / Math.max(input.monthlyNet, 1)) * 100) + "% of estimated take-home pay.");
+      }
+
+      overTargetRows.slice(0, 3).forEach(function (row) {
+        lines.push(row.key + " is about " + formatCurrency(row.delta) + " over the guide.");
+      });
+      if (!overTargetRows.length) {
+        lines.push("Your category mix is close to the suggested guide.");
+      }
+      lines.push("Housing guide is around " + formatCurrency(guideByKey.Housing || 0) + ".");
+
       return {
-        bannerClass: "good",
-        bannerLabel: "Budget Ready",
-        summary: "This plan was built from your estimated monthly take-home pay.",
-        lines: [
-          "Keep total monthly spending at or below " + formatCurrency(input.monthlyNet) + ".",
-          "Try to hold housing near " + formatCurrency(guideByKey.Housing || 0) + ".",
-          "Plan about " + formatCurrency(guideByKey.Food || 0) + " for food each month.",
-          "Keep around " + formatCurrency(guideByKey["Savings, Debt & Taxes"] || 0) + " for savings, debt, and taxes.",
-        ],
+        bannerClass: bannerClass,
+        bannerLabel: bannerLabel,
+        summary: summary,
+        lines: lines.slice(0, 5),
       };
     }
 
@@ -1336,7 +1655,7 @@
         labels: labels.length ? labels : ["No spending data"],
         datasets: [{
           data: values.length ? values : [1],
-          backgroundColor: values.length ? ACTUAL_CHART_COLORS.slice(0, labels.length) : ["#d9e6dd"],
+          backgroundColor: values.length ? labels.map(getCategoryColor) : ["#d9e6dd"],
           borderColor: "#f7faf7",
           borderWidth: 2,
         }],
@@ -1415,6 +1734,10 @@
   }
 
   function renderComparisonTable(rows) {
+    if (!rows.length) {
+      dom.comparisonTableBody.innerHTML = '<tr><td colspan="4" class="results-empty">Add spending data to compare it.</td></tr>';
+      return;
+    }
     dom.comparisonTableBody.innerHTML = rows.map(function (row) {
       const deltaPrefix = row.delta > 0 ? "+" : "";
       return [
@@ -1426,6 +1749,20 @@
         "</tr>",
       ].join("");
     }).join("");
+  }
+
+  function getCategoryColor(category) {
+    const guideEntry = BUDGET_GUIDE.find(function (entry) {
+      return entry.key === category;
+    });
+    if (guideEntry) {
+      return guideEntry.color;
+    }
+    if (category === "Miscellaneous") {
+      return "#c6d3ca";
+    }
+    const index = Math.abs(hashString(category)) % ACTUAL_CHART_COLORS.length;
+    return ACTUAL_CHART_COLORS[index];
   }
 
   function renderRecommendation(recommendation) {
@@ -1445,6 +1782,10 @@
     appState.monthlyOptions = [];
     appState.incomeProfile = null;
     appState.spendingMode = "files";
+    appState.budgetEditorEntries = [];
+    appState.budgetEditorSourceKey = "";
+    appState.nextBudgetEditorId = 1;
+    appState.nextManualExpenseId = 1;
     if (appState.charts.actual) {
       appState.charts.actual.destroy();
       appState.charts.actual = null;
@@ -1458,6 +1799,8 @@
     dom.stateSelect.selectedIndex = 0;
     dom.stateTaxRateInput.value = "";
     appState.stateRateTouched = false;
+    resetManualExpenseEntries();
+    renderManualExpenseRows();
     updateSpendingMode();
     updateIncomeMode();
     renderFileList();
@@ -1676,6 +2019,12 @@
 
   function toMonthKey(date) {
     return formatIsoDate(date).slice(0, 7);
+  }
+
+  function hashString(value) {
+    return String(value || "").split("").reduce(function (hash, character) {
+      return ((hash << 5) - hash + character.charCodeAt(0)) | 0;
+    }, 0);
   }
 
   function roundMoney(value) {

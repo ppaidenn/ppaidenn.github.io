@@ -355,6 +355,38 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
     }
+    .entry-list {
+      display: grid;
+      gap: 10px;
+    }
+    .entry-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: end;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(12,18,24,0.08);
+    }
+    .entry-row .field {
+      margin: 0;
+    }
+    .entry-row .icon-btn {
+      margin-bottom: 2px;
+    }
+    .editor-total-row {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .editor-total-row .field {
+      margin: 0;
+      min-width: min(100%, 260px);
+      flex: 1 1 220px;
+    }
     .manual-expense-note {
       font-size: 13px;
       line-height: 1.45;
@@ -555,6 +587,15 @@
       gap: 12px;
       box-shadow: 0 10px 26px rgba(16,21,28,0.05);
     }
+    .editor-card {
+      border: 1px solid rgba(12,18,24,0.08);
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.97), rgba(239,246,241,0.94));
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+      box-shadow: 0 10px 26px rgba(16,21,28,0.05);
+    }
     .chart-wrap {
       position: relative;
       min-height: 320px;
@@ -668,6 +709,9 @@
       .manual-expense-grid {
         grid-template-columns: 1fr;
       }
+      .entry-row {
+        grid-template-columns: 1fr;
+      }
       .segmented {
         grid-template-columns: 1fr;
       }
@@ -777,43 +821,9 @@
                     <div class="upload-copy">
                       <strong>Enter current monthly expenses</strong>
                     </div>
-                    <div class="manual-expense-grid">
-                      <div class="field">
-                        <label for="manualHousingInput">Housing</label>
-                        <input id="manualHousingInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Housing" data-manual-bucket="Housing">
-                      </div>
-                      <div class="field">
-                        <label for="manualFoodInput">Food</label>
-                        <input id="manualFoodInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Food" data-manual-bucket="Food">
-                      </div>
-                      <div class="field">
-                        <label for="manualTransportationInput">Transportation</label>
-                        <input id="manualTransportationInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Transportation" data-manual-bucket="Transportation">
-                      </div>
-                      <div class="field">
-                        <label for="manualUtilitiesInput">Utilities &amp; Bills</label>
-                        <input id="manualUtilitiesInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Utilities &amp; Bills" data-manual-bucket="Utilities &amp; Bills">
-                      </div>
-                      <div class="field">
-                        <label for="manualHealthcareInput">Healthcare &amp; Insurance</label>
-                        <input id="manualHealthcareInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Healthcare &amp; Insurance" data-manual-bucket="Healthcare &amp; Insurance">
-                      </div>
-                      <div class="field">
-                        <label for="manualShoppingInput">Shopping &amp; Personal</label>
-                        <input id="manualShoppingInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Shopping &amp; Personal" data-manual-bucket="Shopping &amp; Personal">
-                      </div>
-                      <div class="field">
-                        <label for="manualEntertainmentInput">Entertainment &amp; Travel</label>
-                        <input id="manualEntertainmentInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Entertainment &amp; Travel" data-manual-bucket="Entertainment &amp; Travel">
-                      </div>
-                      <div class="field">
-                        <label for="manualSavingsDebtInput">Savings, Debt &amp; Taxes</label>
-                        <input id="manualSavingsDebtInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Savings, Debt &amp; Taxes" data-manual-bucket="Savings, Debt &amp; Taxes">
-                      </div>
-                      <div class="field">
-                        <label for="manualMiscInput">Miscellaneous</label>
-                        <input id="manualMiscInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-manual-expense="Miscellaneous" data-manual-bucket="Shopping &amp; Personal">
-                      </div>
+                    <div class="entry-list" id="manualExpenseList"></div>
+                    <div class="btn-row" style="margin-top:0;">
+                      <button class="btn-secondary" id="addManualExpenseRowBtn" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>Add Category</span></button>
                     </div>
                   </div>
                 </div>
@@ -941,6 +951,23 @@
           </div>
         </div>
 
+        <div class="editor-card">
+          <div class="editor-total-row">
+            <div>
+              <h3>Adjust Monthly Categories</h3>
+              <div class="legend-note" id="budgetEditorNote">Change category amounts and update the charts below.</div>
+            </div>
+            <div class="field">
+              <label for="budgetTargetInput">Monthly spending target</label>
+              <input id="budgetTargetInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0">
+            </div>
+          </div>
+          <div class="entry-list" id="budgetEntryList"></div>
+          <div class="btn-row" style="margin-top:0;">
+            <button class="btn-secondary" id="addBudgetEntryRowBtn" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>Add Category</span></button>
+          </div>
+        </div>
+
         <div class="chart-grid">
           <div class="chart-card">
             <div>
@@ -1039,6 +1066,6 @@
       return year + "-" + month;
     }
   </script>
-  <script src="/finances/finances-page.js?v=20260524e"></script>
+  <script src="/finances/finances-page.js?v=20260524f"></script>
 </body>
 </html>
