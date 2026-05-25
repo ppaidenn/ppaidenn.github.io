@@ -24,6 +24,7 @@
     "bracket-builder",
     "all-tournaments",
     "finances",
+    "trivia",
     "spotify-app-setup",
     "tomi-p-shrine",
     "notifications",
