@@ -1,4 +1,4 @@
-window.PAIDEN_TRIVIA_QUESTION_BANK = [
+const BASE_TRIVIA_QUESTIONS = [
   { id: "music-easy-1", category: "Music", difficulty: "easy", prompt: "Which singer is known as the 'King of Pop'?", choices: ["Michael Jackson", "Prince", "Elvis Presley", "Bruno Mars"], answerIndex: 0, explanation: "Michael Jackson earned the nickname 'King of Pop' during his global solo career." },
   { id: "music-easy-2", category: "Music", difficulty: "easy", prompt: "Who released the hit song 'Rolling in the Deep'?", choices: ["Adele", "Beyonce", "Taylor Swift", "P!nk"], answerIndex: 0, explanation: "'Rolling in the Deep' was one of Adele's biggest singles from 21." },
   { id: "music-easy-3", category: "Music", difficulty: "easy", prompt: "Which instrument is famous for having 88 keys?", choices: ["Piano", "Violin", "Trumpet", "Harp"], answerIndex: 0, explanation: "A standard piano keyboard has 88 keys." },
@@ -100,9 +100,100 @@ window.PAIDEN_TRIVIA_QUESTION_BANK = [
   { id: "geography-impossible-2", category: "Geography", difficulty: "impossible", prompt: "What is the largest island in the Mediterranean Sea?", choices: ["Sicily", "Sardinia", "Cyprus", "Crete"], answerIndex: 0, explanation: "Sicily is the Mediterranean's largest island." },
   { id: "geography-impossible-3", category: "Geography", difficulty: "impossible", prompt: "What is the capital of Mongolia?", choices: ["Ulaanbaatar", "Astana", "Bishkek", "Tashkent"], answerIndex: 0, explanation: "Ulaanbaatar is Mongolia's capital and largest city." },
   { id: "geography-impossible-4", category: "Geography", difficulty: "impossible", prompt: "Which desert stretches across much of Botswana, Namibia, and South Africa?", choices: ["Kalahari", "Gobi", "Atacama", "Negev"], answerIndex: 0, explanation: "The Kalahari covers large areas of southern Africa." }
-].map(function (question) {
+];
+
+const VARIANT_PREFIXES = [
+  "",
+  "Trivia check: ",
+  "Quick round: ",
+  "On this turn: ",
+  "Category challenge: ",
+  "Question time: ",
+  "Pick carefully: ",
+  "Spot the answer: ",
+  "Next one: ",
+  "Game time: ",
+];
+
+const VARIANT_SUFFIXES = [
+  "",
+  " Pick the best answer.",
+  " Choose the right option.",
+  " Lock in the correct choice.",
+  " Which option is correct?",
+];
+
+const CHOICE_PERMUTATIONS = [
+  [0, 1, 2, 3],
+  [0, 1, 3, 2],
+  [0, 2, 1, 3],
+  [0, 2, 3, 1],
+  [0, 3, 1, 2],
+  [0, 3, 2, 1],
+  [1, 0, 2, 3],
+  [1, 0, 3, 2],
+  [1, 2, 0, 3],
+  [1, 2, 3, 0],
+  [1, 3, 0, 2],
+  [1, 3, 2, 0],
+  [2, 0, 1, 3],
+  [2, 0, 3, 1],
+  [2, 1, 0, 3],
+  [2, 1, 3, 0],
+  [2, 3, 0, 1],
+  [2, 3, 1, 0],
+  [3, 0, 1, 2],
+  [3, 0, 2, 1],
+  [3, 1, 0, 2],
+  [3, 1, 2, 0],
+  [3, 2, 0, 1],
+  [3, 2, 1, 0],
+];
+
+const VARIANTS_PER_BASE_QUESTION = VARIANT_PREFIXES.length * VARIANT_SUFFIXES.length;
+
+function buildPromptVariant(basePrompt, prefix, suffix) {
+  const prompt = String(basePrompt || "").trim();
+  const leading = prefix || "";
+  const trailing = suffix || "";
+  if (!leading && !trailing) {
+    return prompt;
+  }
+  return (leading + prompt + trailing).replace(/\s+/g, " ").trim();
+}
+
+function applyChoicePermutation(baseQuestion, permutation) {
+  const remappedChoices = permutation.map(function (choiceIndex) {
+    return baseQuestion.choices[choiceIndex];
+  });
+  const remappedAnswerIndex = permutation.indexOf(baseQuestion.answerIndex);
   return {
-    ...question,
-    answerText: question.choices[question.answerIndex],
+    choices: remappedChoices,
+    answerIndex: remappedAnswerIndex,
+    answerText: remappedChoices[remappedAnswerIndex],
   };
+}
+
+function buildQuestionVariant(baseQuestion, variantIndex) {
+  const prefixIndex = Math.floor(variantIndex / VARIANT_SUFFIXES.length);
+  const suffixIndex = variantIndex % VARIANT_SUFFIXES.length;
+  const permutation = CHOICE_PERMUTATIONS[(variantIndex + baseQuestion.id.length) % CHOICE_PERMUTATIONS.length];
+  const choiceData = applyChoicePermutation(baseQuestion, permutation);
+
+  return {
+    id: baseQuestion.id + "-variant-" + (variantIndex + 1),
+    category: baseQuestion.category,
+    difficulty: baseQuestion.difficulty,
+    prompt: buildPromptVariant(baseQuestion.prompt, VARIANT_PREFIXES[prefixIndex], VARIANT_SUFFIXES[suffixIndex]),
+    choices: choiceData.choices,
+    answerIndex: choiceData.answerIndex,
+    explanation: baseQuestion.explanation,
+    answerText: choiceData.answerText,
+  };
+}
+
+window.PAIDEN_TRIVIA_QUESTION_BANK = BASE_TRIVIA_QUESTIONS.flatMap(function (question) {
+  return Array.from({ length: VARIANTS_PER_BASE_QUESTION }, function (_unused, variantIndex) {
+    return buildQuestionVariant(question, variantIndex);
+  });
 });
