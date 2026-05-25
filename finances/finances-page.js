@@ -296,9 +296,10 @@
     dom.financesForm.addEventListener("submit", handleProcessSubmit);
     dom.rangeStartSelect.addEventListener("change", handleRangeChange);
     dom.rangeEndSelect.addEventListener("change", handleRangeChange);
+    dom.budgetTargetInput.addEventListener("input", handleBudgetTargetChange);
     dom.budgetTargetInput.addEventListener("change", handleBudgetTargetChange);
     dom.addBudgetEntryRowBtn.addEventListener("click", function () {
-      addBudgetEditorEntry();
+      addBudgetEntryRow();
       renderResults();
     });
     dom.runAnotherImportBtn.addEventListener("click", resetToImport);
@@ -776,13 +777,15 @@
       });
     });
     Array.from(dom.budgetEntryList.querySelectorAll("[data-budget-amount]")).forEach(function (input) {
-      input.addEventListener("change", function () {
+      const applyBudgetAmount = function () {
         const entry = findBudgetEditorEntry(input.getAttribute("data-budget-amount"));
         if (entry) {
           entry.amount = roundMoney(Math.max(Number(input.value) || 0, 0));
-          renderResults();
+          rerenderResultsPreservingEditorFocus();
         }
-      });
+      };
+      input.addEventListener("input", applyBudgetAmount);
+      input.addEventListener("change", applyBudgetAmount);
     });
     Array.from(dom.budgetEntryList.querySelectorAll("[data-remove-budget-entry]")).forEach(function (button) {
       button.addEventListener("click", function () {
@@ -822,7 +825,63 @@
     }
 
     appState.budgetEditorEntries = buildBudgetEditorEntriesFromMix(nextMix, appState.spendingMode);
+    rerenderResultsPreservingEditorFocus();
+  }
+
+  function rerenderResultsPreservingEditorFocus() {
+    const focusState = captureBudgetEditorFocus();
     renderResults();
+    restoreBudgetEditorFocus(focusState);
+  }
+
+  function captureBudgetEditorFocus() {
+    const active = document.activeElement;
+    if (!active) {
+      return null;
+    }
+    if (active === dom.budgetTargetInput) {
+      return {
+        type: "target",
+        cursorStart: typeof active.selectionStart === "number" ? active.selectionStart : null,
+        cursorEnd: typeof active.selectionEnd === "number" ? active.selectionEnd : null,
+      };
+    }
+    if (active.hasAttribute("data-budget-amount")) {
+      return {
+        type: "amount",
+        id: active.getAttribute("data-budget-amount"),
+        cursorStart: typeof active.selectionStart === "number" ? active.selectionStart : null,
+        cursorEnd: typeof active.selectionEnd === "number" ? active.selectionEnd : null,
+      };
+    }
+    if (active.hasAttribute("data-budget-category")) {
+      return {
+        type: "category",
+        id: active.getAttribute("data-budget-category"),
+      };
+    }
+    return null;
+  }
+
+  function restoreBudgetEditorFocus(focusState) {
+    if (!focusState) {
+      return;
+    }
+    let target = null;
+    if (focusState.type === "target") {
+      target = dom.budgetTargetInput;
+    } else if (focusState.type === "amount") {
+      target = dom.budgetEntryList.querySelector('[data-budget-amount="' + focusState.id + '"]');
+    } else if (focusState.type === "category") {
+      target = dom.budgetEntryList.querySelector('[data-budget-category="' + focusState.id + '"]');
+    }
+    if (!target) {
+      return;
+    }
+    target.focus({ preventScroll: true });
+    if (typeof focusState.cursorStart === "number" && typeof target.setSelectionRange === "function") {
+      target.setSelectionRange(focusState.cursorStart, typeof focusState.cursorEnd === "number" ? focusState.cursorEnd : focusState.cursorStart);
+    }
   }
 
   function parseStatementFile(params) {

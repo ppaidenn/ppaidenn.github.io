@@ -528,6 +528,13 @@
       gap: 16px;
       flex-wrap: wrap;
     }
+    .results-hero-panel {
+      border: 1px solid rgba(24, 61, 44, 0.14);
+      background:
+        radial-gradient(circle at top right, rgba(116, 183, 138, 0.18), transparent 38%),
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(233,242,236,0.96));
+      box-shadow: 0 16px 32px rgba(16,21,28,0.06);
+    }
     .range-controls {
       display: flex;
       flex-wrap: wrap;
@@ -546,12 +553,27 @@
     .metric-card {
       border: 1px solid rgba(12,18,24,0.08);
       border-radius: 22px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(244,248,243,0.92));
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,248,243,0.94));
       padding: 16px;
       display: grid;
       gap: 8px;
-      box-shadow: 0 10px 24px rgba(16,21,28,0.04);
+      box-shadow: 0 12px 24px rgba(16,21,28,0.05);
+    }
+    .metric-card-primary {
+      background: linear-gradient(180deg, rgba(246,252,248,0.98), rgba(223,240,229,0.94));
+      border-color: rgba(45,123,84,0.16);
+    }
+    .metric-card-secondary {
+      background: linear-gradient(180deg, rgba(255,250,246,0.98), rgba(246,236,225,0.95));
+      border-color: rgba(136, 98, 45, 0.14);
+    }
+    .metric-card-tertiary {
+      background: linear-gradient(180deg, rgba(247,249,255,0.98), rgba(229,236,247,0.95));
+      border-color: rgba(67, 92, 131, 0.14);
+    }
+    .metric-card-quaternary {
+      background: linear-gradient(180deg, rgba(250,248,255,0.98), rgba(237,232,247,0.95));
+      border-color: rgba(89, 71, 132, 0.14);
     }
     .metric-label {
       font-size: 12px;
@@ -587,6 +609,14 @@
       gap: 12px;
       box-shadow: 0 10px 26px rgba(16,21,28,0.05);
     }
+    .actual-chart-card {
+      background: linear-gradient(180deg, rgba(252,255,253,0.98), rgba(232,244,236,0.95));
+      border-color: rgba(45,123,84,0.14);
+    }
+    .guide-chart-card {
+      background: linear-gradient(180deg, rgba(255,254,249,0.98), rgba(247,242,226,0.95));
+      border-color: rgba(145, 117, 51, 0.14);
+    }
     .editor-card {
       border: 1px solid rgba(12,18,24,0.08);
       border-radius: 24px;
@@ -595,6 +625,21 @@
       display: grid;
       gap: 12px;
       box-shadow: 0 10px 26px rgba(16,21,28,0.05);
+    }
+    .comparison-card {
+      background: linear-gradient(180deg, rgba(251,252,255,0.98), rgba(235,240,247,0.95));
+      border-color: rgba(71, 97, 132, 0.14);
+    }
+    .recommendation-card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(242,246,241,0.95));
+      border-color: rgba(45,123,84,0.12);
+    }
+    .budget-editor-card {
+      background:
+        radial-gradient(circle at top right, rgba(45,123,84,0.12), transparent 40%),
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(236,245,239,0.95));
+      border-color: rgba(45,123,84,0.16);
+      box-shadow: 0 14px 28px rgba(16,21,28,0.06);
     }
     .chart-wrap {
       position: relative;
@@ -906,7 +951,7 @@
       </section>
 
       <section class="wizard-step" id="resultsStep">
-        <div class="panel">
+        <div class="panel results-hero-panel">
           <div class="results-toolbar">
             <div>
               <h2 id="resultsHeading">Expense Snapshot</h2>
@@ -929,47 +974,30 @@
         </div>
 
         <div class="metrics-grid">
-          <div class="metric-card">
+          <div class="metric-card metric-card-primary">
             <div class="metric-label" id="selectedSpendingLabel">Monthly average</div>
             <div class="metric-value" id="selectedSpendingValue">$0</div>
             <div class="metric-sub" id="selectedSpendingSub">Average in the selected range.</div>
           </div>
-          <div class="metric-card">
+          <div class="metric-card metric-card-secondary">
             <div class="metric-label" id="monthlyExpensesLabel">Range total</div>
             <div class="metric-value" id="monthlyExpensesValue">$0</div>
             <div class="metric-sub" id="monthlyExpensesSub">Total in the selected range.</div>
           </div>
-          <div class="metric-card">
+          <div class="metric-card metric-card-tertiary">
             <div class="metric-label">Monthly gross</div>
             <div class="metric-value" id="monthlyGrossValue">$0</div>
             <div class="metric-sub" id="weeklyGrossSub">Weekly gross: $0</div>
           </div>
-          <div class="metric-card">
+          <div class="metric-card metric-card-quaternary">
             <div class="metric-label">Monthly net</div>
             <div class="metric-value" id="monthlyNetValue">$0</div>
             <div class="metric-sub" id="weeklyNetSub">Weekly net estimate: $0</div>
           </div>
         </div>
 
-        <div class="editor-card">
-          <div class="editor-total-row">
-            <div>
-              <h3>Adjust Monthly Categories</h3>
-              <div class="legend-note" id="budgetEditorNote">Change category amounts and update the charts below.</div>
-            </div>
-            <div class="field">
-              <label for="budgetTargetInput">Monthly spending target</label>
-              <input id="budgetTargetInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0">
-            </div>
-          </div>
-          <div class="entry-list" id="budgetEntryList"></div>
-          <div class="btn-row" style="margin-top:0;">
-            <button class="btn-secondary" id="addBudgetEntryRowBtn" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>Add Category</span></button>
-          </div>
-        </div>
-
         <div class="chart-grid">
-          <div class="chart-card">
+          <div class="chart-card actual-chart-card">
             <div>
               <h3 id="expensesChartHeading">Expense Pie Chart</h3>
             </div>
@@ -979,7 +1007,7 @@
             <div class="legend-note" id="expensesChartNote">Showing expense categories only for the selected months.</div>
           </div>
 
-          <div class="chart-card">
+          <div class="chart-card guide-chart-card">
             <div>
               <h3>Suggested Monthly Budget Mix</h3>
             </div>
@@ -990,7 +1018,7 @@
           </div>
         </div>
 
-        <div class="table-card" id="comparisonSection">
+        <div class="table-card comparison-card" id="comparisonSection">
           <div>
             <h3>How your current spending compares</h3>
           </div>
@@ -1021,6 +1049,23 @@
           <ul class="recommendation-list" id="recommendationList">
             <li>Recommendations appear here after processing.</li>
           </ul>
+        </div>
+
+        <div class="editor-card budget-editor-card">
+          <div class="editor-total-row">
+            <div>
+              <h3>Adjust Monthly Categories</h3>
+              <div class="legend-note" id="budgetEditorNote">Change category amounts and update the charts below.</div>
+            </div>
+            <div class="field">
+              <label for="budgetTargetInput">Monthly spending target</label>
+              <input id="budgetTargetInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0">
+            </div>
+          </div>
+          <div class="entry-list" id="budgetEntryList"></div>
+          <div class="btn-row" style="margin-top:0;">
+            <button class="btn-secondary" id="addBudgetEntryRowBtn" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>Add Category</span></button>
+          </div>
         </div>
       </section>
     </section>
@@ -1066,6 +1111,6 @@
       return year + "-" + month;
     }
   </script>
-  <script src="/finances/finances-page.js?v=20260524f"></script>
+  <script src="/finances/finances-page.js?v=20260524g"></script>
 </body>
 </html>
