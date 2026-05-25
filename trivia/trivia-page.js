@@ -969,14 +969,16 @@
     }
 
     activeStep.style.removeProperty("--fit-scale");
-    activeStep.style.removeProperty("--fit-width");
 
-    const availableHeight = Math.max(320, container.clientHeight - 2);
+    const availableWidth = Math.max(220, container.clientWidth - 2);
+    const availableHeight = Math.max(280, container.clientHeight - 2);
+    const naturalWidth = Math.max(activeStep.scrollWidth, activeStep.offsetWidth, 1);
     const naturalHeight = activeStep.scrollHeight;
-    const scale = Math.max(0.68, Math.min(1, availableHeight / Math.max(1, naturalHeight)));
+    const scaleWidth = availableWidth / naturalWidth;
+    const scaleHeight = availableHeight / Math.max(1, naturalHeight);
+    const scale = Math.max(0.42, Math.min(1, scaleWidth, scaleHeight));
 
     activeStep.style.setProperty("--fit-scale", scale.toFixed(4));
-    activeStep.style.setProperty("--fit-width", (100 / scale).toFixed(4) + "%");
   }
 
   function runTransition(callback) {
