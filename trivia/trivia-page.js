@@ -163,15 +163,21 @@
     renderCategoryBank();
     renderOrderList();
     renderGame();
+    syncImmersiveState();
     showStep("landingStep");
     window.addEventListener("resize", function () {
       drawWheel();
+      scheduleFitActiveStep();
+    });
+    document.addEventListener("fullscreenchange", function () {
+      syncImmersiveState();
       scheduleFitActiveStep();
     });
   }
 
   function bindEvents() {
     dom.startTriviaBtn.addEventListener("click", function () {
+      enterImmersiveMode();
       requestFullscreenMode();
       showStep("playerCountStep");
       clearStatus(dom.playerCountStatus);
@@ -917,7 +923,19 @@
     });
     state.currentStep = stepId;
     document.body.classList.toggle("trivia-subpage-active", stepId !== "landingStep");
+    document.documentElement.classList.toggle("trivia-immersive", stepId !== "landingStep" || !!document.fullscreenElement);
     scheduleFitActiveStep();
+  }
+
+  function enterImmersiveMode() {
+    document.documentElement.classList.add("trivia-immersive");
+    document.body.classList.add("trivia-subpage-active");
+  }
+
+  function syncImmersiveState() {
+    const shouldHideChrome = state.currentStep !== "landingStep" || !!document.fullscreenElement;
+    document.documentElement.classList.toggle("trivia-immersive", shouldHideChrome);
+    document.body.classList.toggle("trivia-subpage-active", shouldHideChrome);
   }
 
   function scheduleFitActiveStep() {

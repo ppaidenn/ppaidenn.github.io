@@ -199,9 +199,19 @@
       display: flex;
       align-items: stretch;
     }
+    html.trivia-immersive .top-nav,
+    html.trivia-immersive .mobile-fixed-header,
     body.trivia-subpage-active .top-nav,
     body.trivia-subpage-active .mobile-fixed-header {
       display: none !important;
+    }
+    :fullscreen .top-nav,
+    :fullscreen .mobile-fixed-header {
+      display: none !important;
+    }
+    html.trivia-immersive .content-wrap {
+      min-height: 100dvh;
+      padding: 14px 0;
     }
     body.trivia-subpage-active .content-wrap {
       min-height: 100dvh;
@@ -1174,7 +1184,7 @@
     </div>
   </div>
 
-  <script src="/trivia/question-bank.js?v=20260524a"></script>
-  <script src="/trivia/trivia-page.js?v=20260524a"></script>
+  <script src="/trivia/question-bank.js?v=20260524b"></script>
+  <script src="/trivia/trivia-page.js?v=20260524b"></script>
 </body>
 </html>
