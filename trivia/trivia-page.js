@@ -143,6 +143,7 @@
     winnerId: "",
     transitionTimer: 0,
     spinTimer: 0,
+    fitFrame: 0,
   };
 
   if (!dom.startTriviaBtn) {
@@ -161,7 +162,10 @@
     renderOrderList();
     renderGame();
     showStep("landingStep");
-    window.addEventListener("resize", drawWheel);
+    window.addEventListener("resize", function () {
+      drawWheel();
+      scheduleFitActiveStep();
+    });
   }
 
   function bindEvents() {
@@ -369,6 +373,7 @@
         renderPlayerSetup();
       });
     });
+    scheduleFitActiveStep();
   }
 
   function renderPlayerPreview() {
@@ -399,6 +404,7 @@
   function renderModeCards() {
     dom.modeMultipleChoiceCard.classList.toggle("is-selected", state.mode === "multiple-choice");
     dom.modeFreeResponseCard.classList.toggle("is-selected", state.mode === "free-response");
+    scheduleFitActiveStep();
   }
 
   function handlePointsContinue() {
@@ -417,6 +423,7 @@
     Array.from(dom.difficultyGrid.querySelectorAll("[data-difficulty]")).forEach(function (button) {
       button.classList.toggle("is-selected", String(button.getAttribute("data-difficulty")) === state.difficulty);
     });
+    scheduleFitActiveStep();
   }
 
   function renderCategoryBank() {
@@ -437,6 +444,7 @@
         renderCategoryBank();
       });
     });
+    scheduleFitActiveStep();
   }
 
   function handleCategoriesStart() {
@@ -494,6 +502,7 @@
         moveOrderedPlayer(String(button.getAttribute("data-move-down") || ""), 1);
       });
     });
+    scheduleFitActiveStep();
   }
 
   function moveOrderedPlayer(playerId, direction) {
@@ -542,6 +551,7 @@
     renderQuestionPanel();
     drawWheel();
     renderWinnerOverlay();
+    scheduleFitActiveStep();
   }
 
   function renderScoreboard() {
@@ -891,6 +901,31 @@
       step.classList.toggle("is-active", step.id === stepId);
     });
     state.currentStep = stepId;
+    document.body.classList.toggle("trivia-subpage-active", stepId !== "landingStep");
+    scheduleFitActiveStep();
+  }
+
+  function scheduleFitActiveStep() {
+    window.cancelAnimationFrame(state.fitFrame);
+    state.fitFrame = window.requestAnimationFrame(fitActiveStep);
+  }
+
+  function fitActiveStep() {
+    const activeStep = document.querySelector(".step.is-active");
+    const container = document.querySelector(".content-inner");
+    if (!activeStep || !container) {
+      return;
+    }
+
+    activeStep.style.removeProperty("--fit-scale");
+    activeStep.style.removeProperty("--fit-width");
+
+    const availableHeight = Math.max(320, container.clientHeight - 2);
+    const naturalHeight = activeStep.scrollHeight;
+    const scale = Math.max(0.68, Math.min(1, availableHeight / Math.max(1, naturalHeight)));
+
+    activeStep.style.setProperty("--fit-scale", scale.toFixed(4));
+    activeStep.style.setProperty("--fit-width", (100 / scale).toFixed(4) + "%");
   }
 
   function runTransition(callback) {
