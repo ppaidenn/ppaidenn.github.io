@@ -628,11 +628,16 @@
         linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,248,252,0.95));
     }
     .question-card {
+      --question-accent: #70c9ff;
+      --question-accent-soft: rgba(112, 201, 255, 0.14);
+      --question-accent-border: rgba(112, 201, 255, 0.24);
+      --question-accent-ink: #1c5e84;
       min-height: 480px;
       align-content: start;
       background:
-        radial-gradient(circle at top right, rgba(255,137,213,0.14), transparent 32%),
+        radial-gradient(circle at top right, var(--question-accent-soft), transparent 32%),
         linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,248,252,0.95));
+      border-color: var(--question-accent-border);
     }
     .wheel-wrap {
       position: relative;
@@ -651,6 +656,10 @@
       background: rgba(255,255,255,0.72);
       border: 10px solid rgba(17,22,29,0.08);
       overflow: hidden;
+      cursor: pointer;
+    }
+    .wheel-spin.is-disabled {
+      cursor: default;
     }
     #categoryWheelCanvas {
       width: 100%;
@@ -678,7 +687,7 @@
     .question-prompt {
       font-size: clamp(24px, 2.6vw, 36px);
       line-height: 1.14;
-      color: #11161d;
+      color: var(--question-accent-ink);
     }
     .question-sub {
       font-size: 14px;
@@ -718,13 +727,14 @@
     .answer-panel {
       border-radius: 22px;
       padding: 16px;
-      border: 1px solid rgba(17,22,29,0.1);
-      background: rgba(248,251,255,0.96);
+      border: 1px solid var(--question-accent-border);
+      background: linear-gradient(180deg, rgba(248,251,255,0.96), var(--question-accent-soft));
       display: grid;
       gap: 8px;
     }
     .answer-panel strong {
       font-size: 16px;
+      color: var(--question-accent-ink);
     }
     .judge-note {
       color: rgba(255,203,103,0.92);
@@ -1103,14 +1113,14 @@
             <div class="scoreboard" id="scoreboard"></div>
 
             <div class="game-grid">
-              <div class="wheel-card">
+              <div class="wheel-card" id="wheelCard">
                 <div>
                   <h3>Category Wheel</h3>
                   <p class="tiny-copy">A random category is chosen every turn.</p>
                 </div>
                 <div class="wheel-wrap">
                   <div class="wheel-pointer"></div>
-                  <div class="wheel-spin" id="wheelSpinWrap">
+                  <div class="wheel-spin" id="wheelSpinWrap" role="button" tabindex="0" aria-label="Spin category wheel">
                     <canvas id="categoryWheelCanvas" width="640" height="640" aria-label="Trivia category wheel"></canvas>
                   </div>
                 </div>
@@ -1121,7 +1131,7 @@
                 <div class="tiny-copy" id="questionPoolStatus"></div>
               </div>
 
-              <div class="question-card">
+              <div class="question-card" id="questionCard">
                 <div>
                   <div class="section-kicker"><span id="questionCategoryBadge">Category</span><span id="questionModeBadge">Mode</span></div>
                 </div>

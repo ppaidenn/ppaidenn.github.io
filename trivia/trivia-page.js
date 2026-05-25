@@ -93,9 +93,11 @@
     gameStartOverBtn: document.getElementById("gameStartOverBtn"),
     scoreboard: document.getElementById("scoreboard"),
     wheelSpinWrap: document.getElementById("wheelSpinWrap"),
+    wheelCard: document.getElementById("wheelCard"),
     categoryWheelCanvas: document.getElementById("categoryWheelCanvas"),
     wheelResult: document.getElementById("wheelResult"),
     spinWheelBtn: document.getElementById("spinWheelBtn"),
+    questionCard: document.getElementById("questionCard"),
     questionPoolStatus: document.getElementById("questionPoolStatus"),
     questionCategoryBadge: document.getElementById("questionCategoryBadge"),
     questionModeBadge: document.getElementById("questionModeBadge"),
@@ -242,6 +244,13 @@
       startMatch();
     });
     dom.spinWheelBtn.addEventListener("click", spinWheelForTurn);
+    dom.wheelSpinWrap.addEventListener("click", spinWheelForTurn);
+    dom.wheelSpinWrap.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        spinWheelForTurn();
+      }
+    });
     dom.restartSameSettingsBtn.addEventListener("click", function () {
       dom.winnerOverlay.classList.remove("is-active");
       startMatch(true);
@@ -574,6 +583,8 @@
   function renderQuestionPanel() {
     const currentPlayer = getCurrentPlayer();
     const judge = getJudgePlayer();
+    const themeCategory = state.currentCategory || state.categories[0] || DEFAULT_CATEGORIES[0];
+    applyQuestionTheme(themeCategory);
     dom.turnNumberLabel.textContent = "Turn " + (state.turnIndex + 1);
     dom.turnDifficultyLabel.textContent = formatDifficultyLabel(state.difficulty);
     dom.currentPlayerHeading.textContent = currentPlayer ? currentPlayer.name + "'s turn" : "Trivia Match";
@@ -588,6 +599,8 @@
     dom.answerExplanation.textContent = "";
     dom.judgeNote.hidden = true;
     dom.spinWheelBtn.disabled = state.spinning || !!state.winnerId;
+    dom.wheelSpinWrap.classList.toggle("is-disabled", state.spinning || !!state.winnerId);
+    dom.wheelSpinWrap.setAttribute("aria-disabled", state.spinning || !!state.winnerId ? "true" : "false");
     dom.wheelSpinWrap.style.transform = "rotate(" + state.wheelRotation + "deg)";
 
     if (state.winnerId) {
@@ -783,8 +796,10 @@
     state.questionResolved = false;
     state.showAnswer = false;
     const anglePer = 360 / state.categories.length;
-    const stopRotation = 360 - ((categoryIndex * anglePer) + (anglePer / 2));
-    state.wheelRotation += 1440 + stopRotation;
+    const desiredRotation = normalizeRotation(360 - ((categoryIndex * anglePer) + (anglePer / 2)));
+    const currentRotation = normalizeRotation(state.wheelRotation);
+    const deltaRotation = normalizeRotation(desiredRotation - currentRotation);
+    state.wheelRotation += 1440 + deltaRotation;
     renderGame();
 
     window.clearTimeout(state.spinTimer);
@@ -1069,6 +1084,55 @@
 
   function getCategoryColor(category) {
     return CATEGORY_META[category]?.color || "#70c9ff";
+  }
+
+  function applyQuestionTheme(category) {
+    if (!dom.questionCard) {
+      return;
+    }
+    const accent = getCategoryColor(category);
+    dom.questionCard.style.setProperty("--question-accent", accent);
+    dom.questionCard.style.setProperty("--question-accent-soft", rgbaFromHex(accent, 0.14));
+    dom.questionCard.style.setProperty("--question-accent-border", rgbaFromHex(accent, 0.28));
+    dom.questionCard.style.setProperty("--question-accent-ink", mixHex(accent, "#11161d", 0.58));
+  }
+
+  function normalizeRotation(value) {
+    return ((value % 360) + 360) % 360;
+  }
+
+  function rgbaFromHex(hex, alpha) {
+    const rgb = hexToRgb(hex);
+    return "rgba(" + rgb.r + ", " + rgb.g + ", " + rgb.b + ", " + alpha + ")";
+  }
+
+  function mixHex(hex, targetHex, weight) {
+    const base = hexToRgb(hex);
+    const target = hexToRgb(targetHex);
+    const clampedWeight = Math.min(Math.max(weight, 0), 1);
+    const r = Math.round((base.r * clampedWeight) + (target.r * (1 - clampedWeight)));
+    const g = Math.round((base.g * clampedWeight) + (target.g * (1 - clampedWeight)));
+    const b = Math.round((base.b * clampedWeight) + (target.b * (1 - clampedWeight)));
+    return rgbToHex(r, g, b);
+  }
+
+  function hexToRgb(hex) {
+    const normalized = String(hex || "").replace("#", "");
+    const expanded = normalized.length === 3
+      ? normalized.split("").map(function (char) { return char + char; }).join("")
+      : normalized;
+    const safe = expanded.padEnd(6, "0").slice(0, 6);
+    return {
+      r: parseInt(safe.slice(0, 2), 16),
+      g: parseInt(safe.slice(2, 4), 16),
+      b: parseInt(safe.slice(4, 6), 16),
+    };
+  }
+
+  function rgbToHex(r, g, b) {
+    return "#" + [r, g, b].map(function (value) {
+      return Math.max(0, Math.min(255, value)).toString(16).padStart(2, "0");
+    }).join("");
   }
 
   function svgAvatar(kind, primary, secondary, accent, earStyle, label) {
