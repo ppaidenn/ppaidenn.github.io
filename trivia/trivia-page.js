@@ -970,8 +970,11 @@
 
     activeStep.style.removeProperty("--fit-scale");
 
+    const bodyStyles = window.getComputedStyle(document.body);
+    const reservedTop = parseFloat(bodyStyles.paddingTop || "0") || 0;
+    const viewportHeight = Math.max(280, window.innerHeight - reservedTop - 8);
     const availableWidth = Math.max(220, container.clientWidth - 2);
-    const availableHeight = Math.max(280, container.clientHeight - 2);
+    const availableHeight = Math.max(280, Math.min(container.clientHeight - 2, viewportHeight));
     const naturalWidth = Math.max(activeStep.scrollWidth, activeStep.offsetWidth, 1);
     const naturalHeight = activeStep.scrollHeight;
     const scaleWidth = availableWidth / naturalWidth;
