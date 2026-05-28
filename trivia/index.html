@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Paiden's Trivia!!!</title>
   <meta name="description" content="Play a local browser-only trivia game on paiden.com.">
-  <meta name="theme-color" content="#090d12">
+  <meta name="theme-color" content="#ead9b8">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <link rel="manifest" href="/manifest.webmanifest">
@@ -15,22 +15,28 @@
   <link rel="stylesheet" href="/shared-app-header.css?v=20260421b">
   <style>
     :root {
-      --ink: #11161d;
-      --ink-soft: rgba(17, 22, 29, 0.72);
-      --ink-dim: rgba(17, 22, 29, 0.48);
-      --panel: rgba(255, 255, 255, 0.92);
-      --panel-strong: rgba(255, 255, 255, 0.98);
-      --panel-soft: rgba(246, 249, 252, 0.96);
-      --border: rgba(17, 22, 29, 0.08);
+      --ink: #151b21;
+      --ink-soft: rgba(21, 27, 33, 0.76);
+      --ink-dim: rgba(21, 27, 33, 0.52);
+      --panel: rgba(252, 243, 225, 0.92);
+      --panel-strong: rgba(255, 248, 235, 0.98);
+      --panel-soft: rgba(245, 238, 225, 0.96);
+      --border: rgba(78, 63, 39, 0.11);
       --teal: #52d8c8;
       --cyan: #70c9ff;
       --gold: #ffcb67;
       --pink: #ff89d5;
       --violet: #a992ff;
       --lime: #9fe870;
+      --peach: #ffbb8f;
+      --butter: #ffe6a3;
+      --sky-soft: #d9f0ff;
+      --mint-soft: #dff7e8;
+      --rose-soft: #ffe1ee;
+      --lavender-soft: #ece3ff;
       --danger: #ff7b7b;
       --good: #87f0a6;
-      --shadow: 0 24px 60px rgba(28, 35, 48, 0.12);
+      --shadow: 0 28px 72px rgba(81, 63, 31, 0.16);
     }
     * { box-sizing: border-box; }
     body {
@@ -40,10 +46,11 @@
       font-family: "Avenir Next", "Segoe UI", Arial, sans-serif;
       color: var(--ink);
       background:
-        radial-gradient(circle at top left, rgba(82, 216, 200, 0.18), transparent 26%),
-        radial-gradient(circle at top right, rgba(255, 137, 213, 0.14), transparent 28%),
-        radial-gradient(circle at bottom, rgba(112, 201, 255, 0.18), transparent 34%),
-        linear-gradient(180deg, #fbfdff 0%, #f0f5fb 100%);
+        radial-gradient(circle at top left, rgba(255, 203, 103, 0.32), transparent 24%),
+        radial-gradient(circle at 82% 14%, rgba(112, 201, 255, 0.22), transparent 22%),
+        radial-gradient(circle at 18% 72%, rgba(82, 216, 200, 0.22), transparent 24%),
+        radial-gradient(circle at 86% 78%, rgba(255, 137, 213, 0.18), transparent 24%),
+        linear-gradient(180deg, #f7edd9 0%, #efe4cf 42%, #e7eddc 100%);
       overflow: hidden;
     }
     [hidden] { display: none !important; }
@@ -63,24 +70,24 @@
     .backdrop-grid {
       inset: -12%;
       background-image:
-        linear-gradient(rgba(17,22,29,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(17,22,29,0.05) 1px, transparent 1px);
-      background-size: 92px 92px;
+        linear-gradient(rgba(78,63,39,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(78,63,39,0.06) 1px, transparent 1px);
+      background-size: 88px 88px;
       mask-image: radial-gradient(circle at center, rgba(0,0,0,0.95), transparent 78%);
-      opacity: 0.48;
+      opacity: 0.54;
       transform: perspective(980px) rotateX(66deg) translateY(18vh);
     }
     .backdrop-glow {
       border-radius: 999px;
       filter: blur(0);
-      opacity: 0.64;
+      opacity: 0.78;
     }
     .backdrop-glow.glow-a {
       width: 340px;
       height: 340px;
       top: -70px;
       left: -90px;
-      background: radial-gradient(circle, rgba(82,216,200,0.34), transparent 72%);
+      background: radial-gradient(circle, rgba(82,216,200,0.4), transparent 72%);
       animation: driftGlow 18s ease-in-out infinite;
     }
     .backdrop-glow.glow-b {
@@ -88,7 +95,7 @@
       height: 420px;
       top: 12%;
       right: -120px;
-      background: radial-gradient(circle, rgba(255,137,213,0.28), transparent 72%);
+      background: radial-gradient(circle, rgba(255,137,213,0.34), transparent 72%);
       animation: driftGlow 22s ease-in-out infinite reverse;
     }
     .backdrop-glow.glow-c {
@@ -96,14 +103,24 @@
       height: 360px;
       bottom: -120px;
       left: 20%;
-      background: radial-gradient(circle, rgba(112,201,255,0.28), transparent 72%);
+      background: radial-gradient(circle, rgba(112,201,255,0.34), transparent 72%);
       animation: driftGlow 20s ease-in-out infinite;
+    }
+    .backdrop-glow.glow-d {
+      width: 280px;
+      height: 280px;
+      bottom: 8%;
+      right: 34%;
+      background: radial-gradient(circle, rgba(255,203,103,0.26), transparent 70%);
+      animation: driftGlow 24s ease-in-out infinite reverse;
     }
     .backdrop-sprite {
       border-radius: 999px;
-      border: 1px solid rgba(17,22,29,0.08);
-      backdrop-filter: blur(3px);
-      box-shadow: 0 12px 24px rgba(17,22,29,0.08);
+      border: 1px solid rgba(78,63,39,0.14);
+      backdrop-filter: blur(5px);
+      box-shadow:
+        0 16px 32px rgba(81,63,31,0.12),
+        inset 0 1px 0 rgba(255,255,255,0.7);
       animation: floatSprite 16s ease-in-out infinite;
     }
     .backdrop-sprite::after {
@@ -111,14 +128,14 @@
       position: absolute;
       inset: 18%;
       border-radius: inherit;
-      border: 1px dashed rgba(17,22,29,0.12);
+      border: 1px dashed rgba(78,63,39,0.16);
     }
     .backdrop-sprite.sprite-a {
       width: 72px;
       height: 72px;
       top: 19%;
       left: 7%;
-      background: linear-gradient(135deg, rgba(82,216,200,0.26), rgba(82,216,200,0.06));
+      background: linear-gradient(135deg, rgba(82,216,200,0.44), rgba(225,251,246,0.3));
       animation-duration: 14s;
     }
     .backdrop-sprite.sprite-b {
@@ -126,7 +143,7 @@
       height: 56px;
       top: 36%;
       right: 14%;
-      background: linear-gradient(135deg, rgba(255,203,103,0.24), rgba(255,203,103,0.05));
+      background: linear-gradient(135deg, rgba(255,203,103,0.42), rgba(255,243,205,0.28));
       animation-duration: 17s;
       animation-delay: -6s;
     }
@@ -135,7 +152,7 @@
       height: 94px;
       bottom: 16%;
       right: 22%;
-      background: linear-gradient(135deg, rgba(169,146,255,0.22), rgba(169,146,255,0.05));
+      background: linear-gradient(135deg, rgba(169,146,255,0.34), rgba(243,237,255,0.28));
       animation-duration: 19s;
       animation-delay: -3s;
     }
@@ -144,12 +161,50 @@
       height: 66px;
       bottom: 22%;
       left: 12%;
-      background: linear-gradient(135deg, rgba(112,201,255,0.24), rgba(112,201,255,0.05));
+      background: linear-gradient(135deg, rgba(112,201,255,0.38), rgba(233,247,255,0.28));
       animation-duration: 15s;
       animation-delay: -8s;
     }
+    .backdrop-sprite.sprite-e {
+      width: 88px;
+      height: 88px;
+      top: 58%;
+      left: 6%;
+      background: linear-gradient(135deg, rgba(255,187,143,0.38), rgba(255,240,225,0.24));
+      animation-duration: 18s;
+      animation-delay: -4s;
+    }
+    .backdrop-sprite.sprite-f {
+      width: 112px;
+      height: 56px;
+      top: 20%;
+      right: 28%;
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(223,247,232,0.84), rgba(159,232,112,0.24));
+      animation-duration: 21s;
+      animation-delay: -9s;
+    }
+    .backdrop-sprite.sprite-g {
+      width: 58px;
+      height: 118px;
+      bottom: 12%;
+      right: 8%;
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(255,225,238,0.84), rgba(255,137,213,0.2));
+      animation-duration: 20s;
+      animation-delay: -5s;
+    }
+    .backdrop-sprite.sprite-h {
+      width: 96px;
+      height: 96px;
+      top: 10%;
+      left: 42%;
+      background: linear-gradient(135deg, rgba(236,227,255,0.88), rgba(169,146,255,0.24));
+      animation-duration: 23s;
+      animation-delay: -11s;
+    }
     .backdrop-doodle {
-      opacity: 0.46;
+      opacity: 0.62;
       border-radius: 999px;
       animation: orbitDoodle 24s linear infinite;
     }
@@ -158,14 +213,14 @@
       height: 210px;
       top: 9%;
       left: 58%;
-      border: 2px dashed rgba(17,22,29,0.12);
+      border: 2px dashed rgba(78,63,39,0.16);
     }
     .backdrop-doodle.doodle-b {
       width: 160px;
       height: 160px;
       bottom: 14%;
       left: 26%;
-      border: 2px dotted rgba(159,232,112,0.24);
+      border: 2px dotted rgba(159,232,112,0.34);
       animation-direction: reverse;
     }
     .backdrop-doodle.doodle-c {
@@ -173,7 +228,24 @@
       height: 110px;
       top: 48%;
       right: 12%;
-      border: 2px solid rgba(255,137,213,0.18);
+      border: 2px solid rgba(255,137,213,0.28);
+    }
+    .backdrop-doodle.doodle-d {
+      width: 136px;
+      height: 136px;
+      top: 30%;
+      left: 30%;
+      border: 2px dashed rgba(112,201,255,0.24);
+      animation-duration: 18s;
+    }
+    .backdrop-doodle.doodle-e {
+      width: 180px;
+      height: 180px;
+      bottom: 8%;
+      right: 18%;
+      border: 2px dotted rgba(255,203,103,0.28);
+      animation-duration: 27s;
+      animation-direction: reverse;
     }
     @keyframes driftGlow {
       0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
@@ -223,8 +295,9 @@
       border-radius: 34px;
       border: 1px solid rgba(17,22,29,0.08);
       background:
-        radial-gradient(circle at top right, rgba(82,216,200,0.14), transparent 28%),
-        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(247,250,253,0.94));
+        radial-gradient(circle at top right, rgba(82,216,200,0.18), transparent 30%),
+        radial-gradient(circle at bottom left, rgba(255,203,103,0.16), transparent 28%),
+        linear-gradient(180deg, rgba(250,241,224,0.96), rgba(238,231,217,0.94));
       padding: clamp(14px, 1.8vw, 24px);
       box-shadow: var(--shadow);
       backdrop-filter: blur(10px);
@@ -243,7 +316,7 @@
       border-radius: 28px;
       padding: clamp(16px, 1.7vw, 22px);
       background:
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,250,253,0.96));
+        linear-gradient(180deg, rgba(255,246,231,0.98), rgba(241,233,220,0.96));
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.82),
         inset 0 -1px 0 rgba(17,22,29,0.03),
@@ -251,57 +324,57 @@
     }
     .step-card.step-theme-players {
       background:
-        radial-gradient(circle at top right, rgba(112,201,255,0.16), transparent 34%),
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,249,255,0.96));
+        radial-gradient(circle at top right, rgba(112,201,255,0.24), transparent 38%),
+        linear-gradient(180deg, rgba(244,248,231,0.98), rgba(229,240,242,0.96));
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.84),
         0 22px 48px rgba(112,201,255,0.16);
     }
     .step-card.step-theme-setup {
       background:
-        radial-gradient(circle at top right, rgba(82,216,200,0.16), transparent 34%),
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(242,250,248,0.96));
+        radial-gradient(circle at top right, rgba(82,216,200,0.22), transparent 36%),
+        linear-gradient(180deg, rgba(240,249,235,0.98), rgba(227,241,230,0.96));
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.84),
         0 22px 48px rgba(82,216,200,0.16);
     }
     .step-card.step-theme-mode {
       background:
-        radial-gradient(circle at top right, rgba(255,137,213,0.14), transparent 34%),
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(253,244,249,0.96));
+        radial-gradient(circle at top right, rgba(255,137,213,0.22), transparent 36%),
+        linear-gradient(180deg, rgba(252,237,241,0.98), rgba(244,228,236,0.96));
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.84),
         0 22px 48px rgba(255,137,213,0.14);
     }
     .step-card.step-theme-scoring {
       background:
-        radial-gradient(circle at top right, rgba(255,203,103,0.18), transparent 34%),
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,249,240,0.96));
+        radial-gradient(circle at top right, rgba(255,203,103,0.28), transparent 36%),
+        linear-gradient(180deg, rgba(253,243,221,0.98), rgba(247,232,204,0.96));
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.84),
         0 22px 48px rgba(255,203,103,0.16);
     }
     .step-card.step-theme-difficulty {
       background:
-        radial-gradient(circle at top right, rgba(169,146,255,0.16), transparent 34%),
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,244,255,0.96));
+        radial-gradient(circle at top right, rgba(169,146,255,0.24), transparent 36%),
+        linear-gradient(180deg, rgba(243,236,252,0.98), rgba(234,226,246,0.96));
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.84),
         0 22px 48px rgba(169,146,255,0.16);
     }
     .step-card.step-theme-categories {
       background:
-        radial-gradient(circle at top right, rgba(159,232,112,0.16), transparent 34%),
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,252,241,0.96));
+        radial-gradient(circle at top right, rgba(159,232,112,0.24), transparent 36%),
+        linear-gradient(180deg, rgba(241,249,229,0.98), rgba(229,239,214,0.96));
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.84),
         0 22px 48px rgba(159,232,112,0.16);
     }
     .step-card.step-theme-order {
       background:
-        radial-gradient(circle at top right, rgba(112,201,255,0.12), transparent 34%),
-        radial-gradient(circle at bottom left, rgba(255,203,103,0.14), transparent 28%),
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(246,249,253,0.96));
+        radial-gradient(circle at top right, rgba(112,201,255,0.2), transparent 36%),
+        radial-gradient(circle at bottom left, rgba(255,203,103,0.22), transparent 30%),
+        linear-gradient(180deg, rgba(247,241,228,0.98), rgba(236,230,220,0.96));
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.84),
         0 24px 52px rgba(112,201,255,0.12),
@@ -309,9 +382,9 @@
     }
     .step-card.step-theme-game {
       background:
-        radial-gradient(circle at top right, rgba(82,216,200,0.1), transparent 34%),
-        radial-gradient(circle at bottom left, rgba(255,137,213,0.1), transparent 28%),
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(246,249,253,0.96));
+        radial-gradient(circle at top right, rgba(82,216,200,0.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(255,137,213,0.16), transparent 30%),
+        linear-gradient(180deg, rgba(250,242,226,0.98), rgba(235,229,218,0.96));
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.84),
         0 26px 56px rgba(17,22,29,0.12);
@@ -320,9 +393,10 @@
       min-height: min(72vh, 720px);
       text-align: center;
       background:
-        radial-gradient(circle at top, rgba(112,201,255,0.22), transparent 32%),
-        radial-gradient(circle at 20% 80%, rgba(255,137,213,0.14), transparent 26%),
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,249,253,0.96));
+        radial-gradient(circle at top, rgba(112,201,255,0.28), transparent 32%),
+        radial-gradient(circle at 20% 80%, rgba(255,137,213,0.22), transparent 26%),
+        radial-gradient(circle at 84% 78%, rgba(255,203,103,0.2), transparent 24%),
+        linear-gradient(180deg, rgba(248,238,218,0.98), rgba(236,231,220,0.96));
     }
     .step-card.hero-card.is-active {
       place-items: center;
@@ -340,8 +414,8 @@
       gap: 8px;
       padding: 8px 12px;
       border-radius: 999px;
-      background: rgba(17,22,29,0.05);
-      border: 1px solid rgba(17,22,29,0.08);
+      background: rgba(90, 72, 43, 0.08);
+      border: 1px solid rgba(90, 72, 43, 0.12);
       font-size: 11px;
       letter-spacing: 0.16em;
       font-weight: 800;
@@ -387,7 +461,7 @@
     .panel {
       border-radius: 24px;
       border: 1px solid rgba(17,22,29,0.08);
-      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(244,248,252,0.94));
+      background: linear-gradient(180deg, rgba(253,244,228,0.96), rgba(238,231,219,0.94));
       padding: 16px;
       display: grid;
       gap: 12px;
@@ -396,7 +470,7 @@
         0 14px 30px rgba(17,22,29,0.08);
     }
     .panel-soft {
-      background: linear-gradient(180deg, rgba(248,251,255,0.98), rgba(240,245,250,0.96));
+      background: linear-gradient(180deg, rgba(246,239,227,0.98), rgba(235,230,221,0.96));
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.86),
         0 16px 32px rgba(17,22,29,0.08);
@@ -426,7 +500,7 @@
       min-height: 50px;
       border-radius: 18px;
       border: 1px solid rgba(17,22,29,0.12);
-      background: rgba(255,255,255,0.96);
+      background: rgba(255,247,234,0.96);
       color: var(--ink);
       padding: 14px 16px;
       font: inherit;
@@ -478,17 +552,17 @@
     }
     .btn {
       color: #11161d;
-      background: linear-gradient(135deg, #ffffff, #f4f7fb);
-      box-shadow: 0 14px 28px rgba(17, 22, 29, 0.08);
+      background: linear-gradient(135deg, #ffe7a8, #ffcfa8 52%, #ffbfd6);
+      box-shadow: 0 16px 30px rgba(150, 108, 46, 0.16);
     }
     .btn-secondary {
       color: var(--ink);
-      background: linear-gradient(135deg, rgba(82,216,200,0.18), rgba(112,201,255,0.12));
-      box-shadow: 0 12px 24px rgba(82, 216, 200, 0.1);
+      background: linear-gradient(135deg, rgba(82,216,200,0.42), rgba(112,201,255,0.26));
+      box-shadow: 0 14px 28px rgba(82, 216, 200, 0.14);
     }
     .btn-ghost {
       color: var(--ink);
-      background: rgba(17,22,29,0.04);
+      background: linear-gradient(135deg, rgba(255,244,219,0.96), rgba(238,228,209,0.9));
     }
     .choice-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -499,7 +573,7 @@
     .icon-card {
       border-radius: 22px;
       border: 1px solid rgba(17,22,29,0.08);
-      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(246,249,252,0.96));
+      background: linear-gradient(180deg, rgba(255,248,236,0.98), rgba(242,234,222,0.96));
       padding: 14px;
       display: grid;
       gap: 10px;
@@ -519,8 +593,38 @@
     .difficulty-card.is-selected,
     .icon-card.is-selected {
       border-color: rgba(82,216,200,0.52);
-      background: linear-gradient(180deg, rgba(240,255,252,0.98), rgba(233,248,245,0.96));
+      background: linear-gradient(180deg, rgba(226,249,241,0.98), rgba(217,240,232,0.96));
       box-shadow: 0 18px 34px rgba(82,216,200,0.18);
+    }
+    .mode-card:first-child {
+      background: linear-gradient(145deg, rgba(214,239,255,0.96), rgba(238,245,226,0.94));
+    }
+    .mode-card:last-child {
+      background: linear-gradient(145deg, rgba(255,228,214,0.96), rgba(255,236,246,0.94));
+    }
+    .difficulty-card[data-difficulty="easy"] {
+      background: linear-gradient(145deg, rgba(230,247,216,0.98), rgba(247,243,217,0.94));
+    }
+    .difficulty-card[data-difficulty="medium"] {
+      background: linear-gradient(145deg, rgba(214,242,255,0.98), rgba(239,244,222,0.94));
+    }
+    .difficulty-card[data-difficulty="hard"] {
+      background: linear-gradient(145deg, rgba(255,236,202,0.98), rgba(255,228,221,0.94));
+    }
+    .difficulty-card[data-difficulty="impossible"] {
+      background: linear-gradient(145deg, rgba(238,226,255,0.98), rgba(255,231,244,0.94));
+    }
+    .icon-card:nth-child(4n+1) {
+      background: linear-gradient(145deg, rgba(214,239,255,0.98), rgba(244,240,224,0.94));
+    }
+    .icon-card:nth-child(4n+2) {
+      background: linear-gradient(145deg, rgba(255,231,243,0.98), rgba(253,240,219,0.94));
+    }
+    .icon-card:nth-child(4n+3) {
+      background: linear-gradient(145deg, rgba(229,247,218,0.98), rgba(240,238,220,0.94));
+    }
+    .icon-card:nth-child(4n) {
+      background: linear-gradient(145deg, rgba(236,229,255,0.98), rgba(240,245,223,0.94));
     }
     .choice-card strong,
     .mode-card strong,
@@ -546,8 +650,8 @@
       margin: 0 auto;
       border-radius: 22px;
       padding: 10px;
-      background: rgba(17,22,29,0.05);
-      border: 1px solid rgba(17,22,29,0.08);
+      background: rgba(90,72,43,0.08);
+      border: 1px solid rgba(90,72,43,0.11);
     }
     .icon-art img {
       width: 100%;
@@ -585,9 +689,33 @@
       min-height: 52px;
       padding: 12px 14px;
       border-radius: 18px;
-      background: rgba(255,255,255,0.92);
+      background: rgba(255,246,232,0.92);
       border: 1px solid rgba(17,22,29,0.08);
       box-shadow: 0 10px 22px rgba(17,22,29,0.06);
+    }
+    .category-pill:nth-child(6n+1),
+    .player-pill:nth-child(6n+1) {
+      background: linear-gradient(145deg, rgba(214,239,255,0.95), rgba(246,240,223,0.93));
+    }
+    .category-pill:nth-child(6n+2),
+    .player-pill:nth-child(6n+2) {
+      background: linear-gradient(145deg, rgba(255,232,242,0.95), rgba(249,238,220,0.93));
+    }
+    .category-pill:nth-child(6n+3),
+    .player-pill:nth-child(6n+3) {
+      background: linear-gradient(145deg, rgba(230,247,219,0.95), rgba(245,241,221,0.93));
+    }
+    .category-pill:nth-child(6n+4),
+    .player-pill:nth-child(6n+4) {
+      background: linear-gradient(145deg, rgba(237,229,255,0.95), rgba(247,237,223,0.93));
+    }
+    .category-pill:nth-child(6n+5),
+    .player-pill:nth-child(6n+5) {
+      background: linear-gradient(145deg, rgba(255,236,205,0.95), rgba(255,232,224,0.93));
+    }
+    .category-pill:nth-child(6n),
+    .player-pill:nth-child(6n) {
+      background: linear-gradient(145deg, rgba(222,246,241,0.95), rgba(244,236,223,0.93));
     }
     .category-pill strong,
     .player-pill strong {
@@ -598,7 +726,7 @@
       height: 34px;
       border-radius: 50%;
       border: 1px solid rgba(17,22,29,0.1);
-      background: rgba(17,22,29,0.04);
+      background: rgba(90,72,43,0.07);
       color: var(--ink);
       cursor: pointer;
       display: inline-flex;
@@ -615,9 +743,21 @@
       gap: 12px;
       padding: 12px 14px;
       border-radius: 18px;
-      background: rgba(255,255,255,0.94);
+      background: rgba(255,246,232,0.94);
       border: 1px solid rgba(17,22,29,0.08);
       box-shadow: 0 12px 24px rgba(17,22,29,0.07);
+    }
+    .order-row:nth-child(4n+1) {
+      background: linear-gradient(145deg, rgba(214,239,255,0.95), rgba(245,239,223,0.93));
+    }
+    .order-row:nth-child(4n+2) {
+      background: linear-gradient(145deg, rgba(255,231,243,0.95), rgba(248,238,221,0.93));
+    }
+    .order-row:nth-child(4n+3) {
+      background: linear-gradient(145deg, rgba(230,246,219,0.95), rgba(244,240,220,0.93));
+    }
+    .order-row:nth-child(4n) {
+      background: linear-gradient(145deg, rgba(237,229,255,0.95), rgba(246,237,222,0.93));
     }
     .order-index {
       width: 34px;
@@ -626,7 +766,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: rgba(82,216,200,0.22);
+      background: linear-gradient(135deg, rgba(82,216,200,0.28), rgba(255,203,103,0.22));
       font-weight: 800;
       color: #0e4139;
     }
@@ -642,7 +782,7 @@
       border-radius: 14px;
       object-fit: cover;
       border: 1px solid rgba(17,22,29,0.1);
-      background: rgba(17,22,29,0.04);
+      background: rgba(90,72,43,0.07);
     }
     .order-move {
       display: flex;
@@ -677,7 +817,7 @@
       border-radius: 22px;
       border: 1px solid rgba(17,22,29,0.08);
       background:
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(241,247,252,0.96));
+        linear-gradient(180deg, rgba(255,248,234,0.98), rgba(236,231,222,0.96));
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.86),
         0 16px 30px rgba(17,22,29,0.08);
@@ -704,7 +844,7 @@
       min-height: 46px;
       border-radius: 16px;
       border: 1px solid rgba(17,22,29,0.1);
-      background: rgba(255,255,255,0.92);
+      background: rgba(255,247,232,0.92);
       color: var(--ink);
       font: inherit;
       font-weight: 800;
@@ -717,8 +857,20 @@
     }
     .difficulty-toggle.is-selected {
       border-color: rgba(169,146,255,0.42);
-      background: linear-gradient(180deg, rgba(245,240,255,0.98), rgba(236,229,255,0.96));
+      background: linear-gradient(180deg, rgba(240,232,255,0.98), rgba(233,225,245,0.96));
       box-shadow: 0 16px 30px rgba(169,146,255,0.18);
+    }
+    .difficulty-toggle[data-game-difficulty="easy"] {
+      background: linear-gradient(145deg, rgba(229,246,215,0.98), rgba(246,243,214,0.94));
+    }
+    .difficulty-toggle[data-game-difficulty="medium"] {
+      background: linear-gradient(145deg, rgba(214,242,255,0.98), rgba(235,243,220,0.94));
+    }
+    .difficulty-toggle[data-game-difficulty="hard"] {
+      background: linear-gradient(145deg, rgba(255,234,204,0.98), rgba(255,226,221,0.94));
+    }
+    .difficulty-toggle[data-game-difficulty="impossible"] {
+      background: linear-gradient(145deg, rgba(237,228,255,0.98), rgba(255,233,246,0.94));
     }
     .difficulty-hint {
       color: var(--ink-soft);
@@ -730,7 +882,7 @@
     .score-card {
       border-radius: 22px;
       border: 1px solid rgba(17,22,29,0.08);
-      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,248,252,0.95));
+      background: linear-gradient(180deg, rgba(255,247,232,0.98), rgba(239,231,220,0.95));
       padding: 12px;
       display: grid;
       gap: 10px;
@@ -754,8 +906,20 @@
       height: 52px;
       border-radius: 16px;
       object-fit: cover;
-      background: rgba(17,22,29,0.04);
-      border: 1px solid rgba(17,22,29,0.08);
+      background: rgba(90,72,43,0.07);
+      border: 1px solid rgba(90,72,43,0.12);
+    }
+    .score-card:nth-child(4n+1) {
+      background: linear-gradient(180deg, rgba(214,239,255,0.98), rgba(235,241,225,0.95));
+    }
+    .score-card:nth-child(4n+2) {
+      background: linear-gradient(180deg, rgba(255,231,243,0.98), rgba(245,232,226,0.95));
+    }
+    .score-card:nth-child(4n+3) {
+      background: linear-gradient(180deg, rgba(230,246,219,0.98), rgba(242,239,221,0.95));
+    }
+    .score-card:nth-child(4n) {
+      background: linear-gradient(180deg, rgba(237,229,255,0.98), rgba(241,232,222,0.95));
     }
     .score-points {
       font-size: 34px;
@@ -774,7 +938,7 @@
       border-radius: 28px;
       border: 1px solid rgba(17,22,29,0.08);
       background:
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,248,252,0.95));
+        linear-gradient(180deg, rgba(255,248,235,0.98), rgba(239,231,220,0.95));
       padding: 16px;
       display: grid;
       gap: 14px;
@@ -784,8 +948,9 @@
     }
     .wheel-card {
       background:
-        radial-gradient(circle at top, rgba(112,201,255,0.16), transparent 38%),
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,248,252,0.95));
+        radial-gradient(circle at top, rgba(112,201,255,0.24), transparent 40%),
+        radial-gradient(circle at 18% 82%, rgba(255,203,103,0.18), transparent 30%),
+        linear-gradient(180deg, rgba(255,248,235,0.98), rgba(239,231,220,0.95));
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.88),
         0 26px 44px rgba(112,201,255,0.16);
@@ -799,7 +964,8 @@
       align-content: start;
       background:
         radial-gradient(circle at top right, var(--question-accent-soft), transparent 32%),
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,248,252,0.95));
+        radial-gradient(circle at bottom left, rgba(255,248,235,0.42), transparent 34%),
+        linear-gradient(180deg, rgba(255,248,235,0.98), rgba(239,231,220,0.95));
       border-color: var(--question-accent-border);
       box-shadow:
         0 26px 44px rgba(17,22,29,0.1),
@@ -819,8 +985,8 @@
       border-radius: 50%;
       transition: transform 1.55s cubic-bezier(.12,.86,.18,1);
       box-shadow: 0 20px 34px rgba(17,22,29,0.1);
-      background: rgba(255,255,255,0.72);
-      border: 10px solid rgba(17,22,29,0.08);
+      background: rgba(255,246,230,0.82);
+      border: 10px solid rgba(112, 90, 57, 0.12);
       overflow: hidden;
       cursor: pointer;
     }
@@ -866,7 +1032,7 @@
       min-height: 76px;
       border-radius: 20px;
       border: 1px solid rgba(17,22,29,0.1);
-      background: rgba(255,255,255,0.92);
+      background: rgba(255,247,232,0.94);
       color: #11161d;
       padding: 16px;
       text-align: left;
@@ -881,11 +1047,27 @@
     }
     .mc-option.is-correct {
       border-color: rgba(135,240,166,0.54);
-      background: rgba(135,240,166,0.12);
+      background: linear-gradient(145deg, rgba(210,250,223,0.92), rgba(231,245,216,0.94));
     }
     .mc-option.is-wrong {
       border-color: rgba(255,123,123,0.5);
-      background: rgba(255,123,123,0.12);
+      background: linear-gradient(145deg, rgba(255,223,223,0.92), rgba(255,236,225,0.94));
+    }
+    .mc-option:nth-child(4n+1) {
+      background: linear-gradient(145deg, rgba(255,232,241,0.94), rgba(255,244,222,0.94));
+      border-color: rgba(255,137,213,0.24);
+    }
+    .mc-option:nth-child(4n+2) {
+      background: linear-gradient(145deg, rgba(221,245,255,0.94), rgba(237,247,225,0.94));
+      border-color: rgba(112,201,255,0.24);
+    }
+    .mc-option:nth-child(4n+3) {
+      background: linear-gradient(145deg, rgba(232,248,220,0.94), rgba(248,244,214,0.94));
+      border-color: rgba(159,232,112,0.24);
+    }
+    .mc-option:nth-child(4n) {
+      background: linear-gradient(145deg, rgba(239,230,255,0.94), rgba(255,236,227,0.94));
+      border-color: rgba(169,146,255,0.24);
     }
     .question-actions {
       grid-template-columns: repeat(auto-fit, minmax(180px, max-content));
@@ -894,7 +1076,7 @@
       border-radius: 22px;
       padding: 16px;
       border: 1px solid var(--question-accent-border);
-      background: linear-gradient(180deg, rgba(248,251,255,0.96), var(--question-accent-soft));
+      background: linear-gradient(180deg, rgba(255,248,236,0.96), var(--question-accent-soft));
       display: grid;
       gap: 8px;
       box-shadow:
@@ -916,7 +1098,7 @@
       display: none;
       place-items: center;
       padding: 24px;
-      background: rgba(242, 247, 252, 0.84);
+      background: rgba(242, 235, 222, 0.84);
       backdrop-filter: blur(10px);
     }
     .winner-overlay.is-active {
@@ -926,8 +1108,9 @@
       width: min(100%, 620px);
       text-align: center;
       background:
-        radial-gradient(circle at top, rgba(255,203,103,0.22), transparent 34%),
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,249,253,0.96));
+        radial-gradient(circle at top, rgba(255,203,103,0.28), transparent 34%),
+        radial-gradient(circle at 20% 80%, rgba(255,137,213,0.16), transparent 24%),
+        linear-gradient(180deg, rgba(255,248,235,0.98), rgba(239,231,220,0.96));
     }
     .winner-icon {
       width: 108px;
@@ -937,7 +1120,7 @@
       overflow: hidden;
       border: 1px solid rgba(17,22,29,0.08);
       box-shadow: 0 16px 28px rgba(17,22,29,0.08);
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,247,232,0.9);
     }
     .winner-icon img {
       width: 100%;
@@ -951,8 +1134,8 @@
       display: none;
       place-items: center;
       background:
-        radial-gradient(circle at center, rgba(112,201,255,0.16), transparent 26%),
-        rgba(239, 245, 251, 0.9);
+        radial-gradient(circle at center, rgba(112,201,255,0.2), transparent 26%),
+        rgba(241, 232, 216, 0.92);
       backdrop-filter: blur(12px);
     }
     .transition-overlay.is-active {
@@ -965,8 +1148,8 @@
       border-radius: 50%;
       border: 2px solid rgba(17,22,29,0.1);
       background:
-        radial-gradient(circle at center, rgba(255,255,255,0.4), transparent 42%),
-        conic-gradient(from 0deg, rgba(82,216,200,0.22), rgba(255,203,103,0.28), rgba(255,137,213,0.22), rgba(82,216,200,0.22));
+        radial-gradient(circle at center, rgba(255,248,232,0.54), transparent 42%),
+        conic-gradient(from 0deg, rgba(82,216,200,0.28), rgba(255,203,103,0.34), rgba(255,137,213,0.26), rgba(169,146,255,0.22), rgba(82,216,200,0.28));
       display: grid;
       place-items: center;
       animation: pulsePortal 1s ease-in-out infinite;
@@ -1002,7 +1185,7 @@
       margin: 0 auto;
     }
     .fullscreen-hint {
-      color: rgba(255,255,255,0.62);
+      color: rgba(21,27,33,0.62);
       font-size: 13px;
     }
     @media (max-width: 1040px) {
@@ -1113,13 +1296,20 @@
     <div class="backdrop-glow glow-a"></div>
     <div class="backdrop-glow glow-b"></div>
     <div class="backdrop-glow glow-c"></div>
+    <div class="backdrop-glow glow-d"></div>
     <div class="backdrop-sprite sprite-a"></div>
     <div class="backdrop-sprite sprite-b"></div>
     <div class="backdrop-sprite sprite-c"></div>
     <div class="backdrop-sprite sprite-d"></div>
+    <div class="backdrop-sprite sprite-e"></div>
+    <div class="backdrop-sprite sprite-f"></div>
+    <div class="backdrop-sprite sprite-g"></div>
+    <div class="backdrop-sprite sprite-h"></div>
     <div class="backdrop-doodle doodle-a"></div>
     <div class="backdrop-doodle doodle-b"></div>
     <div class="backdrop-doodle doodle-c"></div>
+    <div class="backdrop-doodle doodle-d"></div>
+    <div class="backdrop-doodle doodle-e"></div>
   </div>
 
   <header class="top-nav" role="navigation" aria-label="Primary site navigation">
@@ -1410,7 +1600,7 @@
     </div>
   </div>
 
-  <script src="/trivia/question-bank.js?v=20260527b"></script>
-  <script src="/trivia/trivia-page.js?v=20260527b"></script>
+  <script src="/trivia/question-bank.js?v=20260527c"></script>
+  <script src="/trivia/trivia-page.js?v=20260527c"></script>
 </body>
 </html>
