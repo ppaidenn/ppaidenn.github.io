@@ -29,6 +29,38 @@
 
   const DIFFICULTY_OPTIONS = ["easy", "medium", "hard", "impossible"];
 
+  const SPORTS_MEDIUM_RUNTIME_REJECT_PATTERNS = [
+    /\bcricket\b/i,
+    /\bashes\b/i,
+    /\binnings\b/i,
+    /\bwicket\b/i,
+    /\bwhat year\b/i,
+    /\bwhen did\b/i,
+    /\bwhen was\b/i,
+    /\bin what year\b/i,
+    /\bscore of\b/i,
+    /\bwhat was the score\b/i,
+    /\bhighest score\b/i,
+    /\bhow many points\b/i,
+    /\bhow many goals\b/i,
+    /\bpoints scored\b/i,
+    /\bgoals did .* score\b/i,
+    /\bworld series mvp\b/i,
+    /\brookie of the year\b/i,
+    /\bhall of famer?\b/i,
+    /\b2nd round\b/i,
+    /\bfirst player\b/i,
+    /^this\b/i,
+    /^he\b/i,
+    /^although\b/i,
+    /^before\b/i,
+    /^after\b/i,
+    /^while\b/i,
+    /^on [a-z]+\b/i,
+    /^in \d{4}\b/i,
+    /^as a freshman\b/i,
+  ];
+
   const PRESET_ICONS = [
     { id: "fox", name: "Fox", src: svgAvatar("fox", "#ff9c4a", "#fff0dc", "#7a3212", "triangle", "fox") },
     { id: "cat", name: "Cat", src: svgAvatar("cat", "#b48fff", "#f5edff", "#4d3072", "cat", "cat") },
@@ -837,9 +869,7 @@
   }
 
   function chooseQuestion(category, difficulty) {
-    const matchingQuestions = QUESTION_BANK.filter(function (question) {
-      return question.category === category && question.difficulty === difficulty;
-    });
+    const matchingQuestions = getCandidateQuestions(category, difficulty);
     if (!matchingQuestions.length) {
       return null;
     }
@@ -881,8 +911,43 @@
     state.usedInGameIds.push(selected.id);
     return {
       ...selected,
+      difficulty: difficulty,
       recycleNotice: recycleNotice,
     };
+  }
+
+  function getCandidateQuestions(category, requestedDifficulty) {
+    const searchOrder = getDifficultySearchOrder(category, requestedDifficulty);
+    for (let index = 0; index < searchOrder.length; index += 1) {
+      const sourceDifficulty = searchOrder[index];
+      const pool = QUESTION_BANK.filter(function (question) {
+        return (
+          question.category === category &&
+          question.difficulty === sourceDifficulty &&
+          isQuestionEligibleForRequestedDifficulty(question, requestedDifficulty)
+        );
+      });
+      if (pool.length) {
+        return pool;
+      }
+    }
+    return [];
+  }
+
+  function getDifficultySearchOrder(category, requestedDifficulty) {
+    if (category === "Sports" && requestedDifficulty === "medium") {
+      return ["easy", "medium"];
+    }
+    return [requestedDifficulty];
+  }
+
+  function isQuestionEligibleForRequestedDifficulty(question, requestedDifficulty) {
+    if (question.category === "Sports" && requestedDifficulty === "medium") {
+      return !SPORTS_MEDIUM_RUNTIME_REJECT_PATTERNS.some(function (pattern) {
+        return pattern.test(question.prompt);
+      });
+    }
+    return true;
   }
 
   function loadUsedQuestionIds() {

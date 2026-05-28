@@ -70,6 +70,39 @@ const GLOBAL_EASY_REJECT_PATTERNS = [
   /\bhow old was\b/i,
 ];
 
+const GLOBAL_MEDIUM_REJECT_PATTERNS = [
+  /\blyrics?\b/i,
+  /\bthese lines\b/i,
+  /\bquote\b/i,
+  /\bmiddle initial\b/i,
+  /\boriginal voice\b/i,
+  /\bdebut\b/i,
+  /\bpremiere\b/i,
+  /\bwhat year\b/i,
+  /\bwhen did\b/i,
+  /\bwhen was\b/i,
+  /\bin what year\b/i,
+  /\bhow old was\b/i,
+  /\bfinal score\b/i,
+  /\bscore of\b/i,
+  /\bwhat was the score\b/i,
+  /\btop scored\b/i,
+  /\btop scorer\b/i,
+  /\bwhich stadium\b/i,
+  /\bwho was the first\b/i,
+  /\bwho was the last\b/i,
+  /\bfirst .* player\b/i,
+  /\blast .* player\b/i,
+  /\bfirst .* from\b/i,
+  /\bhow many awards\b/i,
+  /\bhow many emmys\b/i,
+  /\bhow many grammys\b/i,
+  /\bwhich single\b/i,
+  /\bwhich member\b/i,
+  /\bwhich cover song\b/i,
+  /\bbacking band\b/i,
+];
+
 const CATEGORY_TUNING = {
   Music: {
     easyHints: [
@@ -113,6 +146,32 @@ const CATEGORY_TUNING = {
       /\bstanley cup\b/i,
       /\bmichael jordan\b/i,
     ],
+    mediumAllowHints: [
+      /\bsuper bowl\b/i,
+      /\bworld cup\b/i,
+      /\bworld series\b/i,
+      /\bstanley cup\b/i,
+      /\bnba\b/i,
+      /\bnfl\b/i,
+      /\bmlb\b/i,
+      /\bnhl\b/i,
+      /\bfifa\b/i,
+      /\bwimbledon\b/i,
+      /\bmasters\b/i,
+      /\btouchdown\b/i,
+      /\bfree throw\b/i,
+      /\bslam dunk\b/i,
+      /\bhat trick\b/i,
+      /\bhome run\b/i,
+      /\bperfect game\b/i,
+      /\bpenalty\b/i,
+      /\bgoalie\b/i,
+      /\bpar\b/i,
+      /\bbirdie\b/i,
+      /\bpele\b/i,
+      /\bmaradona\b/i,
+      /\bmichael jordan\b/i,
+    ],
     hardHints: [
       /\bmake his .* debut\b/i,
       /\bwhere was the first\b/i,
@@ -122,6 +181,37 @@ const CATEGORY_TUNING = {
       /\bwith which team\b/i,
       /\bnickname of .* during\b/i,
       /\bwhen was the first\b/i,
+    ],
+    mediumRejects: [
+      /\bcricket\b/i,
+      /\bashes\b/i,
+      /\binnings\b/i,
+      /\bwicket\b/i,
+      /\bheisman\b/i,
+      /\bhall of fame\b/i,
+      /\bbusch series\b/i,
+      /\bindianapolis 500\b/i,
+      /\btorrey pines\b/i,
+      /\bstumpjumper\b/i,
+      /\bwwf\b/i,
+      /\bwwe\b/i,
+      /\bhow many points\b/i,
+      /\bhow many goals\b/i,
+      /\bpoints scored\b/i,
+      /\bgoals did .* score\b/i,
+      /\bhighest score\b/i,
+      /\bfastest goal\b/i,
+      /\bwho misses the penalty\b/i,
+      /\bwhich lucky figure skater\b/i,
+      /\bwho am i\b/i,
+      /\bi was born on\b/i,
+      /\bthis (player|man|center|goalie|coach|hall of famer|basketball hall of famer|brazilian football player|historic soccer player|former nfl player|defensive back|defensive player|great center|baseball player|former player|backcourt wonder|great kicker|excellent amateur golfer|former finnish ski jumper)\b/i,
+      /^he played\b/i,
+      /^although\b/i,
+      /^before he\b/i,
+      /^from \d{4}/i,
+      /^in \d{4}/i,
+      /^as a freshman\b/i,
     ],
   },
   "Movies & TV": {
@@ -417,13 +507,16 @@ function normalizeRecord(record, category) {
     difficultyHint: sourceHint,
     difficultyScore,
     easyAllowed: isAllowedForEasy(category, prompt),
+    mediumAllowed: isAllowedForMedium(category, prompt, difficultyScore, sourceType),
   };
 }
 
 function assignDifficultyBuckets(records, category) {
   const otdbByDifficulty = {
     easy: sortByDifficultyAscending(records.filter(bySourceDifficulty("opentdb", "easy"))),
-    medium: sortByDifficultyAscending(records.filter(bySourceDifficulty("opentdb", "medium"))),
+    medium: sortByDifficultyAscending(records.filter(function (record) {
+      return bySourceDifficulty("opentdb", "medium")(record) && record.mediumAllowed;
+    })),
     hard: sortByDifficultyAscending(records.filter(bySourceDifficulty("opentdb", "hard"))),
   };
 
@@ -434,7 +527,9 @@ function assignDifficultyBuckets(records, category) {
   const qaEasy = qaRecords.filter(function (record) {
     return record.easyAllowed;
   });
-  const qaMedium = sortByDistanceFromMedian(qaRecords, 78);
+  const qaMedium = sortByDistanceFromMedian(qaRecords.filter(function (record) {
+    return record.mediumAllowed;
+  }), 66);
   const qaHard = sortByDifficultyDescending(qaRecords.filter(function (record) {
     return record.difficultyScore >= 70;
   }));
@@ -462,11 +557,17 @@ function assignDifficultyBuckets(records, category) {
     category,
     "medium",
     [
-      sortByDifficultyAscending(otdbByDifficulty.medium),
+      otdbByDifficulty.medium,
       qaMedium,
-      sortByDifficultyAscending(otdbByDifficulty.easy),
-      sortByDifficultyAscending(otdbByDifficulty.hard),
-      sortByDistanceFromMedian(qaRecords, 82),
+      sortByDifficultyAscending(otdbByDifficulty.easy.filter(function (record) {
+        return record.mediumAllowed;
+      })),
+      sortByDistanceFromMedian(qaEasy.filter(function (record) {
+        return record.mediumAllowed;
+      }), 58),
+      sortByDistanceFromMedian(qaRecords.filter(function (record) {
+        return record.mediumAllowed;
+      }), 72),
     ],
     chosenKeys
   );
@@ -653,6 +754,47 @@ function isAllowedForEasy(category, prompt) {
   }
   const tuning = CATEGORY_TUNING[category.label];
   if (tuning && tuning.hardHints.some(function (pattern) { return pattern.test(prompt); })) {
+    return false;
+  }
+  return true;
+}
+
+function isAllowedForMedium(category, prompt, difficultyScore, sourceType) {
+  if (GLOBAL_MEDIUM_REJECT_PATTERNS.some(function (pattern) { return pattern.test(prompt); })) {
+    return false;
+  }
+  const tuning = CATEGORY_TUNING[category.label];
+  if (tuning && tuning.hardHints.some(function (pattern) { return pattern.test(prompt); })) {
+    return false;
+  }
+  if (
+    tuning &&
+    Array.isArray(tuning.mediumRejects) &&
+    tuning.mediumRejects.some(function (pattern) {
+      return pattern.test(prompt);
+    })
+  ) {
+    return false;
+  }
+  if (category.label === "Sports" && sourceType === "qa" && difficultyScore > 68) {
+    return false;
+  }
+  if (sourceType === "qa" && difficultyScore > 72) {
+    return false;
+  }
+  if (sourceType === "opentdb" && difficultyScore > 84) {
+    return false;
+  }
+  if (
+    category.label === "Sports" &&
+    sourceType === "qa" &&
+    tuning &&
+    Array.isArray(tuning.mediumAllowHints) &&
+    tuning.mediumAllowHints.length &&
+    !tuning.mediumAllowHints.some(function (pattern) {
+      return pattern.test(prompt);
+    })
+  ) {
     return false;
   }
   return true;
