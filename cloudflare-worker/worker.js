@@ -196,6 +196,7 @@ export default {
       "bracket-builder",
       "all-tournaments",
       "finances",
+      "decision-maker",
       "trivia",
       "spotify-app-setup",
       "tomi-p-shrine",

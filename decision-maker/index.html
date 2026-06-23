@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>paiden.com</title>
+  <meta name="description" content="Build a weighted do-or-don't decision on paiden.com.">
+  <meta name="theme-color" content="#0d1b24">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="apple-touch-icon" href="/images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="/shared-footer.css?v=20260417a">
+  <link rel="stylesheet" href="/shared-app-header.css?v=20260421b">
+  <style>
+    :root {
+      --ink: #10202b;
+      --ink-soft: rgba(16, 32, 43, 0.7);
+      --ink-dim: rgba(16, 32, 43, 0.54);
+      --panel-border: rgba(16, 32, 43, 0.1);
+      --panel-bg: rgba(255, 255, 255, 0.9);
+      --panel-soft: rgba(248, 251, 252, 0.94);
+      --navy: #0f2d42;
+      --navy-deep: #091a27;
+      --teal: #0f8e8c;
+      --teal-soft: rgba(15, 142, 140, 0.14);
+      --gold: #e2b55f;
+      --gold-soft: rgba(226, 181, 95, 0.18);
+      --rose: #bf5f64;
+      --rose-soft: rgba(191, 95, 100, 0.14);
+      --mint: #d8efe9;
+      --shadow: 0 18px 44px rgba(10, 29, 43, 0.1);
+      --shadow-soft: 0 10px 24px rgba(10, 29, 43, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: "Avenir Next", "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(15, 142, 140, 0.18), transparent 24%),
+        radial-gradient(circle at top right, rgba(226, 181, 95, 0.14), transparent 28%),
+        linear-gradient(180deg, #dde5e3 0%, #d4ddd9 100%);
+    }
+
+    [hidden] { display: none !important; }
+
+    .content-wrap {
+      flex: 1 0 auto;
+      padding: clamp(22px, 4vh, 40px) 0 calc(30px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .content-inner {
+      width: min(1220px, calc(100vw - 10vw));
+      margin: 0 auto;
+      border-radius: 30px;
+      border: 1px solid var(--panel-border);
+      padding: clamp(18px, 2.4vw, 34px);
+      background:
+        radial-gradient(circle at top left, rgba(15, 142, 140, 0.1), transparent 34%),
+        linear-gradient(180deg, rgba(255,255,255,0.93), rgba(241,246,245,0.9));
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      margin-bottom: 22px;
+    }
+
+    .hero-card {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: clamp(18px, 2.2vw, 28px);
+      border-radius: 26px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background:
+        radial-gradient(circle at top right, rgba(226, 181, 95, 0.24), transparent 34%),
+        linear-gradient(135deg, rgba(9, 26, 39, 0.96), rgba(15, 45, 66, 0.94) 54%, rgba(15, 142, 140, 0.92));
+      color: #fff;
+      box-shadow: 0 18px 34px rgba(10, 25, 37, 0.18);
+    }
+
+    .hero-mark {
+      width: 68px;
+      height: 68px;
+      flex: 0 0 68px;
+      border-radius: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+      font-size: 26px;
+    }
+
+    .hero-copy {
+      min-width: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .hero-eyebrow {
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.12);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .hero-copy h1 {
+      margin: 0;
+      font-size: clamp(32px, 4vw, 54px);
+      line-height: 0.96;
+    }
+
+    .hero-sub {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.55;
+      color: rgba(255,255,255,0.84);
+      max-width: 780px;
+    }
+
+    .app-shell {
+      display: grid;
+      gap: 18px;
+    }
+
+    .panel {
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      background: var(--panel-bg);
+      padding: clamp(18px, 2vw, 26px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), var(--shadow-soft);
+    }
+
+    .panel-soft {
+      background:
+        linear-gradient(180deg, rgba(252,253,253,0.98), rgba(241,246,245,0.94));
+    }
+
+    .intro-panel,
+    .results-panel {
+      display: grid;
+      gap: 18px;
+    }
+
+    .kicker {
+      margin: 0 0 10px;
+      letter-spacing: 0.18em;
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(21, 61, 66, 0.72);
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: clamp(24px, 2.8vw, 38px);
+      line-height: 1.05;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: clamp(18px, 1.9vw, 24px);
+      line-height: 1.12;
+    }
+
+    p {
+      margin: 0 0 12px;
+      color: rgba(16, 32, 43, 0.86);
+      font-size: clamp(15px, 1.08vw, 18px);
+      line-height: 1.55;
+    }
+
+    .panel-copy {
+      margin: 0;
+      color: var(--ink-soft);
+      max-width: 840px;
+    }
+
+    .tiny-note {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--ink-dim);
+    }
+
+    .progress-shell {
+      display: grid;
+      gap: 14px;
+    }
+
+    .progress-top {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .progress-summary {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink-soft);
+    }
+
+    .progress-track {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .progress-step {
+      min-width: 0;
+      border: 1px solid rgba(16, 32, 43, 0.08);
+      border-radius: 18px;
+      padding: 12px 10px;
+      background: rgba(255,255,255,0.86);
+      color: var(--ink-soft);
+      display: grid;
+      gap: 4px;
+      justify-items: start;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+      font-family: inherit;
+    }
+
+    .progress-step:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 18px rgba(10, 29, 43, 0.06);
+      border-color: rgba(15, 142, 140, 0.22);
+    }
+
+    .progress-step span {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(16, 32, 43, 0.07);
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .progress-step strong {
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .progress-step.is-active {
+      border-color: rgba(15, 142, 140, 0.32);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(231,246,244,0.92));
+      color: var(--ink);
+      box-shadow: 0 12px 24px rgba(15, 142, 140, 0.1);
+    }
+
+    .progress-step.is-active span,
+    .progress-step.is-complete span {
+      background: linear-gradient(135deg, var(--navy), var(--teal));
+      color: #fff;
+    }
+
+    .progress-step.is-complete {
+      color: var(--ink);
+      border-color: rgba(15, 142, 140, 0.16);
+    }
+
+    .wizard-step {
+      display: none;
+      gap: 18px;
+    }
+
+    .wizard-step.is-active {
+      display: grid;
+    }
+
+    .intro-grid,
+    .setup-note-grid,
+    .review-summary-grid,
+    .drivers-grid,
+    .score-grid,
+    .rating-meta-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .intro-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .setup-note-grid,
+    .review-summary-grid,
+    .drivers-grid,
+    .score-grid,
+    .rating-meta-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .mini-card,
+    .callout,
+    .score-card,
+    .driver-card,
+    .result-metric,
+    .rating-meta-card {
+      border-radius: 20px;
+      border: 1px solid rgba(16, 32, 43, 0.08);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(244,248,248,0.9));
+      padding: 16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+    }
+
+    .mini-card strong,
+    .callout strong,
+    .score-card strong,
+    .result-metric strong,
+    .driver-card strong,
+    .rating-meta-card strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 16px;
+      line-height: 1.3;
+    }
+
+    .callout {
+      background:
+        radial-gradient(circle at top right, rgba(226, 181, 95, 0.16), transparent 34%),
+        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(247,249,250,0.92));
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .btn,
+    .btn-secondary,
+    .btn-ghost {
+      min-height: 52px;
+      border-radius: 16px;
+      border: 1px solid rgba(16, 32, 43, 0.12);
+      padding: 14px 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1.15;
+      text-decoration: none;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+    }
+
+    .btn:hover,
+    .btn-secondary:hover,
+    .btn-ghost:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(10, 29, 43, 0.08);
+    }
+
+    .btn:disabled,
+    .btn-secondary:disabled,
+    .btn-ghost:disabled {
+      cursor: not-allowed;
+      opacity: 0.54;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, var(--navy-deep), var(--navy) 54%, var(--teal));
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.96);
+      color: var(--ink);
+    }
+
+    .btn-ghost {
+      background: rgba(15, 45, 66, 0.06);
+      color: var(--navy);
+      border-style: dashed;
+    }
+
+    .section-head,
+    .criteria-toolbar,
+    .review-toolbar,
+    .results-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .total-stack,
+    .rating-weight-chip,
+    .result-chip {
+      min-width: 200px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(16, 32, 43, 0.08);
+      background: rgba(255,255,255,0.72);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.48);
+    }
+
+    .total-stack span,
+    .rating-weight-chip span,
+    .result-chip span {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 800;
+      color: var(--ink-dim);
+    }
+
+    .total-stack strong,
+    .rating-weight-chip strong,
+    .result-chip strong {
+      display: block;
+      font-size: 28px;
+      line-height: 1;
+      color: var(--ink);
+    }
+
+    .total-stack small,
+    .rating-weight-chip small,
+    .result-chip small {
+      display: block;
+      margin-top: 8px;
+      color: var(--ink-soft);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .total-stack.is-valid {
+      border-color: rgba(15, 142, 140, 0.22);
+      background: linear-gradient(180deg, rgba(223, 246, 244, 0.9), rgba(255,255,255,0.78));
+    }
+
+    .total-stack.is-invalid {
+      border-color: rgba(191, 95, 100, 0.24);
+      background: linear-gradient(180deg, rgba(252, 236, 237, 0.92), rgba(255,255,255,0.8));
+    }
+
+    .field-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-bottom: 18px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field label {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--ink-soft);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select,
+    .review-row input,
+    .review-row select {
+      width: 100%;
+      min-height: 52px;
+      border-radius: 14px;
+      border: 1px solid rgba(16, 32, 43, 0.14);
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.96);
+      font: inherit;
+      color: var(--ink);
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .review-row input:focus,
+    .review-row select:focus {
+      outline: 2px solid rgba(15, 142, 140, 0.24);
+      outline-offset: 1px;
+      border-color: rgba(15, 142, 140, 0.38);
+    }
+
+    .criteria-list,
+    .review-list,
+    .driver-list,
+    .breakdown-table {
+      display: grid;
+      gap: 12px;
+    }
+
+    .criteria-row,
+    .review-row {
+      border-radius: 20px;
+      border: 1px solid rgba(16, 32, 43, 0.08);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(243,247,247,0.88));
+      padding: 16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+    }
+
+    .criteria-row {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 48px minmax(0, 1.25fr) minmax(160px, 0.48fr) auto;
+      align-items: end;
+    }
+
+    .criteria-count,
+    .review-count {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--navy);
+      background: rgba(15, 142, 140, 0.1);
+      border: 1px solid rgba(15, 142, 140, 0.12);
+    }
+
+    .criteria-row-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .criterion-rating-pill,
+    .meaning-pill,
+    .breakdown-pill,
+    .score-chip {
+      width: fit-content;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      background: rgba(16, 32, 43, 0.08);
+      color: var(--ink-soft);
+    }
+
+    .meaning-pill.positive,
+    .breakdown-pill.positive,
+    .score-chip.positive,
+    .result-banner.positive {
+      background: rgba(15, 142, 140, 0.12);
+      color: #085c5b;
+    }
+
+    .meaning-pill.negative,
+    .breakdown-pill.negative,
+    .score-chip.negative,
+    .result-banner.negative {
+      background: rgba(191, 95, 100, 0.12);
+      color: #8a4045;
+    }
+
+    .meaning-pill.mixed,
+    .breakdown-pill.mixed,
+    .score-chip.mixed,
+    .result-banner.mixed {
+      background: rgba(226, 181, 95, 0.16);
+      color: #7a5b22;
+    }
+
+    .status {
+      min-height: 24px;
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 700;
+      color: var(--ink-soft);
+    }
+
+    .status.is-error {
+      color: #8b2f38;
+    }
+
+    .status.is-success {
+      color: #0a6665;
+    }
+
+    .rating-panel {
+      display: grid;
+      gap: 18px;
+    }
+
+    .rating-progress {
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(16, 32, 43, 0.08);
+      overflow: hidden;
+    }
+
+    .rating-progress-bar {
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--navy), var(--teal), var(--gold));
+      transition: width 0.18s ease;
+    }
+
+    .rating-current {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: minmax(180px, 0.42fr) minmax(0, 1fr);
+      align-items: stretch;
+    }
+
+    .rating-value-card {
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at top, rgba(226, 181, 95, 0.2), transparent 44%),
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(239,246,245,0.92));
+      border: 1px solid rgba(16, 32, 43, 0.08);
+      padding: 18px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.56);
+    }
+
+    .rating-number {
+      font-size: clamp(42px, 5vw, 68px);
+      line-height: 0.92;
+      font-weight: 900;
+      color: var(--navy);
+    }
+
+    .rating-label {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--ink-soft);
+    }
+
+    .rating-guidance {
+      border-radius: 22px;
+      border: 1px solid rgba(16, 32, 43, 0.08);
+      padding: 16px 18px;
+      background: rgba(255,255,255,0.72);
+    }
+
+    .scale-legend {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink-soft);
+    }
+
+    .scale-legend strong {
+      color: var(--ink);
+    }
+
+    .rating-choice-grid {
+      display: grid;
+      grid-template-columns: repeat(9, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .rating-choice {
+      min-height: 72px;
+      border-radius: 18px;
+      border: 1px solid rgba(16, 32, 43, 0.1);
+      background: rgba(255,255,255,0.9);
+      display: grid;
+      gap: 4px;
+      place-items: center;
+      padding: 10px 6px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+    }
+
+    .rating-choice:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 18px rgba(10, 29, 43, 0.08);
+      border-color: rgba(15, 142, 140, 0.26);
+    }
+
+    .rating-choice strong {
+      font-size: 20px;
+      line-height: 1;
+      color: var(--ink);
+    }
+
+    .rating-choice span {
+      font-size: 11px;
+      line-height: 1.2;
+      font-weight: 800;
+      color: var(--ink-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .rating-choice.is-selected {
+      border-color: rgba(15, 142, 140, 0.34);
+      background:
+        radial-gradient(circle at top, rgba(226, 181, 95, 0.22), transparent 40%),
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(228,244,242,0.94));
+      box-shadow: 0 12px 20px rgba(15, 142, 140, 0.1);
+    }
+
+    .review-row {
+      display: grid;
+      gap: 14px;
+    }
+
+    .review-row-top {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 48px minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .review-fields {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: minmax(0, 1fr) minmax(150px, 0.34fr) minmax(160px, 0.36fr);
+      align-items: end;
+    }
+
+    .review-row-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .review-row-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .linkish-btn {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--teal);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .linkish-btn:hover {
+      text-decoration: underline;
+    }
+
+    .result-banner {
+      width: fit-content;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+    }
+
+    .result-copy {
+      max-width: 860px;
+    }
+
+    .score-card {
+      display: grid;
+      gap: 10px;
+    }
+
+    .score-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .score-card-label {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .score-card-value {
+      font-size: clamp(28px, 3vw, 42px);
+      line-height: 0.98;
+      font-weight: 900;
+      color: var(--navy);
+    }
+
+    .score-bar {
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(16, 32, 43, 0.08);
+      overflow: hidden;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      border-radius: inherit;
+    }
+
+    .score-bar-fill.positive {
+      background: linear-gradient(90deg, var(--navy), var(--teal));
+    }
+
+    .score-bar-fill.negative {
+      background: linear-gradient(90deg, #824349, var(--rose));
+    }
+
+    .result-metrics {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .result-metric strong {
+      font-size: 22px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .driver-list {
+      margin-top: 10px;
+    }
+
+    .driver-item {
+      border-radius: 16px;
+      border: 1px solid rgba(16, 32, 43, 0.08);
+      background: rgba(255,255,255,0.76);
+      padding: 14px;
+    }
+
+    .driver-item-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+
+    .driver-item h4 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.3;
+    }
+
+    .driver-item p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--ink-soft);
+    }
+
+    .breakdown-shell {
+      display: grid;
+      gap: 12px;
+    }
+
+    .breakdown-row {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: minmax(180px, 1.15fr) repeat(4, minmax(110px, 0.45fr));
+      align-items: center;
+      border-radius: 18px;
+      border: 1px solid rgba(16, 32, 43, 0.08);
+      background: rgba(255,255,255,0.76);
+      padding: 14px 16px;
+    }
+
+    .breakdown-row.head {
+      background: rgba(16, 32, 43, 0.05);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-dim);
+    }
+
+    .breakdown-row strong {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.35;
+      color: var(--ink);
+    }
+
+    .breakdown-row span {
+      font-size: 14px;
+      color: var(--ink-soft);
+    }
+
+    .empty-inline {
+      border-radius: 18px;
+      border: 1px dashed rgba(16, 32, 43, 0.16);
+      padding: 16px;
+      background: rgba(255,255,255,0.5);
+      color: var(--ink-soft);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .footer {
+      width: 100%;
+      background: #000;
+      padding: 56px 0 calc(56px + env(safe-area-inset-bottom, 0px));
+      margin-top: auto;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 1180px) {
+      .rating-choice-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+
+      .breakdown-row {
+        grid-template-columns: minmax(180px, 1.1fr) repeat(2, minmax(110px, 0.45fr));
+      }
+
+      .breakdown-row > :nth-child(4),
+      .breakdown-row > :nth-child(5) {
+        grid-column: span 1;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .intro-grid,
+      .setup-note-grid,
+      .review-summary-grid,
+      .drivers-grid,
+      .score-grid,
+      .rating-meta-grid,
+      .result-metrics,
+      .field-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .criteria-row,
+      .rating-current,
+      .review-row-top,
+      .review-fields {
+        grid-template-columns: 1fr;
+      }
+
+      .criteria-count,
+      .review-count {
+        width: 36px;
+        height: 36px;
+      }
+
+      .criteria-row-actions {
+        align-items: stretch;
+      }
+
+      .progress-track {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding-top: calc(env(safe-area-inset-top, 0px) + 58px);
+      }
+
+      .top-nav {
+        display: none;
+      }
+
+      .mobile-fixed-header {
+        display: flex;
+      }
+
+      .content-wrap {
+        padding-top: 18px;
+      }
+
+      .content-inner {
+        width: min(100vw - 10vw, 1220px);
+        padding: 16px;
+      }
+
+      .hero-card {
+        align-items: flex-start;
+      }
+
+      .progress-track {
+        grid-template-columns: 1fr;
+      }
+
+      .rating-choice-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .breakdown-row,
+      .breakdown-row.head {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .footer {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body data-decision-maker-view="binary">
+  <header class="top-nav" role="navigation" aria-label="Primary site navigation">
+    <div class="top-nav-inner">
+      <a class="brand" href="/">paiden.com</a>
+      <nav class="nav-links">
+        <a href="/resume">Resume</a>
+        <a href="/photos">Photos</a>
+        <a href="/blog">Blog</a>
+        <a href="/contactme">Contact Me</a>
+      </nav>
+    </div>
+  </header>
+  <div class="mobile-fixed-header" role="navigation" aria-label="Mobile site navigation">
+    <a class="mobile-fixed-brand" href="/">paiden.com</a>
+    <div class="mobile-fixed-nav">
+      <a href="/photos" aria-label="Photos"><i class="fa-solid fa-image" aria-hidden="true"></i></a>
+      <a href="/blog" aria-label="Blog"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></a>
+      <a href="/contactme" aria-label="Contact"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a>
+    </div>
+  </div>
+
+  <main class="content-wrap">
+    <section class="content-inner">
+      <section class="hero">
+        <div class="hero-card">
+          <div class="hero-mark" aria-hidden="true"><i class="fa-solid fa-scale-balanced"></i></div>
+          <div class="hero-copy">
+            <div class="hero-eyebrow">Weighted Decision Helper</div>
+            <h1>Decision Maker</h1>
+            <p class="hero-sub">Turn a fuzzy do-or-don't choice into a structured recommendation. Set what matters, split the weights to 100%, rate how strongly each criterion supports the action, and see what actually drove the result.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="app-shell">
+        <section class="progress-shell panel panel-soft">
+          <div class="progress-top">
+            <div>
+              <div class="kicker">FLOW</div>
+              <h2>Your decision flow</h2>
+            </div>
+            <div class="progress-summary" id="progressSummaryText">Start with a quick explanation, then build the decision model.</div>
+          </div>
+          <div class="progress-track" id="progressTrack">
+            <button class="progress-step" type="button" data-step-target="intro"><span>1</span><strong>Intro</strong></button>
+            <button class="progress-step" type="button" data-step-target="setup"><span>2</span><strong>Criteria + Weights</strong></button>
+            <button class="progress-step" type="button" data-step-target="ratings"><span>3</span><strong>Rate the Do Option</strong></button>
+            <button class="progress-step" type="button" data-step-target="review"><span>4</span><strong>Review Inputs</strong></button>
+            <button class="progress-step" type="button" data-step-target="results"><span>5</span><strong>Final Result</strong></button>
+          </div>
+        </section>
+
+        <section class="wizard-step" id="introStep">
+          <div class="panel intro-panel">
+            <div>
+              <div class="kicker">START</div>
+              <h2>Make a weighted decision without losing the human reasoning behind it.</h2>
+              <p class="panel-copy">This page walks through one do-or-don't decision. You name the action, choose the criteria that matter, assign them weights that total 100%, and then rate only the "do" side from 1 to 9. The page automatically treats the "don't" side as the inverse, just like the workbook logic you modeled this after.</p>
+            </div>
+
+            <div class="intro-grid">
+              <div class="mini-card">
+                <strong>1. Build the criteria</strong>
+                <p>List the factors that matter and give each one a share of the total weight.</p>
+              </div>
+              <div class="mini-card">
+                <strong>2. Rate the action</strong>
+                <p>For each criterion, rate how strongly it supports doing the thing on a 1-9 scale.</p>
+              </div>
+              <div class="mini-card">
+                <strong>3. Review the tradeoffs</strong>
+                <p>Confirm the inputs on one screen, then see the weighted recommendation and biggest drivers.</p>
+              </div>
+            </div>
+
+            <div class="callout">
+              <strong>Scoring logic</strong>
+              <p>A rating of <strong>1</strong> gives that criterion entirely to the "don't" side. A rating of <strong>5</strong> splits it evenly. A rating of <strong>9</strong> gives it entirely to the "do" side.</p>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn" id="startDecisionBtn" type="button"><i class="fa-solid fa-play" aria-hidden="true"></i><span>Start Building</span></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="wizard-step" id="setupStep">
+          <div class="panel">
+            <div class="section-head">
+              <div>
+                <div class="kicker">SETUP</div>
+                <h2>Name the decision and define the criteria.</h2>
+                <p class="panel-copy">The starter layout begins with evenly split weights so you can focus on the decision itself first, then rebalance as you think through what matters most.</p>
+              </div>
+              <div class="total-stack" id="setupTotalCard">
+                <span>Weight Total</span>
+                <strong id="setupWeightTotal">100%</strong>
+                <small id="setupWeightHint">Weights need to add up to exactly 100% before the rating step.</small>
+              </div>
+            </div>
+
+            <div class="field-grid">
+              <div class="field">
+                <label for="decisionTitleInput">What are you deciding?</label>
+                <input id="decisionTitleInput" type="text" maxlength="140" placeholder="Example: Whether to accept the offer">
+              </div>
+              <div class="field">
+                <label for="positiveChoiceInput">Do option label</label>
+                <input id="positiveChoiceInput" type="text" maxlength="80" placeholder="Accept the offer">
+              </div>
+              <div class="field">
+                <label for="negativeChoiceInput">Don't option label</label>
+                <input id="negativeChoiceInput" type="text" maxlength="80" placeholder="Decline the offer">
+              </div>
+            </div>
+
+            <div class="criteria-toolbar">
+              <div>
+                <h3>Criteria list</h3>
+                <p class="tiny-note">Each row should have a criterion name and a positive weight. Add or remove rows as needed.</p>
+              </div>
+              <div class="btn-row">
+                <button class="btn-secondary" id="normalizeWeightsBtn" type="button"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span>Normalize Weights</span></button>
+                <button class="btn-ghost" id="addCriterionBtn" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>Add Criterion</span></button>
+              </div>
+            </div>
+
+            <div class="criteria-list" id="criteriaList"></div>
+
+            <div class="setup-note-grid">
+              <div class="callout">
+                <strong>Spreadsheet import is planned next</strong>
+                <p>The page state already uses a decision header plus a criteria array, so an Excel importer can later fill this same model without changing the scoring logic.</p>
+              </div>
+              <div class="callout">
+                <strong>Built for more than two options later</strong>
+                <p>The UI is currently a binary do-or-don't flow, but the state keeps the option labels separate from the criteria so the architecture can expand into multi-choice comparisons later.</p>
+              </div>
+            </div>
+
+            <div class="status" id="setupStatus" aria-live="polite"></div>
+            <div class="btn-row">
+              <button class="btn-secondary" id="backToIntroBtn" type="button"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Back</span></button>
+              <button class="btn" id="setupContinueBtn" type="button"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>Continue to Ratings</span></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="wizard-step" id="ratingsStep">
+          <div class="panel rating-panel">
+            <div class="section-head">
+              <div>
+                <div class="kicker" id="ratingStepKicker">CRITERION 1 OF 4</div>
+                <h2 id="ratingCriterionTitle">Criterion</h2>
+                <p class="panel-copy" id="ratingCriterionCopy">Rate how strongly this criterion favors the do option.</p>
+              </div>
+              <div class="rating-weight-chip">
+                <span>Criterion Weight</span>
+                <strong id="ratingCriterionWeight">25%</strong>
+                <small id="ratingDecisionLine">This criterion is being scored for the current do option.</small>
+              </div>
+            </div>
+
+            <div class="rating-progress" aria-hidden="true">
+              <div class="rating-progress-bar" id="ratingProgressBar"></div>
+            </div>
+
+            <div class="rating-current">
+              <div class="rating-value-card">
+                <div class="rating-number" id="ratingCurrentValue">5</div>
+                <div class="rating-label" id="ratingCurrentMeaning">Neutral / mixed</div>
+              </div>
+              <div class="rating-guidance">
+                <p><strong id="ratingPositiveLabel">Do it</strong> is the only side you rate directly. The page calculates the inverse share for <strong id="ratingNegativeLabel">Don't do it</strong> automatically.</p>
+                <div class="scale-legend">
+                  <span><strong>1</strong> strongly favors don't</span>
+                  <span><strong>5</strong> neutral / mixed</span>
+                  <span><strong>9</strong> strongly favors do</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="rating-choice-grid" id="ratingChoiceGrid"></div>
+
+            <div class="rating-meta-grid">
+              <div class="rating-meta-card">
+                <strong id="ratingPositiveContributionLabel">Do share</strong>
+                <p class="tiny-note" id="ratingPositiveContributionValue">This criterion currently gives 12.5% of the total model to the do side.</p>
+              </div>
+              <div class="rating-meta-card">
+                <strong id="ratingNegativeContributionLabel">Don't share</strong>
+                <p class="tiny-note" id="ratingNegativeContributionValue">The remainder of this criterion goes to the don't side.</p>
+              </div>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn-secondary" id="ratingBackBtn" type="button"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Previous</span></button>
+              <button class="btn" id="ratingNextBtn" type="button"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>Next Criterion</span></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="wizard-step" id="reviewStep">
+          <div class="panel">
+            <div class="review-toolbar">
+              <div>
+                <div class="kicker">REVIEW</div>
+                <h2>Confirm every criterion, weight, and rating in one place.</h2>
+                <p class="panel-copy">Click directly into any row below to change the inputs before locking in the result.</p>
+              </div>
+              <div class="total-stack" id="reviewTotalCard">
+                <span>Projected Direction</span>
+                <strong id="reviewProjectedDirection">Ready</strong>
+                <small id="reviewProjectedHint">This preview updates live as you change weights and ratings.</small>
+              </div>
+            </div>
+
+            <div class="review-summary-grid">
+              <div class="mini-card">
+                <strong id="reviewDecisionTitle">This decision</strong>
+                <p id="reviewDecisionLabels" class="tiny-note">Do it vs. Don't do it</p>
+              </div>
+              <div class="mini-card">
+                <strong id="reviewWeightSummary">100% total weight</strong>
+                <p id="reviewWeightSummaryNote" class="tiny-note">Your criteria are ready to score.</p>
+              </div>
+            </div>
+
+            <div class="review-toolbar" style="margin-top: 4px;">
+              <div>
+                <h3>Editable review matrix</h3>
+                <p class="tiny-note">Need to add or remove rows instead of editing them? Jump back to the setup step.</p>
+              </div>
+              <div class="btn-row">
+                <button class="btn-secondary" id="reviewToSetupBtn" type="button"><i class="fa-solid fa-sliders" aria-hidden="true"></i><span>Edit Criteria List</span></button>
+              </div>
+            </div>
+
+            <div class="review-list" id="reviewList"></div>
+
+            <div class="status" id="reviewStatus" aria-live="polite"></div>
+            <div class="btn-row">
+              <button class="btn-secondary" id="reviewBackBtn" type="button"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Back to Ratings</span></button>
+              <button class="btn" id="reviewResultsBtn" type="button"><i class="fa-solid fa-chart-line" aria-hidden="true"></i><span>See Final Result</span></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="wizard-step" id="resultsStep">
+          <div class="panel results-panel">
+            <div class="results-head">
+              <div>
+                <div class="kicker">RESULT</div>
+                <h2 id="resultsTitle">Decision result</h2>
+                <p class="panel-copy result-copy" id="resultsSummary">Your weighted outcome appears here.</p>
+              </div>
+              <div class="result-chip">
+                <span>Suggested Direction</span>
+                <strong id="resultDirectionText">Ready</strong>
+                <small id="resultDirectionHint">The margin shows how far apart the two sides ended up.</small>
+              </div>
+            </div>
+
+            <div class="result-banner mixed" id="resultBanner">Awaiting a valid decision model.</div>
+
+            <div class="score-grid">
+              <article class="score-card">
+                <div class="score-card-head">
+                  <div class="score-card-label" id="positiveScoreLabel">Do it</div>
+                  <div class="score-chip positive" id="positiveScoreChip">Primary choice</div>
+                </div>
+                <div class="score-card-value" id="positiveScoreValue">0%</div>
+                <div class="score-bar" aria-hidden="true"><div class="score-bar-fill positive" id="positiveScoreBar"></div></div>
+                <p class="tiny-note" id="positiveScoreNote">This is the total share allocated to the do option.</p>
+              </article>
+
+              <article class="score-card">
+                <div class="score-card-head">
+                  <div class="score-card-label" id="negativeScoreLabel">Don't do it</div>
+                  <div class="score-chip negative" id="negativeScoreChip">Inverse choice</div>
+                </div>
+                <div class="score-card-value" id="negativeScoreValue">0%</div>
+                <div class="score-bar" aria-hidden="true"><div class="score-bar-fill negative" id="negativeScoreBar"></div></div>
+                <p class="tiny-note" id="negativeScoreNote">This is the total share allocated to the don't side.</p>
+              </article>
+            </div>
+
+            <div class="result-metrics">
+              <div class="result-metric">
+                <strong id="resultMarginValue">0%</strong>
+                <p class="tiny-note">Score margin between the two sides.</p>
+              </div>
+              <div class="result-metric">
+                <strong id="resultCriteriaCount">0 criteria</strong>
+                <p class="tiny-note">Number of weighted factors used in the model.</p>
+              </div>
+              <div class="result-metric">
+                <strong>1-9 inverse model</strong>
+                <p class="tiny-note">A 1 gives the full criterion to don't, 5 splits it, and 9 gives it to do.</p>
+              </div>
+            </div>
+
+            <div class="drivers-grid">
+              <section class="driver-card">
+                <strong id="positiveDriversHeading">Strongest toward do</strong>
+                <div class="driver-list" id="positiveDriversList"></div>
+              </section>
+              <section class="driver-card">
+                <strong id="negativeDriversHeading">Strongest toward don't</strong>
+                <div class="driver-list" id="negativeDriversList"></div>
+              </section>
+            </div>
+
+            <section class="breakdown-shell">
+              <div>
+                <h3>Criterion breakdown</h3>
+                <p class="tiny-note">This table shows how each weighted criterion got split between the two sides.</p>
+              </div>
+              <div class="breakdown-table" id="breakdownTable"></div>
+            </section>
+
+            <div class="btn-row">
+              <button class="btn-secondary" id="backToReviewBtn" type="button"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>Adjust Inputs</span></button>
+              <button class="btn-ghost" id="restartDecisionBtn" type="button"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span>Start New Decision</span></button>
+            </div>
+          </div>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-left-cluster">
+        <div class="footer-brand-stack">
+          <div class="footer-brand-wrap"><a class="footer-brand" href="/">paiden.com</a></div>
+          <div class="footer-meta">
+            <div class="footer-created">Created by Paiden Nicks</div>
+            <div class="footer-updated" id="last-updated"></div>
+          </div>
+        </div>
+        <div class="footer-nav">
+          <a href="/resume">Resume</a>
+          <a href="/photos">Photos</a>
+          <a href="/blog">Blog</a>
+          <a href="/contactme">Contact Me</a>
+        </div>
+      </div>
+      <div class="footer-social">
+        <span class="follow-text">Follow Me</span>
+        <div class="social-icons">
+          <a href="https://www.linkedin.com/in/paiden" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          <a href="https://www.instagram.com/paiden_26" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="https://snapchat.com/t/m04JWymy" target="_blank" rel="noopener" aria-label="Snapchat"><i class="fab fa-snapchat"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>const lastUpdated=document.getElementById("last-updated"); if(lastUpdated) lastUpdated.textContent="Today's Date: "+new Date().toLocaleDateString();</script>
+  <script src="/shared-app-header.js?v=20260421b"></script>
+  <script src="/shared-footer.js?v=20260417a"></script>
+  <script src="/decision-maker/decision-maker-page.js?v=20260622a"></script>
+</body>
+</html>
