@@ -313,10 +313,10 @@
     restartDecisionBtn: document.getElementById("restartDecisionBtn"),
     aiSituationInput: document.getElementById("aiSituationInput"),
     aiPromptOutput: document.getElementById("aiPromptOutput"),
-    aiTemplatePreview: document.getElementById("aiTemplatePreview"),
     copyAIPromptBtn: document.getElementById("copyAIPromptBtn"),
     downloadBlankTemplateBtn: document.getElementById("downloadBlankTemplateBtn"),
     aiKitStatus: document.getElementById("aiKitStatus"),
+    aiImportFileInput: document.getElementById("aiImportFileInput"),
     aiImportTextInput: document.getElementById("aiImportTextInput"),
     importPastedAIDraftBtn: document.getElementById("importPastedAIDraftBtn"),
     aiImportStatus: document.getElementById("aiImportStatus"),
@@ -342,9 +342,9 @@
     });
 
     const summaryByStep = {
-      intro: "Start with a quick overview and a scrollable example of how to read the decision data.",
+      intro: "Start with a clean overview and a vertical walkthrough of how to read the decision model.",
       path: "Choose whether you want AI help drafting the model or a blank manual start.",
-      ai: "Tell the story, copy the strict prompt, and paste the AI draft back into the tool.",
+      ai: "Tell the story, copy the strict prompt, and paste or upload the AI draft back into the tool.",
       setup: "Name the choice, shape the criteria cards, and make the weights total 100%.",
       ratings: "Work through each criterion and rate how much it supports the do option.",
       review: "Edit every weight, question, and rating on one page before finalizing the result.",
@@ -1038,7 +1038,7 @@
       "Your job is to turn the user's situation into a binary do-or-dont decision model.",
       "",
       "Output rules:",
-      "- Preferred output: fill the attached TSV template file and return the completed TSV file.",
+      "- Preferred output: if a TSV template file is attached, fill that exact file structure and return the completed TSV file.",
       `- Fallback output: return ONLY raw JSON using the exact schema version "${IMPORT_SCHEMA_VERSION}" shown below.`,
       "- Do not add markdown, commentary, code fences, bullet points, or any extra prose around the machine-readable output.",
       "- Do not change column names, field names, record_type values, or the overall structure.",
@@ -1070,7 +1070,6 @@
 
   function refreshAIKitOutputs() {
     dom.aiPromptOutput.value = buildAIPrompt(dom.aiSituationInput.value);
-    dom.aiTemplatePreview.value = buildBlankTemplateTsv();
   }
 
   function sanitizeFileStem(value, fallback = "decision-maker-draft") {
@@ -1352,6 +1351,19 @@
     }
   }
 
+  async function readFileAsText(file) {
+    if (!file) throw new Error("Choose a file first.");
+    if (typeof file.text === "function") {
+      return file.text();
+    }
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("Could not read that file."));
+      reader.readAsText(file);
+    });
+  }
+
   function handleDownloadBlankTemplate() {
     downloadTextFile("decision-maker-ai-template.tsv", buildBlankTemplateTsv(), "text/tab-separated-values;charset=utf-8");
     setStatus(dom.aiKitStatus, "Blank TSV template downloaded.", "success");
@@ -1374,6 +1386,7 @@
 
   function resetAIFields() {
     dom.aiSituationInput.value = "";
+    dom.aiImportFileInput.value = "";
     dom.aiImportTextInput.value = "";
     refreshAIKitOutputs();
     setStatus(dom.aiKitStatus, "", "");
@@ -1411,6 +1424,16 @@
       }
     });
     dom.downloadBlankTemplateBtn.addEventListener("click", handleDownloadBlankTemplate);
+    dom.aiImportFileInput.addEventListener("change", async () => {
+      const file = dom.aiImportFileInput.files && dom.aiImportFileInput.files[0];
+      if (!file) return;
+      try {
+        const text = await readFileAsText(file);
+        await handleImportedText(text, `${file.name} file`);
+      } finally {
+        dom.aiImportFileInput.value = "";
+      }
+    });
     dom.downloadCurrentDraftFromSetupBtn.addEventListener("click", handleDownloadCurrentDraft);
 
     dom.importPastedAIDraftBtn.addEventListener("click", async () => {

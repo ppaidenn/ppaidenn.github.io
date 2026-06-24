@@ -289,7 +289,6 @@
       display: grid;
     }
 
-    .intro-grid,
     .setup-note-grid,
     .review-summary-grid,
     .drivers-grid,
@@ -299,10 +298,6 @@
     .ai-process-grid {
       display: grid;
       gap: 14px;
-    }
-
-    .intro-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .setup-note-grid,
@@ -326,7 +321,6 @@
       gap: 14px;
     }
 
-    .mini-card,
     .callout,
     .score-card,
     .driver-card,
@@ -340,7 +334,6 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
     }
 
-    .mini-card strong,
     .callout strong,
     .score-card strong,
     .result-metric strong,
@@ -366,46 +359,133 @@
       align-items: center;
     }
 
-    .tutorial-shell {
+    .overview-stage {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(380px, 0.92fr);
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .overview-copy-shell {
+      display: grid;
+      gap: 18px;
+      padding: clamp(24px, 2.8vw, 34px);
+      border-radius: 30px;
+      background:
+        radial-gradient(circle at top right, rgba(15, 142, 140, 0.26), transparent 34%),
+        linear-gradient(160deg, #07111a 0%, #0f2233 54%, #173c55 100%);
+      color: #fff;
+      box-shadow: 0 28px 44px rgba(8, 19, 28, 0.18);
+    }
+
+    .overview-copy-shell h2 {
+      margin: 0;
+      color: #fff;
+      font-size: clamp(34px, 4vw, 60px);
+      line-height: 0.96;
+      letter-spacing: -0.03em;
+      max-width: 560px;
+    }
+
+    .overview-copy-shell .panel-copy,
+    .overview-copy-shell .tiny-note {
+      color: rgba(255,255,255,0.8);
+      max-width: 620px;
+    }
+
+    .overview-kicker {
+      width: fit-content;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.9);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .overview-points {
       display: grid;
       gap: 14px;
-      padding: 18px;
-      border-radius: 24px;
-      border: 1px solid rgba(16, 32, 43, 0.08);
+      margin-top: 4px;
+    }
+
+    .overview-point {
+      display: grid;
+      gap: 4px;
+      padding-left: 16px;
+      border-left: 2px solid rgba(255,255,255,0.18);
+    }
+
+    .overview-point strong {
+      font-size: 15px;
+      line-height: 1.35;
+      color: #fff;
+    }
+
+    .overview-point span {
+      color: rgba(255,255,255,0.74);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .tutorial-shell {
+      display: grid;
+      gap: 16px;
+      padding: clamp(20px, 2vw, 24px);
+      border-radius: 30px;
+      border: 1px solid rgba(255,255,255,0.08);
       background:
-        radial-gradient(circle at top left, rgba(15, 142, 140, 0.08), transparent 32%),
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(242,247,247,0.92));
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.56);
+        radial-gradient(circle at top right, rgba(226, 181, 95, 0.18), transparent 30%),
+        linear-gradient(180deg, rgba(8, 20, 30, 0.98), rgba(11, 29, 42, 0.94));
+      box-shadow: 0 24px 40px rgba(8, 19, 28, 0.16);
     }
 
     .tutorial-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-      align-items: flex-end;
+      display: grid;
+      gap: 8px;
+      color: #fff;
     }
 
-    .tutorial-rail {
+    .tutorial-head h3 {
+      color: #fff;
+    }
+
+    .tutorial-head .kicker {
+      color: rgba(255,255,255,0.66);
+    }
+
+    .tutorial-head .tiny-note {
+      color: rgba(255,255,255,0.72);
+    }
+
+    .tutorial-stack {
       display: grid;
-      grid-auto-flow: column;
-      grid-auto-columns: minmax(280px, 34%);
-      gap: 14px;
-      overflow-x: auto;
-      padding-bottom: 8px;
-      scroll-snap-type: x proximity;
+      gap: 16px;
+      max-height: 560px;
+      overflow-y: auto;
+      padding-right: 8px;
       scrollbar-width: thin;
     }
 
     .tutorial-card {
-      min-height: 100%;
-      scroll-snap-align: start;
-      border-radius: 22px;
-      border: 1px solid rgba(16, 32, 43, 0.08);
+      display: grid;
+      gap: 12px;
+      padding: 18px 0 20px;
+      border-radius: 0;
+      border: 0;
+      border-top: 1px solid rgba(255,255,255,0.1);
       background:
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(241,246,245,0.92));
-      padding: 18px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.58);
+        linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+      box-shadow: none;
+      color: #fff;
+    }
+
+    .tutorial-card:first-child {
+      border-top: 0;
+      padding-top: 4px;
     }
 
     .tutorial-step {
@@ -415,8 +495,8 @@
       gap: 8px;
       padding: 6px 10px;
       border-radius: 999px;
-      background: rgba(15, 45, 66, 0.07);
-      color: var(--navy);
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.86);
       font-size: 12px;
       font-weight: 800;
       letter-spacing: 0.06em;
@@ -429,6 +509,15 @@
       margin: 0;
     }
 
+    .tutorial-card h3 {
+      color: #fff;
+    }
+
+    .tutorial-card p {
+      color: rgba(255,255,255,0.74);
+      margin: 0;
+    }
+
     .tutorial-metric {
       display: inline-flex;
       width: fit-content;
@@ -436,8 +525,8 @@
       gap: 8px;
       padding: 8px 12px;
       border-radius: 16px;
-      background: rgba(15, 142, 140, 0.1);
-      color: #085c5b;
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.82);
       font-size: 13px;
       font-weight: 800;
     }
@@ -501,8 +590,8 @@
     .tutorial-chip-row span {
       padding: 8px 12px;
       border-radius: 999px;
-      background: rgba(16, 32, 43, 0.06);
-      color: var(--ink-soft);
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.78);
       font-size: 13px;
       font-weight: 700;
       line-height: 1.35;
@@ -527,6 +616,13 @@
       min-width: 0;
       display: grid;
       gap: 6px;
+    }
+
+    .process-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
     }
 
     .btn-row {
@@ -1232,7 +1328,6 @@
     }
 
     @media (max-width: 980px) {
-      .intro-grid,
       .setup-note-grid,
       .review-summary-grid,
       .drivers-grid,
@@ -1241,6 +1336,10 @@
       .result-metrics,
       .field-grid,
       .path-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .overview-stage {
         grid-template-columns: 1fr;
       }
 
@@ -1303,8 +1402,10 @@
         grid-template-columns: 1fr;
       }
 
-      .tutorial-rail {
-        grid-auto-columns: minmax(82vw, 1fr);
+      .tutorial-stack {
+        max-height: none;
+        overflow: visible;
+        padding-right: 0;
       }
 
       .rating-choice-grid {
@@ -1378,93 +1479,84 @@
 
         <section class="wizard-step" id="introStep">
           <div class="panel intro-panel">
-            <div class="section-head">
-              <div>
-                <div class="kicker">OVERVIEW</div>
-                <h2>Turn a messy do-or-don't decision into a calm, reviewable model.</h2>
-                <p class="panel-copy">This page follows the same weighted inverse logic as the Mia workbook. You define the choice, weight the criteria to 100%, rate only the "do" side on a 1-9 scale, and then inspect the final split between doing it and not doing it.</p>
-              </div>
-              <div class="callout" style="max-width: 320px;">
-                <strong>Local-only session</strong>
-                <p>This tool stays in the current browser runtime only. A refresh clears the session so the next person starts clean.</p>
-              </div>
-            </div>
-
-            <div class="intro-grid">
-              <div class="mini-card">
-                <strong>Weighted, not vague</strong>
-                <p>Every criterion gets a visible share of the decision, so tradeoffs cannot hide inside gut feeling.</p>
-              </div>
-              <div class="mini-card">
-                <strong>Readable wording</strong>
-                <p>Each criterion can be turned into a plain-English rating question, similar to the Mia workbook prompts.</p>
-              </div>
-              <div class="mini-card">
-                <strong>Built to confirm, not blindly trust</strong>
-                <p>Even if AI helps draft the model, you still walk through the criteria, ratings, review, and final result step by step.</p>
-              </div>
-            </div>
-
-            <div class="intro-actions">
-              <button class="btn" type="button" data-go-path><i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>Choose a Starting Path</span></button>
-              <span class="tiny-note">Skip ahead if you already know whether you want AI help or a blank manual start.</span>
-            </div>
-
-            <section class="tutorial-shell">
-              <div class="tutorial-head">
-                <div>
-                  <div class="kicker">QUICK TUTORIAL</div>
-                  <h3>Scroll through a short example before you start.</h3>
-                  <p class="tiny-note">Each card shows how to read the decision data, from the decision framing all the way to the final weighted split.</p>
+            <section class="overview-stage">
+              <div class="overview-copy-shell">
+                <div class="overview-kicker">Overview</div>
+                <h2>Turn a messy call into a clear recommendation you can actually inspect.</h2>
+                <p class="panel-copy">This page follows the same weighted inverse logic as the Mia workbook. You define the decision, split the criteria to 100%, rate only the do side from 1 to 9, and then see exactly how each factor pushes the result.</p>
+                <div class="overview-points">
+                  <div class="overview-point">
+                    <strong>Structured enough to surface tradeoffs</strong>
+                    <span>Each criterion gets visible weight, so the final outcome cannot hide what mattered most.</span>
+                  </div>
+                  <div class="overview-point">
+                    <strong>Plain-English questions during scoring</strong>
+                    <span>The rating flow can turn each criterion into a cleaner question instead of making people rate vague labels.</span>
+                  </div>
+                  <div class="overview-point">
+                    <strong>Local session, human confirmation</strong>
+                    <span>Refreshing clears the session, and even AI-generated drafts still move through setup, ratings, review, and results in order.</span>
+                  </div>
                 </div>
-                <div class="tutorial-metric">Scroll sideways to preview the flow</div>
+                <div class="intro-actions">
+                  <button class="btn" type="button" data-go-path><i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>Choose a Starting Path</span></button>
+                  <span class="tiny-note">Skip the walkthrough if you already know whether you want AI help or a blank manual start.</span>
+                </div>
               </div>
 
-              <div class="tutorial-rail">
-                <article class="tutorial-card">
-                  <div class="tutorial-step">Example 1</div>
-                  <h3>Frame the decision</h3>
-                  <p>The model begins with one plain question and two labels.</p>
-                  <div class="tutorial-chip-row">
-                    <span>Decision: Whether to accept the job offer</span>
-                    <span>Do: Accept the offer</span>
-                    <span>Don't: Decline the offer</span>
-                  </div>
-                </article>
+              <section class="tutorial-shell">
+                <div class="tutorial-head">
+                  <div class="kicker">HOW TO READ IT</div>
+                  <h3>Scroll down this example to see the model from start to finish.</h3>
+                  <p class="tiny-note">The same pattern will appear when you use the real tool: name the choice, weight the criteria, rate the do option, then read the final split and the biggest drivers.</p>
+                </div>
+                <div class="tutorial-metric">Vertical walkthrough</div>
+                <div class="tutorial-stack">
+                  <article class="tutorial-card">
+                    <div class="tutorial-step">Example 1</div>
+                    <h3>Frame the choice</h3>
+                    <p>The model begins with one decision title and two labels that define the action and its inverse.</p>
+                    <div class="tutorial-chip-row">
+                      <span>Decision: Whether to accept the job offer</span>
+                      <span>Do: Accept the offer</span>
+                      <span>Don't: Decline the offer</span>
+                    </div>
+                  </article>
 
-                <article class="tutorial-card">
-                  <div class="tutorial-step">Example 2</div>
-                  <h3>Weight what matters</h3>
-                  <p>Each criterion gets a percentage share of the full model, and the total must equal 100%.</p>
-                  <div class="tutorial-chip-row">
-                    <span>Career fit and interest: 24%</span>
-                    <span>Compensation and finances: 18%</span>
-                    <span>Location and social life: 20%</span>
-                  </div>
-                </article>
+                  <article class="tutorial-card">
+                    <div class="tutorial-step">Example 2</div>
+                    <h3>Allocate weight</h3>
+                    <p>Every criterion gets a percentage share of the full model, and the total must equal exactly 100%.</p>
+                    <div class="tutorial-chip-row">
+                      <span>Career fit and interest: 24%</span>
+                      <span>Compensation and finances: 18%</span>
+                      <span>Location and social life: 20%</span>
+                    </div>
+                  </article>
 
-                <article class="tutorial-card">
-                  <div class="tutorial-step">Example 3</div>
-                  <h3>Rate only the do side</h3>
-                  <p>A clearer question keeps the rating grounded: "Does the pay adequately support the move, living costs, savings, and personal goals?"</p>
-                  <div class="tutorial-chip-row">
-                    <span>Rating 1: strongly favors don't</span>
-                    <span>Rating 5: split evenly</span>
-                    <span>Rating 9: strongly favors do</span>
-                  </div>
-                </article>
+                  <article class="tutorial-card">
+                    <div class="tutorial-step">Example 3</div>
+                    <h3>Score only the do side</h3>
+                    <p>A clearer question keeps the rating grounded: "Does the pay adequately support the move, living costs, savings, and personal goals?"</p>
+                    <div class="tutorial-chip-row">
+                      <span>Rating 1: strongly favors don't</span>
+                      <span>Rating 5: split evenly</span>
+                      <span>Rating 9: strongly favors do</span>
+                    </div>
+                  </article>
 
-                <article class="tutorial-card">
-                  <div class="tutorial-step">Example 4</div>
-                  <h3>Read the final split</h3>
-                  <p>The result shows both sides, the score margin, and which criteria created the biggest swing.</p>
-                  <div class="tutorial-chip-row">
-                    <span>Do: 55.9%</span>
-                    <span>Don't: 44.1%</span>
-                    <span>Margin: 11.8%</span>
-                  </div>
-                </article>
-              </div>
+                  <article class="tutorial-card">
+                    <div class="tutorial-step">Example 4</div>
+                    <h3>Read the outcome</h3>
+                    <p>The final screen shows both sides, the score margin, and which criteria created the largest swing in either direction.</p>
+                    <div class="tutorial-chip-row">
+                      <span>Do: 55.9%</span>
+                      <span>Don't: 44.1%</span>
+                      <span>Margin: 11.8%</span>
+                    </div>
+                  </article>
+                </div>
+              </section>
             </section>
 
             <div class="btn-row">
@@ -1519,15 +1611,11 @@
 
         <section class="wizard-step" id="aiStep">
           <div class="panel intro-panel">
-            <div class="section-head">
+            <div>
               <div>
                 <div class="kicker">AI ASSIST</div>
                 <h2>Give another AI a strict job, then bring the answer back here.</h2>
-                <p class="panel-copy">This page does not call AI itself. Instead, it gives you a precise prompt and a template file so another AI can generate a clean draft that this page can reliably read.</p>
-              </div>
-              <div class="callout" style="max-width: 340px;">
-                <strong>What the AI should return</strong>
-                <p>The output should fill the template with the decision title, do/don't labels, criteria, plain-English criterion questions, weights, ratings, and short notes.</p>
+                <p class="panel-copy">This page does not call AI itself. Instead, it gives you a precise prompt another AI can use to draft the decision title, do and don't labels, criteria, rating questions, weights, notes, and starter ratings in a format this page can read.</p>
               </div>
             </div>
 
@@ -1558,36 +1646,25 @@
                   <label for="aiPromptOutput">Prompt to paste into your AI tool</label>
                   <textarea id="aiPromptOutput" class="code-textarea" rows="18" readonly></textarea>
                 </div>
-                <div class="btn-row">
+                <div class="process-actions">
                   <button class="btn-secondary" id="copyAIPromptBtn" type="button"><i class="fa-regular fa-copy" aria-hidden="true"></i><span>Copy AI Prompt</span></button>
-                </div>
-              </article>
-
-              <article class="process-card">
-                <div class="process-head">
-                  <div class="step-badge" aria-hidden="true">3</div>
-                  <div class="process-head-copy">
-                    <h3>Optionally attach the blank template file so the AI fills the exact columns.</h3>
-                    <p class="tiny-note">This is the safest path when your AI tool can accept uploaded files. It gives the AI a labeled structure it can fill instead of inventing one.</p>
-                  </div>
-                </div>
-                <div class="btn-row">
-                  <button class="btn-ghost" id="downloadBlankTemplateBtn" type="button"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Download Blank Template</span></button>
-                </div>
-                <div class="field">
-                  <label for="aiTemplatePreview">Template preview</label>
-                  <textarea id="aiTemplatePreview" class="code-textarea" rows="8" readonly></textarea>
+                  <button class="btn-ghost" id="downloadBlankTemplateBtn" type="button"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Download Blank TSV Template</span></button>
+                  <span class="tiny-note">If your AI accepts file uploads, attach the blank TSV template along with the prompt and ask it to fill the file directly.</span>
                 </div>
                 <div class="status" id="aiKitStatus" aria-live="polite"></div>
               </article>
 
               <article class="process-card">
                 <div class="process-head">
-                  <div class="step-badge" aria-hidden="true">4</div>
+                  <div class="step-badge" aria-hidden="true">3</div>
                   <div class="process-head-copy">
-                    <h3>Paste the raw AI output here and import it.</h3>
-                    <p class="tiny-note">Paste the machine-readable TSV or JSON exactly as returned. Code fences are okay. After import, the normal decision tool opens with everything prefilled so you can confirm it step by step.</p>
+                    <h3>Paste or upload the AI output and continue into the normal tool.</h3>
+                    <p class="tiny-note">If your AI gives you a downloadable TSV or JSON file, upload it here. If it returns raw machine-readable text, paste that instead. After import, the decision tool opens with everything prefilled so you can confirm it step by step.</p>
                   </div>
+                </div>
+                <div class="field">
+                  <label for="aiImportFileInput">Upload completed AI file</label>
+                  <input id="aiImportFileInput" type="file" accept=".tsv,.txt,.json,application/json,text/plain,text/tab-separated-values">
                 </div>
                 <div class="field">
                   <label for="aiImportTextInput">Paste raw AI output</label>
@@ -1885,6 +1962,6 @@
   <script>const lastUpdated=document.getElementById("last-updated"); if(lastUpdated) lastUpdated.textContent="Today's Date: "+new Date().toLocaleDateString();</script>
   <script src="/shared-app-header.js?v=20260421b"></script>
   <script src="/shared-footer.js?v=20260417a"></script>
-  <script src="/decision-maker/decision-maker-page.js?v=20260623b"></script>
+  <script src="/decision-maker/decision-maker-page.js?v=20260623c"></script>
 </body>
 </html>
