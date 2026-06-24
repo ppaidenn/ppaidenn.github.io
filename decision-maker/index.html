@@ -531,12 +531,6 @@
       font-weight: 800;
     }
 
-    .choice-points {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
     .choice-card {
       width: 100%;
       min-height: 300px;
@@ -583,16 +577,6 @@
       color: #fff;
       font-size: 20px;
       box-shadow: 0 10px 18px rgba(10, 29, 43, 0.14);
-    }
-
-    .choice-points span {
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.78);
-      font-size: 13px;
-      font-weight: 700;
-      line-height: 1.35;
     }
 
     .tutorial-readout,
@@ -1588,7 +1572,6 @@
                   <h3>Scroll down this example to see the model from start to finish.</h3>
                   <p class="tiny-note">The same pattern will appear when you use the real tool: name the choice, weight the criteria, rate the do option, then read the final split and the biggest drivers.</p>
                 </div>
-                <div class="tutorial-metric">Vertical walkthrough</div>
                 <div class="tutorial-stack">
                   <article class="tutorial-card">
                     <div class="tutorial-step">Example 1</div>
@@ -1712,11 +1695,6 @@
                   <h3>Have another AI draft the criteria, weights, wording, and starter ratings.</h3>
                   <p>Use a strict prompt and template so the output stays machine-readable and easy to import back into this page.</p>
                 </div>
-                <div class="choice-points">
-                  <span>Paste your whole story in your own words</span>
-                  <span>Copy the exact prompt</span>
-                  <span>Return here and paste the AI output</span>
-                </div>
               </button>
 
               <button class="choice-card is-manual" id="chooseManualPathBtn" type="button">
@@ -1725,11 +1703,6 @@
                   <div class="kicker">MANUAL ENTRY</div>
                   <h3>Start with a blank decision and define everything yourself.</h3>
                   <p>Go straight into the criteria builder with an empty local session and work through the weighting and rating flow from scratch.</p>
-                </div>
-                <div class="choice-points">
-                  <span>Blank decision title and labels</span>
-                  <span>Editable criteria cards with roomy prompts</span>
-                  <span>Same review and final result pages</span>
                 </div>
               </button>
             </div>
@@ -2071,6 +2044,6 @@
   <script>const lastUpdated=document.getElementById("last-updated"); if(lastUpdated) lastUpdated.textContent="Today's Date: "+new Date().toLocaleDateString();</script>
   <script src="/shared-app-header.js?v=20260421b"></script>
   <script src="/shared-footer.js?v=20260417a"></script>
-  <script src="/decision-maker/decision-maker-page.js?v=20260623d"></script>
+  <script src="/decision-maker/decision-maker-page.js?v=20260623e"></script>
 </body>
 </html>
