@@ -673,7 +673,6 @@
 
   function refreshReviewSummary() {
     const validation = validateSetupState();
-    const model = computeDecisionModel();
 
     dom.reviewDecisionTitle.textContent = decisionTitle();
     dom.reviewDecisionLabels.textContent = `${positiveLabel()} vs. ${negativeLabel()}`;
@@ -694,17 +693,8 @@
     }
 
     dom.reviewResultsBtn.disabled = false;
-
-    if (model.direction === "close") {
-      dom.reviewProjectedDirection.textContent = "Close call";
-      dom.reviewProjectedHint.textContent = `The two sides are only ${formatShare(model.margin)} apart, so judgment still matters.`;
-    } else if (model.direction === "positive") {
-      dom.reviewProjectedDirection.textContent = positiveLabel();
-      dom.reviewProjectedHint.textContent = `${positiveLabel()} currently leads by ${formatShare(model.margin)}.`;
-    } else {
-      dom.reviewProjectedDirection.textContent = negativeLabel();
-      dom.reviewProjectedHint.textContent = `${negativeLabel()} currently leads by ${formatShare(model.margin)}.`;
-    }
+    dom.reviewProjectedDirection.textContent = "Ready to finalize";
+    dom.reviewProjectedHint.textContent = "This step is only for confirming the inputs. The final direction appears on the next screen.";
 
     setStatus(dom.reviewStatus, "You can still tweak any input here before opening the result.", "success");
   }
