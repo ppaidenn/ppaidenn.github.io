@@ -271,10 +271,6 @@
     ratingPositiveLabel: document.getElementById("ratingPositiveLabel"),
     ratingNegativeLabel: document.getElementById("ratingNegativeLabel"),
     ratingChoiceGrid: document.getElementById("ratingChoiceGrid"),
-    ratingPositiveContributionLabel: document.getElementById("ratingPositiveContributionLabel"),
-    ratingPositiveContributionValue: document.getElementById("ratingPositiveContributionValue"),
-    ratingNegativeContributionLabel: document.getElementById("ratingNegativeContributionLabel"),
-    ratingNegativeContributionValue: document.getElementById("ratingNegativeContributionValue"),
     ratingBackBtn: document.getElementById("ratingBackBtn"),
     ratingNextBtn: document.getElementById("ratingNextBtn"),
     reviewProjectedDirection: document.getElementById("reviewProjectedDirection"),
@@ -435,28 +431,23 @@
                 <div class="criteria-count" aria-hidden="true">${index + 1}</div>
                 <div class="criteria-row-title-copy">
                   <strong data-criteria-label>${escapeHtml(label)}</strong>
-                  <p class="tiny-note">This card controls the criterion label, its user-facing question, the weight, and any short reasoning note you want to keep attached to it.</p>
+                  <p class="tiny-note">Set how important this criterion is and why it belongs in the decision.</p>
                 </div>
               </div>
               <div class="criteria-row-actions">
-                <div class="criterion-rating-pill">Current rating: ${clampRating(criterion.rating)}/9</div>
                 <button class="btn-ghost" data-remove-criterion type="button" ${canRemove ? "" : "disabled"}><i class="fa-solid fa-minus" aria-hidden="true"></i><span>Remove</span></button>
               </div>
             </div>
             <div class="criteria-fields">
-              <div class="field criteria-field-span-2">
+              <div class="field criteria-field-span-3">
                 <label for="criterion-name-${escapeHtml(criterion.id)}">Criterion Name</label>
                 <input id="criterion-name-${escapeHtml(criterion.id)}" data-criterion-name type="text" maxlength="120" value="${escapeHtml(criterion.name)}" placeholder="Example: Compensation and finances">
-              </div>
-              <div class="field criteria-field-span-2">
-                <label for="criterion-question-${escapeHtml(criterion.id)}">Question Shown During Rating</label>
-                <textarea id="criterion-question-${escapeHtml(criterion.id)}" data-criterion-question rows="4" maxlength="220" placeholder="Example: Does the pay adequately support the move, living costs, savings, and personal goals?">${escapeHtml(criterion.question)}</textarea>
               </div>
               <div class="field criteria-field-narrow">
                 <label for="criterion-weight-${escapeHtml(criterion.id)}">Weight (%)</label>
                 <input id="criterion-weight-${escapeHtml(criterion.id)}" data-criterion-weight type="number" min="0" max="100" step="0.1" inputmode="decimal" value="${escapeHtml(criterion.weight)}" placeholder="25">
               </div>
-              <div class="field criteria-field-span-3">
+              <div class="field criteria-field-span-4">
                 <label for="criterion-notes-${escapeHtml(criterion.id)}">Notes or Reasoning</label>
                 <textarea id="criterion-notes-${escapeHtml(criterion.id)}" data-criterion-notes rows="4" maxlength="320" placeholder="Optional: Why does this criterion matter, and why did it get this weight or wording?">${escapeHtml(criterion.notes)}</textarea>
               </div>
@@ -470,12 +461,9 @@
   function syncCriteriaRow(rowElement, criterionId) {
     const criterion = state.criteria.find((entry) => entry.id === criterionId);
     if (!rowElement || !criterion) return;
-    const pill = rowElement.querySelector(".criterion-rating-pill");
     const title = rowElement.querySelector("[data-criteria-label]");
-    if (!pill) return;
     const index = state.criteria.findIndex((entry) => entry.id === criterionId);
     if (title) title.textContent = getCriterionLabel(criterion, index);
-    pill.textContent = `Current rating: ${clampRating(criterion.rating)}/9`;
   }
 
   function refreshSetupStatus() {
@@ -608,11 +596,6 @@
     dom.ratingCurrentMeaning.textContent = split.meaning;
     dom.ratingPositiveLabel.textContent = positive;
     dom.ratingNegativeLabel.textContent = negative;
-    dom.ratingPositiveContributionLabel.textContent = `${positive} share`;
-    dom.ratingPositiveContributionValue.textContent = `This criterion currently gives ${formatShare(split.positiveShare)} of the full model to "${positive}".`;
-    dom.ratingNegativeContributionLabel.textContent = `${negative} share`;
-    dom.ratingNegativeContributionValue.textContent = `The remaining ${formatShare(split.negativeShare)} goes to "${negative}".`;
-
     Array.from(dom.ratingChoiceGrid.querySelectorAll("[data-rating-value]")).forEach((button) => {
       const value = clampRating(button.getAttribute("data-rating-value"));
       button.classList.toggle("is-selected", value === split.rating);
@@ -961,10 +944,9 @@
     return [
       TEMPLATE_HEADERS.join("\t"),
       ["meta", "Replace with the full decision title", "Replace with the do option", "Replace with the dont option", "", "", "", "", "", ""].join("\t"),
-      ["criterion", "", "", "", "1", "Replace with a short criterion name", "Replace with the question shown to the user during rating", "25", "5", "Replace with short reasoning for this criterion, weight, and rating"].join("\t"),
-      ["criterion", "", "", "", "2", "Replace with a short criterion name", "Replace with the question shown to the user during rating", "25", "5", "Replace with short reasoning for this criterion, weight, and rating"].join("\t"),
-      ["criterion", "", "", "", "3", "Replace with a short criterion name", "Replace with the question shown to the user during rating", "25", "5", "Replace with short reasoning for this criterion, weight, and rating"].join("\t"),
-      ["criterion", "", "", "", "4", "Replace with a short criterion name", "Replace with the question shown to the user during rating", "25", "5", "Replace with short reasoning for this criterion, weight, and rating"].join("\t"),
+      ["criterion", "", "", "", "1", "Replace with a short criterion name", "Replace with the question shown to the user during rating", "34", "5", "Explain why this criterion matters and why it got this weight and rating. Add or delete criterion rows as needed."].join("\t"),
+      ["criterion", "", "", "", "2", "Replace with a short criterion name", "Replace with the question shown to the user during rating", "33", "5", "Explain why this criterion matters and why it got this weight and rating. Add or delete criterion rows as needed."].join("\t"),
+      ["criterion", "", "", "", "3", "Replace with a short criterion name", "Replace with the question shown to the user during rating", "33", "5", "Explain why this criterion matters and why it got this weight and rating. Add or delete criterion rows as needed."].join("\t"),
     ];
   }
 
@@ -1044,7 +1026,9 @@
       "- Do not change column names, field names, record_type values, or the overall structure.",
       "- Do not add extra sheets, extra columns, or summary rows.",
       "- Do not place tab characters or line breaks inside any cell value. Replace them with plain spaces.",
-      "- Use 2 to 10 criterion rows.",
+      "- Choose the number of criterion rows based on the situation. Do not default to five criteria.",
+      "- Use the fewest criteria that still capture the real tradeoffs clearly. Most situations should land between 3 and 8 criteria, but fewer or more is acceptable when justified.",
+      "- Use 2 to 10 criterion rows total.",
       "- criterion_order must be sequential whole numbers starting at 1.",
       "- weight_percent values must be positive numbers that sum to exactly 100.0.",
       "- rating_1_to_9 values must be whole integers from 1 to 9.",
@@ -1471,8 +1455,6 @@
 
       if (target.matches("[data-criterion-name]")) {
         updateCriterionValueById(id, { name: target.value });
-      } else if (target.matches("[data-criterion-question]")) {
-        updateCriterionValueById(id, { question: target.value });
       } else if (target.matches("[data-criterion-notes]")) {
         updateCriterionValueById(id, { notes: target.value });
       } else if (target.matches("[data-criterion-weight]")) {

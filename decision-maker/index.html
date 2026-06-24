@@ -531,7 +531,6 @@
       font-weight: 800;
     }
 
-    .tutorial-chip-row,
     .choice-points {
       display: flex;
       flex-wrap: wrap;
@@ -586,8 +585,7 @@
       box-shadow: 0 10px 18px rgba(10, 29, 43, 0.14);
     }
 
-    .choice-points span,
-    .tutorial-chip-row span {
+    .choice-points span {
       padding: 8px 12px;
       border-radius: 999px;
       background: rgba(255,255,255,0.08);
@@ -595,6 +593,79 @@
       font-size: 13px;
       font-weight: 700;
       line-height: 1.35;
+    }
+
+    .tutorial-readout,
+    .tutorial-scale,
+    .tutorial-formula {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 12px;
+    }
+
+    .tutorial-readout {
+      display: grid;
+      gap: 8px;
+    }
+
+    .tutorial-readout-row {
+      display: grid;
+      grid-template-columns: 96px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    .tutorial-readout-row strong {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.52);
+    }
+
+    .tutorial-readout-row span {
+      color: rgba(255,255,255,0.82);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .tutorial-scale {
+      display: grid;
+      gap: 10px;
+    }
+
+    .tutorial-scale-item {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    .tutorial-scale-number {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .tutorial-scale-copy strong,
+    .tutorial-formula strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #fff;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .tutorial-scale-copy span,
+    .tutorial-formula span {
+      color: rgba(255,255,255,0.76);
+      font-size: 14px;
+      line-height: 1.55;
     }
 
     .process-card {
@@ -882,6 +953,12 @@
       color: var(--ink);
     }
 
+    .criteria-row-title-copy strong {
+      font-size: 24px;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+    }
+
     .criteria-row-actions {
       display: flex;
       gap: 10px;
@@ -907,6 +984,7 @@
       grid-column: span 3;
     }
 
+    .criteria-field-span-4,
     .review-field-span-4 {
       grid-column: span 4;
     }
@@ -1483,7 +1561,7 @@
               <div class="overview-copy-shell">
                 <div class="overview-kicker">Overview</div>
                 <h2>Turn a messy call into a clear recommendation you can actually inspect.</h2>
-                <p class="panel-copy">This page follows the same weighted inverse logic as the Mia workbook. You define the decision, split the criteria to 100%, rate only the do side from 1 to 9, and then see exactly how each factor pushes the result.</p>
+                <p class="panel-copy">This page helps turn a complicated choice into a structured AHP-style decision model. Frameworks like this are used in high-stakes planning, including NASA-related decision work, and the goal here is simple: define what matters, weight it, rate the action, and see what truly drives the recommendation.</p>
                 <div class="overview-points">
                   <div class="overview-point">
                     <strong>Structured enough to surface tradeoffs</strong>
@@ -1515,33 +1593,77 @@
                   <article class="tutorial-card">
                     <div class="tutorial-step">Example 1</div>
                     <h3>Frame the choice</h3>
-                    <p>The model begins with one decision title and two labels that define the action and its inverse.</p>
-                    <div class="tutorial-chip-row">
-                      <span>Decision: Whether to accept the job offer</span>
-                      <span>Do: Accept the offer</span>
-                      <span>Don't: Decline the offer</span>
+                    <p>Start by saying what decision is being made and what counts as the action versus the inverse action.</p>
+                    <div class="tutorial-readout">
+                      <div class="tutorial-readout-row">
+                        <strong>Decision</strong>
+                        <span>Whether to accept the job offer</span>
+                      </div>
+                      <div class="tutorial-readout-row">
+                        <strong>Do</strong>
+                        <span>Accept the offer</span>
+                      </div>
+                      <div class="tutorial-readout-row">
+                        <strong>Don't</strong>
+                        <span>Decline the offer</span>
+                      </div>
                     </div>
                   </article>
 
                   <article class="tutorial-card">
                     <div class="tutorial-step">Example 2</div>
                     <h3>Allocate weight</h3>
-                    <p>Every criterion gets a percentage share of the full model, and the total must equal exactly 100%.</p>
-                    <div class="tutorial-chip-row">
-                      <span>Career fit and interest: 24%</span>
-                      <span>Compensation and finances: 18%</span>
-                      <span>Location and social life: 20%</span>
+                    <p>Weights tell the model how much each criterion should matter relative to the others. All weights together must add to 100%.</p>
+                    <div class="tutorial-readout">
+                      <div class="tutorial-readout-row">
+                        <strong>24%</strong>
+                        <span>Career fit and interest</span>
+                      </div>
+                      <div class="tutorial-readout-row">
+                        <strong>18%</strong>
+                        <span>Compensation and finances</span>
+                      </div>
+                      <div class="tutorial-readout-row">
+                        <strong>20%</strong>
+                        <span>Location and social life</span>
+                      </div>
+                    </div>
+                    <div class="tutorial-formula">
+                      <strong>How to read this</strong>
+                      <span>If one criterion is 20% and another is 10%, the first one counts twice as much in the final result.</span>
                     </div>
                   </article>
 
                   <article class="tutorial-card">
                     <div class="tutorial-step">Example 3</div>
                     <h3>Score only the do side</h3>
-                    <p>A clearer question keeps the rating grounded: "Does the pay adequately support the move, living costs, savings, and personal goals?"</p>
-                    <div class="tutorial-chip-row">
-                      <span>Rating 1: strongly favors don't</span>
-                      <span>Rating 5: split evenly</span>
-                      <span>Rating 9: strongly favors do</span>
+                    <p>Each criterion is rated on a 1 to 9 scale. A clearer question keeps the judgment grounded instead of abstract.</p>
+                    <div class="tutorial-formula">
+                      <strong>Example question</strong>
+                      <span>"Does the pay adequately support the move, living costs, savings, and personal goals?"</span>
+                    </div>
+                    <div class="tutorial-scale">
+                      <div class="tutorial-scale-item">
+                        <div class="tutorial-scale-number">1</div>
+                        <div class="tutorial-scale-copy">
+                          <strong>Strongly favors don't</strong>
+                          <span>The criterion points almost entirely against doing the thing.</span>
+                        </div>
+                      </div>
+                      <div class="tutorial-scale-item">
+                        <div class="tutorial-scale-number">5</div>
+                        <div class="tutorial-scale-copy">
+                          <strong>Neutral or mixed</strong>
+                          <span>The criterion splits roughly evenly between the two sides.</span>
+                        </div>
+                      </div>
+                      <div class="tutorial-scale-item">
+                        <div class="tutorial-scale-number">9</div>
+                        <div class="tutorial-scale-copy">
+                          <strong>Strongly favors do</strong>
+                          <span>The criterion points almost entirely toward taking the action.</span>
+                        </div>
+                      </div>
                     </div>
                   </article>
 
@@ -1549,19 +1671,28 @@
                     <div class="tutorial-step">Example 4</div>
                     <h3>Read the outcome</h3>
                     <p>The final screen shows both sides, the score margin, and which criteria created the largest swing in either direction.</p>
-                    <div class="tutorial-chip-row">
-                      <span>Do: 55.9%</span>
-                      <span>Don't: 44.1%</span>
-                      <span>Margin: 11.8%</span>
+                    <div class="tutorial-readout">
+                      <div class="tutorial-readout-row">
+                        <strong>Do</strong>
+                        <span>55.9% of the weighted model</span>
+                      </div>
+                      <div class="tutorial-readout-row">
+                        <strong>Don't</strong>
+                        <span>44.1% of the weighted model</span>
+                      </div>
+                      <div class="tutorial-readout-row">
+                        <strong>Margin</strong>
+                        <span>11.8%, which means the result leans meaningfully but not overwhelmingly in one direction.</span>
+                      </div>
+                    </div>
+                    <div class="tutorial-formula">
+                      <strong>What matters most</strong>
+                      <span>The driver list tells you which criteria actually created that gap, so you can agree, disagree, and adjust with intention.</span>
                     </div>
                   </article>
                 </div>
               </section>
             </section>
-
-            <div class="btn-row">
-              <button class="btn" type="button" data-go-path><i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>Skip Tutorial and Choose a Path</span></button>
-            </div>
           </div>
         </section>
 
@@ -1690,7 +1821,7 @@
               <div>
                 <div class="kicker">SETUP</div>
                 <h2>Name the decision and define the criteria with enough room to think.</h2>
-                <p class="panel-copy">This step sets the decision title, the do/don't labels, and the full criteria deck. Each criterion card includes a short name, the plain-English question you want shown during rating, an optional note, and a weight.</p>
+                <p class="panel-copy">This step sets the decision title, the do/don't labels, and the criteria themselves. The goal here is to make each criterion easy to name, weight, and explain before you move into scoring.</p>
               </div>
               <div class="total-stack" id="setupTotalCard">
                 <span>Weight Total</span>
@@ -1717,7 +1848,7 @@
             <div class="criteria-toolbar">
               <div>
                 <h3>Criteria list</h3>
-                <p class="tiny-note">Use each card to label the criterion, phrase the rating question clearly, leave reasoning notes if helpful, and keep the total weight balanced at 100%.</p>
+                <p class="tiny-note">Keep the criteria concise, make the weights honest, and use the reasoning field to explain why each factor belongs in the decision.</p>
               </div>
               <div class="btn-row">
                 <button class="btn-secondary" id="downloadCurrentDraftFromSetupBtn" type="button"><i class="fa-solid fa-file-export" aria-hidden="true"></i><span>Export Spreadsheet</span></button>
@@ -1727,17 +1858,6 @@
             </div>
 
             <div class="criteria-list" id="criteriaList"></div>
-
-            <div class="setup-note-grid">
-              <div class="callout">
-                <strong>Spreadsheet editing stays available</strong>
-                <p>Export the current draft as a TSV spreadsheet whenever you want to tweak labels, questions, weights, ratings, or notes outside the page and bring them back later.</p>
-              </div>
-              <div class="callout">
-                <strong>The rating flow only asks one side directly</strong>
-                <p>You score the do option from 1 to 9. The page automatically assigns the leftover share of each criterion to the don't side, just like the Mia workbook.</p>
-              </div>
-            </div>
 
             <div class="status" id="setupStatus" aria-live="polite"></div>
             <div class="btn-row">
@@ -1783,17 +1903,6 @@
             </div>
 
             <div class="rating-choice-grid" id="ratingChoiceGrid"></div>
-
-            <div class="rating-meta-grid">
-              <div class="rating-meta-card">
-                <strong id="ratingPositiveContributionLabel">Do share</strong>
-                <p class="tiny-note" id="ratingPositiveContributionValue">This criterion currently gives 12.5% of the total model to the do side.</p>
-              </div>
-              <div class="rating-meta-card">
-                <strong id="ratingNegativeContributionLabel">Don't share</strong>
-                <p class="tiny-note" id="ratingNegativeContributionValue">The remainder of this criterion goes to the don't side.</p>
-              </div>
-            </div>
 
             <div class="btn-row">
               <button class="btn-secondary" id="ratingBackBtn" type="button"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Previous</span></button>
@@ -1962,6 +2071,6 @@
   <script>const lastUpdated=document.getElementById("last-updated"); if(lastUpdated) lastUpdated.textContent="Today's Date: "+new Date().toLocaleDateString();</script>
   <script src="/shared-app-header.js?v=20260421b"></script>
   <script src="/shared-footer.js?v=20260417a"></script>
-  <script src="/decision-maker/decision-maker-page.js?v=20260623c"></script>
+  <script src="/decision-maker/decision-maker-page.js?v=20260623d"></script>
 </body>
 </html>
