@@ -1,5 +1,5 @@
 (() => {
-  const STEP_ORDER = ["intro", "setup", "ratings", "review", "results"];
+  const STEP_ORDER = ["intro", "path", "ai", "setup", "ratings", "review", "results"];
   const CLOSE_CALL_THRESHOLD = 0.03;
   const DEFAULT_POSITIVE_LABEL = "Do it";
   const DEFAULT_NEGATIVE_LABEL = "Don't do it";
@@ -81,6 +81,7 @@
   function createDefaultState() {
     return {
       currentStep: "intro",
+      entryMode: "",
       decisionTitle: "",
       positiveLabel: DEFAULT_POSITIVE_LABEL,
       negativeLabel: DEFAULT_NEGATIVE_LABEL,
@@ -230,15 +231,21 @@
   const dom = {
     progressSummaryText: document.getElementById("progressSummaryText"),
     progressSteps: Array.from(document.querySelectorAll("[data-step-target]")),
+    goPathButtons: Array.from(document.querySelectorAll("[data-go-path]")),
     stepSections: {
       intro: document.getElementById("introStep"),
+      path: document.getElementById("pathStep"),
+      ai: document.getElementById("aiStep"),
       setup: document.getElementById("setupStep"),
       ratings: document.getElementById("ratingsStep"),
       review: document.getElementById("reviewStep"),
       results: document.getElementById("resultsStep"),
     },
-    startDecisionBtn: document.getElementById("startDecisionBtn"),
-    backToIntroBtn: document.getElementById("backToIntroBtn"),
+    backToOverviewBtn: document.getElementById("backToOverviewBtn"),
+    chooseAIPathBtn: document.getElementById("chooseAIPathBtn"),
+    chooseManualPathBtn: document.getElementById("chooseManualPathBtn"),
+    backToPathFromAIBtn: document.getElementById("backToPathFromAIBtn"),
+    startManualFromAIBtn: document.getElementById("startManualFromAIBtn"),
     decisionTitleInput: document.getElementById("decisionTitleInput"),
     positiveChoiceInput: document.getElementById("positiveChoiceInput"),
     negativeChoiceInput: document.getElementById("negativeChoiceInput"),
@@ -246,6 +253,7 @@
     normalizeWeightsBtn: document.getElementById("normalizeWeightsBtn"),
     downloadCurrentDraftFromSetupBtn: document.getElementById("downloadCurrentDraftFromSetupBtn"),
     criteriaList: document.getElementById("criteriaList"),
+    setupBackBtn: document.getElementById("setupBackBtn"),
     setupContinueBtn: document.getElementById("setupContinueBtn"),
     setupStatus: document.getElementById("setupStatus"),
     setupTotalCard: document.getElementById("setupTotalCard"),
@@ -308,9 +316,7 @@
     aiTemplatePreview: document.getElementById("aiTemplatePreview"),
     copyAIPromptBtn: document.getElementById("copyAIPromptBtn"),
     downloadBlankTemplateBtn: document.getElementById("downloadBlankTemplateBtn"),
-    downloadCurrentDraftBtn: document.getElementById("downloadCurrentDraftBtn"),
     aiKitStatus: document.getElementById("aiKitStatus"),
-    aiImportFileInput: document.getElementById("aiImportFileInput"),
     aiImportTextInput: document.getElementById("aiImportTextInput"),
     importPastedAIDraftBtn: document.getElementById("importPastedAIDraftBtn"),
     aiImportStatus: document.getElementById("aiImportStatus"),
@@ -336,8 +342,10 @@
     });
 
     const summaryByStep = {
-      intro: "Start with a quick explanation, use the AI import kit if you want, or build the model manually.",
-      setup: "Name the choice, set the criteria, and make the weights total 100%.",
+      intro: "Start with a quick overview and a scrollable example of how to read the decision data.",
+      path: "Choose whether you want AI help drafting the model or a blank manual start.",
+      ai: "Tell the story, copy the strict prompt, and paste the AI draft back into the tool.",
+      setup: "Name the choice, shape the criteria cards, and make the weights total 100%.",
       ratings: "Work through each criterion and rate how much it supports the do option.",
       review: "Edit every weight, question, and rating on one page before finalizing the result.",
       results: "See the weighted outcome, the score margin, and the biggest drivers.",
@@ -358,6 +366,8 @@
       renderSetupFields();
       renderCriteriaRows();
       refreshSetupStatus();
+    } else if (stepName === "ai") {
+      refreshAIKitOutputs();
     } else if (stepName === "ratings") {
       renderRatingStep();
     } else if (stepName === "review") {
@@ -386,9 +396,14 @@
     }
 
     if (stepName === "results" && !validation.ok) {
-      showStep("review");
-      refreshReviewSummary();
-      setStatus(dom.reviewStatus, validation.errors[0], "error");
+      const destination = state.currentStep === "review" ? "review" : "setup";
+      showStep(destination);
+      if (destination === "review") {
+        refreshReviewSummary();
+        setStatus(dom.reviewStatus, validation.errors[0], "error");
+      } else {
+        setStatus(dom.setupStatus, validation.errors[0], "error");
+      }
       scrollToTopOfApp();
       return;
     }
@@ -401,6 +416,11 @@
     dom.decisionTitleInput.value = state.decisionTitle;
     dom.positiveChoiceInput.value = state.positiveLabel;
     dom.negativeChoiceInput.value = state.negativeLabel;
+    if (dom.setupBackBtn) {
+      const backLabel = state.entryMode === "ai" ? "Back to AI Assist" : "Back to Path Choice";
+      const backSpan = dom.setupBackBtn.querySelector("span");
+      if (backSpan) backSpan.textContent = backLabel;
+    }
   }
 
   function renderCriteriaRows() {
@@ -410,22 +430,36 @@
         const label = getCriterionLabel(criterion, index);
         return `
           <div class="criteria-row" data-criterion-id="${escapeHtml(criterion.id)}">
-            <div class="criteria-count" aria-hidden="true">${index + 1}</div>
-            <div class="field">
-              <label for="criterion-name-${escapeHtml(criterion.id)}">Criterion</label>
-              <input id="criterion-name-${escapeHtml(criterion.id)}" data-criterion-name type="text" maxlength="120" value="${escapeHtml(criterion.name)}" placeholder="Example: Compensation and finances">
+            <div class="criteria-row-head">
+              <div class="criteria-row-title">
+                <div class="criteria-count" aria-hidden="true">${index + 1}</div>
+                <div class="criteria-row-title-copy">
+                  <strong data-criteria-label>${escapeHtml(label)}</strong>
+                  <p class="tiny-note">This card controls the criterion label, its user-facing question, the weight, and any short reasoning note you want to keep attached to it.</p>
+                </div>
+              </div>
+              <div class="criteria-row-actions">
+                <div class="criterion-rating-pill">Current rating: ${clampRating(criterion.rating)}/9</div>
+                <button class="btn-ghost" data-remove-criterion type="button" ${canRemove ? "" : "disabled"}><i class="fa-solid fa-minus" aria-hidden="true"></i><span>Remove</span></button>
+              </div>
             </div>
-            <div class="field">
-              <label for="criterion-question-${escapeHtml(criterion.id)}">Question Shown During Rating</label>
-              <input id="criterion-question-${escapeHtml(criterion.id)}" data-criterion-question type="text" maxlength="220" value="${escapeHtml(criterion.question)}" placeholder="Example: Does the pay adequately support the move, living costs, savings, and personal goals?">
-            </div>
-            <div class="field">
-              <label for="criterion-weight-${escapeHtml(criterion.id)}">Weight (%)</label>
-              <input id="criterion-weight-${escapeHtml(criterion.id)}" data-criterion-weight type="number" min="0" max="100" step="0.1" inputmode="decimal" value="${escapeHtml(criterion.weight)}" placeholder="25">
-            </div>
-            <div class="criteria-row-actions">
-              <div class="criterion-rating-pill">${escapeHtml(label)} rating: ${clampRating(criterion.rating)}/9</div>
-              <button class="btn-ghost" data-remove-criterion type="button" ${canRemove ? "" : "disabled"}><i class="fa-solid fa-minus" aria-hidden="true"></i><span>Remove</span></button>
+            <div class="criteria-fields">
+              <div class="field criteria-field-span-2">
+                <label for="criterion-name-${escapeHtml(criterion.id)}">Criterion Name</label>
+                <input id="criterion-name-${escapeHtml(criterion.id)}" data-criterion-name type="text" maxlength="120" value="${escapeHtml(criterion.name)}" placeholder="Example: Compensation and finances">
+              </div>
+              <div class="field criteria-field-span-2">
+                <label for="criterion-question-${escapeHtml(criterion.id)}">Question Shown During Rating</label>
+                <textarea id="criterion-question-${escapeHtml(criterion.id)}" data-criterion-question rows="4" maxlength="220" placeholder="Example: Does the pay adequately support the move, living costs, savings, and personal goals?">${escapeHtml(criterion.question)}</textarea>
+              </div>
+              <div class="field criteria-field-narrow">
+                <label for="criterion-weight-${escapeHtml(criterion.id)}">Weight (%)</label>
+                <input id="criterion-weight-${escapeHtml(criterion.id)}" data-criterion-weight type="number" min="0" max="100" step="0.1" inputmode="decimal" value="${escapeHtml(criterion.weight)}" placeholder="25">
+              </div>
+              <div class="field criteria-field-span-3">
+                <label for="criterion-notes-${escapeHtml(criterion.id)}">Notes or Reasoning</label>
+                <textarea id="criterion-notes-${escapeHtml(criterion.id)}" data-criterion-notes rows="4" maxlength="320" placeholder="Optional: Why does this criterion matter, and why did it get this weight or wording?">${escapeHtml(criterion.notes)}</textarea>
+              </div>
             </div>
           </div>
         `;
@@ -437,9 +471,11 @@
     const criterion = state.criteria.find((entry) => entry.id === criterionId);
     if (!rowElement || !criterion) return;
     const pill = rowElement.querySelector(".criterion-rating-pill");
+    const title = rowElement.querySelector("[data-criteria-label]");
     if (!pill) return;
     const index = state.criteria.findIndex((entry) => entry.id === criterionId);
-    pill.textContent = `${getCriterionLabel(criterion, index)} rating: ${clampRating(criterion.rating)}/9`;
+    if (title) title.textContent = getCriterionLabel(criterion, index);
+    pill.textContent = `Current rating: ${clampRating(criterion.rating)}/9`;
   }
 
   function refreshSetupStatus() {
@@ -596,45 +632,54 @@
 
     dom.reviewList.innerHTML = rows
       .map((row) => {
-        const notesHtml = row.notes
-          ? `<p class="tiny-note">${escapeHtml(row.notes)}</p>`
-          : "";
         return `
           <div class="review-row" data-review-id="${escapeHtml(row.id)}">
             <div class="review-row-top">
-              <div class="review-count" aria-hidden="true">${row.index + 1}</div>
-              <div class="review-fields">
-                <div class="field">
-                  <label for="review-name-${escapeHtml(row.id)}">Criterion</label>
-                  <input id="review-name-${escapeHtml(row.id)}" data-review-name type="text" maxlength="120" value="${escapeHtml(row.name)}" placeholder="Criterion ${row.index + 1}">
+              <div class="review-row-title">
+                <div class="review-count" aria-hidden="true">${row.index + 1}</div>
+                <div class="review-row-title-copy">
+                  <strong data-review-title>${escapeHtml(row.label)}</strong>
+                  <p class="tiny-note">You can still change the wording, notes, weight, or rating here before opening the final result.</p>
                 </div>
-                <div class="field">
-                  <label for="review-question-${escapeHtml(row.id)}">Question Shown During Rating</label>
-                  <input id="review-question-${escapeHtml(row.id)}" data-review-question type="text" maxlength="220" value="${escapeHtml(row.question || "")}" placeholder="Plain-English question for this criterion">
-                </div>
-                <div class="field">
-                  <label for="review-weight-${escapeHtml(row.id)}">Weight (%)</label>
-                  <input id="review-weight-${escapeHtml(row.id)}" data-review-weight type="number" min="0" max="100" step="0.1" inputmode="decimal" value="${escapeHtml(row.weightPercent)}">
-                </div>
-                <div class="field">
-                  <label for="review-rating-${escapeHtml(row.id)}">${escapeHtml(positive)} Rating</label>
-                  <select id="review-rating-${escapeHtml(row.id)}" data-review-rating>
-                    ${Array.from({ length: 9 }, (_, idx) => {
-                      const value = idx + 1;
-                      return `<option value="${value}" ${value === row.rating ? "selected" : ""}>${value}</option>`;
-                    }).join("")}
-                  </select>
-                </div>
+              </div>
+              <div class="review-row-actions">
+                <div class="meaning-pill ${row.tone}" data-review-meaning>${escapeHtml(row.meaning)}</div>
+                <button class="linkish-btn" type="button" data-review-focus>Open in rating flow</button>
+              </div>
+            </div>
+            <div class="review-fields">
+              <div class="field review-field-span-2">
+                <label for="review-name-${escapeHtml(row.id)}">Criterion Name</label>
+                <input id="review-name-${escapeHtml(row.id)}" data-review-name type="text" maxlength="120" value="${escapeHtml(row.name)}" placeholder="Criterion ${row.index + 1}">
+              </div>
+              <div class="field">
+                <label for="review-weight-${escapeHtml(row.id)}">Weight (%)</label>
+                <input id="review-weight-${escapeHtml(row.id)}" data-review-weight type="number" min="0" max="100" step="0.1" inputmode="decimal" value="${escapeHtml(row.weightPercent)}">
+              </div>
+              <div class="field">
+                <label for="review-rating-${escapeHtml(row.id)}">${escapeHtml(positive)} Rating</label>
+                <select id="review-rating-${escapeHtml(row.id)}" data-review-rating>
+                  ${Array.from({ length: 9 }, (_, idx) => {
+                    const value = idx + 1;
+                    return `<option value="${value}" ${value === row.rating ? "selected" : ""}>${value}</option>`;
+                  }).join("")}
+                </select>
+              </div>
+              <div class="field review-field-span-4">
+                <label for="review-question-${escapeHtml(row.id)}">Question Shown During Rating</label>
+                <textarea id="review-question-${escapeHtml(row.id)}" data-review-question rows="4" maxlength="220" placeholder="Plain-English question for this criterion">${escapeHtml(row.question || "")}</textarea>
+              </div>
+              <div class="field review-field-span-4">
+                <label for="review-notes-${escapeHtml(row.id)}">Notes or Reasoning</label>
+                <textarea id="review-notes-${escapeHtml(row.id)}" data-review-notes rows="4" maxlength="320" placeholder="Optional notes explaining the weight, question wording, or rating">${escapeHtml(row.notes || "")}</textarea>
               </div>
             </div>
             <div class="review-row-foot">
               <div class="review-row-foot-copy">
-                <div class="meaning-pill ${row.tone}" data-review-meaning>${escapeHtml(row.meaning)}</div>
-                ${notesHtml}
+                <span class="tiny-note">This criterion currently splits as ${escapeHtml(positive)} ${formatShare(row.positiveShare)} and ${escapeHtml(negative)} ${formatShare(row.negativeShare)}.</span>
               </div>
               <div class="review-row-actions">
-                <span class="tiny-note">${escapeHtml(positive)}: ${formatShare(row.positiveShare)} | ${escapeHtml(negative)}: ${formatShare(row.negativeShare)}</span>
-                <button class="linkish-btn" type="button" data-review-focus>Open in rating flow</button>
+                <span class="tiny-note">Rating ${row.rating}/9</span>
               </div>
             </div>
           </div>
@@ -830,6 +875,8 @@
       criterion.name = target.value;
     } else if (target.matches("[data-review-question]")) {
       criterion.question = target.value;
+    } else if (target.matches("[data-review-notes]")) {
+      criterion.notes = target.value;
     } else if (target.matches("[data-review-weight]")) {
       criterion.weight = Math.max(0, toNumber(target.value));
     } else if (target.matches("[data-review-rating]")) {
@@ -846,8 +893,11 @@
   function updateReviewRow(rowElement, criterion) {
     const split = calculateCriterionSplit(criterion);
     const meaning = rowElement.querySelector("[data-review-meaning]");
-    const note = rowElement.querySelector(".review-row-actions .tiny-note");
+    const title = rowElement.querySelector("[data-review-title]");
+    const note = rowElement.querySelector(".review-row-foot-copy .tiny-note");
+    const ratingNote = rowElement.querySelector(".review-row-actions .tiny-note");
     const tone = getMeaningTone(split.rating);
+    const index = state.criteria.findIndex((entry) => entry.id === criterion.id);
 
     if (meaning) {
       meaning.textContent = getRatingMeaning(split.rating);
@@ -855,8 +905,16 @@
       meaning.classList.add(tone);
     }
 
+    if (title) {
+      title.textContent = getCriterionLabel(criterion, index);
+    }
+
     if (note) {
-      note.textContent = `${positiveLabel()}: ${formatShare(split.positiveShare)} | ${negativeLabel()}: ${formatShare(split.negativeShare)}`;
+      note.textContent = `This criterion currently splits as ${positiveLabel()} ${formatShare(split.positiveShare)} and ${negativeLabel()} ${formatShare(split.negativeShare)}.`;
+    }
+
+    if (ratingNote) {
+      ratingNote.textContent = `Rating ${split.rating}/9`;
     }
   }
 
@@ -874,6 +932,29 @@
         );
       })
     );
+  }
+
+  function resetDecisionDraft(entryMode) {
+    state = {
+      ...createDefaultState(),
+      entryMode: entryMode || "",
+    };
+  }
+
+  function startManualEntry() {
+    if (hasMeaningfulCurrentDraft()) {
+      const confirmed = window.confirm("Start a blank manual decision and clear the current draft?");
+      if (!confirmed) return;
+    }
+
+    resetDecisionDraft("manual");
+    renderSetupFields();
+    renderCriteriaRows();
+    refreshSetupStatus();
+    renderReviewRows();
+    refreshReviewSummary();
+    renderResults();
+    navigateTo("setup");
   }
 
   function buildBlankTemplateRows() {
@@ -1235,7 +1316,8 @@
     const normalized = normalizeImportedCriteria(importedModel.criteria || []);
 
     state = {
-      currentStep: "review",
+      currentStep: "setup",
+      entryMode: "ai",
       decisionTitle: nextDecisionTitle,
       positiveLabel: nextPositive,
       negativeLabel: nextNegative,
@@ -1250,14 +1332,14 @@
     refreshReviewSummary();
     renderResults();
     refreshAIKitOutputs();
-    navigateTo("review");
+    navigateTo("setup");
 
     const importMessage = normalized.note
-      ? `${sourceLabel} imported successfully. ${normalized.note}`
-      : `${sourceLabel} imported successfully. Review the criteria, questions, weights, and ratings before moving on.`;
+      ? `${sourceLabel} imported successfully. ${normalized.note} Walk through the setup and rating steps to confirm everything before the final result.`
+      : `${sourceLabel} imported successfully. Walk through the setup and rating steps to confirm the criteria, questions, weights, and ratings.`;
 
     setStatus(dom.aiImportStatus, importMessage, "success");
-    setStatus(dom.reviewStatus, importMessage, "success");
+    setStatus(dom.setupStatus, importMessage, "success");
   }
 
   async function handleImportedText(rawText, sourceLabel) {
@@ -1268,19 +1350,6 @@
       const message = error && error.message ? error.message : "Could not import the draft.";
       setStatus(dom.aiImportStatus, message, "error");
     }
-  }
-
-  async function readFileAsText(file) {
-    if (!file) throw new Error("Choose a file first.");
-    if (typeof file.text === "function") {
-      return file.text();
-    }
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ""));
-      reader.onerror = () => reject(new Error("Could not read that file."));
-      reader.readAsText(file);
-    });
   }
 
   function handleDownloadBlankTemplate() {
@@ -1296,27 +1365,34 @@
       : "decision-maker-ai-template.tsv";
 
     downloadTextFile(filename, text, "text/tab-separated-values;charset=utf-8");
-    setStatus(
-      dom.aiKitStatus,
-      hasDraft
-        ? "Current draft downloaded as a TSV file you can edit in a spreadsheet."
-        : "There was no populated draft yet, so the blank TSV template was downloaded instead.",
-      "success"
-    );
+    const message = hasDraft
+      ? "Current draft downloaded as a TSV file you can edit in a spreadsheet."
+      : "There was no populated draft yet, so the blank TSV template was downloaded instead.";
+    setStatus(dom.setupStatus, message, "success");
+    setStatus(dom.aiKitStatus, message, "success");
   }
 
   function resetAIFields() {
     dom.aiSituationInput.value = "";
     dom.aiImportTextInput.value = "";
-    dom.aiImportFileInput.value = "";
     refreshAIKitOutputs();
     setStatus(dom.aiKitStatus, "", "");
     setStatus(dom.aiImportStatus, "", "");
   }
 
   function bindEvents() {
-    dom.startDecisionBtn.addEventListener("click", () => navigateTo("setup"));
-    dom.backToIntroBtn.addEventListener("click", () => navigateTo("intro"));
+    dom.goPathButtons.forEach((button) => {
+      button.addEventListener("click", () => navigateTo("path"));
+    });
+    dom.backToOverviewBtn.addEventListener("click", () => navigateTo("intro"));
+    dom.chooseAIPathBtn.addEventListener("click", () => {
+      state.entryMode = "ai";
+      saveState();
+      navigateTo("ai");
+    });
+    dom.chooseManualPathBtn.addEventListener("click", startManualEntry);
+    dom.backToPathFromAIBtn.addEventListener("click", () => navigateTo("path"));
+    dom.startManualFromAIBtn.addEventListener("click", startManualEntry);
 
     dom.progressSteps.forEach((button) => {
       button.addEventListener("click", () => {
@@ -1335,19 +1411,7 @@
       }
     });
     dom.downloadBlankTemplateBtn.addEventListener("click", handleDownloadBlankTemplate);
-    dom.downloadCurrentDraftBtn.addEventListener("click", handleDownloadCurrentDraft);
     dom.downloadCurrentDraftFromSetupBtn.addEventListener("click", handleDownloadCurrentDraft);
-
-    dom.aiImportFileInput.addEventListener("change", async () => {
-      const file = dom.aiImportFileInput.files && dom.aiImportFileInput.files[0];
-      if (!file) return;
-      try {
-        const text = await readFileAsText(file);
-        await handleImportedText(text, `${file.name} file`);
-      } finally {
-        dom.aiImportFileInput.value = "";
-      }
-    });
 
     dom.importPastedAIDraftBtn.addEventListener("click", async () => {
       await handleImportedText(dom.aiImportTextInput.value, "Pasted AI draft");
@@ -1386,6 +1450,8 @@
         updateCriterionValueById(id, { name: target.value });
       } else if (target.matches("[data-criterion-question]")) {
         updateCriterionValueById(id, { question: target.value });
+      } else if (target.matches("[data-criterion-notes]")) {
+        updateCriterionValueById(id, { notes: target.value });
       } else if (target.matches("[data-criterion-weight]")) {
         updateCriterionValueById(id, { weight: Math.max(0, toNumber(target.value)) });
       } else {
@@ -1418,6 +1484,10 @@
       }
       state.currentCriterionIndex = clamp(state.currentCriterionIndex, 0, Math.max(state.criteria.length - 1, 0));
       navigateTo("ratings");
+    });
+
+    dom.setupBackBtn.addEventListener("click", () => {
+      navigateTo(state.entryMode === "ai" ? "ai" : "path");
     });
 
     dom.ratingChoiceGrid.addEventListener("click", (event) => {
@@ -1476,7 +1546,7 @@
     dom.restartDecisionBtn.addEventListener("click", () => {
       const confirmed = window.confirm("Start a brand new decision and clear the current inputs?");
       if (!confirmed) return;
-      state = createDefaultState();
+      resetDecisionDraft("");
       saveState();
       resetAIFields();
       renderSetupFields();

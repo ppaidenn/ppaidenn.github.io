@@ -217,7 +217,7 @@
 
     .progress-track {
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: 10px;
     }
 
@@ -290,12 +290,13 @@
     }
 
     .intro-grid,
-    .ai-kit-grid,
     .setup-note-grid,
     .review-summary-grid,
     .drivers-grid,
     .score-grid,
-    .rating-meta-grid {
+    .rating-meta-grid,
+    .path-grid,
+    .ai-process-grid {
       display: grid;
       gap: 14px;
     }
@@ -304,16 +305,23 @@
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    .ai-kit-grid,
     .setup-note-grid,
     .review-summary-grid,
     .drivers-grid,
     .score-grid,
-    .rating-meta-grid {
+    .rating-meta-grid,
+    .path-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .ai-kit-card {
+    .ai-process-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .ai-kit-card,
+    .process-card,
+    .tutorial-card,
+    .choice-card {
       display: grid;
       gap: 14px;
     }
@@ -348,6 +356,177 @@
       background:
         radial-gradient(circle at top right, rgba(226, 181, 95, 0.16), transparent 34%),
         linear-gradient(180deg, rgba(255,255,255,0.96), rgba(247,249,250,0.92));
+    }
+
+    .intro-actions,
+    .path-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .tutorial-shell {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border-radius: 24px;
+      border: 1px solid rgba(16, 32, 43, 0.08);
+      background:
+        radial-gradient(circle at top left, rgba(15, 142, 140, 0.08), transparent 32%),
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(242,247,247,0.92));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.56);
+    }
+
+    .tutorial-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .tutorial-rail {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(280px, 34%);
+      gap: 14px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scroll-snap-type: x proximity;
+      scrollbar-width: thin;
+    }
+
+    .tutorial-card {
+      min-height: 100%;
+      scroll-snap-align: start;
+      border-radius: 22px;
+      border: 1px solid rgba(16, 32, 43, 0.08);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(241,246,245,0.92));
+      padding: 18px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.58);
+    }
+
+    .tutorial-step {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 45, 66, 0.07);
+      color: var(--navy);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .tutorial-card h3,
+    .process-card h3,
+    .choice-card h3 {
+      margin: 0;
+    }
+
+    .tutorial-metric {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 16px;
+      background: rgba(15, 142, 140, 0.1);
+      color: #085c5b;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .tutorial-chip-row,
+    .choice-points {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .choice-card {
+      width: 100%;
+      min-height: 300px;
+      border-radius: 24px;
+      border: 1px solid rgba(16, 32, 43, 0.1);
+      padding: 24px;
+      background:
+        radial-gradient(circle at top right, rgba(226, 181, 95, 0.16), transparent 30%),
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(238,244,243,0.94));
+      text-align: left;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.56);
+    }
+
+    .choice-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 26px rgba(10, 29, 43, 0.08);
+      border-color: rgba(15, 142, 140, 0.28);
+    }
+
+    .choice-card.is-ai {
+      background:
+        radial-gradient(circle at top right, rgba(15, 142, 140, 0.16), transparent 30%),
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(232,244,242,0.94));
+    }
+
+    .choice-card.is-manual {
+      background:
+        radial-gradient(circle at top right, rgba(226, 181, 95, 0.18), transparent 30%),
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(246,244,238,0.94));
+    }
+
+    .choice-mark,
+    .step-badge {
+      width: 52px;
+      height: 52px;
+      border-radius: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--navy), var(--teal));
+      color: #fff;
+      font-size: 20px;
+      box-shadow: 0 10px 18px rgba(10, 29, 43, 0.14);
+    }
+
+    .choice-points span,
+    .tutorial-chip-row span {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(16, 32, 43, 0.06);
+      color: var(--ink-soft);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .process-card {
+      border-radius: 24px;
+      border: 1px solid rgba(16, 32, 43, 0.08);
+      padding: 20px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(241,246,245,0.92));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.56);
+    }
+
+    .process-head {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .process-head-copy {
+      min-width: 0;
+      display: grid;
+      gap: 6px;
     }
 
     .btn-row {
@@ -557,9 +736,8 @@
 
     .criteria-row {
       display: grid;
-      gap: 14px;
-      grid-template-columns: 48px minmax(0, 0.85fr) minmax(0, 1.2fr) minmax(150px, 0.34fr) auto;
-      align-items: end;
+      gap: 18px;
+      padding: 20px;
     }
 
     .criteria-count,
@@ -577,11 +755,68 @@
       border: 1px solid rgba(15, 142, 140, 0.12);
     }
 
+    .criteria-row-head,
+    .review-row-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .criteria-row-title,
+    .review-row-title {
+      min-width: 0;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .criteria-row-title-copy,
+    .review-row-title-copy {
+      min-width: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .criteria-row-title-copy strong,
+    .review-row-title-copy strong {
+      font-size: 17px;
+      line-height: 1.25;
+      color: var(--ink);
+    }
+
     .criteria-row-actions {
       display: flex;
-      flex-direction: column;
       gap: 10px;
-      align-items: flex-end;
+      align-items: flex-start;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .criteria-fields,
+    .review-fields {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      align-items: start;
+    }
+
+    .criteria-field-span-2,
+    .review-field-span-2 {
+      grid-column: span 2;
+    }
+
+    .criteria-field-span-3 {
+      grid-column: span 3;
+    }
+
+    .review-field-span-4 {
+      grid-column: span 4;
+    }
+
+    .criteria-field-narrow {
+      grid-column: span 1;
     }
 
     .criterion-rating-pill,
@@ -763,21 +998,8 @@
 
     .review-row {
       display: grid;
-      gap: 14px;
-    }
-
-    .review-row-top {
-      display: grid;
-      gap: 14px;
-      grid-template-columns: 48px minmax(0, 1fr);
-      align-items: start;
-    }
-
-    .review-fields {
-      display: grid;
-      gap: 12px;
-      grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr) minmax(140px, 0.3fr) minmax(140px, 0.28fr);
-      align-items: end;
+      gap: 16px;
+      padding: 20px;
     }
 
     .review-row-foot {
@@ -786,6 +1008,8 @@
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
+      padding-top: 4px;
+      border-top: 1px solid rgba(16, 32, 43, 0.06);
     }
 
     .review-row-foot-copy {
@@ -977,6 +1201,22 @@
     }
 
     @media (max-width: 1180px) {
+      .progress-track {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .criteria-fields,
+      .review-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .criteria-field-span-2,
+      .review-field-span-2,
+      .criteria-field-span-3,
+      .review-field-span-4 {
+        grid-column: span 2;
+      }
+
       .rating-choice-grid {
         grid-template-columns: repeat(5, minmax(0, 1fr));
       }
@@ -993,22 +1233,28 @@
 
     @media (max-width: 980px) {
       .intro-grid,
-      .ai-kit-grid,
       .setup-note-grid,
       .review-summary-grid,
       .drivers-grid,
       .score-grid,
       .rating-meta-grid,
       .result-metrics,
-      .field-grid {
+      .field-grid,
+      .path-grid {
         grid-template-columns: 1fr;
       }
 
-      .criteria-row,
       .rating-current,
-      .review-row-top,
+      .criteria-fields,
       .review-fields {
         grid-template-columns: 1fr;
+      }
+
+      .criteria-field-span-2,
+      .review-field-span-2,
+      .criteria-field-span-3,
+      .review-field-span-4 {
+        grid-column: span 1;
       }
 
       .criteria-count,
@@ -1018,7 +1264,8 @@
       }
 
       .criteria-row-actions {
-        align-items: stretch;
+        align-items: flex-start;
+        justify-content: flex-start;
       }
 
       .progress-track {
@@ -1054,6 +1301,10 @@
 
       .progress-track {
         grid-template-columns: 1fr;
+      }
+
+      .tutorial-rail {
+        grid-auto-columns: minmax(82vw, 1fr);
       }
 
       .rating-choice-grid {
@@ -1115,111 +1366,243 @@
             <div class="progress-summary" id="progressSummaryText">Start with a quick explanation, then build the decision model.</div>
           </div>
           <div class="progress-track" id="progressTrack">
-            <button class="progress-step" type="button" data-step-target="intro"><span>1</span><strong>Intro</strong></button>
-            <button class="progress-step" type="button" data-step-target="setup"><span>2</span><strong>Criteria + Weights</strong></button>
-            <button class="progress-step" type="button" data-step-target="ratings"><span>3</span><strong>Rate the Do Option</strong></button>
-            <button class="progress-step" type="button" data-step-target="review"><span>4</span><strong>Review Inputs</strong></button>
-            <button class="progress-step" type="button" data-step-target="results"><span>5</span><strong>Final Result</strong></button>
+            <button class="progress-step" type="button" data-step-target="intro"><span>1</span><strong>Overview</strong></button>
+            <button class="progress-step" type="button" data-step-target="path"><span>2</span><strong>Choose Path</strong></button>
+            <button class="progress-step" type="button" data-step-target="ai"><span>3</span><strong>AI Assist</strong></button>
+            <button class="progress-step" type="button" data-step-target="setup"><span>4</span><strong>Criteria + Weights</strong></button>
+            <button class="progress-step" type="button" data-step-target="ratings"><span>5</span><strong>Rate the Do Option</strong></button>
+            <button class="progress-step" type="button" data-step-target="review"><span>6</span><strong>Review Inputs</strong></button>
+            <button class="progress-step" type="button" data-step-target="results"><span>7</span><strong>Final Result</strong></button>
           </div>
         </section>
 
         <section class="wizard-step" id="introStep">
           <div class="panel intro-panel">
-            <div>
-              <div class="kicker">START</div>
-              <h2>Make a weighted decision without losing the human reasoning behind it.</h2>
-              <p class="panel-copy">This page walks through one do-or-don't decision. You name the action, choose the criteria that matter, assign them weights that total 100%, and then rate only the "do" side from 1 to 9. The page automatically treats the "don't" side as the inverse, just like the workbook logic you modeled this after.</p>
+            <div class="section-head">
+              <div>
+                <div class="kicker">OVERVIEW</div>
+                <h2>Turn a messy do-or-don't decision into a calm, reviewable model.</h2>
+                <p class="panel-copy">This page follows the same weighted inverse logic as the Mia workbook. You define the choice, weight the criteria to 100%, rate only the "do" side on a 1-9 scale, and then inspect the final split between doing it and not doing it.</p>
+              </div>
+              <div class="callout" style="max-width: 320px;">
+                <strong>Local-only session</strong>
+                <p>This tool stays in the current browser runtime only. A refresh clears the session so the next person starts clean.</p>
+              </div>
             </div>
 
             <div class="intro-grid">
               <div class="mini-card">
-                <strong>1. Build the criteria</strong>
-                <p>List the factors that matter and give each one a share of the total weight.</p>
+                <strong>Weighted, not vague</strong>
+                <p>Every criterion gets a visible share of the decision, so tradeoffs cannot hide inside gut feeling.</p>
               </div>
               <div class="mini-card">
-                <strong>2. Rate the action</strong>
-                <p>For each criterion, rate how strongly it supports doing the thing on a 1-9 scale.</p>
+                <strong>Readable wording</strong>
+                <p>Each criterion can be turned into a plain-English rating question, similar to the Mia workbook prompts.</p>
               </div>
               <div class="mini-card">
-                <strong>3. Review the tradeoffs</strong>
-                <p>Confirm the inputs on one screen, then see the weighted recommendation and biggest drivers.</p>
+                <strong>Built to confirm, not blindly trust</strong>
+                <p>Even if AI helps draft the model, you still walk through the criteria, ratings, review, and final result step by step.</p>
               </div>
             </div>
 
-            <div class="callout">
-              <strong>Scoring logic</strong>
-              <p>A rating of <strong>1</strong> gives that criterion entirely to the "don't" side. A rating of <strong>5</strong> splits it evenly. A rating of <strong>9</strong> gives it entirely to the "do" side.</p>
+            <div class="intro-actions">
+              <button class="btn" type="button" data-go-path><i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>Choose a Starting Path</span></button>
+              <span class="tiny-note">Skip ahead if you already know whether you want AI help or a blank manual start.</span>
             </div>
 
-            <div class="callout">
-              <strong>Local-only draft</strong>
-              <p>This page stays local to the browser. paiden.com does not call AI for you, and refreshing the page clears the current draft so the next user starts clean.</p>
-            </div>
-
-            <div class="ai-kit-grid">
-              <div class="panel panel-soft ai-kit-card">
+            <section class="tutorial-shell">
+              <div class="tutorial-head">
                 <div>
-                  <div class="kicker">AI PREP</div>
-                  <h3>Give another AI a strict template to fill.</h3>
-                  <p class="tiny-note">Paste your full situation below, copy the generated prompt, and optionally attach the blank TSV template to your AI tool so it returns something this page can read consistently.</p>
+                  <div class="kicker">QUICK TUTORIAL</div>
+                  <h3>Scroll through a short example before you start.</h3>
+                  <p class="tiny-note">Each card shows how to read the decision data, from the decision framing all the way to the final weighted split.</p>
                 </div>
+                <div class="tutorial-metric">Scroll sideways to preview the flow</div>
+              </div>
 
+              <div class="tutorial-rail">
+                <article class="tutorial-card">
+                  <div class="tutorial-step">Example 1</div>
+                  <h3>Frame the decision</h3>
+                  <p>The model begins with one plain question and two labels.</p>
+                  <div class="tutorial-chip-row">
+                    <span>Decision: Whether to accept the job offer</span>
+                    <span>Do: Accept the offer</span>
+                    <span>Don't: Decline the offer</span>
+                  </div>
+                </article>
+
+                <article class="tutorial-card">
+                  <div class="tutorial-step">Example 2</div>
+                  <h3>Weight what matters</h3>
+                  <p>Each criterion gets a percentage share of the full model, and the total must equal 100%.</p>
+                  <div class="tutorial-chip-row">
+                    <span>Career fit and interest: 24%</span>
+                    <span>Compensation and finances: 18%</span>
+                    <span>Location and social life: 20%</span>
+                  </div>
+                </article>
+
+                <article class="tutorial-card">
+                  <div class="tutorial-step">Example 3</div>
+                  <h3>Rate only the do side</h3>
+                  <p>A clearer question keeps the rating grounded: "Does the pay adequately support the move, living costs, savings, and personal goals?"</p>
+                  <div class="tutorial-chip-row">
+                    <span>Rating 1: strongly favors don't</span>
+                    <span>Rating 5: split evenly</span>
+                    <span>Rating 9: strongly favors do</span>
+                  </div>
+                </article>
+
+                <article class="tutorial-card">
+                  <div class="tutorial-step">Example 4</div>
+                  <h3>Read the final split</h3>
+                  <p>The result shows both sides, the score margin, and which criteria created the biggest swing.</p>
+                  <div class="tutorial-chip-row">
+                    <span>Do: 55.9%</span>
+                    <span>Don't: 44.1%</span>
+                    <span>Margin: 11.8%</span>
+                  </div>
+                </article>
+              </div>
+            </section>
+
+            <div class="btn-row">
+              <button class="btn" type="button" data-go-path><i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>Skip Tutorial and Choose a Path</span></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="wizard-step" id="pathStep">
+          <div class="panel intro-panel">
+            <div>
+              <div class="kicker">START PATH</div>
+              <h2>Pick how you want to build the decision.</h2>
+              <p class="panel-copy">Both paths end inside the same decision flow. The only difference is whether you want another AI to draft the first pass for you or whether you want to start from a blank model.</p>
+            </div>
+
+            <div class="path-grid">
+              <button class="choice-card is-ai" id="chooseAIPathBtn" type="button">
+                <div class="choice-mark" aria-hidden="true"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                <div>
+                  <div class="kicker">AI ASSISTANCE</div>
+                  <h3>Have another AI draft the criteria, weights, wording, and starter ratings.</h3>
+                  <p>Use a strict prompt and template so the output stays machine-readable and easy to import back into this page.</p>
+                </div>
+                <div class="choice-points">
+                  <span>Paste your whole story in your own words</span>
+                  <span>Copy the exact prompt</span>
+                  <span>Return here and paste the AI output</span>
+                </div>
+              </button>
+
+              <button class="choice-card is-manual" id="chooseManualPathBtn" type="button">
+                <div class="choice-mark" aria-hidden="true"><i class="fa-solid fa-pen-ruler"></i></div>
+                <div>
+                  <div class="kicker">MANUAL ENTRY</div>
+                  <h3>Start with a blank decision and define everything yourself.</h3>
+                  <p>Go straight into the criteria builder with an empty local session and work through the weighting and rating flow from scratch.</p>
+                </div>
+                <div class="choice-points">
+                  <span>Blank decision title and labels</span>
+                  <span>Editable criteria cards with roomy prompts</span>
+                  <span>Same review and final result pages</span>
+                </div>
+              </button>
+            </div>
+
+            <div class="path-actions">
+              <button class="btn-secondary" id="backToOverviewBtn" type="button"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Back to Overview</span></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="wizard-step" id="aiStep">
+          <div class="panel intro-panel">
+            <div class="section-head">
+              <div>
+                <div class="kicker">AI ASSIST</div>
+                <h2>Give another AI a strict job, then bring the answer back here.</h2>
+                <p class="panel-copy">This page does not call AI itself. Instead, it gives you a precise prompt and a template file so another AI can generate a clean draft that this page can reliably read.</p>
+              </div>
+              <div class="callout" style="max-width: 340px;">
+                <strong>What the AI should return</strong>
+                <p>The output should fill the template with the decision title, do/don't labels, criteria, plain-English criterion questions, weights, ratings, and short notes.</p>
+              </div>
+            </div>
+
+            <div class="ai-process-grid">
+              <article class="process-card">
+                <div class="process-head">
+                  <div class="step-badge" aria-hidden="true">1</div>
+                  <div class="process-head-copy">
+                    <h3>Tell the story exactly how you would explain it to a person.</h3>
+                    <p class="tiny-note">Include the choice, the context, the timing, the tradeoffs, the people involved, your uncertainties, and what feels high-stakes.</p>
+                  </div>
+                </div>
                 <div class="field">
-                  <label for="aiSituationInput">Your full situation for the AI</label>
-                  <textarea id="aiSituationInput" rows="10" placeholder="Describe the situation in your own words. Include the choice being made, the tradeoffs, the people involved, the timeline, the constraints, and anything you think matters."></textarea>
+                  <label for="aiSituationInput">Your situation for the AI</label>
+                  <textarea id="aiSituationInput" rows="10" placeholder="Describe the full situation in your own words. Example: I have a job offer in another city, but I am balancing career growth, social life, finances, graduate school plans, and how hard it would be to replace this opportunity."></textarea>
                 </div>
+              </article>
 
+              <article class="process-card">
+                <div class="process-head">
+                  <div class="step-badge" aria-hidden="true">2</div>
+                  <div class="process-head-copy">
+                    <h3>Copy the exact prompt into your AI tool.</h3>
+                    <p class="tiny-note">The prompt tells the AI how to choose criteria, how to word the rating questions, and how to avoid breaking the import format.</p>
+                  </div>
+                </div>
                 <div class="field">
                   <label for="aiPromptOutput">Prompt to paste into your AI tool</label>
                   <textarea id="aiPromptOutput" class="code-textarea" rows="18" readonly></textarea>
                 </div>
-
                 <div class="btn-row">
                   <button class="btn-secondary" id="copyAIPromptBtn" type="button"><i class="fa-regular fa-copy" aria-hidden="true"></i><span>Copy AI Prompt</span></button>
-                  <button class="btn-ghost" id="downloadBlankTemplateBtn" type="button"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Download Blank Template</span></button>
-                  <button class="btn-ghost" id="downloadCurrentDraftBtn" type="button"><i class="fa-solid fa-file-export" aria-hidden="true"></i><span>Download Current Draft</span></button>
                 </div>
+              </article>
 
+              <article class="process-card">
+                <div class="process-head">
+                  <div class="step-badge" aria-hidden="true">3</div>
+                  <div class="process-head-copy">
+                    <h3>Optionally attach the blank template file so the AI fills the exact columns.</h3>
+                    <p class="tiny-note">This is the safest path when your AI tool can accept uploaded files. It gives the AI a labeled structure it can fill instead of inventing one.</p>
+                  </div>
+                </div>
+                <div class="btn-row">
+                  <button class="btn-ghost" id="downloadBlankTemplateBtn" type="button"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Download Blank Template</span></button>
+                </div>
                 <div class="field">
-                  <label for="aiTemplatePreview">Blank template preview</label>
+                  <label for="aiTemplatePreview">Template preview</label>
                   <textarea id="aiTemplatePreview" class="code-textarea" rows="8" readonly></textarea>
                 </div>
-
                 <div class="status" id="aiKitStatus" aria-live="polite"></div>
-              </div>
+              </article>
 
-              <div class="panel panel-soft ai-kit-card">
-                <div>
-                  <div class="kicker">AI IMPORT</div>
-                  <h3>Bring the completed draft back into this page.</h3>
-                  <p class="tiny-note">Preferred file type: <code>.tsv</code>. Supported fallbacks: raw TSV, raw JSON, or a <code>.json</code> file. If imported weights do not total 100%, the page will normalize them before review.</p>
+              <article class="process-card">
+                <div class="process-head">
+                  <div class="step-badge" aria-hidden="true">4</div>
+                  <div class="process-head-copy">
+                    <h3>Paste the raw AI output here and import it.</h3>
+                    <p class="tiny-note">Paste the machine-readable TSV or JSON exactly as returned. Code fences are okay. After import, the normal decision tool opens with everything prefilled so you can confirm it step by step.</p>
+                  </div>
                 </div>
-
                 <div class="field">
-                  <label for="aiImportFileInput">Upload a completed draft file</label>
-                  <input id="aiImportFileInput" type="file" accept=".tsv,.txt,.json,application/json,text/plain,text/tab-separated-values">
+                  <label for="aiImportTextInput">Paste raw AI output</label>
+                  <textarea id="aiImportTextInput" class="code-textarea" rows="13" placeholder="Paste raw TSV or raw JSON here. Do not include extra commentary outside the machine-readable output if you can avoid it."></textarea>
                 </div>
-
-                <div class="field">
-                  <label for="aiImportTextInput">Or paste raw AI output</label>
-                  <textarea id="aiImportTextInput" class="code-textarea" rows="12" placeholder="Paste raw TSV or raw JSON here. If your AI wrapped the answer in code fences, that is okay."></textarea>
-                </div>
-
                 <div class="btn-row">
-                  <button class="btn" id="importPastedAIDraftBtn" type="button"><i class="fa-solid fa-file-import" aria-hidden="true"></i><span>Import Pasted Draft</span></button>
+                  <button class="btn" id="importPastedAIDraftBtn" type="button"><i class="fa-solid fa-file-import" aria-hidden="true"></i><span>Import Draft and Continue</span></button>
                 </div>
-
-                <div class="callout">
-                  <strong>Strict import contract</strong>
-                  <p>Use the provided template as-is. Do not add extra columns, extra sheets, markdown tables, bullets, or explanatory prose around the machine-readable output.</p>
-                </div>
-
                 <div class="status" id="aiImportStatus" aria-live="polite"></div>
-              </div>
+              </article>
             </div>
 
             <div class="btn-row">
-              <button class="btn" id="startDecisionBtn" type="button"><i class="fa-solid fa-play" aria-hidden="true"></i><span>Start Manually</span></button>
+              <button class="btn-secondary" id="backToPathFromAIBtn" type="button"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Back to Path Choice</span></button>
+              <button class="btn-ghost" id="startManualFromAIBtn" type="button"><i class="fa-solid fa-pen-ruler" aria-hidden="true"></i><span>Start Blank Instead</span></button>
             </div>
           </div>
         </section>
@@ -1229,8 +1612,8 @@
             <div class="section-head">
               <div>
                 <div class="kicker">SETUP</div>
-                <h2>Name the decision and define the criteria.</h2>
-                <p class="panel-copy">The starter layout begins with evenly split weights so you can focus on the decision itself first, then rebalance as you think through what matters most.</p>
+                <h2>Name the decision and define the criteria with enough room to think.</h2>
+                <p class="panel-copy">This step sets the decision title, the do/don't labels, and the full criteria deck. Each criterion card includes a short name, the plain-English question you want shown during rating, an optional note, and a weight.</p>
               </div>
               <div class="total-stack" id="setupTotalCard">
                 <span>Weight Total</span>
@@ -1257,10 +1640,10 @@
             <div class="criteria-toolbar">
               <div>
                 <h3>Criteria list</h3>
-                <p class="tiny-note">Each row should have a short criterion name, an optional plain-English question for the rating step, and a positive weight. Add or remove rows as needed.</p>
+                <p class="tiny-note">Use each card to label the criterion, phrase the rating question clearly, leave reasoning notes if helpful, and keep the total weight balanced at 100%.</p>
               </div>
               <div class="btn-row">
-                <button class="btn-secondary" id="downloadCurrentDraftFromSetupBtn" type="button"><i class="fa-solid fa-file-export" aria-hidden="true"></i><span>Download Current Draft</span></button>
+                <button class="btn-secondary" id="downloadCurrentDraftFromSetupBtn" type="button"><i class="fa-solid fa-file-export" aria-hidden="true"></i><span>Export Spreadsheet</span></button>
                 <button class="btn-secondary" id="normalizeWeightsBtn" type="button"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span>Normalize Weights</span></button>
                 <button class="btn-ghost" id="addCriterionBtn" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>Add Criterion</span></button>
               </div>
@@ -1270,18 +1653,18 @@
 
             <div class="setup-note-grid">
               <div class="callout">
-                <strong>Spreadsheet round-trip is live</strong>
-                <p>You can download the current draft as a TSV spreadsheet, edit the criteria externally, and import it right back into this page for confirmation.</p>
+                <strong>Spreadsheet editing stays available</strong>
+                <p>Export the current draft as a TSV spreadsheet whenever you want to tweak labels, questions, weights, ratings, or notes outside the page and bring them back later.</p>
               </div>
               <div class="callout">
-                <strong>Built for more than two options later</strong>
-                <p>The live UI is still a binary do-or-don't flow, but the decision header and criteria schema were widened so imported drafts can carry clearer question wording and AI notes now, with room for broader expansion later.</p>
+                <strong>The rating flow only asks one side directly</strong>
+                <p>You score the do option from 1 to 9. The page automatically assigns the leftover share of each criterion to the don't side, just like the Mia workbook.</p>
               </div>
             </div>
 
             <div class="status" id="setupStatus" aria-live="polite"></div>
             <div class="btn-row">
-              <button class="btn-secondary" id="backToIntroBtn" type="button"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Back</span></button>
+              <button class="btn-secondary" id="setupBackBtn" type="button"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Back</span></button>
               <button class="btn" id="setupContinueBtn" type="button"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>Continue to Ratings</span></button>
             </div>
           </div>
