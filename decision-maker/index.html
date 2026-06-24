@@ -290,6 +290,7 @@
     }
 
     .intro-grid,
+    .ai-kit-grid,
     .setup-note-grid,
     .review-summary-grid,
     .drivers-grid,
@@ -303,12 +304,18 @@
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
+    .ai-kit-grid,
     .setup-note-grid,
     .review-summary-grid,
     .drivers-grid,
     .score-grid,
     .rating-meta-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ai-kit-card {
+      display: grid;
+      gap: 14px;
     }
 
     .mini-card,
@@ -487,8 +494,10 @@
 
     .field input,
     .field select,
+    .field textarea,
     .review-row input,
-    .review-row select {
+    .review-row select,
+    .review-row textarea {
       width: 100%;
       min-height: 52px;
       border-radius: 14px;
@@ -499,10 +508,30 @@
       color: var(--ink);
     }
 
+    .field textarea,
+    .review-row textarea {
+      resize: vertical;
+      min-height: 110px;
+    }
+
+    .field input[type="file"] {
+      padding: 10px 12px;
+    }
+
+    .code-textarea {
+      min-height: 220px;
+      font-family: Consolas, "SFMono-Regular", Monaco, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
     .field input:focus,
     .field select:focus,
+    .field textarea:focus,
     .review-row input:focus,
-    .review-row select:focus {
+    .review-row select:focus,
+    .review-row textarea:focus {
       outline: 2px solid rgba(15, 142, 140, 0.24);
       outline-offset: 1px;
       border-color: rgba(15, 142, 140, 0.38);
@@ -529,7 +558,7 @@
     .criteria-row {
       display: grid;
       gap: 14px;
-      grid-template-columns: 48px minmax(0, 1.25fr) minmax(160px, 0.48fr) auto;
+      grid-template-columns: 48px minmax(0, 0.85fr) minmax(0, 1.2fr) minmax(150px, 0.34fr) auto;
       align-items: end;
     }
 
@@ -747,7 +776,7 @@
     .review-fields {
       display: grid;
       gap: 12px;
-      grid-template-columns: minmax(0, 1fr) minmax(150px, 0.34fr) minmax(160px, 0.36fr);
+      grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr) minmax(140px, 0.3fr) minmax(140px, 0.28fr);
       align-items: end;
     }
 
@@ -757,6 +786,12 @@
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
+    }
+
+    .review-row-foot-copy {
+      display: grid;
+      gap: 8px;
+      align-content: start;
     }
 
     .review-row-actions {
@@ -958,6 +993,7 @@
 
     @media (max-width: 980px) {
       .intro-grid,
+      .ai-kit-grid,
       .setup-note-grid,
       .review-summary-grid,
       .drivers-grid,
@@ -1115,8 +1151,75 @@
               <p>A rating of <strong>1</strong> gives that criterion entirely to the "don't" side. A rating of <strong>5</strong> splits it evenly. A rating of <strong>9</strong> gives it entirely to the "do" side.</p>
             </div>
 
+            <div class="callout">
+              <strong>Local-only draft</strong>
+              <p>This page stays local to the browser. paiden.com does not call AI for you, and refreshing the page clears the current draft so the next user starts clean.</p>
+            </div>
+
+            <div class="ai-kit-grid">
+              <div class="panel panel-soft ai-kit-card">
+                <div>
+                  <div class="kicker">AI PREP</div>
+                  <h3>Give another AI a strict template to fill.</h3>
+                  <p class="tiny-note">Paste your full situation below, copy the generated prompt, and optionally attach the blank TSV template to your AI tool so it returns something this page can read consistently.</p>
+                </div>
+
+                <div class="field">
+                  <label for="aiSituationInput">Your full situation for the AI</label>
+                  <textarea id="aiSituationInput" rows="10" placeholder="Describe the situation in your own words. Include the choice being made, the tradeoffs, the people involved, the timeline, the constraints, and anything you think matters."></textarea>
+                </div>
+
+                <div class="field">
+                  <label for="aiPromptOutput">Prompt to paste into your AI tool</label>
+                  <textarea id="aiPromptOutput" class="code-textarea" rows="18" readonly></textarea>
+                </div>
+
+                <div class="btn-row">
+                  <button class="btn-secondary" id="copyAIPromptBtn" type="button"><i class="fa-regular fa-copy" aria-hidden="true"></i><span>Copy AI Prompt</span></button>
+                  <button class="btn-ghost" id="downloadBlankTemplateBtn" type="button"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Download Blank Template</span></button>
+                  <button class="btn-ghost" id="downloadCurrentDraftBtn" type="button"><i class="fa-solid fa-file-export" aria-hidden="true"></i><span>Download Current Draft</span></button>
+                </div>
+
+                <div class="field">
+                  <label for="aiTemplatePreview">Blank template preview</label>
+                  <textarea id="aiTemplatePreview" class="code-textarea" rows="8" readonly></textarea>
+                </div>
+
+                <div class="status" id="aiKitStatus" aria-live="polite"></div>
+              </div>
+
+              <div class="panel panel-soft ai-kit-card">
+                <div>
+                  <div class="kicker">AI IMPORT</div>
+                  <h3>Bring the completed draft back into this page.</h3>
+                  <p class="tiny-note">Preferred file type: <code>.tsv</code>. Supported fallbacks: raw TSV, raw JSON, or a <code>.json</code> file. If imported weights do not total 100%, the page will normalize them before review.</p>
+                </div>
+
+                <div class="field">
+                  <label for="aiImportFileInput">Upload a completed draft file</label>
+                  <input id="aiImportFileInput" type="file" accept=".tsv,.txt,.json,application/json,text/plain,text/tab-separated-values">
+                </div>
+
+                <div class="field">
+                  <label for="aiImportTextInput">Or paste raw AI output</label>
+                  <textarea id="aiImportTextInput" class="code-textarea" rows="12" placeholder="Paste raw TSV or raw JSON here. If your AI wrapped the answer in code fences, that is okay."></textarea>
+                </div>
+
+                <div class="btn-row">
+                  <button class="btn" id="importPastedAIDraftBtn" type="button"><i class="fa-solid fa-file-import" aria-hidden="true"></i><span>Import Pasted Draft</span></button>
+                </div>
+
+                <div class="callout">
+                  <strong>Strict import contract</strong>
+                  <p>Use the provided template as-is. Do not add extra columns, extra sheets, markdown tables, bullets, or explanatory prose around the machine-readable output.</p>
+                </div>
+
+                <div class="status" id="aiImportStatus" aria-live="polite"></div>
+              </div>
+            </div>
+
             <div class="btn-row">
-              <button class="btn" id="startDecisionBtn" type="button"><i class="fa-solid fa-play" aria-hidden="true"></i><span>Start Building</span></button>
+              <button class="btn" id="startDecisionBtn" type="button"><i class="fa-solid fa-play" aria-hidden="true"></i><span>Start Manually</span></button>
             </div>
           </div>
         </section>
@@ -1154,9 +1257,10 @@
             <div class="criteria-toolbar">
               <div>
                 <h3>Criteria list</h3>
-                <p class="tiny-note">Each row should have a criterion name and a positive weight. Add or remove rows as needed.</p>
+                <p class="tiny-note">Each row should have a short criterion name, an optional plain-English question for the rating step, and a positive weight. Add or remove rows as needed.</p>
               </div>
               <div class="btn-row">
+                <button class="btn-secondary" id="downloadCurrentDraftFromSetupBtn" type="button"><i class="fa-solid fa-file-export" aria-hidden="true"></i><span>Download Current Draft</span></button>
                 <button class="btn-secondary" id="normalizeWeightsBtn" type="button"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span>Normalize Weights</span></button>
                 <button class="btn-ghost" id="addCriterionBtn" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>Add Criterion</span></button>
               </div>
@@ -1166,12 +1270,12 @@
 
             <div class="setup-note-grid">
               <div class="callout">
-                <strong>Spreadsheet import is planned next</strong>
-                <p>The page state already uses a decision header plus a criteria array, so an Excel importer can later fill this same model without changing the scoring logic.</p>
+                <strong>Spreadsheet round-trip is live</strong>
+                <p>You can download the current draft as a TSV spreadsheet, edit the criteria externally, and import it right back into this page for confirmation.</p>
               </div>
               <div class="callout">
                 <strong>Built for more than two options later</strong>
-                <p>The UI is currently a binary do-or-don't flow, but the state keeps the option labels separate from the criteria so the architecture can expand into multi-choice comparisons later.</p>
+                <p>The live UI is still a binary do-or-don't flow, but the decision header and criteria schema were widened so imported drafts can carry clearer question wording and AI notes now, with room for broader expansion later.</p>
               </div>
             </div>
 
@@ -1190,6 +1294,7 @@
                 <div class="kicker" id="ratingStepKicker">CRITERION 1 OF 4</div>
                 <h2 id="ratingCriterionTitle">Criterion</h2>
                 <p class="panel-copy" id="ratingCriterionCopy">Rate how strongly this criterion favors the do option.</p>
+                <p class="tiny-note" id="ratingCriterionNotes" hidden></p>
               </div>
               <div class="rating-weight-chip">
                 <span>Criterion Weight</span>
