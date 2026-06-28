@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>paiden.com</title>
-  <meta name="description" content="Build a weighted do-or-don't decision on paiden.com.">
+  <meta name="description" content="Build weighted two-option or multi-option decisions on paiden.com.">
   <meta name="theme-color" content="#0d1b24">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -809,6 +809,10 @@
       margin-bottom: 18px;
     }
 
+    .field-grid.is-multi {
+      grid-template-columns: 1fr;
+    }
+
     .field {
       display: grid;
       gap: 7px;
@@ -868,11 +872,170 @@
     }
 
     .criteria-list,
+    .options-list,
+    .multi-rating-list,
+    .multi-results-board,
+    .multi-results-drivers,
     .review-list,
     .driver-list,
     .breakdown-table {
       display: grid;
       gap: 12px;
+    }
+
+    .mode-switch-row,
+    .options-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .multi-setup-shell,
+    .multi-rating-shell,
+    .multi-results-shell {
+      display: grid;
+      gap: 16px;
+    }
+
+    .option-row,
+    .multi-rating-card,
+    .multi-result-card {
+      border-radius: 20px;
+      border: 1px solid rgba(16, 32, 43, 0.08);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(243,247,247,0.88));
+      padding: 18px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+    }
+
+    .option-row {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 48px minmax(0, 1fr) auto;
+      align-items: start;
+    }
+
+    .option-row-head {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .option-label-copy {
+      display: grid;
+      gap: 6px;
+    }
+
+    .option-label-copy strong {
+      font-size: 20px;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .option-row .btn-ghost {
+      justify-self: end;
+    }
+
+    .multi-rating-card {
+      display: grid;
+      gap: 14px;
+    }
+
+    .multi-rating-head,
+    .multi-result-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .multi-rating-head strong,
+    .multi-result-card-head strong {
+      font-size: 19px;
+      line-height: 1.1;
+      color: var(--ink);
+    }
+
+    .multi-rating-choice-grid {
+      display: grid;
+      grid-template-columns: repeat(9, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .multi-rating-choice {
+      min-height: 54px;
+      border-radius: 14px;
+      border: 1px solid rgba(16, 32, 43, 0.1);
+      background: rgba(255,255,255,0.9);
+      color: var(--ink);
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+    }
+
+    .multi-rating-choice:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 18px rgba(10, 29, 43, 0.08);
+      border-color: rgba(15, 142, 140, 0.26);
+    }
+
+    .multi-rating-choice.is-selected {
+      border-color: rgba(15, 142, 140, 0.34);
+      background:
+        radial-gradient(circle at top, rgba(226, 181, 95, 0.22), transparent 40%),
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(228,244,242,0.94));
+      box-shadow: 0 12px 20px rgba(15, 142, 140, 0.1);
+    }
+
+    .multi-review-ratings {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    }
+
+    .multi-review-rating {
+      display: grid;
+      gap: 6px;
+    }
+
+    .multi-results-board {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .multi-result-rank {
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 45, 66, 0.07);
+      color: var(--navy);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .multi-result-card-value {
+      font-size: clamp(28px, 3vw, 42px);
+      line-height: 0.98;
+      font-weight: 900;
+      color: var(--navy);
+    }
+
+    .multi-result-card.is-leading {
+      border-color: rgba(15, 142, 140, 0.22);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 14px 24px rgba(15, 142, 140, 0.08);
+    }
+
+    .multi-driver-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
     }
 
     .criteria-row,
@@ -1308,6 +1471,17 @@
       gap: 12px;
     }
 
+    .breakdown-table.is-scrollable {
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .multi-breakdown-grid {
+      display: grid;
+      gap: 12px;
+      min-width: 820px;
+    }
+
     .breakdown-row {
       display: grid;
       gap: 10px;
@@ -1340,6 +1514,19 @@
       color: var(--ink-soft);
     }
 
+    .breakdown-option-cell {
+      display: grid;
+      gap: 2px;
+    }
+
+    .breakdown-option-cell strong {
+      font-size: 14px;
+    }
+
+    .breakdown-option-cell span {
+      font-size: 12px;
+    }
+
     .empty-inline {
       border-radius: 18px;
       border: 1px dashed rgba(16, 32, 43, 0.16);
@@ -1364,18 +1551,24 @@
       }
 
       .criteria-fields,
-      .review-fields {
+      .review-fields,
+      .option-row {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .criteria-field-span-2,
       .review-field-span-2,
       .criteria-field-span-3,
+      .criteria-field-span-4,
       .review-field-span-4 {
         grid-column: span 2;
       }
 
       .rating-choice-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+
+      .multi-rating-choice-grid {
         grid-template-columns: repeat(5, minmax(0, 1fr));
       }
 
@@ -1414,6 +1607,7 @@
       .criteria-field-span-2,
       .review-field-span-2,
       .criteria-field-span-3,
+      .criteria-field-span-4,
       .review-field-span-4 {
         grid-column: span 1;
       }
@@ -1471,6 +1665,10 @@
       }
 
       .rating-choice-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .multi-rating-choice-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
 
@@ -1743,29 +1941,30 @@
                   <div class="step-badge" aria-hidden="true">2</div>
                   <div class="process-head-copy">
                     <h3>Copy the exact prompt into your AI tool.</h3>
-                    <p class="tiny-note">The prompt tells the AI how to choose criteria, how to word the rating questions, and how to avoid breaking the import format.</p>
-                  </div>
-                </div>
-                <div class="field">
-                  <label for="aiPromptOutput">Prompt to paste into your AI tool</label>
-                  <textarea id="aiPromptOutput" class="code-textarea" rows="18" readonly></textarea>
-                </div>
-                <div class="process-actions">
-                  <button class="btn-secondary" id="copyAIPromptBtn" type="button"><i class="fa-regular fa-copy" aria-hidden="true"></i><span>Copy AI Prompt</span></button>
-                  <button class="btn-ghost" id="downloadBlankTemplateBtn" type="button"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Download Blank TSV Template</span></button>
-                  <span class="tiny-note">If your AI accepts file uploads, attach the blank TSV template along with the prompt and ask it to fill the file directly.</span>
-                </div>
-                <div class="status" id="aiKitStatus" aria-live="polite"></div>
-              </article>
+                <p class="tiny-note">The prompt tells the AI when to use the 2-option model versus the 3+ option model, how to choose criteria, and how to avoid breaking the import format.</p>
+              </div>
+            </div>
+            <div class="field">
+              <label for="aiPromptOutput">Prompt to paste into your AI tool</label>
+              <textarea id="aiPromptOutput" class="code-textarea" rows="18" readonly></textarea>
+            </div>
+            <div class="process-actions">
+              <button class="btn-secondary" id="copyAIPromptBtn" type="button"><i class="fa-regular fa-copy" aria-hidden="true"></i><span>Copy AI Prompt</span></button>
+              <button class="btn-ghost" id="downloadBlankTemplateBtn" type="button"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Download 2-Option TSV Template</span></button>
+              <button class="btn-ghost" id="downloadMultiTemplateBtn" type="button"><i class="fa-solid fa-table-cells" aria-hidden="true"></i><span>Download 3+ Option TSV Template</span></button>
+              <span class="tiny-note">If your AI accepts file uploads, attach the matching template: use the 2-option file for binary decisions or the 3+ option file for multi-option decisions.</span>
+            </div>
+            <div class="status" id="aiKitStatus" aria-live="polite"></div>
+          </article>
 
               <article class="process-card">
                 <div class="process-head">
                   <div class="step-badge" aria-hidden="true">3</div>
                   <div class="process-head-copy">
                     <h3>Paste or upload the AI output and continue into the normal tool.</h3>
-                    <p class="tiny-note">If your AI gives you a downloadable TSV or JSON file, upload it here. If it returns raw machine-readable text, paste that instead. After import, the decision tool opens with everything prefilled so you can confirm it step by step.</p>
-                  </div>
-                </div>
+                <p class="tiny-note">If your AI gives you a downloadable TSV or JSON file, upload it here. If it returns raw machine-readable text, paste that instead. After import, the decision tool automatically stays in the 2-option flow or opens the 3+ option flow with everything prefilled so you can confirm it step by step.</p>
+              </div>
+            </div>
                 <div class="field">
                   <label for="aiImportFileInput">Upload completed AI file</label>
                   <input id="aiImportFileInput" type="file" accept=".tsv,.txt,.json,application/json,text/plain,text/tab-separated-values">
@@ -1794,7 +1993,7 @@
               <div>
                 <div class="kicker">SETUP</div>
                 <h2>Name the decision and define the criteria with enough room to think.</h2>
-                <p class="panel-copy">This step sets the decision title, the do/don't labels, and the criteria themselves. The goal here is to make each criterion easy to name, weight, and explain before you move into scoring.</p>
+                <p class="panel-copy">This step sets the decision title, the two-option labels or multi-option set, and the criteria themselves. The goal here is to make each criterion easy to name, weight, and explain before you move into scoring.</p>
               </div>
               <div class="total-stack" id="setupTotalCard">
                 <span>Weight Total</span>
@@ -1803,19 +2002,38 @@
               </div>
             </div>
 
-            <div class="field-grid">
+            <div class="field-grid" id="setupFieldsGrid">
               <div class="field">
                 <label for="decisionTitleInput">What are you deciding?</label>
                 <input id="decisionTitleInput" type="text" maxlength="140" placeholder="Example: Whether to accept the offer">
               </div>
-              <div class="field">
+              <div class="field" id="positiveChoiceField">
                 <label for="positiveChoiceInput">Do option label</label>
                 <input id="positiveChoiceInput" type="text" maxlength="80" placeholder="Accept the offer">
               </div>
-              <div class="field">
+              <div class="field" id="negativeChoiceField">
                 <label for="negativeChoiceInput">Don't option label</label>
                 <input id="negativeChoiceInput" type="text" maxlength="80" placeholder="Decline the offer">
               </div>
+            </div>
+
+            <div class="mode-switch-row">
+              <div class="tiny-note" id="setupModeCopy">Using the two-option comparison flow.</div>
+              <div class="btn-row">
+                <button class="btn-ghost" id="switchToMultiModeBtn" type="button"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i><span>Compare 3+ Options Instead</span></button>
+                <button class="btn-ghost" id="switchToBinaryModeBtn" type="button" hidden><i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i><span>Use the 2-Option Flow</span></button>
+              </div>
+            </div>
+
+            <div class="multi-setup-shell" id="multiSetupShell" hidden>
+              <div class="options-toolbar">
+                <div>
+                  <h3>Options in play</h3>
+                  <p class="tiny-note">List every real option that should compete for the weighted criteria. The multi-option path will compare them side by side instead of using a do/don't inverse.</p>
+                </div>
+                <button class="btn-ghost" id="addOptionBtn" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>Add Option</span></button>
+              </div>
+              <div class="options-list" id="optionsList"></div>
             </div>
 
             <div class="criteria-toolbar">
@@ -1860,7 +2078,7 @@
               <div class="rating-progress-bar" id="ratingProgressBar"></div>
             </div>
 
-            <div class="rating-current">
+            <div class="rating-current" id="binaryRatingShell">
               <div class="rating-value-card">
                 <div class="rating-number" id="ratingCurrentValue">5</div>
                 <div class="rating-label" id="ratingCurrentMeaning">Neutral / mixed</div>
@@ -1876,6 +2094,13 @@
             </div>
 
             <div class="rating-choice-grid" id="ratingChoiceGrid"></div>
+
+            <div class="multi-rating-shell" id="multiRatingShell" hidden>
+              <div class="rating-guidance">
+                <p>For multi-option decisions, rate <strong>every option</strong> on this criterion from <strong>1</strong> to <strong>9</strong>. The criterion's weight will be split across the options in proportion to those ratings.</p>
+              </div>
+              <div class="multi-rating-list" id="multiRatingList"></div>
+            </div>
 
             <div class="btn-row">
               <button class="btn-secondary" id="ratingBackBtn" type="button"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Previous</span></button>
@@ -1947,6 +2172,7 @@
 
             <div class="result-banner mixed" id="resultBanner">Awaiting a valid decision model.</div>
 
+            <div id="binaryResultsShell">
             <div class="score-grid">
               <article class="score-card">
                 <div class="score-card-head">
@@ -2002,6 +2228,20 @@
               </div>
               <div class="breakdown-table" id="breakdownTable"></div>
             </section>
+            </div>
+
+            <div class="multi-results-shell" id="multiResultsShell" hidden>
+              <div class="multi-results-board" id="multiResultsBoard"></div>
+              <div class="result-metrics" id="multiResultsMetrics"></div>
+              <div class="drivers-grid multi-results-drivers" id="multiResultsDrivers"></div>
+              <section class="breakdown-shell">
+                <div>
+                  <h3>Criterion breakdown</h3>
+                  <p class="tiny-note">This view shows how each weighted criterion was split across all options based on the ratings you gave them.</p>
+                </div>
+                <div class="breakdown-table" id="multiBreakdownTable"></div>
+              </section>
+            </div>
 
             <div class="btn-row">
               <button class="btn-secondary" id="backToReviewBtn" type="button"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>Adjust Inputs</span></button>
@@ -2044,6 +2284,6 @@
   <script>const lastUpdated=document.getElementById("last-updated"); if(lastUpdated) lastUpdated.textContent="Today's Date: "+new Date().toLocaleDateString();</script>
   <script src="/shared-app-header.js?v=20260421b"></script>
   <script src="/shared-footer.js?v=20260417a"></script>
-  <script src="/decision-maker/decision-maker-page.js?v=20260623f"></script>
+  <script src="/decision-maker/decision-maker-page.js?v=20260624a"></script>
 </body>
 </html>

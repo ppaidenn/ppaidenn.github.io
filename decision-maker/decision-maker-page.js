@@ -3,8 +3,10 @@
   const CLOSE_CALL_THRESHOLD = 0.03;
   const DEFAULT_POSITIVE_LABEL = "Do it";
   const DEFAULT_NEGATIVE_LABEL = "Don't do it";
+  const DEFAULT_MULTI_OPTION_COUNT = 3;
   const DEFAULT_WEIGHTS = [25, 25, 25, 25];
   const IMPORT_SCHEMA_VERSION = "paiden_decision_maker_v1";
+  const MULTI_IMPORT_SCHEMA_VERSION = "paiden_decision_maker_multi_v1";
   const TEMPLATE_HEADERS = [
     "record_type",
     "decision_title",
@@ -15,6 +17,18 @@
     "criterion_question",
     "weight_percent",
     "rating_1_to_9",
+    "criterion_notes",
+  ];
+  const MULTI_TEMPLATE_HEADERS = [
+    "record_type",
+    "decision_title",
+    "option_order",
+    "option_label",
+    "criterion_order",
+    "criterion_name",
+    "criterion_question",
+    "weight_percent",
+    "option_rating_1_to_9",
     "criterion_notes",
   ];
 
@@ -67,7 +81,18 @@
     return formatPercent((toNumber(share) || 0) * 100, 1);
   }
 
-  function makeCriterion(weight) {
+  function makeOption(label = "") {
+    return {
+      id: makeId(),
+      label,
+    };
+  }
+
+  function deriveBinaryRatingFromOptionPair(primaryRating, secondaryRating) {
+    return clampRating(Math.round(5 + (clampRating(primaryRating) - clampRating(secondaryRating)) / 2));
+  }
+
+  function makeCriterion(weight, options = []) {
     return {
       id: makeId(),
       name: "",
@@ -75,6 +100,7 @@
       notes: "",
       weight,
       rating: 5,
+      optionRatings: Object.fromEntries(options.map((option) => [option.id, 5])),
     };
   }
 
@@ -82,9 +108,11 @@
     return {
       currentStep: "intro",
       entryMode: "",
+      optionMode: "binary",
       decisionTitle: "",
       positiveLabel: DEFAULT_POSITIVE_LABEL,
       negativeLabel: DEFAULT_NEGATIVE_LABEL,
+      options: [],
       currentCriterionIndex: 0,
       criteria: DEFAULT_WEIGHTS.map(makeCriterion),
     };
@@ -107,6 +135,112 @@
 
   function decisionTitle() {
     return sanitizeText(state.decisionTitle, "This decision") || "This decision";
+  }
+
+  function isMultiOptionMode() {
+    return state.optionMode === "multi";
+  }
+
+  function getDefaultOptionLabel(index) {
+    return `Option ${index + 1}`;
+  }
+
+  function getBinaryOptions() {
+    return [
+      { id: "positive", label: positiveLabel() },
+      { id: "negative", label: negativeLabel() },
+    ];
+  }
+
+  function getOptions() {
+    return isMultiOptionMode() ? state.options : getBinaryOptions();
+  }
+
+  function getOptionLabel(optionId, fallback = "Option") {
+    const option = getOptions().find((entry) => entry.id === optionId);
+    return sanitizeText(option && option.label, fallback) || fallback;
+  }
+
+  function getOptionListText(options = getOptions()) {
+    const labels = options
+      .map((option, index) => sanitizeText(option.label, getDefaultOptionLabel(index)))
+      .filter(Boolean);
+    if (!labels.length) return "No options yet";
+    if (labels.length <= 3) return labels.join(" vs. ");
+    return `${labels.slice(0, 3).join(", ")} + ${labels.length - 3} more`;
+  }
+
+  function ensureCriterionOptionRatings(criterion, options = state.options) {
+    const nextRatings = {};
+    options.forEach((option) => {
+      nextRatings[option.id] = clampRating(criterion.optionRatings && criterion.optionRatings[option.id]);
+    });
+    return {
+      ...criterion,
+      optionRatings: nextRatings,
+    };
+  }
+
+  function ensureAllOptionRatings() {
+    if (!isMultiOptionMode()) return;
+    state.criteria = state.criteria.map((criterion) => ensureCriterionOptionRatings(criterion));
+  }
+
+  function switchToBinaryMode() {
+    const priorOptions = state.options.slice();
+    const primaryOption = priorOptions[0];
+    const secondaryOption = priorOptions[1];
+
+    if (primaryOption) {
+      state.positiveLabel = sanitizeText(primaryOption.label, positiveLabel()) || positiveLabel();
+    }
+    if (secondaryOption) {
+      state.negativeLabel = sanitizeText(secondaryOption.label, negativeLabel()) || negativeLabel();
+    }
+
+    if (primaryOption && secondaryOption) {
+      state.criteria = state.criteria.map((criterion) => {
+        const primaryRating = clampRating(criterion.optionRatings && criterion.optionRatings[primaryOption.id]);
+        const secondaryRating = clampRating(criterion.optionRatings && criterion.optionRatings[secondaryOption.id]);
+        return {
+          ...criterion,
+          rating: deriveBinaryRatingFromOptionPair(primaryRating, secondaryRating),
+        };
+      });
+    }
+
+    state.optionMode = "binary";
+    state.options = [];
+    saveState();
+  }
+
+  function switchToMultiOptionMode() {
+    if (isMultiOptionMode()) {
+      ensureAllOptionRatings();
+      saveState();
+      return;
+    }
+
+    state.optionMode = "multi";
+    if (!state.options.length) {
+      const seedLabels = [positiveLabel(), negativeLabel(), getDefaultOptionLabel(2)];
+      state.options = Array.from({ length: DEFAULT_MULTI_OPTION_COUNT }, (_, index) =>
+        makeOption(seedLabels[index] || getDefaultOptionLabel(index))
+      );
+      state.criteria = state.criteria.map((criterion) => {
+        const seededRatings = {
+          [state.options[0].id]: clampRating(criterion.rating),
+          [state.options[1].id]: clampRating(10 - clampRating(criterion.rating)),
+          [state.options[2].id]: 5,
+        };
+        return {
+          ...criterion,
+          optionRatings: seededRatings,
+        };
+      });
+    }
+    ensureAllOptionRatings();
+    saveState();
   }
 
   function getCriterionLabel(criterion, index) {
@@ -155,6 +289,82 @@
   }
 
   function computeDecisionModel() {
+    if (isMultiOptionMode()) {
+      const options = getOptions();
+      const optionTotals = new Map(options.map((option) => [option.id, 0]));
+
+      const rows = state.criteria.map((criterion, index) => {
+        const weightPercent = Math.max(0, toNumber(criterion.weight));
+        const weightShare = weightPercent / 100;
+        const optionRatings = options.map((option, optionIndex) => ({
+          optionId: option.id,
+          label: sanitizeText(option.label, getDefaultOptionLabel(optionIndex)) || getDefaultOptionLabel(optionIndex),
+          rating: clampRating(criterion.optionRatings && criterion.optionRatings[option.id]),
+        }));
+        const ratingTotal = optionRatings.reduce((sum, optionRating) => sum + optionRating.rating, 0) || options.length;
+        const optionShares = optionRatings.map((optionRating) => ({
+          ...optionRating,
+          share: weightShare * (optionRating.rating / ratingTotal),
+        }));
+
+        optionShares.forEach((optionShare) => {
+          optionTotals.set(optionShare.optionId, (optionTotals.get(optionShare.optionId) || 0) + optionShare.share);
+        });
+
+        return {
+          ...criterion,
+          index,
+          label: getCriterionLabel(criterion, index),
+          question: getCriterionQuestion(criterion),
+          weightPercent,
+          weightShare,
+          optionRatings,
+          optionShares,
+        };
+      });
+
+      const ranking = options
+        .map((option, index) => {
+          const label = sanitizeText(option.label, getDefaultOptionLabel(index)) || getDefaultOptionLabel(index);
+          const totalShare = optionTotals.get(option.id) || 0;
+          const topDrivers = rows
+            .map((row) => {
+              const optionShare = row.optionShares.find((entry) => entry.optionId === option.id);
+              const optionRating = row.optionRatings.find((entry) => entry.optionId === option.id);
+              return {
+                label: row.label,
+                share: optionShare ? optionShare.share : 0,
+                rating: optionRating ? optionRating.rating : 5,
+                weightPercent: row.weightPercent,
+              };
+            })
+            .sort((left, right) => right.share - left.share)
+            .slice(0, 3);
+
+          return {
+            ...option,
+            index,
+            label,
+            totalShare,
+            topDrivers,
+          };
+        })
+        .sort((left, right) => right.totalShare - left.totalShare);
+
+      const leadingOption = ranking[0] || null;
+      const runnerUp = ranking[1] || null;
+      const margin = leadingOption && runnerUp ? Math.abs(leadingOption.totalShare - runnerUp.totalShare) : 0;
+
+      return {
+        mode: "multi",
+        rows,
+        ranking,
+        leadingOption,
+        runnerUp,
+        margin,
+      };
+    }
+
     const rows = state.criteria.map((criterion, index) => {
       const split = calculateCriterionSplit(criterion);
       return {
@@ -183,6 +393,7 @@
       .slice(0, 3);
 
     return {
+      mode: "binary",
       rows,
       positiveTotal,
       negativeTotal,
@@ -195,16 +406,35 @@
 
   function validateSetupState() {
     const errors = [];
-    const positive = positiveLabel();
-    const negative = negativeLabel();
     const total = getWeightTotal();
 
     if (state.criteria.length < 2) {
       errors.push("Add at least two criteria before continuing.");
     }
 
-    if (positive.toLowerCase() === negative.toLowerCase()) {
-      errors.push("The do and don't labels need to be different.");
+    if (isMultiOptionMode()) {
+      if (state.options.length < 3) {
+        errors.push("Add at least three options for a multi-option comparison.");
+      }
+
+      const optionLabels = state.options.map((option, index) => sanitizeText(option.label, getDefaultOptionLabel(index)));
+      const normalizedLabels = optionLabels.map((label) => label.toLowerCase());
+
+      optionLabels.forEach((label, index) => {
+        if (!sanitizeText(label)) {
+          errors.push(`Option ${index + 1} still needs a label.`);
+        }
+      });
+
+      if (new Set(normalizedLabels).size !== normalizedLabels.length) {
+        errors.push("Each option needs a distinct label.");
+      }
+    } else {
+      const positive = positiveLabel();
+      const negative = negativeLabel();
+      if (positive.toLowerCase() === negative.toLowerCase()) {
+        errors.push("The do and don't labels need to be different.");
+      }
     }
 
     state.criteria.forEach((criterion, index) => {
@@ -247,8 +477,17 @@
     backToPathFromAIBtn: document.getElementById("backToPathFromAIBtn"),
     startManualFromAIBtn: document.getElementById("startManualFromAIBtn"),
     decisionTitleInput: document.getElementById("decisionTitleInput"),
+    setupFieldsGrid: document.getElementById("setupFieldsGrid"),
+    positiveChoiceField: document.getElementById("positiveChoiceField"),
+    negativeChoiceField: document.getElementById("negativeChoiceField"),
     positiveChoiceInput: document.getElementById("positiveChoiceInput"),
     negativeChoiceInput: document.getElementById("negativeChoiceInput"),
+    setupModeCopy: document.getElementById("setupModeCopy"),
+    switchToMultiModeBtn: document.getElementById("switchToMultiModeBtn"),
+    switchToBinaryModeBtn: document.getElementById("switchToBinaryModeBtn"),
+    multiSetupShell: document.getElementById("multiSetupShell"),
+    addOptionBtn: document.getElementById("addOptionBtn"),
+    optionsList: document.getElementById("optionsList"),
     addCriterionBtn: document.getElementById("addCriterionBtn"),
     normalizeWeightsBtn: document.getElementById("normalizeWeightsBtn"),
     downloadCurrentDraftFromSetupBtn: document.getElementById("downloadCurrentDraftFromSetupBtn"),
@@ -270,7 +509,10 @@
     ratingCurrentMeaning: document.getElementById("ratingCurrentMeaning"),
     ratingPositiveLabel: document.getElementById("ratingPositiveLabel"),
     ratingNegativeLabel: document.getElementById("ratingNegativeLabel"),
+    binaryRatingShell: document.getElementById("binaryRatingShell"),
     ratingChoiceGrid: document.getElementById("ratingChoiceGrid"),
+    multiRatingShell: document.getElementById("multiRatingShell"),
+    multiRatingList: document.getElementById("multiRatingList"),
     ratingBackBtn: document.getElementById("ratingBackBtn"),
     ratingNextBtn: document.getElementById("ratingNextBtn"),
     reviewProjectedDirection: document.getElementById("reviewProjectedDirection"),
@@ -290,6 +532,12 @@
     resultDirectionText: document.getElementById("resultDirectionText"),
     resultDirectionHint: document.getElementById("resultDirectionHint"),
     resultBanner: document.getElementById("resultBanner"),
+    binaryResultsShell: document.getElementById("binaryResultsShell"),
+    multiResultsShell: document.getElementById("multiResultsShell"),
+    multiResultsBoard: document.getElementById("multiResultsBoard"),
+    multiResultsMetrics: document.getElementById("multiResultsMetrics"),
+    multiResultsDrivers: document.getElementById("multiResultsDrivers"),
+    multiBreakdownTable: document.getElementById("multiBreakdownTable"),
     positiveScoreLabel: document.getElementById("positiveScoreLabel"),
     positiveScoreValue: document.getElementById("positiveScoreValue"),
     positiveScoreBar: document.getElementById("positiveScoreBar"),
@@ -311,6 +559,7 @@
     aiPromptOutput: document.getElementById("aiPromptOutput"),
     copyAIPromptBtn: document.getElementById("copyAIPromptBtn"),
     downloadBlankTemplateBtn: document.getElementById("downloadBlankTemplateBtn"),
+    downloadMultiTemplateBtn: document.getElementById("downloadMultiTemplateBtn"),
     aiKitStatus: document.getElementById("aiKitStatus"),
     aiImportFileInput: document.getElementById("aiImportFileInput"),
     aiImportTextInput: document.getElementById("aiImportTextInput"),
@@ -337,14 +586,23 @@
       else button.removeAttribute("aria-current");
     });
 
+    const ratingSummary = isMultiOptionMode()
+      ? "Work through each criterion and rate every option on the same 1 to 9 scale."
+      : "Work through each criterion and rate how much it supports the do option.";
+    const resultsSummary = isMultiOptionMode()
+      ? "See the weighted ranking, the lead over the runner-up, and the criteria that powered each option."
+      : "See the weighted outcome, the score margin, and the biggest drivers.";
+
     const summaryByStep = {
       intro: "Start with a clean overview and a vertical walkthrough of how to read the decision model.",
       path: "Choose whether you want AI help drafting the model or a blank manual start.",
       ai: "Tell the story, copy the strict prompt, and paste or upload the AI draft back into the tool.",
-      setup: "Name the choice, shape the criteria cards, and make the weights total 100%.",
-      ratings: "Work through each criterion and rate how much it supports the do option.",
+      setup: isMultiOptionMode()
+        ? "Name the decision, list the competing options, shape the criteria cards, and make the weights total 100%."
+        : "Name the choice, shape the criteria cards, and make the weights total 100%.",
+      ratings: ratingSummary,
       review: "Edit every weight, question, and rating on one page before finalizing the result.",
-      results: "See the weighted outcome, the score margin, and the biggest drivers.",
+      results: resultsSummary,
     };
 
     dom.progressSummaryText.textContent = summaryByStep[state.currentStep] || "";
@@ -412,11 +670,48 @@
     dom.decisionTitleInput.value = state.decisionTitle;
     dom.positiveChoiceInput.value = state.positiveLabel;
     dom.negativeChoiceInput.value = state.negativeLabel;
+    document.body.setAttribute("data-decision-maker-view", isMultiOptionMode() ? "multi" : "binary");
+    dom.setupFieldsGrid.classList.toggle("is-multi", isMultiOptionMode());
+    dom.positiveChoiceField.hidden = isMultiOptionMode();
+    dom.negativeChoiceField.hidden = isMultiOptionMode();
+    dom.multiSetupShell.hidden = !isMultiOptionMode();
+    dom.switchToMultiModeBtn.hidden = isMultiOptionMode();
+    dom.switchToBinaryModeBtn.hidden = !isMultiOptionMode();
+    dom.setupModeCopy.textContent = isMultiOptionMode()
+      ? `Comparing ${state.options.length} options side by side.`
+      : "Using the two-option comparison flow.";
     if (dom.setupBackBtn) {
       const backLabel = state.entryMode === "ai" ? "Back to AI Assist" : "Back to Path Choice";
       const backSpan = dom.setupBackBtn.querySelector("span");
       if (backSpan) backSpan.textContent = backLabel;
     }
+    renderOptionsList();
+  }
+
+  function renderOptionsList() {
+    if (!dom.optionsList) return;
+    if (!isMultiOptionMode()) {
+      dom.optionsList.innerHTML = "";
+      return;
+    }
+
+    const canRemove = state.options.length > 3;
+    dom.optionsList.innerHTML = state.options
+      .map((option, index) => {
+        const label = sanitizeText(option.label, getDefaultOptionLabel(index)) || getDefaultOptionLabel(index);
+        return `
+          <div class="option-row" data-option-id="${escapeHtml(option.id)}">
+            <div class="criteria-count" aria-hidden="true">${index + 1}</div>
+            <div class="field">
+              <label for="option-label-${escapeHtml(option.id)}">Option ${index + 1}</label>
+              <input id="option-label-${escapeHtml(option.id)}" data-option-label type="text" maxlength="120" value="${escapeHtml(label)}" placeholder="Example: Stay in current role">
+              <p class="tiny-note">This option will compete directly against the others on every weighted criterion.</p>
+            </div>
+            <button class="btn-ghost" data-remove-option type="button" ${canRemove ? "" : "disabled"}><i class="fa-solid fa-minus" aria-hidden="true"></i><span>Remove</span></button>
+          </div>
+        `;
+      })
+      .join("");
   }
 
   function renderCriteriaRows() {
@@ -486,7 +781,13 @@
     }
 
     if (validation.ok) {
-      setStatus(dom.setupStatus, "The setup looks good. You are ready for the rating pass.", "success");
+      setStatus(
+        dom.setupStatus,
+        isMultiOptionMode()
+          ? "The setup looks good. You are ready to rate each criterion across all options."
+          : "The setup looks good. You are ready for the rating pass.",
+        "success"
+      );
       dom.setupContinueBtn.disabled = false;
     } else {
       setStatus(dom.setupStatus, validation.errors[0], "error");
@@ -566,6 +867,31 @@
     }).join("");
   }
 
+  function renderMultiRatingList(criterion) {
+    const options = getOptions();
+    dom.multiRatingList.innerHTML = options
+      .map((option, index) => {
+        const label = sanitizeText(option.label, getDefaultOptionLabel(index)) || getDefaultOptionLabel(index);
+        const currentRating = clampRating(criterion.optionRatings && criterion.optionRatings[option.id]);
+        return `
+          <article class="multi-rating-card" data-option-id="${escapeHtml(option.id)}">
+            <div class="multi-rating-head">
+              <strong>${escapeHtml(label)}</strong>
+              <span class="criterion-rating-pill">Current rating: ${currentRating}/9</span>
+            </div>
+            <div class="multi-rating-choice-grid">
+              ${Array.from({ length: 9 }, (_, buttonIndex) => {
+                const value = buttonIndex + 1;
+                return `<button class="multi-rating-choice ${value === currentRating ? "is-selected" : ""}" type="button" data-multi-rating-value="${value}" data-multi-option-id="${escapeHtml(option.id)}">${value}</button>`;
+              }).join("")}
+            </div>
+            <p class="tiny-note">Higher numbers mean this criterion supports "${escapeHtml(label)}" more strongly than the other options in the set.</p>
+          </article>
+        `;
+      })
+      .join("");
+  }
+
   function renderRatingStep() {
     const validation = validateSetupState();
     if (!validation.ok) {
@@ -576,30 +902,48 @@
 
     const index = clamp(state.currentCriterionIndex, 0, Math.max(state.criteria.length - 1, 0));
     state.currentCriterionIndex = index;
+    if (isMultiOptionMode()) {
+      ensureAllOptionRatings();
+    }
     const criterion = state.criteria[index];
-    const split = calculateCriterionSplit(criterion);
     const totalCriteria = state.criteria.length;
-    const positive = positiveLabel();
-    const negative = negativeLabel();
     const question = getCriterionQuestion(criterion);
     const notes = sanitizeText(criterion.notes, "");
 
     dom.ratingStepKicker.textContent = `CRITERION ${index + 1} OF ${totalCriteria}`;
     dom.ratingCriterionTitle.textContent = getCriterionLabel(criterion, index);
-    dom.ratingCriterionCopy.textContent = question || `Rate how strongly this criterion favors "${positive}" over "${negative}".`;
     dom.ratingCriterionNotes.hidden = !notes;
     dom.ratingCriterionNotes.textContent = notes || "";
-    dom.ratingCriterionWeight.textContent = formatPercent(split.weightPercent, 1);
-    dom.ratingDecisionLine.textContent = `${decisionTitle()} - rating the "${positive}" side`;
     dom.ratingProgressBar.style.width = `${((index + 1) / totalCriteria) * 100}%`;
-    dom.ratingCurrentValue.textContent = String(split.rating);
-    dom.ratingCurrentMeaning.textContent = split.meaning;
-    dom.ratingPositiveLabel.textContent = positive;
-    dom.ratingNegativeLabel.textContent = negative;
-    Array.from(dom.ratingChoiceGrid.querySelectorAll("[data-rating-value]")).forEach((button) => {
-      const value = clampRating(button.getAttribute("data-rating-value"));
-      button.classList.toggle("is-selected", value === split.rating);
-    });
+
+    if (isMultiOptionMode()) {
+      dom.binaryRatingShell.hidden = true;
+      dom.ratingChoiceGrid.hidden = true;
+      dom.multiRatingShell.hidden = false;
+      dom.ratingCriterionCopy.textContent =
+        question || `Rate how strongly this criterion supports each option in "${decisionTitle()}".`;
+      dom.ratingCriterionWeight.textContent = formatPercent(Math.max(0, toNumber(criterion.weight)), 1);
+      dom.ratingDecisionLine.textContent = `${decisionTitle()} - splitting this criterion across ${state.options.length} options`;
+      renderMultiRatingList(criterion);
+    } else {
+      const split = calculateCriterionSplit(criterion);
+      const positive = positiveLabel();
+      const negative = negativeLabel();
+      dom.binaryRatingShell.hidden = false;
+      dom.ratingChoiceGrid.hidden = false;
+      dom.multiRatingShell.hidden = true;
+      dom.ratingCriterionCopy.textContent = question || `Rate how strongly this criterion favors "${positive}" over "${negative}".`;
+      dom.ratingCriterionWeight.textContent = formatPercent(split.weightPercent, 1);
+      dom.ratingDecisionLine.textContent = `${decisionTitle()} - rating the "${positive}" side`;
+      dom.ratingCurrentValue.textContent = String(split.rating);
+      dom.ratingCurrentMeaning.textContent = split.meaning;
+      dom.ratingPositiveLabel.textContent = positive;
+      dom.ratingNegativeLabel.textContent = negative;
+      Array.from(dom.ratingChoiceGrid.querySelectorAll("[data-rating-value]")).forEach((button) => {
+        const value = clampRating(button.getAttribute("data-rating-value"));
+        button.classList.toggle("is-selected", value === split.rating);
+      });
+    }
 
     dom.ratingBackBtn.querySelector("span").textContent = index === 0 ? "Back to Setup" : "Previous Criterion";
     dom.ratingNextBtn.querySelector("span").textContent =
@@ -609,10 +953,80 @@
   }
 
   function renderReviewRows() {
+    const model = computeDecisionModel();
+    const rows = model.rows;
+
+    if (isMultiOptionMode()) {
+      dom.reviewList.innerHTML = rows
+        .map((row) => {
+          return `
+            <div class="review-row" data-review-id="${escapeHtml(row.id)}">
+              <div class="review-row-top">
+                <div class="review-row-title">
+                  <div class="review-count" aria-hidden="true">${row.index + 1}</div>
+                  <div class="review-row-title-copy">
+                    <strong data-review-title>${escapeHtml(row.label)}</strong>
+                    <p class="tiny-note">Adjust the criterion details, then rate every option below before opening the final ranking.</p>
+                  </div>
+                </div>
+                <div class="review-row-actions">
+                  <span class="criterion-rating-pill">${state.options.length} options</span>
+                  <button class="linkish-btn" type="button" data-review-focus>Open in rating flow</button>
+                </div>
+              </div>
+              <div class="review-fields">
+                <div class="field review-field-span-2">
+                  <label for="review-name-${escapeHtml(row.id)}">Criterion Name</label>
+                  <input id="review-name-${escapeHtml(row.id)}" data-review-name type="text" maxlength="120" value="${escapeHtml(row.name)}" placeholder="Criterion ${row.index + 1}">
+                </div>
+                <div class="field">
+                  <label for="review-weight-${escapeHtml(row.id)}">Weight (%)</label>
+                  <input id="review-weight-${escapeHtml(row.id)}" data-review-weight type="number" min="0" max="100" step="0.1" inputmode="decimal" value="${escapeHtml(row.weightPercent)}">
+                </div>
+                <div class="field review-field-span-4">
+                  <label for="review-question-${escapeHtml(row.id)}">Question Shown During Rating</label>
+                  <textarea id="review-question-${escapeHtml(row.id)}" data-review-question rows="4" maxlength="220" placeholder="Plain-English question for this criterion">${escapeHtml(row.question || "")}</textarea>
+                </div>
+                <div class="field review-field-span-4">
+                  <label for="review-notes-${escapeHtml(row.id)}">Notes or Reasoning</label>
+                  <textarea id="review-notes-${escapeHtml(row.id)}" data-review-notes rows="4" maxlength="320" placeholder="Optional notes explaining the weight, question wording, or ratings">${escapeHtml(row.notes || "")}</textarea>
+                </div>
+                <div class="field review-field-span-4">
+                  <label>Option Ratings</label>
+                  <div class="multi-review-ratings">
+                    ${row.optionRatings.map((optionRating) => {
+                      return `
+                        <div class="multi-review-rating">
+                          <label for="review-rating-${escapeHtml(row.id)}-${escapeHtml(optionRating.optionId)}">${escapeHtml(optionRating.label)}</label>
+                          <select id="review-rating-${escapeHtml(row.id)}-${escapeHtml(optionRating.optionId)}" data-review-option-rating data-option-id="${escapeHtml(optionRating.optionId)}">
+                            ${Array.from({ length: 9 }, (_, idx) => {
+                              const value = idx + 1;
+                              return `<option value="${value}" ${value === optionRating.rating ? "selected" : ""}>${value}</option>`;
+                            }).join("")}
+                          </select>
+                        </div>
+                      `;
+                    }).join("")}
+                  </div>
+                </div>
+              </div>
+              <div class="review-row-foot">
+                <div class="review-row-foot-copy">
+                  <span class="tiny-note">This criterion's weight will be split across the options in proportion to the ratings shown above.</span>
+                </div>
+                <div class="review-row-actions">
+                  <span class="tiny-note" data-review-weight-note>${formatPercent(row.weightPercent, 1)} total weight</span>
+                </div>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+      return;
+    }
+
     const positive = positiveLabel();
     const negative = negativeLabel();
-    const rows = computeDecisionModel().rows;
-
     dom.reviewList.innerHTML = rows
       .map((row) => {
         return `
@@ -657,17 +1071,17 @@
                 <textarea id="review-notes-${escapeHtml(row.id)}" data-review-notes rows="4" maxlength="320" placeholder="Optional notes explaining the weight, question wording, or rating">${escapeHtml(row.notes || "")}</textarea>
               </div>
             </div>
-            <div class="review-row-foot">
-              <div class="review-row-foot-copy">
-                <span class="tiny-note">This criterion currently splits as ${escapeHtml(positive)} ${formatShare(row.positiveShare)} and ${escapeHtml(negative)} ${formatShare(row.negativeShare)}.</span>
-              </div>
-              <div class="review-row-actions">
-                <span class="tiny-note">Rating ${row.rating}/9</span>
+              <div class="review-row-foot">
+                <div class="review-row-foot-copy">
+                  <span class="tiny-note">This criterion currently splits as ${escapeHtml(positive)} ${formatShare(row.positiveShare)} and ${escapeHtml(negative)} ${formatShare(row.negativeShare)}.</span>
+                </div>
+                <div class="review-row-actions">
+                  <span class="tiny-note" data-review-rating-note>Rating ${row.rating}/9</span>
+                </div>
               </div>
             </div>
-          </div>
-        `;
-      })
+          `;
+        })
       .join("");
   }
 
@@ -675,7 +1089,9 @@
     const validation = validateSetupState();
 
     dom.reviewDecisionTitle.textContent = decisionTitle();
-    dom.reviewDecisionLabels.textContent = `${positiveLabel()} vs. ${negativeLabel()}`;
+    dom.reviewDecisionLabels.textContent = isMultiOptionMode()
+      ? getOptionListText()
+      : `${positiveLabel()} vs. ${negativeLabel()}`;
     dom.reviewWeightSummary.textContent = `${formatPercent(validation.total, 1)} total weight`;
     dom.reviewWeightSummaryNote.textContent = validation.ok
       ? "The model is balanced and ready to score."
@@ -720,6 +1136,27 @@
       .join("");
   }
 
+  function renderMultiDriverList(container, rows, emptyCopy) {
+    if (!rows.length) {
+      container.innerHTML = `<div class="empty-inline">${escapeHtml(emptyCopy)}</div>`;
+      return;
+    }
+
+    container.innerHTML = rows
+      .map((row) => {
+        return `
+          <article class="driver-item">
+            <div class="driver-item-head">
+              <h4>${escapeHtml(row.label)}</h4>
+              <span class="meaning-pill positive">${formatShare(row.share)} weighted share</span>
+            </div>
+            <p>Weight ${formatPercent(row.weightPercent, 1)} | Rating ${row.rating}/9 on this criterion</p>
+          </article>
+        `;
+      })
+      .join("");
+  }
+
   function renderBreakdownTable(model) {
     const rows = [
       `
@@ -751,6 +1188,47 @@
     dom.breakdownTable.innerHTML = rows.join("");
   }
 
+  function renderMultiBreakdownTable(model) {
+    const options = model.ranking;
+    const gridTemplate = `minmax(180px, 1.15fr) minmax(110px, 0.38fr) ${options.map(() => "minmax(150px, 0.55fr)").join(" ")}`;
+    const rows = [
+      `
+        <div class="breakdown-row head is-multi" style="grid-template-columns: ${gridTemplate};">
+          <div>Criterion</div>
+          <div>Weight</div>
+          ${options.map((option) => `<div>${escapeHtml(option.label)}</div>`).join("")}
+        </div>
+      `,
+    ];
+
+    model.rows.forEach((row) => {
+      rows.push(`
+        <div class="breakdown-row is-multi" style="grid-template-columns: ${gridTemplate};">
+          <div>
+            <strong>${escapeHtml(row.label)}</strong>
+            ${row.question ? `<div class="tiny-note">${escapeHtml(row.question)}</div>` : ""}
+          </div>
+          <span>${formatPercent(row.weightPercent, 1)}</span>
+          ${options
+            .map((option) => {
+              const optionRating = row.optionRatings.find((entry) => entry.optionId === option.id);
+              const optionShare = row.optionShares.find((entry) => entry.optionId === option.id);
+              return `
+                <div class="breakdown-option-cell">
+                  <strong>${optionRating ? optionRating.rating : 5}/9</strong>
+                  <span>${formatShare(optionShare ? optionShare.share : 0)}</span>
+                </div>
+              `;
+            })
+            .join("")}
+        </div>
+      `);
+    });
+
+    dom.multiBreakdownTable.classList.add("is-scrollable");
+    dom.multiBreakdownTable.innerHTML = `<div class="multi-breakdown-grid">${rows.join("")}</div>`;
+  }
+
   function renderResults() {
     const validation = validateSetupState();
     if (!validation.ok) {
@@ -761,6 +1239,102 @@
     }
 
     const model = computeDecisionModel();
+
+    dom.binaryResultsShell.hidden = isMultiOptionMode();
+    dom.multiResultsShell.hidden = !isMultiOptionMode();
+
+    if (model.mode === "multi") {
+      const leader = model.leadingOption;
+      const runnerUp = model.runnerUp;
+      const isClose = Boolean(leader && runnerUp && model.margin < CLOSE_CALL_THRESHOLD);
+      const fallbackTitle = decisionTitle();
+      dom.resultsTitle.textContent = fallbackTitle;
+      dom.resultBanner.classList.remove("positive", "negative", "mixed");
+
+      if (!leader) {
+        dom.resultDirectionText.textContent = "No ranking yet";
+        dom.resultDirectionHint.textContent = "Add options and criterion ratings to generate the final ordering.";
+        dom.resultBanner.classList.add("mixed");
+        dom.resultBanner.textContent = "The multi-option model is still incomplete.";
+        dom.resultsSummary.textContent =
+          "This result view will rank the competing options once every criterion and option rating is filled in.";
+        dom.multiResultsBoard.innerHTML = `<div class="empty-inline">No option ranking is available yet.</div>`;
+        dom.multiResultsMetrics.innerHTML = "";
+        dom.multiResultsDrivers.innerHTML = "";
+        dom.multiBreakdownTable.innerHTML = "";
+        return;
+      }
+
+      dom.resultDirectionText.textContent = leader.label;
+      dom.resultDirectionHint.textContent = runnerUp
+        ? `Lead over ${runnerUp.label}: ${formatShare(model.margin)}.`
+        : "Only one fully scored option is available.";
+
+      if (isClose) {
+        dom.resultBanner.classList.add("mixed");
+        dom.resultBanner.textContent = `Narrow lead: ${leader.label} over ${runnerUp.label}`;
+        dom.resultsSummary.textContent =
+          `${leader.label} finishes first, but only by ${formatShare(model.margin)} over ${runnerUp.label}. Treat this as a close finish and use the driver cards below to pressure-test the ranking.`;
+      } else {
+        dom.resultBanner.classList.add("positive");
+        dom.resultBanner.textContent = `Suggested option: ${leader.label}`;
+        dom.resultsSummary.textContent = runnerUp
+          ? `${leader.label} ranks first in the weighted model, ahead of ${runnerUp.label}. The board below shows the full ordering and the criteria that most helped each option.`
+          : `${leader.label} is the only fully scored option in the current model.`;
+      }
+
+      dom.multiResultsBoard.innerHTML = model.ranking
+        .map((option, index) => {
+          const rankCopy =
+            index === 0 ? "Leader" : index === 1 ? "Runner-up" : `Rank ${index + 1}`;
+          const chipClass = index === 0 ? "positive" : "mixed";
+          const chipCopy = index === 0 ? "Top score" : "Weighted total";
+          return `
+            <article class="multi-result-card ${index === 0 ? "is-leading" : ""}">
+              <div class="multi-result-card-head">
+                <span class="multi-result-rank">${escapeHtml(rankCopy)}</span>
+                <span class="score-chip ${chipClass}">${escapeHtml(chipCopy)}</span>
+              </div>
+              <strong>${escapeHtml(option.label)}</strong>
+              <div class="multi-result-card-value">${formatShare(option.totalShare)}</div>
+              <p class="tiny-note">${escapeHtml(option.label)} receives ${formatShare(option.totalShare)} of the total weighted model.</p>
+            </article>
+          `;
+        })
+        .join("");
+
+      dom.multiResultsMetrics.innerHTML = [
+        `<div class="result-metric"><strong>${formatShare(model.margin)}</strong><p class="tiny-note">Lead over the runner-up.</p></div>`,
+        `<div class="result-metric"><strong>${state.options.length} ${state.options.length === 1 ? "option" : "options"}</strong><p class="tiny-note">Competing choices in this comparison.</p></div>`,
+        `<div class="result-metric"><strong>${state.criteria.length} ${state.criteria.length === 1 ? "criterion" : "criteria"}</strong><p class="tiny-note">Weighted factors used in the ranking.</p></div>`,
+      ].join("");
+
+      dom.multiResultsDrivers.innerHTML = model.ranking
+        .map((option) => {
+          const containerId = `multi-driver-${escapeHtml(option.id)}`;
+          return `
+            <section class="driver-card">
+              <strong>Strongest for ${escapeHtml(option.label)}</strong>
+              <div class="driver-list" id="${containerId}"></div>
+            </section>
+          `;
+        })
+        .join("");
+
+      model.ranking.forEach((option) => {
+        const container = document.getElementById(`multi-driver-${option.id}`);
+        if (!container) return;
+        renderMultiDriverList(
+          container,
+          option.topDrivers,
+          `No weighted criteria currently give ${option.label} a measurable share.`
+        );
+      });
+
+      renderMultiBreakdownTable(model);
+      return;
+    }
+
     const positive = positiveLabel();
     const negative = negativeLabel();
     const directionText =
@@ -854,6 +1428,13 @@
       criterion.weight = Math.max(0, toNumber(target.value));
     } else if (target.matches("[data-review-rating]")) {
       criterion.rating = clampRating(target.value);
+    } else if (target.matches("[data-review-option-rating]")) {
+      const optionId = target.getAttribute("data-option-id");
+      if (!optionId) return;
+      criterion.optionRatings = {
+        ...(criterion.optionRatings || {}),
+        [optionId]: clampRating(target.value),
+      };
     } else {
       return;
     }
@@ -864,13 +1445,26 @@
   }
 
   function updateReviewRow(rowElement, criterion) {
+    const index = state.criteria.findIndex((entry) => entry.id === criterion.id);
+
+    if (isMultiOptionMode()) {
+      const title = rowElement.querySelector("[data-review-title]");
+      const weightNote = rowElement.querySelector("[data-review-weight-note]");
+      if (title) {
+        title.textContent = getCriterionLabel(criterion, index);
+      }
+      if (weightNote) {
+        weightNote.textContent = `${formatPercent(Math.max(0, toNumber(criterion.weight)), 1)} total weight`;
+      }
+      return;
+    }
+
     const split = calculateCriterionSplit(criterion);
     const meaning = rowElement.querySelector("[data-review-meaning]");
     const title = rowElement.querySelector("[data-review-title]");
     const note = rowElement.querySelector(".review-row-foot-copy .tiny-note");
-    const ratingNote = rowElement.querySelector(".review-row-actions .tiny-note");
+    const ratingNote = rowElement.querySelector("[data-review-rating-note]");
     const tone = getMeaningTone(split.rating);
-    const index = state.criteria.findIndex((entry) => entry.id === criterion.id);
 
     if (meaning) {
       meaning.textContent = getRatingMeaning(split.rating);
@@ -894,14 +1488,19 @@
   function hasMeaningfulCurrentDraft() {
     return Boolean(
       sanitizeText(state.decisionTitle) ||
+      isMultiOptionMode() ||
       sanitizeText(state.positiveLabel) !== DEFAULT_POSITIVE_LABEL ||
       sanitizeText(state.negativeLabel) !== DEFAULT_NEGATIVE_LABEL ||
+      state.options.some((option, index) => {
+        return sanitizeText(option.label, getDefaultOptionLabel(index)) !== getDefaultOptionLabel(index);
+      }) ||
       state.criteria.some((criterion) => {
         return (
           sanitizeText(criterion.name) ||
           sanitizeText(criterion.question) ||
           sanitizeText(criterion.notes) ||
-          clampRating(criterion.rating) !== 5
+          clampRating(criterion.rating) !== 5 ||
+          Object.values(criterion.optionRatings || {}).some((rating) => clampRating(rating) !== 5)
         );
       })
     );
@@ -930,7 +1529,7 @@
     navigateTo("setup");
   }
 
-  function buildBlankTemplateRows() {
+  function buildBinaryBlankTemplateRows() {
     return [
       TEMPLATE_HEADERS.join("\t"),
       ["meta", "Replace with the full decision title", "Replace with the do option", "Replace with the dont option", "", "", "", "", "", ""].join("\t"),
@@ -940,11 +1539,33 @@
     ];
   }
 
-  function buildBlankTemplateTsv() {
-    return buildBlankTemplateRows().join("\n");
+  function buildMultiBlankTemplateRows() {
+    return [
+      MULTI_TEMPLATE_HEADERS.join("\t"),
+      ["meta", "Replace with the full decision title", "", "", "", "", "", "", "", ""].join("\t"),
+      ["option", "", "1", "Replace with option 1", "", "", "", "", "", ""].join("\t"),
+      ["option", "", "2", "Replace with option 2", "", "", "", "", "", ""].join("\t"),
+      ["option", "", "3", "Replace with option 3", "", "", "", "", "", ""].join("\t"),
+      ["criterion", "", "", "", "1", "Replace with a short criterion name", "Replace with the question shown to the user during rating", "34", "", "Explain why this criterion matters and why it got this weight."].join("\t"),
+      ["criterion", "", "", "", "2", "Replace with a short criterion name", "Replace with the question shown to the user during rating", "33", "", "Explain why this criterion matters and why it got this weight."].join("\t"),
+      ["criterion", "", "", "", "3", "Replace with a short criterion name", "Replace with the question shown to the user during rating", "33", "", "Explain why this criterion matters and why it got this weight."].join("\t"),
+      ["rating", "", "1", "", "1", "", "", "", "7", ""].join("\t"),
+      ["rating", "", "2", "", "1", "", "", "", "5", ""].join("\t"),
+      ["rating", "", "3", "", "1", "", "", "", "4", ""].join("\t"),
+      ["rating", "", "1", "", "2", "", "", "", "6", ""].join("\t"),
+      ["rating", "", "2", "", "2", "", "", "", "8", ""].join("\t"),
+      ["rating", "", "3", "", "2", "", "", "", "4", ""].join("\t"),
+      ["rating", "", "1", "", "3", "", "", "", "5", ""].join("\t"),
+      ["rating", "", "2", "", "3", "", "", "", "3", ""].join("\t"),
+      ["rating", "", "3", "", "3", "", "", "", "9", ""].join("\t"),
+    ];
   }
 
-  function buildCurrentDraftTsv() {
+  function buildBlankTemplateTsv(mode = "binary") {
+    return (mode === "multi" ? buildMultiBlankTemplateRows() : buildBinaryBlankTemplateRows()).join("\n");
+  }
+
+  function buildBinaryDraftTsv() {
     const rows = [TEMPLATE_HEADERS.join("\t")];
     rows.push([
       "meta",
@@ -977,6 +1598,64 @@
     return rows.join("\n");
   }
 
+  function buildMultiDraftTsv() {
+    const rows = [MULTI_TEMPLATE_HEADERS.join("\t")];
+    rows.push(["meta", sanitizeInlineText(state.decisionTitle, ""), "", "", "", "", "", "", "", ""].join("\t"));
+
+    state.options.forEach((option, index) => {
+      rows.push([
+        "option",
+        "",
+        String(index + 1),
+        sanitizeInlineText(option.label, getDefaultOptionLabel(index)),
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+      ].join("\t"));
+    });
+
+    state.criteria.forEach((criterion, index) => {
+      rows.push([
+        "criterion",
+        "",
+        "",
+        "",
+        String(index + 1),
+        sanitizeInlineText(criterion.name, ""),
+        sanitizeInlineText(criterion.question, ""),
+        String(Math.max(0, toNumber(criterion.weight))),
+        "",
+        sanitizeInlineText(criterion.notes, ""),
+      ].join("\t"));
+    });
+
+    state.criteria.forEach((criterion, criterionIndex) => {
+      state.options.forEach((option, optionIndex) => {
+        rows.push([
+          "rating",
+          "",
+          String(optionIndex + 1),
+          "",
+          String(criterionIndex + 1),
+          "",
+          "",
+          "",
+          String(clampRating(criterion.optionRatings && criterion.optionRatings[option.id])),
+          "",
+        ].join("\t"));
+      });
+    });
+
+    return rows.join("\n");
+  }
+
+  function buildCurrentDraftTsv() {
+    return isMultiOptionMode() ? buildMultiDraftTsv() : buildBinaryDraftTsv();
+  }
+
   function buildJsonSchemaExample() {
     return JSON.stringify(
       {
@@ -1000,6 +1679,36 @@
     );
   }
 
+  function buildMultiJsonSchemaExample() {
+    return JSON.stringify(
+      {
+        schema_version: MULTI_IMPORT_SCHEMA_VERSION,
+        decision_title: "Replace with the full decision title",
+        options: [
+          { order: 1, label: "Replace with option 1" },
+          { order: 2, label: "Replace with option 2" },
+          { order: 3, label: "Replace with option 3" },
+        ],
+        criteria: [
+          {
+            order: 1,
+            name: "Replace with a short criterion name",
+            question: "Replace with the question shown to the user during rating",
+            weight_percent: 34,
+            notes: "Replace with short reasoning for this criterion and weight",
+            option_ratings: [
+              { option_order: 1, rating_1_to_9: 7 },
+              { option_order: 2, rating_1_to_9: 5 },
+              { option_order: 3, rating_1_to_9: 4 },
+            ],
+          },
+        ],
+      },
+      null,
+      2
+    );
+  }
+
   function buildAIPrompt(situationText) {
     const safeSituation = sanitizeText(situationText)
       ? sanitizeText(situationText)
@@ -1007,33 +1716,54 @@
 
     return [
       "You are filling a machine-readable decision template for a local paiden.com page.",
-      "Your job is to turn the user's situation into a binary do-or-dont decision model.",
+      "Your job is to turn the user's situation into a structured weighted decision model.",
+      "",
+      "First decide how many real options are in play:",
+      "- If the situation is truly a two-option choice, or the user explicitly framed it as do versus don't, use the binary format.",
+      "- If the situation contains three or more real competing options, use the multi-option format. Do not collapse a real multi-option choice into a binary do/don't shortcut.",
       "",
       "Output rules:",
-      "- Preferred output: if a TSV template file is attached, fill that exact file structure and return the completed TSV file.",
-      `- Fallback output: return ONLY raw JSON using the exact schema version "${IMPORT_SCHEMA_VERSION}" shown below.`,
+      "- Preferred output: if a matching TSV template file is attached, fill that exact TSV structure and return the completed TSV file.",
+      `- Fallback output: return ONLY raw JSON using schema version "${IMPORT_SCHEMA_VERSION}" for binary decisions or "${MULTI_IMPORT_SCHEMA_VERSION}" for multi-option decisions.`,
       "- Do not add markdown, commentary, code fences, bullet points, or any extra prose around the machine-readable output.",
       "- Do not change column names, field names, record_type values, or the overall structure.",
-      "- Do not add extra sheets, extra columns, or summary rows.",
+      "- Do not add extra sheets, extra columns, summary paragraphs, or summary rows.",
       "- Do not place tab characters or line breaks inside any cell value. Replace them with plain spaces.",
-      "- Choose the number of criterion rows based on the situation. Do not default to five criteria.",
+      "- Choose the number of criteria based on the situation. Do not default to five criteria.",
       "- Use the fewest criteria that still capture the real tradeoffs clearly. Most situations should land between 3 and 8 criteria, but fewer or more is acceptable when justified.",
-      "- Use 2 to 10 criterion rows total.",
+      "- Use 2 to 10 criteria total.",
       "- criterion_order must be sequential whole numbers starting at 1.",
       "- weight_percent values must be positive numbers that sum to exactly 100.0.",
-      "- rating_1_to_9 values must be whole integers from 1 to 9.",
-      "- A rating of 1 strongly favors the dont option, 5 is neutral or mixed, and 9 strongly favors the do option.",
       "- criterion_name should be short and scannable.",
       "- criterion_question should be a clear plain-English question shown back to the user during review, similar in tone to: Does the pay adequately support the move, living costs, savings, and personal goals?",
       "- criterion_notes should briefly explain why the criterion, weight, and rating were chosen.",
       "- Base the criteria, weights, and ratings on the user's wording and priorities. If something is uncertain, make a conservative and reviewable estimate instead of inventing facts.",
-      "- The do option should describe the action being considered. The dont option should describe the inverse action.",
       "",
-      "Exact TSV header:",
+      "Binary-format rules:",
+      "- Use the binary format only when there are exactly two real options.",
+      "- The do option should describe the action being considered. The dont option should describe the inverse action.",
+      "- rating_1_to_9 values must be whole integers from 1 to 9.",
+      "- In the binary model, 1 strongly favors the dont option, 5 is neutral or mixed, and 9 strongly favors the do option.",
+      "",
+      "Multi-option-format rules:",
+      "- Use the multi-option format whenever there are 3 or more real options.",
+      "- option_order values must be sequential whole numbers starting at 1.",
+      "- Use record_type rows exactly as follows: one meta row, one option row for each option, one criterion row for each criterion, and one rating row for every option-by-criterion combination.",
+      "- option_rating_1_to_9 values must be whole integers from 1 to 9.",
+      "- In the multi-option model, higher numbers mean that criterion supports that option more strongly relative to the other options in the set.",
+      "- Similar options can receive the same rating on a criterion. Reserve wide rating gaps for meaningful differences.",
+      "",
+      "Exact binary TSV header:",
       TEMPLATE_HEADERS.join("\t"),
       "",
-      "Exact JSON schema example:",
+      "Exact multi-option TSV header:",
+      MULTI_TEMPLATE_HEADERS.join("\t"),
+      "",
+      "Exact binary JSON schema example:",
       buildJsonSchemaExample(),
+      "",
+      "Exact multi-option JSON schema example:",
+      buildMultiJsonSchemaExample(),
       "",
       "User situation:",
       "<<<",
@@ -1135,30 +1865,38 @@
 
     const delimiter = detectDelimiter(lines[0]);
     const headers = parseDelimitedLine(lines[0], delimiter).map(normalizeHeaderCell);
-    const expected = TEMPLATE_HEADERS.map((header) => header.toLowerCase());
+    const binaryExpected = TEMPLATE_HEADERS.map((header) => header.toLowerCase());
+    const multiExpected = MULTI_TEMPLATE_HEADERS.map((header) => header.toLowerCase());
+    const isBinaryTemplate =
+      headers.length === binaryExpected.length &&
+      headers.every((header, index) => header === binaryExpected[index]);
+    const isMultiTemplate =
+      headers.length === multiExpected.length &&
+      headers.every((header, index) => header === multiExpected[index]);
 
-    if (headers.length !== expected.length || headers.some((header, index) => header !== expected[index])) {
-      throw new Error("The template header does not match the required format. Download the blank template from the page and have the AI fill that exact structure.");
+    if (!isBinaryTemplate && !isMultiTemplate) {
+      throw new Error("The template header does not match the required format. Use the binary or multi-option template from the page and keep the header unchanged.");
     }
 
+    const activeHeaders = isMultiTemplate ? MULTI_TEMPLATE_HEADERS : TEMPLATE_HEADERS;
     const rows = lines.slice(1).map((line) => {
       const parsed = parseDelimitedLine(line, delimiter);
-      while (parsed.length < TEMPLATE_HEADERS.length) parsed.push("");
-      return parsed.slice(0, TEMPLATE_HEADERS.length);
+      while (parsed.length < activeHeaders.length) parsed.push("");
+      return parsed.slice(0, activeHeaders.length);
     });
 
     const records = rows.map((cells) => {
       const record = {};
-      TEMPLATE_HEADERS.forEach((header, index) => {
+      activeHeaders.forEach((header, index) => {
         record[header] = cells[index] || "";
       });
       return record;
     });
 
-    return convertImportedTableRecords(records);
+    return isMultiTemplate ? convertImportedMultiTableRecords(records) : convertImportedBinaryTableRecords(records);
   }
 
-  function convertImportedTableRecords(records) {
+  function convertImportedBinaryTableRecords(records) {
     const metaRow = records.find((row) => sanitizeInlineText(row.record_type).toLowerCase() === "meta");
     const criterionRows = records.filter((row) => sanitizeInlineText(row.record_type).toLowerCase() === "criterion");
 
@@ -1181,6 +1919,7 @@
       .sort((left, right) => left.order - right.order);
 
     return {
+      mode: "binary",
       decisionTitle: sanitizeInlineText(metaRow.decision_title),
       positiveLabel: sanitizeInlineText(metaRow.do_label, DEFAULT_POSITIVE_LABEL),
       negativeLabel: sanitizeInlineText(metaRow.dont_label, DEFAULT_NEGATIVE_LABEL),
@@ -1188,11 +1927,100 @@
     };
   }
 
-  function parseJsonImport(rawText) {
-    const text = stripCodeFences(rawText).replace(/^\uFEFF/, "");
-    const parsed = JSON.parse(text);
-    const source = Array.isArray(parsed) ? { criteria: parsed } : parsed;
+  function convertImportedMultiTableRecords(records) {
+    const metaRow = records.find((row) => sanitizeInlineText(row.record_type).toLowerCase() === "meta");
+    const optionRows = records.filter((row) => sanitizeInlineText(row.record_type).toLowerCase() === "option");
+    const criterionRows = records.filter((row) => sanitizeInlineText(row.record_type).toLowerCase() === "criterion");
+    const ratingRows = records.filter((row) => {
+      const recordType = sanitizeInlineText(row.record_type).toLowerCase();
+      return recordType === "rating" || recordType === "option_rating";
+    });
 
+    if (!metaRow) {
+      throw new Error("The imported multi-option draft needs exactly one meta row.");
+    }
+
+    const derivedOptionRows = optionRows.length
+      ? optionRows
+      : Array.from(
+          new Map(
+            ratingRows.map((row, index) => {
+              const order = row.option_order ? Math.max(1, Math.round(toNumber(row.option_order))) : index + 1;
+              return [order, { ...row, option_order: String(order) }];
+            })
+          ).values()
+        );
+
+    const derivedCriterionRows = criterionRows.length
+      ? criterionRows
+      : Array.from(
+          new Map(
+            ratingRows.map((row, index) => {
+              const order = row.criterion_order ? Math.max(1, Math.round(toNumber(row.criterion_order))) : index + 1;
+              return [order, { ...row, criterion_order: String(order) }];
+            })
+          ).values()
+        );
+
+    if (derivedOptionRows.length < 2) {
+      throw new Error("The imported multi-option draft needs at least two option rows.");
+    }
+    if (derivedCriterionRows.length < 2) {
+      throw new Error("The imported multi-option draft needs at least two criterion rows.");
+    }
+    if (!ratingRows.length) {
+      throw new Error("The imported multi-option draft needs rating rows for each option-by-criterion combination.");
+    }
+
+    const options = derivedOptionRows
+      .map((row, index) => ({
+        order: row.option_order ? Math.max(1, Math.round(toNumber(row.option_order))) : index + 1,
+        label: sanitizeInlineText(row.option_label),
+      }))
+      .sort((left, right) => left.order - right.order);
+
+    const criteriaBase = derivedCriterionRows
+      .map((row, index) => ({
+        order: row.criterion_order ? Math.max(1, Math.round(toNumber(row.criterion_order))) : index + 1,
+        name: sanitizeInlineText(row.criterion_name),
+        question: sanitizeInlineText(row.criterion_question),
+        notes: sanitizeInlineText(row.criterion_notes),
+        weight: Math.max(0, toNumber(row.weight_percent)),
+      }))
+      .sort((left, right) => left.order - right.order);
+
+    const ratingsByKey = new Map();
+    ratingRows.forEach((row) => {
+      const optionOrder = row.option_order ? Math.max(1, Math.round(toNumber(row.option_order))) : 0;
+      const criterionOrder = row.criterion_order ? Math.max(1, Math.round(toNumber(row.criterion_order))) : 0;
+      if (!optionOrder || !criterionOrder) return;
+      ratingsByKey.set(`${criterionOrder}:${optionOrder}`, clampRating(row.option_rating_1_to_9));
+    });
+
+    const criteria = criteriaBase.map((criterion) => ({
+      ...criterion,
+      optionRatings: options.map((option) => {
+        const rating = ratingsByKey.get(`${criterion.order}:${option.order}`);
+        if (!rating) {
+          throw new Error(`Criterion "${criterion.name || `#${criterion.order}`}" is missing a rating for option "${option.label || `#${option.order}`}".`);
+        }
+        return {
+          optionOrder: option.order,
+          optionLabel: option.label,
+          rating,
+        };
+      }),
+    }));
+
+    return {
+      mode: "multi",
+      decisionTitle: sanitizeInlineText(metaRow.decision_title),
+      options,
+      criteria,
+    };
+  }
+
+  function parseBinaryJsonSource(source) {
     const criteriaSource = Array.isArray(source.criteria) ? source.criteria : [];
     if (criteriaSource.length < 2) {
       throw new Error("The JSON draft needs at least two criteria.");
@@ -1210,11 +2038,94 @@
       .sort((left, right) => left.order - right.order);
 
     return {
+      mode: "binary",
       decisionTitle: sanitizeInlineText(source.decision_title || source.decisionTitle),
       positiveLabel: sanitizeInlineText(source.positive_label || source.do_label || source.positiveLabel, DEFAULT_POSITIVE_LABEL),
       negativeLabel: sanitizeInlineText(source.negative_label || source.dont_label || source.negativeLabel, DEFAULT_NEGATIVE_LABEL),
       criteria,
     };
+  }
+
+  function extractJsonOptionRatings(rawRatings) {
+    if (Array.isArray(rawRatings)) {
+      return rawRatings.map((entry, index) => ({
+        optionOrder: Math.max(1, Math.round(toNumber(entry.option_order ?? entry.optionOrder ?? entry.order ?? index + 1))),
+        optionLabel: sanitizeInlineText(entry.option_label ?? entry.optionLabel ?? entry.label),
+        rating: clampRating(entry.rating_1_to_9 ?? entry.rating),
+      }));
+    }
+
+    if (rawRatings && typeof rawRatings === "object") {
+      return Object.entries(rawRatings).map(([label, value], index) => {
+        if (value && typeof value === "object") {
+          return {
+            optionOrder: Math.max(1, Math.round(toNumber(value.option_order ?? value.optionOrder ?? value.order ?? index + 1))),
+            optionLabel: sanitizeInlineText(value.option_label ?? value.optionLabel ?? value.label ?? label),
+            rating: clampRating(value.rating_1_to_9 ?? value.rating),
+          };
+        }
+        return {
+          optionOrder: index + 1,
+          optionLabel: sanitizeInlineText(label),
+          rating: clampRating(value),
+        };
+      });
+    }
+
+    return [];
+  }
+
+  function parseMultiJsonSource(source) {
+    const optionsSource = Array.isArray(source.options) ? source.options : [];
+    const criteriaSource = Array.isArray(source.criteria) ? source.criteria : [];
+    if (criteriaSource.length < 2) {
+      throw new Error("The multi-option JSON draft needs at least two criteria.");
+    }
+    if (optionsSource.length < 2) {
+      throw new Error("The multi-option JSON draft needs an options array with at least two entries.");
+    }
+
+    const options = optionsSource
+      .map((option, index) => ({
+        order: option.order ? Math.max(1, Math.round(toNumber(option.order))) : index + 1,
+        label: sanitizeInlineText(option.label || option.option_label),
+      }))
+      .sort((left, right) => left.order - right.order);
+
+    const criteria = criteriaSource
+      .map((criterion, index) => ({
+        order: criterion.order ? Math.max(1, Math.round(toNumber(criterion.order))) : index + 1,
+        name: sanitizeInlineText(criterion.name || criterion.criterion_name),
+        question: sanitizeInlineText(criterion.question || criterion.criterion_question),
+        notes: sanitizeInlineText(criterion.notes || criterion.criterion_notes),
+        weight: Math.max(0, toNumber(criterion.weight_percent ?? criterion.weight)),
+        optionRatings: extractJsonOptionRatings(criterion.option_ratings ?? criterion.optionRatings ?? criterion.ratings),
+      }))
+      .sort((left, right) => left.order - right.order);
+
+    return {
+      mode: "multi",
+      decisionTitle: sanitizeInlineText(source.decision_title || source.decisionTitle),
+      options,
+      criteria,
+    };
+  }
+
+  function parseJsonImport(rawText) {
+    const text = stripCodeFences(rawText).replace(/^\uFEFF/, "");
+    const parsed = JSON.parse(text);
+    const source = Array.isArray(parsed) ? { criteria: parsed } : parsed;
+    const schemaVersion = sanitizeInlineText(source.schema_version || source.schemaVersion);
+    const hasMultiOptions = Array.isArray(source.options) && source.options.length > 0;
+    const hasMultiRatings =
+      Array.isArray(source.criteria) &&
+      source.criteria.some((criterion) => criterion.option_ratings || criterion.optionRatings || criterion.ratings);
+
+    if (schemaVersion === MULTI_IMPORT_SCHEMA_VERSION || hasMultiOptions || hasMultiRatings) {
+      return parseMultiJsonSource(source);
+    }
+
+    return parseBinaryJsonSource(source);
   }
 
   function parseImportedDraft(rawText) {
@@ -1228,7 +2139,7 @@
     return parseTabularImport(text);
   }
 
-  function normalizeImportedCriteria(criteria) {
+  function normalizeImportedBinaryCriteria(criteria) {
     const cleaned = criteria
       .map((criterion) => ({
         id: makeId(),
@@ -1274,29 +2185,184 @@
     return { criteria: cleaned, note };
   }
 
+  function normalizeImportedMultiModel(importedModel) {
+    const cleanedOptions = (importedModel.options || [])
+      .map((option, index) => ({
+        id: makeId(),
+        order: option.order ? Math.max(1, Math.round(toNumber(option.order))) : index + 1,
+        label: sanitizeInlineText(option.label, getDefaultOptionLabel(index)),
+      }))
+      .sort((left, right) => left.order - right.order)
+      .filter((option) => option.label);
+
+    if (cleanedOptions.length < 2) {
+      throw new Error("The imported multi-option draft needs at least two labeled options.");
+    }
+
+    const normalizedLabels = cleanedOptions.map((option) => option.label.toLowerCase());
+    if (new Set(normalizedLabels).size !== normalizedLabels.length) {
+      throw new Error("Each imported option needs a distinct label.");
+    }
+
+    const cleanedCriteria = (importedModel.criteria || [])
+      .map((criterion, index) => {
+        const rawRatings = Array.isArray(criterion.optionRatings) ? criterion.optionRatings : [];
+        const ratingsByOrder = new Map();
+        const ratingsByLabel = new Map();
+        rawRatings.forEach((entry, ratingIndex) => {
+          const order = entry.optionOrder ? Math.max(1, Math.round(toNumber(entry.optionOrder))) : ratingIndex + 1;
+          const label = sanitizeInlineText(entry.optionLabel).toLowerCase();
+          const rating = clampRating(entry.rating);
+          ratingsByOrder.set(order, rating);
+          if (label) ratingsByLabel.set(label, rating);
+        });
+
+        const optionRatings = {};
+        cleanedOptions.forEach((option, optionIndex) => {
+          const rating =
+            ratingsByOrder.get(option.order) ??
+            ratingsByLabel.get(option.label.toLowerCase());
+          if (rating == null) {
+            throw new Error(`Imported criterion "${sanitizeInlineText(criterion.name, `Criterion ${index + 1}`)}" is missing a rating for "${option.label}".`);
+          }
+          optionRatings[option.id] = clampRating(rating);
+        });
+
+        return {
+          id: makeId(),
+          name: sanitizeInlineText(criterion.name),
+          question: sanitizeInlineText(criterion.question),
+          notes: sanitizeInlineText(criterion.notes),
+          weight: Math.max(0, toNumber(criterion.weight)),
+          rating: 5,
+          optionRatings,
+        };
+      })
+      .filter((criterion) => criterion.name || criterion.question || criterion.weight > 0);
+
+    if (cleanedCriteria.length < 2) {
+      throw new Error("The imported multi-option draft needs at least two usable criteria.");
+    }
+
+    cleanedCriteria.forEach((criterion, index) => {
+      if (!criterion.name) {
+        throw new Error(`Imported criterion ${index + 1} is missing a criterion name.`);
+      }
+      if (!(criterion.weight > 0)) {
+        throw new Error(`Imported criterion "${criterion.name}" needs a positive weight.`);
+      }
+    });
+
+    const total = cleanedCriteria.reduce((sum, criterion) => sum + criterion.weight, 0);
+    if (!(total > 0)) {
+      throw new Error("Imported weights must add up to more than 0.");
+    }
+
+    let note = "";
+    if (Math.abs(total - 100) > 0.05) {
+      const normalized = roundWeightsToTarget(
+        cleanedCriteria.map((criterion) => criterion.weight),
+        100,
+        1
+      );
+      normalized.forEach((weight, index) => {
+        cleanedCriteria[index].weight = weight;
+      });
+      note = `Imported weights totaled ${formatPercent(total, 1)}, so the page normalized them to 100%.`;
+    }
+
+    return { options: cleanedOptions, criteria: cleanedCriteria, note };
+  }
+
   function applyImportedDraft(importedModel, sourceLabel) {
     const nextDecisionTitle = sanitizeInlineText(importedModel.decisionTitle, "");
-    const nextPositive = sanitizeInlineText(importedModel.positiveLabel, DEFAULT_POSITIVE_LABEL) || DEFAULT_POSITIVE_LABEL;
-    const nextNegative = sanitizeInlineText(importedModel.negativeLabel, DEFAULT_NEGATIVE_LABEL) || DEFAULT_NEGATIVE_LABEL;
 
     if (!nextDecisionTitle) {
       throw new Error("The imported draft needs a decision title in the meta row or JSON header.");
     }
-    if (nextPositive.toLowerCase() === nextNegative.toLowerCase()) {
-      throw new Error("The imported draft needs different do and dont labels.");
+
+    let importMessage = "";
+    if (importedModel.mode === "multi") {
+      const normalized = normalizeImportedMultiModel(importedModel);
+
+      if (normalized.options.length <= 2) {
+        const positiveOption = normalized.options[0];
+        const negativeOption = normalized.options[1];
+        if (!positiveOption || !negativeOption) {
+          throw new Error("The imported draft needs two distinct option labels to use the two-option flow.");
+        }
+
+        const binaryCriteria = normalized.criteria.map((criterion) => ({
+          id: makeId(),
+          name: criterion.name,
+          question: criterion.question,
+          notes: criterion.notes,
+          weight: criterion.weight,
+          rating: deriveBinaryRatingFromOptionPair(
+            criterion.optionRatings[positiveOption.id],
+            criterion.optionRatings[negativeOption.id]
+          ),
+          optionRatings: {},
+        }));
+
+        state = {
+          currentStep: "setup",
+          entryMode: "ai",
+          optionMode: "binary",
+          decisionTitle: nextDecisionTitle,
+          positiveLabel: positiveOption.label,
+          negativeLabel: negativeOption.label,
+          options: [],
+          currentCriterionIndex: 0,
+          criteria: binaryCriteria,
+        };
+
+        importMessage = normalized.note
+          ? `${sourceLabel} imported successfully. It contained two options, so the page mapped it into the standard two-option flow. ${normalized.note} Walk through the setup and rating steps to confirm everything before the final result.`
+          : `${sourceLabel} imported successfully. It contained two options, so the page mapped it into the standard two-option flow. Walk through the setup and rating steps to confirm the criteria, questions, weights, and ratings.`;
+      } else {
+        state = {
+          currentStep: "setup",
+          entryMode: "ai",
+          optionMode: "multi",
+          decisionTitle: nextDecisionTitle,
+          positiveLabel: DEFAULT_POSITIVE_LABEL,
+          negativeLabel: DEFAULT_NEGATIVE_LABEL,
+          options: normalized.options.map((option) => ({ id: option.id, label: option.label })),
+          currentCriterionIndex: 0,
+          criteria: normalized.criteria,
+        };
+
+        importMessage = normalized.note
+          ? `${sourceLabel} imported successfully. The page detected ${normalized.options.length} competing options and opened the multi-option comparison flow. ${normalized.note} Walk through the setup and rating steps to confirm everything before the final result.`
+          : `${sourceLabel} imported successfully. The page detected ${normalized.options.length} competing options and opened the multi-option comparison flow. Walk through the setup and rating steps to confirm the criteria, weights, options, and ratings.`;
+      }
+    } else {
+      const nextPositive = sanitizeInlineText(importedModel.positiveLabel, DEFAULT_POSITIVE_LABEL) || DEFAULT_POSITIVE_LABEL;
+      const nextNegative = sanitizeInlineText(importedModel.negativeLabel, DEFAULT_NEGATIVE_LABEL) || DEFAULT_NEGATIVE_LABEL;
+
+      if (nextPositive.toLowerCase() === nextNegative.toLowerCase()) {
+        throw new Error("The imported draft needs different do and dont labels.");
+      }
+
+      const normalized = normalizeImportedBinaryCriteria(importedModel.criteria || []);
+
+      state = {
+        currentStep: "setup",
+        entryMode: "ai",
+        optionMode: "binary",
+        decisionTitle: nextDecisionTitle,
+        positiveLabel: nextPositive,
+        negativeLabel: nextNegative,
+        options: [],
+        currentCriterionIndex: 0,
+        criteria: normalized.criteria,
+      };
+
+      importMessage = normalized.note
+        ? `${sourceLabel} imported successfully. ${normalized.note} Walk through the setup and rating steps to confirm everything before the final result.`
+        : `${sourceLabel} imported successfully. Walk through the setup and rating steps to confirm the criteria, questions, weights, and ratings.`;
     }
-
-    const normalized = normalizeImportedCriteria(importedModel.criteria || []);
-
-    state = {
-      currentStep: "setup",
-      entryMode: "ai",
-      decisionTitle: nextDecisionTitle,
-      positiveLabel: nextPositive,
-      negativeLabel: nextNegative,
-      currentCriterionIndex: 0,
-      criteria: normalized.criteria,
-    };
 
     renderSetupFields();
     renderCriteriaRows();
@@ -1306,10 +2372,6 @@
     renderResults();
     refreshAIKitOutputs();
     navigateTo("setup");
-
-    const importMessage = normalized.note
-      ? `${sourceLabel} imported successfully. ${normalized.note} Walk through the setup and rating steps to confirm everything before the final result.`
-      : `${sourceLabel} imported successfully. Walk through the setup and rating steps to confirm the criteria, questions, weights, and ratings.`;
 
     setStatus(dom.aiImportStatus, importMessage, "success");
     setStatus(dom.setupStatus, importMessage, "success");
@@ -1339,21 +2401,30 @@
   }
 
   function handleDownloadBlankTemplate() {
-    downloadTextFile("decision-maker-ai-template.tsv", buildBlankTemplateTsv(), "text/tab-separated-values;charset=utf-8");
-    setStatus(dom.aiKitStatus, "Blank TSV template downloaded.", "success");
+    downloadTextFile("decision-maker-binary-template.tsv", buildBlankTemplateTsv("binary"), "text/tab-separated-values;charset=utf-8");
+    setStatus(dom.aiKitStatus, "Blank 2-option TSV template downloaded.", "success");
+  }
+
+  function handleDownloadMultiTemplate() {
+    downloadTextFile("decision-maker-multi-template.tsv", buildBlankTemplateTsv("multi"), "text/tab-separated-values;charset=utf-8");
+    setStatus(dom.aiKitStatus, "Blank 3+ option TSV template downloaded.", "success");
   }
 
   function handleDownloadCurrentDraft() {
     const hasDraft = hasMeaningfulCurrentDraft();
-    const text = hasDraft ? buildCurrentDraftTsv() : buildBlankTemplateTsv();
+    const text = hasDraft
+      ? buildCurrentDraftTsv()
+      : buildBlankTemplateTsv(isMultiOptionMode() ? "multi" : "binary");
     const filename = hasDraft
       ? `${sanitizeFileStem(state.decisionTitle, "decision-maker-draft")}.tsv`
-      : "decision-maker-ai-template.tsv";
+      : isMultiOptionMode()
+        ? "decision-maker-multi-template.tsv"
+        : "decision-maker-binary-template.tsv";
 
     downloadTextFile(filename, text, "text/tab-separated-values;charset=utf-8");
     const message = hasDraft
       ? "Current draft downloaded as a TSV file you can edit in a spreadsheet."
-      : "There was no populated draft yet, so the blank TSV template was downloaded instead.";
+      : `There was no populated draft yet, so the blank ${isMultiOptionMode() ? "multi-option" : "2-option"} TSV template was downloaded instead.`;
     setStatus(dom.setupStatus, message, "success");
     setStatus(dom.aiKitStatus, message, "success");
   }
@@ -1398,6 +2469,7 @@
       }
     });
     dom.downloadBlankTemplateBtn.addEventListener("click", handleDownloadBlankTemplate);
+    dom.downloadMultiTemplateBtn.addEventListener("click", handleDownloadMultiTemplate);
     dom.aiImportFileInput.addEventListener("change", async () => {
       const file = dom.aiImportFileInput.files && dom.aiImportFileInput.files[0];
       if (!file) return;
@@ -1426,9 +2498,29 @@
       handleSetupFieldInput();
       refreshSetupStatus();
     });
+    dom.switchToMultiModeBtn.addEventListener("click", () => {
+      switchToMultiOptionMode();
+      renderSetupFields();
+      renderCriteriaRows();
+      refreshSetupStatus();
+    });
+    dom.switchToBinaryModeBtn.addEventListener("click", () => {
+      switchToBinaryMode();
+      renderSetupFields();
+      renderCriteriaRows();
+      refreshSetupStatus();
+    });
+    dom.addOptionBtn.addEventListener("click", () => {
+      if (!isMultiOptionMode()) return;
+      state.options.push(makeOption(getDefaultOptionLabel(state.options.length)));
+      ensureAllOptionRatings();
+      saveState();
+      renderSetupFields();
+      refreshSetupStatus();
+    });
 
     dom.addCriterionBtn.addEventListener("click", () => {
-      state.criteria.push(makeCriterion(0));
+      state.criteria.push(makeCriterion(0, isMultiOptionMode() ? state.options : []));
       saveState();
       renderCriteriaRows();
       refreshSetupStatus();
@@ -1454,6 +2546,39 @@
       }
 
       syncCriteriaRow(row, id);
+      refreshSetupStatus();
+    });
+
+    dom.optionsList.addEventListener("input", (event) => {
+      const target = event.target;
+      const row = target.closest("[data-option-id]");
+      if (!row || !target.matches("[data-option-label]")) return;
+      const id = row.getAttribute("data-option-id");
+      if (!id) return;
+
+      state.options = state.options.map((option) =>
+        option.id === id
+          ? {
+              ...option,
+              label: target.value,
+            }
+          : option
+      );
+      saveState();
+      refreshSetupStatus();
+    });
+
+    dom.optionsList.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-remove-option]");
+      if (!button) return;
+      const row = button.closest("[data-option-id]");
+      const id = row && row.getAttribute("data-option-id");
+      if (!id || state.options.length <= 3) return;
+
+      state.options = state.options.filter((option) => option.id !== id);
+      ensureAllOptionRatings();
+      saveState();
+      renderSetupFields();
       refreshSetupStatus();
     });
 
@@ -1491,6 +2616,20 @@
       const criterion = state.criteria[state.currentCriterionIndex];
       if (!criterion) return;
       criterion.rating = clampRating(button.getAttribute("data-rating-value"));
+      saveState();
+      renderRatingStep();
+    });
+    dom.multiRatingList.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-multi-rating-value]");
+      if (!button || !isMultiOptionMode()) return;
+      const criterion = state.criteria[state.currentCriterionIndex];
+      const optionId = button.getAttribute("data-multi-option-id");
+      if (!criterion || !optionId) return;
+
+      criterion.optionRatings = {
+        ...(criterion.optionRatings || {}),
+        [optionId]: clampRating(button.getAttribute("data-multi-rating-value")),
+      };
       saveState();
       renderRatingStep();
     });
