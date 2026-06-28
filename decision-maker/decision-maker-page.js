@@ -93,6 +93,7 @@
   }
 
   function makeCriterion(weight, options = []) {
+    const optionList = Array.isArray(options) ? options : [];
     return {
       id: makeId(),
       name: "",
@@ -100,7 +101,7 @@
       notes: "",
       weight,
       rating: 5,
-      optionRatings: Object.fromEntries(options.map((option) => [option.id, 5])),
+      optionRatings: Object.fromEntries(optionList.map((option) => [option.id, 5])),
     };
   }
 
@@ -114,7 +115,7 @@
       negativeLabel: DEFAULT_NEGATIVE_LABEL,
       options: [],
       currentCriterionIndex: 0,
-      criteria: DEFAULT_WEIGHTS.map(makeCriterion),
+      criteria: DEFAULT_WEIGHTS.map((weight) => makeCriterion(weight)),
     };
   }
 
