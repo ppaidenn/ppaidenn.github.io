@@ -1,6 +1,7 @@
 name = "paiden-username-router"
 main = "worker.js"
 compatibility_date = "2026-03-06"
+account_id = "83d01eea807ed2c6f0856153efb76605"
 
 routes = [
   { pattern = "paiden.com/*", zone_name = "paiden.com" },
