@@ -3,11 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Paiden's Trivia!!!</title>
-  <meta name="description" content="Play a local browser-only trivia game on paiden.com.">
-  <meta name="theme-color" content="#ead9b8">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <title>Trivia Night | paiden.com</title>
+  <meta name="description" content="A local browser-only trivia game with a classic game-night question bank.">
+  <meta name="theme-color" content="#08111f">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" type="image/png" href="/images/favicon.png">
   <link rel="apple-touch-icon" href="/images/favicon.png">
@@ -15,1355 +13,562 @@
   <link rel="stylesheet" href="/shared-app-header.css?v=20260421b">
   <style>
     :root {
-      --ink: #151b21;
-      --ink-soft: rgba(21, 27, 33, 0.76);
-      --ink-dim: rgba(21, 27, 33, 0.52);
-      --panel: rgba(252, 243, 225, 0.92);
-      --panel-strong: rgba(255, 248, 235, 0.98);
-      --panel-soft: rgba(245, 238, 225, 0.96);
-      --border: rgba(78, 63, 39, 0.11);
-      --teal: #52d8c8;
-      --cyan: #70c9ff;
-      --gold: #ffcb67;
-      --pink: #ff89d5;
-      --violet: #a992ff;
-      --lime: #9fe870;
-      --peach: #ffbb8f;
-      --butter: #ffe6a3;
-      --sky-soft: #d9f0ff;
-      --mint-soft: #dff7e8;
-      --rose-soft: #ffe1ee;
-      --lavender-soft: #ece3ff;
-      --danger: #ff7b7b;
-      --good: #87f0a6;
-      --shadow: 0 28px 72px rgba(81, 63, 31, 0.16);
+      --bg: #07101c;
+      --bg-soft: #101d2d;
+      --panel: rgba(11, 19, 31, 0.82);
+      --panel-strong: rgba(15, 26, 42, 0.96);
+      --panel-soft: rgba(22, 35, 53, 0.78);
+      --border: rgba(255, 255, 255, 0.11);
+      --text: #f6f8fb;
+      --text-soft: rgba(246, 248, 251, 0.76);
+      --text-dim: rgba(246, 248, 251, 0.54);
+      --shadow: 0 24px 64px rgba(0, 0, 0, 0.34);
+      --music: #ff6f91;
+      --sports: #77e35d;
+      --movies: #63cfff;
+      --history: #ffbe55;
+      --science: #45dbc7;
+      --geography: #a78dff;
+      --accent: #7fd7ff;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
-      height: 100dvh;
+      color: var(--text);
       font-family: "Avenir Next", "Segoe UI", Arial, sans-serif;
-      color: var(--ink);
       background:
-        radial-gradient(circle at top left, rgba(255, 203, 103, 0.32), transparent 24%),
-        radial-gradient(circle at 82% 14%, rgba(112, 201, 255, 0.22), transparent 22%),
-        radial-gradient(circle at 18% 72%, rgba(82, 216, 200, 0.22), transparent 24%),
-        radial-gradient(circle at 86% 78%, rgba(255, 137, 213, 0.18), transparent 24%),
-        linear-gradient(180deg, #f7edd9 0%, #efe4cf 42%, #e7eddc 100%);
-      overflow: hidden;
+        radial-gradient(circle at top, rgba(99, 207, 255, 0.18), transparent 28%),
+        radial-gradient(circle at 15% 25%, rgba(255, 111, 145, 0.14), transparent 18%),
+        radial-gradient(circle at 85% 20%, rgba(69, 219, 199, 0.16), transparent 20%),
+        radial-gradient(circle at 80% 80%, rgba(167, 141, 255, 0.14), transparent 22%),
+        linear-gradient(180deg, #07101c 0%, #081423 45%, #0b1726 100%);
     }
     [hidden] { display: none !important; }
-    .trivia-backdrop {
+    .trivia-bg {
       position: fixed;
       inset: 0;
-      overflow: hidden;
       pointer-events: none;
+      overflow: hidden;
       z-index: 0;
     }
-    .backdrop-grid,
-    .backdrop-glow,
-    .backdrop-sprite,
-    .backdrop-doodle {
-      position: absolute;
-    }
-    .backdrop-grid {
-      inset: -12%;
-      background-image:
-        linear-gradient(rgba(78,63,39,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(78,63,39,0.06) 1px, transparent 1px);
-      background-size: 88px 88px;
-      mask-image: radial-gradient(circle at center, rgba(0,0,0,0.95), transparent 78%);
-      opacity: 0.54;
-      transform: perspective(980px) rotateX(66deg) translateY(18vh);
-    }
-    .backdrop-glow {
-      border-radius: 999px;
-      filter: blur(0);
-      opacity: 0.78;
-    }
-    .backdrop-glow.glow-a {
-      width: 340px;
-      height: 340px;
-      top: -70px;
-      left: -90px;
-      background: radial-gradient(circle, rgba(82,216,200,0.4), transparent 72%);
-      animation: driftGlow 18s ease-in-out infinite;
-    }
-    .backdrop-glow.glow-b {
-      width: 420px;
-      height: 420px;
-      top: 12%;
-      right: -120px;
-      background: radial-gradient(circle, rgba(255,137,213,0.34), transparent 72%);
-      animation: driftGlow 22s ease-in-out infinite reverse;
-    }
-    .backdrop-glow.glow-c {
-      width: 360px;
-      height: 360px;
-      bottom: -120px;
-      left: 20%;
-      background: radial-gradient(circle, rgba(112,201,255,0.34), transparent 72%);
-      animation: driftGlow 20s ease-in-out infinite;
-    }
-    .backdrop-glow.glow-d {
-      width: 280px;
-      height: 280px;
-      bottom: 8%;
-      right: 34%;
-      background: radial-gradient(circle, rgba(255,203,103,0.26), transparent 70%);
-      animation: driftGlow 24s ease-in-out infinite reverse;
-    }
-    .backdrop-sprite {
-      border-radius: 999px;
-      border: 1px solid rgba(78,63,39,0.14);
-      backdrop-filter: blur(5px);
-      box-shadow:
-        0 16px 32px rgba(81,63,31,0.12),
-        inset 0 1px 0 rgba(255,255,255,0.7);
-      animation: floatSprite 16s ease-in-out infinite;
-    }
-    .backdrop-sprite::after {
+    .trivia-bg::before,
+    .trivia-bg::after {
       content: "";
       position: absolute;
-      inset: 18%;
-      border-radius: inherit;
-      border: 1px dashed rgba(78,63,39,0.16);
+      inset: -20%;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: radial-gradient(circle at center, rgba(0,0,0,0.94), transparent 76%);
     }
-    .backdrop-sprite.sprite-a {
-      width: 72px;
-      height: 72px;
-      top: 19%;
-      left: 7%;
-      background: linear-gradient(135deg, rgba(82,216,200,0.44), rgba(225,251,246,0.3));
-      animation-duration: 14s;
+    .trivia-bg::after {
+      inset: 10% 5% auto auto;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(99, 207, 255, 0.26), transparent 68%);
+      animation: pulse 12s ease-in-out infinite;
+      mask-image: none;
     }
-    .backdrop-sprite.sprite-b {
-      width: 56px;
-      height: 56px;
-      top: 36%;
-      right: 14%;
-      background: linear-gradient(135deg, rgba(255,203,103,0.42), rgba(255,243,205,0.28));
-      animation-duration: 17s;
-      animation-delay: -6s;
-    }
-    .backdrop-sprite.sprite-c {
-      width: 94px;
-      height: 94px;
-      bottom: 16%;
-      right: 22%;
-      background: linear-gradient(135deg, rgba(169,146,255,0.34), rgba(243,237,255,0.28));
-      animation-duration: 19s;
-      animation-delay: -3s;
-    }
-    .backdrop-sprite.sprite-d {
-      width: 66px;
-      height: 66px;
-      bottom: 22%;
-      left: 12%;
-      background: linear-gradient(135deg, rgba(112,201,255,0.38), rgba(233,247,255,0.28));
-      animation-duration: 15s;
-      animation-delay: -8s;
-    }
-    .backdrop-sprite.sprite-e {
-      width: 88px;
-      height: 88px;
-      top: 58%;
-      left: 6%;
-      background: linear-gradient(135deg, rgba(255,187,143,0.38), rgba(255,240,225,0.24));
-      animation-duration: 18s;
-      animation-delay: -4s;
-    }
-    .backdrop-sprite.sprite-f {
-      width: 112px;
-      height: 56px;
-      top: 20%;
-      right: 28%;
-      border-radius: 28px;
-      background: linear-gradient(135deg, rgba(223,247,232,0.84), rgba(159,232,112,0.24));
-      animation-duration: 21s;
-      animation-delay: -9s;
-    }
-    .backdrop-sprite.sprite-g {
-      width: 58px;
-      height: 118px;
-      bottom: 12%;
-      right: 8%;
-      border-radius: 24px;
-      background: linear-gradient(135deg, rgba(255,225,238,0.84), rgba(255,137,213,0.2));
-      animation-duration: 20s;
-      animation-delay: -5s;
-    }
-    .backdrop-sprite.sprite-h {
-      width: 96px;
-      height: 96px;
-      top: 10%;
-      left: 42%;
-      background: linear-gradient(135deg, rgba(236,227,255,0.88), rgba(169,146,255,0.24));
-      animation-duration: 23s;
-      animation-delay: -11s;
-    }
-    .backdrop-doodle {
-      opacity: 0.62;
-      border-radius: 999px;
-      animation: orbitDoodle 24s linear infinite;
-    }
-    .backdrop-doodle.doodle-a {
-      width: 210px;
-      height: 210px;
-      top: 9%;
-      left: 58%;
-      border: 2px dashed rgba(78,63,39,0.16);
-    }
-    .backdrop-doodle.doodle-b {
-      width: 160px;
-      height: 160px;
-      bottom: 14%;
-      left: 26%;
-      border: 2px dotted rgba(159,232,112,0.34);
-      animation-direction: reverse;
-    }
-    .backdrop-doodle.doodle-c {
-      width: 110px;
-      height: 110px;
-      top: 48%;
-      right: 12%;
-      border: 2px solid rgba(255,137,213,0.28);
-    }
-    .backdrop-doodle.doodle-d {
-      width: 136px;
-      height: 136px;
-      top: 30%;
-      left: 30%;
-      border: 2px dashed rgba(112,201,255,0.24);
-      animation-duration: 18s;
-    }
-    .backdrop-doodle.doodle-e {
-      width: 180px;
-      height: 180px;
-      bottom: 8%;
-      right: 18%;
-      border: 2px dotted rgba(255,203,103,0.28);
-      animation-duration: 27s;
-      animation-direction: reverse;
-    }
-    @keyframes driftGlow {
-      0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-      50% { transform: translate3d(24px, 18px, 0) scale(1.08); }
-    }
-    @keyframes floatSprite {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      50% { transform: translateY(-20px) rotate(7deg); }
-    }
-    @keyframes orbitDoodle {
-      to { transform: rotate(360deg); }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1) translate3d(0, 0, 0); opacity: 0.5; }
+      50% { transform: scale(1.08) translate3d(20px, 18px, 0); opacity: 0.8; }
     }
     .top-nav,
     .mobile-fixed-header {
       position: relative;
       z-index: 5;
     }
-    .content-wrap {
+    .trivia-page {
       position: relative;
       z-index: 1;
-      min-height: calc(100dvh - 92px);
-      height: calc(100dvh - 92px);
-      padding: 14px 0 18px;
-      display: flex;
-      align-items: stretch;
+      padding: 18px 16px 44px;
     }
-    html.trivia-immersive .top-nav,
-    html.trivia-immersive .mobile-fixed-header,
-    body.trivia-subpage-active .top-nav,
-    body.trivia-subpage-active .mobile-fixed-header {
-      display: none !important;
-    }
-    :fullscreen .top-nav,
-    :fullscreen .mobile-fixed-header {
-      display: none !important;
-    }
-    html.trivia-immersive .content-wrap {
-      min-height: 100dvh;
-      height: 100dvh;
-      padding: 14px 0;
-    }
-    body.trivia-subpage-active .content-wrap {
-      min-height: 100dvh;
-      height: 100dvh;
-      padding: 14px 0;
-    }
-    .content-inner {
-      width: min(1240px, calc(100vw - 28px));
+    .page-shell {
+      width: min(1220px, 100%);
       margin: 0 auto;
-      border-radius: 34px;
-      border: 1px solid rgba(17,22,29,0.08);
-      background:
-        radial-gradient(circle at top right, rgba(82,216,200,0.18), transparent 30%),
-        radial-gradient(circle at bottom left, rgba(255,203,103,0.16), transparent 28%),
-        linear-gradient(180deg, rgba(250,241,224,0.96), rgba(238,231,217,0.94));
-      padding: clamp(14px, 1.8vw, 24px);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      flex: 1;
-      height: 100%;
-      min-height: 0;
-      overflow: hidden;
-    }
-    .game-shell {
       display: grid;
-      gap: 0;
-      height: 100%;
-      min-height: 0;
+      gap: 20px;
     }
-    .step-card {
+    .hero-band,
+    .step,
+    .winner-card {
       border: 1px solid var(--border);
-      border-radius: 28px;
-      padding: clamp(16px, 1.7vw, 22px);
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+    }
+    .hero-band {
+      border-radius: 32px;
+      overflow: hidden;
+      position: relative;
+    }
+    .hero-band::before {
+      content: "";
+      position: absolute;
+      inset: 0;
       background:
-        linear-gradient(180deg, rgba(255,246,231,0.98), rgba(241,233,220,0.96));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.82),
-        inset 0 -1px 0 rgba(17,22,29,0.03),
-        0 18px 42px rgba(17,22,29,0.12);
+        linear-gradient(135deg, rgba(99, 207, 255, 0.16), transparent 35%),
+        linear-gradient(225deg, rgba(255, 190, 85, 0.12), transparent 32%),
+        linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+      pointer-events: none;
     }
-    .step-card.step-theme-players {
-      background:
-        radial-gradient(circle at top right, rgba(112,201,255,0.24), transparent 38%),
-        linear-gradient(180deg, rgba(244,248,231,0.98), rgba(229,240,242,0.96));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.84),
-        0 22px 48px rgba(112,201,255,0.16);
-    }
-    .step-card.step-theme-setup {
-      background:
-        radial-gradient(circle at top right, rgba(82,216,200,0.22), transparent 36%),
-        linear-gradient(180deg, rgba(240,249,235,0.98), rgba(227,241,230,0.96));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.84),
-        0 22px 48px rgba(82,216,200,0.16);
-    }
-    .step-card.step-theme-mode {
-      background:
-        radial-gradient(circle at top right, rgba(255,137,213,0.22), transparent 36%),
-        linear-gradient(180deg, rgba(252,237,241,0.98), rgba(244,228,236,0.96));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.84),
-        0 22px 48px rgba(255,137,213,0.14);
-    }
-    .step-card.step-theme-scoring {
-      background:
-        radial-gradient(circle at top right, rgba(255,203,103,0.28), transparent 36%),
-        linear-gradient(180deg, rgba(253,243,221,0.98), rgba(247,232,204,0.96));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.84),
-        0 22px 48px rgba(255,203,103,0.16);
-    }
-    .step-card.step-theme-difficulty {
-      background:
-        radial-gradient(circle at top right, rgba(169,146,255,0.24), transparent 36%),
-        linear-gradient(180deg, rgba(243,236,252,0.98), rgba(234,226,246,0.96));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.84),
-        0 22px 48px rgba(169,146,255,0.16);
-    }
-    .step-card.step-theme-categories {
-      background:
-        radial-gradient(circle at top right, rgba(159,232,112,0.24), transparent 36%),
-        linear-gradient(180deg, rgba(241,249,229,0.98), rgba(229,239,214,0.96));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.84),
-        0 22px 48px rgba(159,232,112,0.16);
-    }
-    .step-card.step-theme-order {
-      background:
-        radial-gradient(circle at top right, rgba(112,201,255,0.2), transparent 36%),
-        radial-gradient(circle at bottom left, rgba(255,203,103,0.22), transparent 30%),
-        linear-gradient(180deg, rgba(247,241,228,0.98), rgba(236,230,220,0.96));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.84),
-        0 24px 52px rgba(112,201,255,0.12),
-        0 10px 24px rgba(255,203,103,0.08);
-    }
-    .step-card.step-theme-game {
-      background:
-        radial-gradient(circle at top right, rgba(82,216,200,0.18), transparent 34%),
-        radial-gradient(circle at bottom left, rgba(255,137,213,0.16), transparent 30%),
-        linear-gradient(180deg, rgba(250,242,226,0.98), rgba(235,229,218,0.96));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.84),
-        0 26px 56px rgba(17,22,29,0.12);
-    }
-    .step-card.hero-card {
-      min-height: min(72vh, 720px);
-      text-align: center;
-      background:
-        radial-gradient(circle at top, rgba(112,201,255,0.28), transparent 32%),
-        radial-gradient(circle at 20% 80%, rgba(255,137,213,0.22), transparent 26%),
-        radial-gradient(circle at 84% 78%, rgba(255,203,103,0.2), transparent 24%),
-        linear-gradient(180deg, rgba(248,238,218,0.98), rgba(236,231,220,0.96));
-    }
-    .step-card.hero-card.is-active {
-      place-items: center;
-    }
-    .hero-stack {
-      width: min(100%, 760px);
+    .hero-grid {
+      position: relative;
       display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
       gap: 18px;
-      justify-items: center;
+      padding: clamp(22px, 4vw, 38px);
     }
-    .hero-kicker,
-    .section-kicker {
+    .eyebrow,
+    .section-eyebrow {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
+      gap: 10px;
+      padding: 8px 14px;
       border-radius: 999px;
-      background: rgba(90, 72, 43, 0.08);
-      border: 1px solid rgba(90, 72, 43, 0.12);
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      color: var(--text-soft);
       font-size: 11px;
       letter-spacing: 0.16em;
-      font-weight: 800;
       text-transform: uppercase;
-      color: rgba(17,22,29,0.64);
+      font-weight: 800;
     }
-    h1, h2, h3, p {
-      margin: 0;
-    }
+    h1, h2, h3, p { margin: 0; }
     h1 {
-      font-size: clamp(42px, 7vw, 88px);
-      line-height: 0.95;
-      letter-spacing: -0.04em;
-      text-wrap: balance;
+      font-size: clamp(40px, 7vw, 76px);
+      line-height: 0.94;
+      letter-spacing: -0.05em;
+      max-width: 8ch;
     }
     h2 {
-      font-size: clamp(28px, 3.2vw, 46px);
-      line-height: 0.98;
-      letter-spacing: -0.03em;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1;
+      letter-spacing: -0.04em;
     }
     h3 {
-      font-size: clamp(20px, 2vw, 26px);
+      font-size: clamp(20px, 2.4vw, 25px);
       line-height: 1.08;
     }
     p {
-      color: var(--ink-soft);
-      line-height: 1.5;
+      color: var(--text-soft);
+      line-height: 1.55;
       font-size: 15px;
     }
     .hero-copy {
-      max-width: 620px;
-      font-size: clamp(16px, 1.3vw, 20px);
-    }
-    .step-grid {
       display: grid;
       gap: 18px;
+      align-content: start;
     }
-    .split-grid {
-      display: grid;
-      gap: 16px;
-      grid-template-columns: 1.1fr .9fr;
-    }
-    .panel {
-      border-radius: 24px;
-      border: 1px solid rgba(17,22,29,0.08);
-      background: linear-gradient(180deg, rgba(253,244,228,0.96), rgba(238,231,219,0.94));
-      padding: 16px;
-      display: grid;
-      gap: 12px;
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.82),
-        0 14px 30px rgba(17,22,29,0.08);
-    }
-    .panel-soft {
-      background: linear-gradient(180deg, rgba(246,239,227,0.98), rgba(235,230,221,0.96));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.86),
-        0 16px 32px rgba(17,22,29,0.08);
-    }
-    .field,
-    .choice-grid,
-    .icon-grid,
-    .category-bank,
-    .scoreboard,
-    .order-list,
-    .player-pill-row,
-    .question-actions,
-    .mc-grid {
-      display: grid;
-      gap: 12px;
-    }
-    .field label {
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--ink-dim);
-    }
-    .field input,
-    .field select {
-      width: 100%;
-      min-height: 50px;
-      border-radius: 18px;
-      border: 1px solid rgba(17,22,29,0.12);
-      background: rgba(255,247,234,0.96);
-      color: var(--ink);
-      padding: 14px 16px;
-      font: inherit;
-    }
-    .field input:focus,
-    .field select:focus {
-      outline: 2px solid rgba(82,216,200,0.22);
-      border-color: rgba(82,216,200,0.44);
-    }
-    .inline-field {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .inline-field input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
-      accent-color: var(--teal);
-    }
+    .hero-copy p { max-width: 60ch; }
+    .hero-actions,
     .btn-row {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
       align-items: center;
     }
+    .hero-stats,
+    .category-preview,
+    .step-rail,
+    .mode-grid,
+    .category-grid,
+    .roster-grid,
+    .icon-grid,
+    .scoreboard,
+    .choices-grid,
+    .game-actions,
+    .order-list {
+      display: grid;
+      gap: 12px;
+    }
+    .hero-stats {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-content: start;
+    }
+    .stat-card,
+    .preview-card,
+    .panel,
+    .mode-card,
+    .category-card,
+    .player-chip,
+    .score-card,
+    .order-row,
+    .question-surface,
+    .wheel-card,
+    .status-pill,
+    .choice-btn,
+    .icon-tile {
+      border: 1px solid rgba(255,255,255,0.1);
+      background: var(--panel-soft);
+      border-radius: 24px;
+    }
+    .stat-card,
+    .preview-card,
+    .panel,
+    .mode-card,
+    .category-card,
+    .question-surface,
+    .wheel-card {
+      padding: 18px;
+    }
+    .stat-value {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.05em;
+      margin-bottom: 8px;
+    }
+    .category-preview {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .preview-card { min-height: 94px; }
+    .step-rail {
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+    }
+    .step-pill {
+      padding: 14px 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.09);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-dim);
+      min-height: 74px;
+      display: grid;
+      gap: 6px;
+      align-content: center;
+      text-align: left;
+    }
+    .step-pill strong {
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1;
+    }
+    .step-pill.is-active {
+      border-color: rgba(127, 215, 255, 0.44);
+      background: rgba(127, 215, 255, 0.1);
+      color: var(--text-soft);
+      box-shadow: inset 0 0 0 1px rgba(127, 215, 255, 0.14);
+    }
+    .step-pill.is-complete {
+      color: var(--text-soft);
+      background: rgba(119, 227, 93, 0.1);
+      border-color: rgba(119, 227, 93, 0.24);
+    }
+    .step {
+      display: grid;
+      gap: 20px;
+      padding: clamp(20px, 3vw, 30px);
+      border-radius: 30px;
+    }
+    .step-head {
+      display: grid;
+      gap: 10px;
+    }
+    .grid-2 {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 1.05fr 0.95fr;
+    }
+    .panel { display: grid; gap: 14px; }
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+    .field label {
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 800;
+      color: var(--text-dim);
+    }
+    .field input {
+      width: 100%;
+      min-height: 54px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(7, 16, 28, 0.7);
+      color: var(--text);
+      padding: 14px 16px;
+      font: inherit;
+    }
+    .field input:focus {
+      outline: 2px solid rgba(127, 215, 255, 0.22);
+      border-color: rgba(127, 215, 255, 0.5);
+    }
+    .inline-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-soft);
+    }
+    .status-message {
+      min-height: 20px;
+      color: #ffb3c2;
+      font-weight: 700;
+    }
+    .btn,
+    .btn-secondary,
+    .btn-ghost,
+    .choice-btn,
+    .mode-card,
+    .category-card,
+    .icon-tile {
+      cursor: pointer;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+    }
     .btn,
     .btn-secondary,
     .btn-ghost {
       min-height: 50px;
-      border-radius: 18px;
-      padding: 14px 20px;
-      border: 1px solid rgba(17,22,29,0.12);
+      border-radius: 999px;
+      padding: 0 18px;
+      border: 1px solid transparent;
       font: inherit;
       font-weight: 800;
       letter-spacing: 0.01em;
-      cursor: pointer;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
       gap: 10px;
-      text-decoration: none;
-      transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+    .btn {
+      color: #08111f;
+      background: linear-gradient(135deg, #7fd7ff, #d6f4ff);
+      box-shadow: 0 14px 30px rgba(127, 215, 255, 0.28);
+    }
+    .btn-secondary {
+      color: var(--text);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.12);
+    }
+    .btn-ghost {
+      color: var(--text-soft);
+      background: transparent;
+      border-color: rgba(255,255,255,0.12);
     }
     .btn:hover,
     .btn-secondary:hover,
-    .btn-ghost:hover {
-      transform: translateY(-1px);
+    .btn-ghost:hover,
+    .choice-btn:hover,
+    .mode-card:hover,
+    .category-card:hover,
+    .icon-tile:hover {
+      transform: translateY(-2px);
     }
-    .btn {
-      color: #11161d;
-      background: linear-gradient(135deg, #ffe7a8, #ffcfa8 52%, #ffbfd6);
-      box-shadow: 0 16px 30px rgba(150, 108, 46, 0.16);
-    }
-    .btn-secondary {
-      color: var(--ink);
-      background: linear-gradient(135deg, rgba(82,216,200,0.42), rgba(112,201,255,0.26));
-      box-shadow: 0 14px 28px rgba(82, 216, 200, 0.14);
-    }
-    .btn-ghost {
-      color: var(--ink);
-      background: linear-gradient(135deg, rgba(255,244,219,0.96), rgba(238,228,209,0.9));
-    }
-    .choice-grid {
+    .mode-grid,
+    .category-grid,
+    .scoreboard,
+    .roster-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .choice-card,
     .mode-card,
-    .difficulty-card,
-    .icon-card {
-      border-radius: 22px;
-      border: 1px solid rgba(17,22,29,0.08);
-      background: linear-gradient(180deg, rgba(255,248,236,0.98), rgba(242,234,222,0.96));
-      padding: 14px;
-      display: grid;
-      gap: 10px;
-      cursor: pointer;
-      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+    .category-card,
+    .icon-tile,
+    .choice-btn {
+      text-align: left;
+      color: inherit;
+      font: inherit;
     }
-    .choice-card:hover,
-    .mode-card:hover,
-    .difficulty-card:hover,
-    .icon-card:hover {
-      transform: translateY(-2px);
-      border-color: rgba(112,201,255,0.34);
-      box-shadow: 0 18px 34px rgba(17,22,29,0.12);
-    }
-    .choice-card.is-selected,
     .mode-card.is-selected,
-    .difficulty-card.is-selected,
-    .icon-card.is-selected {
-      border-color: rgba(82,216,200,0.52);
-      background: linear-gradient(180deg, rgba(226,249,241,0.98), rgba(217,240,232,0.96));
-      box-shadow: 0 18px 34px rgba(82,216,200,0.18);
-    }
-    .mode-card:first-child {
-      background: linear-gradient(145deg, rgba(214,239,255,0.96), rgba(238,245,226,0.94));
-    }
-    .mode-card:last-child {
-      background: linear-gradient(145deg, rgba(255,228,214,0.96), rgba(255,236,246,0.94));
-    }
-    .difficulty-card[data-difficulty="easy"] {
-      background: linear-gradient(145deg, rgba(230,247,216,0.98), rgba(247,243,217,0.94));
-    }
-    .difficulty-card[data-difficulty="medium"] {
-      background: linear-gradient(145deg, rgba(214,242,255,0.98), rgba(239,244,222,0.94));
-    }
-    .difficulty-card[data-difficulty="hard"] {
-      background: linear-gradient(145deg, rgba(255,236,202,0.98), rgba(255,228,221,0.94));
-    }
-    .difficulty-card[data-difficulty="impossible"] {
-      background: linear-gradient(145deg, rgba(238,226,255,0.98), rgba(255,231,244,0.94));
-    }
-    .icon-card:nth-child(4n+1) {
-      background: linear-gradient(145deg, rgba(214,239,255,0.98), rgba(244,240,224,0.94));
-    }
-    .icon-card:nth-child(4n+2) {
-      background: linear-gradient(145deg, rgba(255,231,243,0.98), rgba(253,240,219,0.94));
-    }
-    .icon-card:nth-child(4n+3) {
-      background: linear-gradient(145deg, rgba(229,247,218,0.98), rgba(240,238,220,0.94));
-    }
-    .icon-card:nth-child(4n) {
-      background: linear-gradient(145deg, rgba(236,229,255,0.98), rgba(240,245,223,0.94));
-    }
-    .choice-card strong,
-    .mode-card strong,
-    .difficulty-card strong,
-    .icon-card strong {
-      font-size: 18px;
-    }
-    .choice-card span,
-    .mode-card span,
-    .difficulty-card span,
-    .icon-card span,
-    .tiny-copy {
-      color: var(--ink-soft);
-      font-size: 14px;
-      line-height: 1.45;
+    .category-card.is-selected,
+    .icon-tile.is-selected,
+    .choice-btn.is-selected,
+    .score-card.is-selected {
+      border-color: rgba(127, 215, 255, 0.5);
+      background: rgba(127, 215, 255, 0.12);
+      box-shadow: inset 0 0 0 1px rgba(127, 215, 255, 0.14);
     }
     .icon-grid {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
-    .icon-art {
-      width: 76px;
-      height: 76px;
-      margin: 0 auto;
-      border-radius: 22px;
-      padding: 10px;
-      background: rgba(90,72,43,0.08);
-      border: 1px solid rgba(90,72,43,0.11);
+    .icon-tile {
+      min-height: 92px;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+      align-content: center;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
     }
-    .icon-art img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 16px;
+    .icon-mark,
+    .player-avatar,
+    .winner-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      color: #08111f;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
     }
-    .player-preview {
+    .player-avatar,
+    .winner-avatar {
+      width: 64px;
+      height: 64px;
+      font-size: 28px;
+    }
+    .roster-grid {
+      align-content: start;
+    }
+    .player-chip,
+    .score-card,
+    .order-row {
+      padding: 14px 16px;
       display: flex;
       align-items: center;
       gap: 14px;
     }
-    .player-preview .icon-art {
-      margin: 0;
-      width: 72px;
-      height: 72px;
+    .player-chip strong,
+    .score-card strong,
+    .order-row strong { display: block; }
+    .muted { color: var(--text-dim); }
+    .category-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
-    .status-message {
-      min-height: 20px;
-      color: var(--danger);
-      font-size: 14px;
-      font-weight: 700;
-    }
-    .category-bank,
-    .player-pill-row {
-      grid-template-columns: repeat(auto-fit, minmax(180px, max-content));
-      align-items: stretch;
-    }
-    .category-pill,
-    .player-pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      min-height: 52px;
-      padding: 12px 14px;
-      border-radius: 18px;
-      background: rgba(255,246,232,0.92);
-      border: 1px solid rgba(17,22,29,0.08);
-      box-shadow: 0 10px 22px rgba(17,22,29,0.06);
-    }
-    .category-pill:nth-child(6n+1),
-    .player-pill:nth-child(6n+1) {
-      background: linear-gradient(145deg, rgba(214,239,255,0.95), rgba(246,240,223,0.93));
-    }
-    .category-pill:nth-child(6n+2),
-    .player-pill:nth-child(6n+2) {
-      background: linear-gradient(145deg, rgba(255,232,242,0.95), rgba(249,238,220,0.93));
-    }
-    .category-pill:nth-child(6n+3),
-    .player-pill:nth-child(6n+3) {
-      background: linear-gradient(145deg, rgba(230,247,219,0.95), rgba(245,241,221,0.93));
-    }
-    .category-pill:nth-child(6n+4),
-    .player-pill:nth-child(6n+4) {
-      background: linear-gradient(145deg, rgba(237,229,255,0.95), rgba(247,237,223,0.93));
-    }
-    .category-pill:nth-child(6n+5),
-    .player-pill:nth-child(6n+5) {
-      background: linear-gradient(145deg, rgba(255,236,205,0.95), rgba(255,232,224,0.93));
-    }
-    .category-pill:nth-child(6n),
-    .player-pill:nth-child(6n) {
-      background: linear-gradient(145deg, rgba(222,246,241,0.95), rgba(244,236,223,0.93));
-    }
-    .category-pill strong,
-    .player-pill strong {
-      font-size: 14px;
-    }
-    .icon-btn {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      border: 1px solid rgba(17,22,29,0.1);
-      background: rgba(90,72,43,0.07);
-      color: var(--ink);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .order-list {
-      grid-template-columns: 1fr;
-    }
-    .order-row {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 14px;
-      border-radius: 18px;
-      background: rgba(255,246,232,0.94);
-      border: 1px solid rgba(17,22,29,0.08);
-      box-shadow: 0 12px 24px rgba(17,22,29,0.07);
-    }
-    .order-row:nth-child(4n+1) {
-      background: linear-gradient(145deg, rgba(214,239,255,0.95), rgba(245,239,223,0.93));
-    }
-    .order-row:nth-child(4n+2) {
-      background: linear-gradient(145deg, rgba(255,231,243,0.95), rgba(248,238,221,0.93));
-    }
-    .order-row:nth-child(4n+3) {
-      background: linear-gradient(145deg, rgba(230,246,219,0.95), rgba(244,240,220,0.93));
-    }
-    .order-row:nth-child(4n) {
-      background: linear-gradient(145deg, rgba(237,229,255,0.95), rgba(246,237,222,0.93));
-    }
-    .order-index {
-      width: 34px;
-      height: 34px;
-      border-radius: 12px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, rgba(82,216,200,0.28), rgba(255,203,103,0.22));
-      font-weight: 800;
-      color: #0e4139;
-    }
-    .order-player {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-    }
-    .order-player img {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      object-fit: cover;
-      border: 1px solid rgba(17,22,29,0.1);
-      background: rgba(90,72,43,0.07);
-    }
-    .order-move {
-      display: flex;
-      gap: 8px;
-    }
-    .game-stage {
-      display: grid;
-      gap: 18px;
-    }
-    .game-topbar {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-    .game-topbar-meta {
-      display: grid;
-      gap: 12px;
-      min-width: min(100%, 680px);
-      flex: 1;
-    }
-    .game-topbar-actions {
-      display: grid;
-      gap: 12px;
-      justify-items: end;
-    }
-    .game-settings-card {
-      display: grid;
-      gap: 10px;
-      padding: 14px;
-      border-radius: 22px;
-      border: 1px solid rgba(17,22,29,0.08);
-      background:
-        linear-gradient(180deg, rgba(255,248,234,0.98), rgba(236,231,222,0.96));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.86),
-        0 16px 30px rgba(17,22,29,0.08);
-    }
-    .settings-heading {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .settings-heading strong {
-      font-size: 14px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--ink-dim);
-    }
-    .difficulty-switcher {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-    }
-    .difficulty-toggle {
-      min-height: 46px;
-      border-radius: 16px;
-      border: 1px solid rgba(17,22,29,0.1);
-      background: rgba(255,247,232,0.92);
-      color: var(--ink);
-      font: inherit;
-      font-weight: 800;
-      cursor: pointer;
-      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease;
-    }
-    .difficulty-toggle:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 28px rgba(17,22,29,0.1);
-    }
-    .difficulty-toggle.is-selected {
-      border-color: rgba(169,146,255,0.42);
-      background: linear-gradient(180deg, rgba(240,232,255,0.98), rgba(233,225,245,0.96));
-      box-shadow: 0 16px 30px rgba(169,146,255,0.18);
-    }
-    .difficulty-toggle[data-game-difficulty="easy"] {
-      background: linear-gradient(145deg, rgba(229,246,215,0.98), rgba(246,243,214,0.94));
-    }
-    .difficulty-toggle[data-game-difficulty="medium"] {
-      background: linear-gradient(145deg, rgba(214,242,255,0.98), rgba(235,243,220,0.94));
-    }
-    .difficulty-toggle[data-game-difficulty="hard"] {
-      background: linear-gradient(145deg, rgba(255,234,204,0.98), rgba(255,226,221,0.94));
-    }
-    .difficulty-toggle[data-game-difficulty="impossible"] {
-      background: linear-gradient(145deg, rgba(237,228,255,0.98), rgba(255,233,246,0.94));
-    }
-    .difficulty-hint {
-      color: var(--ink-soft);
+    .category-card small { color: var(--text-dim); }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .status-pill {
+      padding: 10px 14px;
+      color: var(--text-soft);
+      background: rgba(255,255,255,0.06);
       font-size: 13px;
     }
-    .scoreboard {
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    .order-row {
+      justify-content: space-between;
     }
-    .score-card {
-      border-radius: 22px;
-      border: 1px solid rgba(17,22,29,0.08);
-      background: linear-gradient(180deg, rgba(255,247,232,0.98), rgba(239,231,220,0.95));
-      padding: 12px;
-      display: grid;
-      gap: 10px;
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.84),
-        0 16px 30px rgba(17,22,29,0.08);
+    .order-actions {
+      display: inline-flex;
+      gap: 8px;
     }
-    .score-card.is-turn {
-      border-color: rgba(255,203,103,0.56);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.88),
-        0 22px 40px rgba(255,203,103,0.2);
+    .order-actions button {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.07);
+      color: var(--text);
+      cursor: pointer;
     }
-    .score-head {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .score-head img {
-      width: 52px;
-      height: 52px;
-      border-radius: 16px;
-      object-fit: cover;
-      background: rgba(90,72,43,0.07);
-      border: 1px solid rgba(90,72,43,0.12);
-    }
-    .score-card:nth-child(4n+1) {
-      background: linear-gradient(180deg, rgba(214,239,255,0.98), rgba(235,241,225,0.95));
-    }
-    .score-card:nth-child(4n+2) {
-      background: linear-gradient(180deg, rgba(255,231,243,0.98), rgba(245,232,226,0.95));
-    }
-    .score-card:nth-child(4n+3) {
-      background: linear-gradient(180deg, rgba(230,246,219,0.98), rgba(242,239,221,0.95));
-    }
-    .score-card:nth-child(4n) {
-      background: linear-gradient(180deg, rgba(237,229,255,0.98), rgba(241,232,222,0.95));
-    }
-    .score-points {
-      font-size: 34px;
-      font-weight: 900;
-      line-height: 1;
-    }
-    .game-grid {
+    .game-layout {
       display: grid;
       gap: 18px;
-      grid-template-columns: minmax(280px, 400px) minmax(0, 1fr);
+      grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.1fr);
       align-items: start;
     }
     .wheel-card,
-    .question-card,
-    .winner-card {
-      border-radius: 28px;
-      border: 1px solid rgba(17,22,29,0.08);
-      background:
-        linear-gradient(180deg, rgba(255,248,235,0.98), rgba(239,231,220,0.95));
-      padding: 16px;
-      display: grid;
-      gap: 14px;
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.86),
-        0 24px 42px rgba(17,22,29,0.1);
-    }
-    .wheel-card {
-      background:
-        radial-gradient(circle at top, rgba(112,201,255,0.24), transparent 40%),
-        radial-gradient(circle at 18% 82%, rgba(255,203,103,0.18), transparent 30%),
-        linear-gradient(180deg, rgba(255,248,235,0.98), rgba(239,231,220,0.95));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.88),
-        0 26px 44px rgba(112,201,255,0.16);
-    }
-    .question-card {
-      --question-accent: #70c9ff;
-      --question-accent-soft: rgba(112, 201, 255, 0.14);
-      --question-accent-border: rgba(112, 201, 255, 0.24);
-      --question-accent-ink: #1c5e84;
-      min-height: 420px;
-      align-content: start;
-      background:
-        radial-gradient(circle at top right, var(--question-accent-soft), transparent 32%),
-        radial-gradient(circle at bottom left, rgba(255,248,235,0.42), transparent 34%),
-        linear-gradient(180deg, rgba(255,248,235,0.98), rgba(239,231,220,0.95));
-      border-color: var(--question-accent-border);
-      box-shadow:
-        0 26px 44px rgba(17,22,29,0.1),
-        inset 0 1px 0 rgba(255,255,255,0.88);
-    }
-    .wheel-wrap {
+    .question-surface { display: grid; gap: 18px; }
+    .wheel-stage {
       position: relative;
-      width: min(100%, 320px);
-      aspect-ratio: 1;
+      width: min(100%, 420px);
       margin: 0 auto;
-      display: grid;
-      place-items: center;
+      aspect-ratio: 1 / 1;
     }
-    .wheel-spin {
+    .wheel-rotor {
       width: 100%;
       height: 100%;
-      border-radius: 50%;
-      transition: transform 1.55s cubic-bezier(.12,.86,.18,1);
-      box-shadow: 0 20px 34px rgba(17,22,29,0.1);
-      background: rgba(255,246,230,0.82);
-      border: 10px solid rgba(112, 90, 57, 0.12);
-      overflow: hidden;
-      cursor: pointer;
+      transition: transform 3.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .wheel-spin.is-disabled {
-      cursor: default;
-    }
-    #categoryWheelCanvas {
+    .wheel-stage canvas {
       width: 100%;
       height: 100%;
       display: block;
+      filter: drop-shadow(0 24px 34px rgba(0,0,0,0.3));
     }
     .wheel-pointer {
       position: absolute;
-      top: -2px;
       left: 50%;
+      top: -4px;
       transform: translateX(-50%);
       width: 0;
       height: 0;
-      border-left: 16px solid transparent;
-      border-right: 16px solid transparent;
-      border-top: 30px solid #11161d;
-      filter: drop-shadow(0 10px 10px rgba(17,22,29,0.1));
+      border-left: 18px solid transparent;
+      border-right: 18px solid transparent;
+      border-top: 30px solid #f8fbff;
+      filter: drop-shadow(0 10px 16px rgba(0,0,0,0.3));
     }
-    .wheel-result {
-      min-height: 32px;
-      text-align: center;
-      color: var(--ink-soft);
-      font-weight: 700;
-    }
+    .question-surface .section-eyebrow { justify-self: start; }
     .question-prompt {
-      font-size: clamp(24px, 2.6vw, 36px);
-      line-height: 1.14;
-      color: var(--question-accent-ink);
+      font-size: clamp(24px, 4vw, 36px);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
     }
-    .question-sub {
-      font-size: 14px;
-      color: var(--ink-soft);
-    }
-    .mc-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .mc-option {
-      min-height: 76px;
-      border-radius: 20px;
-      border: 1px solid rgba(17,22,29,0.1);
-      background: rgba(255,247,232,0.94);
-      color: #11161d;
+    .question-sub { color: var(--text-dim); }
+    .choices-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .choice-btn {
+      min-height: 72px;
       padding: 16px;
-      text-align: left;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform .16s ease, border-color .16s ease, background .16s ease;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
     }
-    .mc-option:hover {
-      transform: translateY(-1px);
-      border-color: rgba(112,201,255,0.34);
+    .choice-btn.is-correct {
+      border-color: rgba(119, 227, 93, 0.44);
+      background: rgba(119, 227, 93, 0.14);
     }
-    .mc-option.is-correct {
-      border-color: rgba(135,240,166,0.54);
-      background: linear-gradient(145deg, rgba(210,250,223,0.92), rgba(231,245,216,0.94));
-    }
-    .mc-option.is-wrong {
-      border-color: rgba(255,123,123,0.5);
-      background: linear-gradient(145deg, rgba(255,223,223,0.92), rgba(255,236,225,0.94));
-    }
-    .mc-option:nth-child(4n+1) {
-      background: linear-gradient(145deg, rgba(255,232,241,0.94), rgba(255,244,222,0.94));
-      border-color: rgba(255,137,213,0.24);
-    }
-    .mc-option:nth-child(4n+2) {
-      background: linear-gradient(145deg, rgba(221,245,255,0.94), rgba(237,247,225,0.94));
-      border-color: rgba(112,201,255,0.24);
-    }
-    .mc-option:nth-child(4n+3) {
-      background: linear-gradient(145deg, rgba(232,248,220,0.94), rgba(248,244,214,0.94));
-      border-color: rgba(159,232,112,0.24);
-    }
-    .mc-option:nth-child(4n) {
-      background: linear-gradient(145deg, rgba(239,230,255,0.94), rgba(255,236,227,0.94));
-      border-color: rgba(169,146,255,0.24);
-    }
-    .question-actions {
-      grid-template-columns: repeat(auto-fit, minmax(180px, max-content));
+    .choice-btn.is-wrong {
+      border-color: rgba(255, 111, 145, 0.44);
+      background: rgba(255, 111, 145, 0.14);
     }
     .answer-panel {
       border-radius: 22px;
-      padding: 16px;
-      border: 1px solid var(--question-accent-border);
-      background: linear-gradient(180deg, rgba(255,248,236,0.96), var(--question-accent-soft));
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      padding: 18px;
       display: grid;
       gap: 8px;
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.84),
-        0 14px 28px rgba(17,22,29,0.06);
-    }
-    .answer-panel strong {
-      font-size: 16px;
-      color: var(--question-accent-ink);
-    }
-    .judge-note {
-      color: rgba(255,203,103,0.92);
-      font-weight: 700;
     }
     .winner-overlay {
       position: fixed;
       inset: 0;
-      z-index: 25;
-      display: none;
-      place-items: center;
-      padding: 24px;
-      background: rgba(242, 235, 222, 0.84);
+      background: rgba(5, 9, 16, 0.72);
       backdrop-filter: blur(10px);
-    }
-    .winner-overlay.is-active {
       display: grid;
+      place-items: center;
+      padding: 18px;
+      z-index: 40;
     }
     .winner-card {
-      width: min(100%, 620px);
-      text-align: center;
-      background:
-        radial-gradient(circle at top, rgba(255,203,103,0.28), transparent 34%),
-        radial-gradient(circle at 20% 80%, rgba(255,137,213,0.16), transparent 24%),
-        linear-gradient(180deg, rgba(255,248,235,0.98), rgba(239,231,220,0.96));
-    }
-    .winner-icon {
-      width: 108px;
-      height: 108px;
-      margin: 0 auto;
+      width: min(520px, 100%);
       border-radius: 28px;
-      overflow: hidden;
-      border: 1px solid rgba(17,22,29,0.08);
-      box-shadow: 0 16px 28px rgba(17,22,29,0.08);
-      background: rgba(255,247,232,0.9);
-    }
-    .winner-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .transition-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 26;
-      display: none;
-      place-items: center;
-      background:
-        radial-gradient(circle at center, rgba(112,201,255,0.2), transparent 26%),
-        rgba(241, 232, 216, 0.92);
-      backdrop-filter: blur(12px);
-    }
-    .transition-overlay.is-active {
+      padding: 28px;
       display: grid;
-      animation: fadeScene 1s ease forwards;
-    }
-    .transition-core {
-      width: min(42vw, 320px);
-      aspect-ratio: 1;
-      border-radius: 50%;
-      border: 2px solid rgba(17,22,29,0.1);
-      background:
-        radial-gradient(circle at center, rgba(255,248,232,0.54), transparent 42%),
-        conic-gradient(from 0deg, rgba(82,216,200,0.28), rgba(255,203,103,0.34), rgba(255,137,213,0.26), rgba(169,146,255,0.22), rgba(82,216,200,0.28));
-      display: grid;
-      place-items: center;
-      animation: pulsePortal 1s ease-in-out infinite;
-      box-shadow: 0 28px 60px rgba(17,22,29,0.12);
-    }
-    .transition-core span {
-      font-size: clamp(18px, 2vw, 24px);
-      font-weight: 800;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      color: rgba(17,22,29,0.88);
+      gap: 18px;
       text-align: center;
     }
-    @keyframes pulsePortal {
-      0%, 100% { transform: scale(0.96) rotate(0deg); }
-      50% { transform: scale(1.04) rotate(8deg); }
-    }
-    @keyframes fadeScene {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    .hidden-upload {
-      display: none;
-    }
-    .step {
-      display: none;
-    }
-    .step.is-active {
-      display: grid;
-      width: 100%;
-      transform: scale(var(--fit-scale, 1));
-      transform-origin: top center;
-      margin: 0 auto;
-    }
-    .fullscreen-hint {
-      color: rgba(21,27,33,0.62);
-      font-size: 13px;
-    }
-    @media (max-width: 1040px) {
-      .split-grid,
-      .game-grid {
+    @media (max-width: 960px) {
+      .hero-grid,
+      .grid-2,
+      .game-layout {
         grid-template-columns: 1fr;
       }
-      .icon-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-      }
+      .step-rail { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
-    @media (max-width: 768px) {
-      body {
-        padding-top: calc(env(safe-area-inset-top, 0px) + 58px);
-      }
-      html.trivia-immersive body,
-      body.trivia-subpage-active {
-        padding-top: 0;
-      }
-      .top-nav { display: none; }
-      .mobile-fixed-header { display: flex; }
-      .content-wrap {
-        padding-top: 12px;
-        min-height: calc(100dvh - 58px);
-        height: calc(100dvh - 58px);
-      }
-      html.trivia-immersive .content-wrap,
-      body.trivia-subpage-active .content-wrap {
-        min-height: 100dvh;
-        height: 100dvh;
-        padding-top: 10px;
-      }
-      .content-inner {
-        width: auto;
-        margin: 0 12px 14px;
-        padding: 12px;
-      }
-      .step-grid,
-      .game-stage {
-        gap: 14px;
-      }
-      .panel,
-      .panel-soft,
-      .wheel-card,
-      .question-card,
-      .winner-card,
-      .game-settings-card {
-        padding: 12px;
-        border-radius: 22px;
-      }
-      .choice-card,
-      .mode-card,
-      .difficulty-card,
-      .icon-card,
-      .mc-option,
-      .category-pill,
-      .player-pill,
-      .order-row {
-        border-radius: 18px;
-      }
-      .field input,
-      .field select,
+    @media (max-width: 700px) {
+      .trivia-page { padding-inline: 10px; }
+      .hero-stats,
+      .mode-grid,
+      .roster-grid,
+      .scoreboard,
+      .choices-grid,
+      .category-grid,
+      .icon-grid,
+      .step-rail { grid-template-columns: 1fr; }
+      .hero-band,
+      .step,
+      .winner-card { border-radius: 24px; }
       .btn,
       .btn-secondary,
-      .btn-ghost {
-        min-height: 46px;
-        padding: 12px 14px;
-      }
-      .choice-grid,
-      .mc-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .scoreboard {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .difficulty-switcher {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .game-topbar-actions {
-        width: 100%;
-        justify-items: stretch;
-      }
-      .game-topbar-actions .btn-row {
-        justify-content: stretch;
-      }
-      .game-topbar-actions .btn-row > * {
-        flex: 1;
-      }
-      .icon-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-      }
-      .icon-art {
-        width: 60px;
-        height: 60px;
-        padding: 8px;
-      }
-      .wheel-wrap {
-        width: min(100%, 268px);
-      }
-      h2 {
-        font-size: clamp(22px, 6vw, 32px);
-      }
-      p,
-      .tiny-copy {
-        font-size: 13px;
-      }
-    }
-    @media (max-width: 480px) {
-      .content-inner {
-        margin: 0 8px 10px;
-        padding: 10px;
-      }
-      .step-card {
-        padding: 12px;
-        border-radius: 22px;
-      }
-      .step-grid,
-      .game-stage {
-        gap: 12px;
-      }
-      .game-grid,
-      .split-grid,
-      .choice-grid,
-      .mc-grid {
-        grid-template-columns: 1fr;
-      }
-      .difficulty-switcher {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .scoreboard {
-        grid-template-columns: 1fr;
-      }
-      .icon-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .wheel-wrap {
-        width: min(100%, 220px);
-      }
-      .question-card {
-        min-height: 360px;
-      }
-      .question-prompt {
-        font-size: clamp(20px, 7vw, 28px);
-      }
-      .btn,
-      .btn-secondary,
-      .btn-ghost {
-        min-height: 44px;
-        padding: 12px 16px;
-      }
+      .btn-ghost { width: 100%; justify-content: center; }
+      .btn-row { display: grid; }
     }
   </style>
 </head>
 <body data-trivia-view="local-only">
-  <div class="trivia-backdrop" aria-hidden="true">
-    <div class="backdrop-grid"></div>
-    <div class="backdrop-glow glow-a"></div>
-    <div class="backdrop-glow glow-b"></div>
-    <div class="backdrop-glow glow-c"></div>
-    <div class="backdrop-glow glow-d"></div>
-    <div class="backdrop-sprite sprite-a"></div>
-    <div class="backdrop-sprite sprite-b"></div>
-    <div class="backdrop-sprite sprite-c"></div>
-    <div class="backdrop-sprite sprite-d"></div>
-    <div class="backdrop-sprite sprite-e"></div>
-    <div class="backdrop-sprite sprite-f"></div>
-    <div class="backdrop-sprite sprite-g"></div>
-    <div class="backdrop-sprite sprite-h"></div>
-    <div class="backdrop-doodle doodle-a"></div>
-    <div class="backdrop-doodle doodle-b"></div>
-    <div class="backdrop-doodle doodle-c"></div>
-    <div class="backdrop-doodle doodle-d"></div>
-    <div class="backdrop-doodle doodle-e"></div>
-  </div>
+  <div class="trivia-bg" aria-hidden="true"></div>
 
   <header class="top-nav" role="navigation" aria-label="Primary site navigation">
     <div class="top-nav-inner">
@@ -1385,265 +590,215 @@
     </div>
   </div>
 
-  <main class="content-wrap">
-    <section class="content-inner">
-      <div class="game-shell">
-        <section class="step step-card hero-card is-active" id="landingStep">
-          <div class="hero-stack">
-            <div class="hero-kicker"><i class="fa-solid fa-bolt" aria-hidden="true"></i><span>Local Browser Game</span></div>
-            <h1>Paiden's Trivia!!!</h1>
-            <p class="hero-copy">Set up the players, spin for random categories, and race to the target score with a fully local game state.</p>
-            <div class="btn-row">
-              <button class="btn" id="startTriviaBtn" type="button"><i class="fa-solid fa-play" aria-hidden="true"></i><span>Start Game</span></button>
-            </div>
-            <div class="fullscreen-hint">This will request fullscreen mode after you start.</div>
-          </div>
-        </section>
-
-        <section class="step step-card step-theme-players" id="playerCountStep">
-          <div class="step-grid">
-            <div class="section-kicker"><span>Step 1</span><span>Players</span></div>
-            <h2>How many players are joining?</h2>
-            <div class="split-grid">
-              <div class="panel">
-                <div class="field">
-                  <label for="playerCountInput">Player count</label>
-                  <input id="playerCountInput" type="number" min="2" max="8" step="1" value="2" inputmode="numeric">
-                </div>
-                <p>Pick anywhere from 2 to 8 players.</p>
-              </div>
-              <div class="panel panel-soft">
-                <h3>What happens next</h3>
-                <p>Each player picks a name and an icon before the trivia rules are set.</p>
-              </div>
-            </div>
-            <div class="status-message" id="playerCountStatus"></div>
-            <div class="btn-row">
-              <button class="btn-ghost" id="playerCountBackBtn" type="button">Back</button>
-              <button class="btn" id="playerCountContinueBtn" type="button">Continue</button>
+  <main class="trivia-page">
+    <div class="page-shell">
+      <section class="hero-band">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <div class="eyebrow"><i class="fa-solid fa-dharmachakra" aria-hidden="true"></i><span>Local Trivia Night</span></div>
+            <h1>Classic trivia without the impossible stuff.</h1>
+            <p>Set up the players, choose the categories, spin the wheel, and play through a local question bank tuned for actual game-night use instead of obscure stumpers.</p>
+            <div class="hero-actions">
+              <button class="btn" id="startTriviaBtn" type="button"><i class="fa-solid fa-play" aria-hidden="true"></i><span>Start a Game</span></button>
+              <button class="btn-secondary" id="jumpToGameBtn" type="button"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>View the Flow</span></button>
             </div>
           </div>
-        </section>
+          <div class="hero-stats" id="heroStats"></div>
+        </div>
+      </section>
 
-        <section class="step step-card step-theme-setup" id="playerSetupStep">
-          <div class="step-grid">
-            <div class="section-kicker"><span>Step 2</span><span>Player Setup</span></div>
-            <div class="player-preview">
-              <div class="icon-art"><img id="playerSetupPreview" alt="Selected player icon"></div>
+      <div class="step-rail" id="stepRail"></div>
+
+      <section class="step" id="landingStep">
+        <div class="step-head">
+          <div class="section-eyebrow"><span>Welcome</span><span>How it works</span></div>
+          <h2>One screen, one wheel, six classic categories.</h2>
+          <p>The setup keeps the same familiar flow: pick a roster, choose your play mode, set a target score, trim the category deck, set the order, and start spinning.</p>
+        </div>
+        <div class="grid-2">
+          <div class="panel">
+            <h3>What changed</h3>
+            <p>The old difficulty ladder is gone. This version uses a single curated classic bank so the questions feel closer to a living-room board game than a niche internet quiz.</p>
+            <div class="pill-row" id="bankHighlights"></div>
+          </div>
+          <div class="panel">
+            <h3>Categories in the deck</h3>
+            <div class="category-preview" id="categoryPreview"></div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="landingContinueBtn" type="button">Continue to Players</button>
+        </div>
+      </section>
+
+      <section class="step" id="playerCountStep" hidden>
+        <div class="step-head">
+          <div class="section-eyebrow"><span>Step 1</span><span>Players</span></div>
+          <h2>How many people are playing?</h2>
+          <p>Pick a local couch-game roster from two to eight players.</p>
+        </div>
+        <div class="grid-2">
+          <div class="panel">
+            <div class="field">
+              <label for="playerCountInput">Player count</label>
+              <input id="playerCountInput" type="number" min="2" max="8" step="1" value="2" inputmode="numeric">
+            </div>
+          </div>
+          <div class="panel">
+            <h3>Next up</h3>
+            <p>Each player gets a name and a visual token so the scoreboard is easy to follow from across the room.</p>
+          </div>
+        </div>
+        <div class="status-message" id="playerCountStatus"></div>
+        <div class="btn-row">
+          <button class="btn-ghost" id="playerCountBackBtn" type="button">Back</button>
+          <button class="btn" id="playerCountContinueBtn" type="button">Continue</button>
+        </div>
+      </section>
+
+      <section class="step" id="playerSetupStep" hidden>
+        <div class="step-head">
+          <div class="section-eyebrow"><span>Step 2</span><span>Roster</span></div>
+          <h2 id="playerSetupHeading">Player 1</h2>
+          <p id="playerSetupSub">Choose a name and token for this player.</p>
+        </div>
+        <div class="grid-2">
+          <div class="panel">
+            <div class="player-chip">
+              <div class="player-avatar" id="playerPreviewAvatar"></div>
               <div>
-                <h2 id="playerSetupHeading">Player 1</h2>
-                <p id="playerSetupSub">Pick a name and icon for this player.</p>
+                <strong id="playerPreviewName">Player 1</strong>
+                <span class="muted">Current token preview</span>
               </div>
             </div>
-            <div class="split-grid">
-              <div class="panel">
-                <div class="field">
-                  <label for="playerNameInput">Player name</label>
-                  <input id="playerNameInput" type="text" maxlength="28" placeholder="Player 1">
-                </div>
-                <div class="field">
-                  <label>Upload your own icon</label>
-                  <div class="btn-row">
-                    <label class="btn-secondary" for="playerIconUploadInput"><i class="fa-solid fa-image" aria-hidden="true"></i><span>Choose Photo</span></label>
-                    <button class="btn-ghost" id="resetPlayerIconBtn" type="button">Use preset</button>
-                  </div>
-                  <input class="hidden-upload" id="playerIconUploadInput" type="file" accept="image/*">
-                </div>
-              </div>
-              <div class="panel panel-soft">
-                <h3>Generic icon bank</h3>
-                <div class="icon-grid" id="playerIconGrid"></div>
+            <div class="field">
+              <label for="playerNameInput">Player name</label>
+              <input id="playerNameInput" type="text" maxlength="24" autocomplete="off">
+            </div>
+            <div class="icon-grid" id="playerIconGrid"></div>
+          </div>
+          <div class="panel">
+            <h3>Current roster</h3>
+            <div class="roster-grid" id="rosterPreview"></div>
+          </div>
+        </div>
+        <div class="status-message" id="playerSetupStatus"></div>
+        <div class="btn-row">
+          <button class="btn-ghost" id="playerSetupBackBtn" type="button">Back</button>
+          <button class="btn" id="playerSetupContinueBtn" type="button">Continue</button>
+        </div>
+      </section>
+
+      <section class="step" id="modeStep" hidden>
+        <div class="step-head">
+          <div class="section-eyebrow"><span>Step 3</span><span>Mode</span></div>
+          <h2>Pick how answers are handled.</h2>
+          <p>Multiple choice is quicker. Host judged is better if you want players to answer out loud first.</p>
+        </div>
+        <div class="mode-grid" id="modeGrid"></div>
+        <div class="btn-row">
+          <button class="btn-ghost" id="modeBackBtn" type="button">Back</button>
+          <button class="btn" id="modeContinueBtn" type="button">Continue</button>
+        </div>
+      </section>
+
+      <section class="step" id="pointsStep" hidden>
+        <div class="step-head">
+          <div class="section-eyebrow"><span>Step 4</span><span>Target</span></div>
+          <h2>Set the race condition.</h2>
+          <p>Choose the target score and decide whether a player must win by two.</p>
+        </div>
+        <div class="grid-2">
+          <div class="panel">
+            <div class="field">
+              <label for="pointsToWinInput">Points to win</label>
+              <input id="pointsToWinInput" type="number" min="3" max="50" step="1" value="10" inputmode="numeric">
+            </div>
+            <label class="inline-toggle"><input id="winByTwoInput" type="checkbox" checked> Require a two-point lead</label>
+          </div>
+          <div class="panel">
+            <h3>Good defaults</h3>
+            <p>Ten points with win-by-two turned on works well for longer games. Lower the target if you want a quicker round.</p>
+          </div>
+        </div>
+        <div class="status-message" id="pointsStatus"></div>
+        <div class="btn-row">
+          <button class="btn-ghost" id="pointsBackBtn" type="button">Back</button>
+          <button class="btn" id="pointsContinueBtn" type="button">Continue</button>
+        </div>
+      </section>
+      <section class="step" id="categoriesStep" hidden>
+        <div class="step-head">
+          <div class="section-eyebrow"><span>Step 5</span><span>Categories</span></div>
+          <h2>Build the deck for this round.</h2>
+          <p>Leave everything on for a broad game or trim the wheel down to the categories your group wants tonight.</p>
+        </div>
+        <div class="category-grid" id="categoryGrid"></div>
+        <div class="status-message" id="categoriesStatus"></div>
+        <div class="btn-row">
+          <button class="btn-ghost" id="categoriesBackBtn" type="button">Back</button>
+          <button class="btn" id="categoriesContinueBtn" type="button">Continue</button>
+        </div>
+      </section>
+
+      <section class="step" id="orderStep" hidden>
+        <div class="step-head">
+          <div class="section-eyebrow"><span>Step 6</span><span>Order</span></div>
+          <h2>Set the turn order.</h2>
+          <p>You can use the default order or move players up and down before the game starts.</p>
+        </div>
+        <div class="order-list" id="orderList"></div>
+        <div class="btn-row">
+          <button class="btn-secondary" id="alphabetizeOrderBtn" type="button">Alphabetize</button>
+          <button class="btn-ghost" id="orderBackBtn" type="button">Back</button>
+          <button class="btn" id="beginMatchBtn" type="button">Start Match</button>
+        </div>
+      </section>
+
+      <section class="step" id="gameStep" hidden>
+        <div class="step-head">
+          <div class="section-eyebrow"><span>Step 7</span><span>Play</span></div>
+          <h2 id="currentPlayerHeading">Player Turn</h2>
+          <p id="gameInstruction">Spin the wheel to reveal the next category.</p>
+        </div>
+        <div class="scoreboard" id="scoreboard"></div>
+        <div class="game-layout">
+          <div class="wheel-card">
+            <div class="wheel-stage">
+              <div class="wheel-pointer" aria-hidden="true"></div>
+              <div class="wheel-rotor" id="wheelRotor">
+                <canvas id="categoryWheelCanvas" width="680" height="680" aria-label="Trivia category wheel"></canvas>
               </div>
             </div>
-            <div class="status-message" id="playerSetupStatus"></div>
+            <div class="status-pill" id="wheelResult">Ready to spin.</div>
+            <div class="status-pill" id="questionPoolStatus">Classic deck loaded.</div>
             <div class="btn-row">
-              <button class="btn-ghost" id="playerSetupBackBtn" type="button">Back</button>
-              <button class="btn" id="playerSetupContinueBtn" type="button">Continue</button>
+              <button class="btn" id="spinWheelBtn" type="button"><i class="fa-solid fa-dharmachakra" aria-hidden="true"></i><span>Spin Wheel</span></button>
+              <button class="btn-secondary" id="restartMatchBtn" type="button">Restart Match</button>
+              <button class="btn-ghost" id="startOverBtn" type="button">Start Over</button>
             </div>
           </div>
-        </section>
-
-        <section class="step step-card step-theme-mode" id="modeStep">
-          <div class="step-grid">
-            <div class="section-kicker"><span>Step 3</span><span>Mode</span></div>
-            <h2>Which game mode should this round use?</h2>
-            <div class="choice-grid">
-              <button class="mode-card is-selected" id="modeMultipleChoiceCard" type="button" data-mode-option="multiple-choice">
-                <strong>Multiple Choice</strong>
-                <span>Players tap an answer and the game checks it instantly.</span>
-              </button>
-              <button class="mode-card" id="modeFreeResponseCard" type="button" data-mode-option="free-response">
-                <strong>Free Response</strong>
-                <span>The next player reads the prompt and decides if the answer earns the point.</span>
-              </button>
+          <div class="question-surface">
+            <div class="section-eyebrow" id="questionBadgeRow"><span id="questionCategoryBadge">Category</span><span id="questionModeBadge">Mode</span></div>
+            <div class="question-prompt" id="questionPrompt">Spin the wheel to reveal the next question.</div>
+            <div class="question-sub" id="questionSubPrompt">No question has been drawn yet.</div>
+            <div class="choices-grid" id="choicesGrid"></div>
+            <div class="answer-panel" id="answerPanel" hidden>
+              <strong id="answerHeading">Answer</strong>
+              <div id="answerText"></div>
+              <div class="muted" id="answerExplanation"></div>
             </div>
-            <div class="btn-row">
-              <button class="btn-ghost" id="modeBackBtn" type="button">Back</button>
-              <button class="btn" id="modeContinueBtn" type="button">Continue</button>
-            </div>
+            <div class="game-actions" id="questionActions"></div>
           </div>
-        </section>
-
-        <section class="step step-card step-theme-scoring" id="pointsStep">
-          <div class="step-grid">
-            <div class="section-kicker"><span>Step 4</span><span>Scoring</span></div>
-            <h2>How many points should it take to win?</h2>
-            <div class="split-grid">
-              <div class="panel">
-                <div class="field">
-                  <label for="pointsToWinInput">Points to win</label>
-                  <input id="pointsToWinInput" type="number" min="3" max="99" step="1" value="11" inputmode="numeric">
-                </div>
-                <label class="inline-field" for="winByTwoInput">
-                  <input id="winByTwoInput" type="checkbox" checked>
-                  <span>Win by 2</span>
-                </label>
-              </div>
-              <div class="panel panel-soft">
-                <h3>Default match rules</h3>
-                <p>Correct answers are worth 1 point. The first player to the target wins, unless the win-by-two rule is still on.</p>
-              </div>
-            </div>
-            <div class="status-message" id="pointsStatus"></div>
-            <div class="btn-row">
-              <button class="btn-ghost" id="pointsBackBtn" type="button">Back</button>
-              <button class="btn" id="pointsContinueBtn" type="button">Continue</button>
-            </div>
-          </div>
-        </section>
-
-        <section class="step step-card step-theme-difficulty" id="difficultyStep">
-          <div class="step-grid">
-            <div class="section-kicker"><span>Step 5</span><span>Difficulty</span></div>
-            <h2>How hard should the questions be?</h2>
-            <div class="choice-grid" id="difficultyGrid">
-              <button class="difficulty-card" type="button" data-difficulty="easy"><strong>Easy</strong><span>Friendly warm-up questions.</span></button>
-              <button class="difficulty-card is-selected" type="button" data-difficulty="medium"><strong>Medium</strong><span>Balanced difficulty for most games.</span></button>
-              <button class="difficulty-card" type="button" data-difficulty="hard"><strong>Hard</strong><span>More specific recall and tougher facts.</span></button>
-              <button class="difficulty-card" type="button" data-difficulty="impossible"><strong>Impossible</strong><span>Deep-cut trivia for chaos mode.</span></button>
-            </div>
-            <div class="btn-row">
-              <button class="btn-ghost" id="difficultyBackBtn" type="button">Back</button>
-              <button class="btn" id="difficultyContinueBtn" type="button">Continue</button>
-            </div>
-          </div>
-        </section>
-
-        <section class="step step-card step-theme-categories" id="categoriesStep">
-          <div class="step-grid">
-            <div class="section-kicker"><span>Step 6</span><span>Categories</span></div>
-            <h2>Choose the category pool.</h2>
-            <p>Delete anything you do not want in the wheel before the game begins.</p>
-            <div class="panel panel-soft">
-              <div class="category-bank" id="categoryBank"></div>
-            </div>
-            <div class="status-message" id="categoriesStatus"></div>
-            <div class="btn-row">
-              <button class="btn-ghost" id="categoriesBackBtn" type="button">Back</button>
-              <button class="btn" id="categoriesStartBtn" type="button"><i class="fa-solid fa-wand-sparkles" aria-hidden="true"></i><span>Start Game</span></button>
-            </div>
-          </div>
-        </section>
-
-        <section class="step step-card step-theme-order" id="orderStep">
-          <div class="step-grid">
-            <div class="section-kicker"><span>Game Setup</span><span>Turn Order</span></div>
-            <h2>Do a rock paper scissors tournament to decide who starts.</h2>
-            <p>After that, set the order below. The default list is alphabetical.</p>
-            <div class="panel panel-soft">
-              <div class="order-list" id="orderList"></div>
-            </div>
-            <div class="btn-row">
-              <button class="btn-secondary" id="alphabetizeOrderBtn" type="button">Sort Alphabetically</button>
-              <button class="btn-ghost" id="orderBackBtn" type="button">Back</button>
-              <button class="btn" id="beginMatchBtn" type="button">Begin Match</button>
-            </div>
-          </div>
-        </section>
-
-        <section class="step step-card step-theme-game" id="gameStep">
-          <div class="game-stage">
-            <div class="game-topbar">
-              <div class="game-topbar-meta">
-                <div class="section-kicker"><span id="turnNumberLabel">Turn 1</span><span id="turnDifficultyLabel">Medium</span></div>
-                <h2 id="currentPlayerHeading">Player Turn</h2>
-                <p id="gameInstruction">Spin the category wheel to begin.</p>
-                <div class="game-settings-card">
-                  <div class="settings-heading">
-                    <strong>Question Difficulty</strong>
-                    <span class="difficulty-hint">Applies to the next spin.</span>
-                  </div>
-                  <div class="difficulty-switcher" id="gameDifficultySwitcher">
-                    <button class="difficulty-toggle" type="button" data-game-difficulty="easy">Easy</button>
-                    <button class="difficulty-toggle is-selected" type="button" data-game-difficulty="medium">Medium</button>
-                    <button class="difficulty-toggle" type="button" data-game-difficulty="hard">Hard</button>
-                    <button class="difficulty-toggle" type="button" data-game-difficulty="impossible">Impossible</button>
-                  </div>
-                </div>
-              </div>
-              <div class="game-topbar-actions">
-                <div class="btn-row">
-                  <button class="btn-secondary" id="restartSameSettingsBtn" type="button">Replay Setup</button>
-                  <button class="btn-ghost" id="gameStartOverBtn" type="button">Start Over</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="scoreboard" id="scoreboard"></div>
-
-            <div class="game-grid">
-              <div class="wheel-card" id="wheelCard">
-                <div>
-                  <h3>Category Wheel</h3>
-                  <p class="tiny-copy">A random category is chosen every turn.</p>
-                </div>
-                <div class="wheel-wrap">
-                  <div class="wheel-pointer"></div>
-                  <div class="wheel-spin" id="wheelSpinWrap" role="button" tabindex="0" aria-label="Spin category wheel">
-                    <canvas id="categoryWheelCanvas" width="640" height="640" aria-label="Trivia category wheel"></canvas>
-                  </div>
-                </div>
-                <div class="wheel-result" id="wheelResult">Ready to spin.</div>
-                <div class="btn-row">
-                  <button class="btn" id="spinWheelBtn" type="button"><i class="fa-solid fa-dharmachakra" aria-hidden="true"></i><span>Spin Wheel</span></button>
-                </div>
-                <div class="tiny-copy" id="questionPoolStatus"></div>
-              </div>
-
-              <div class="question-card" id="questionCard">
-                <div>
-                  <div class="section-kicker"><span id="questionCategoryBadge">Category</span><span id="questionModeBadge">Mode</span></div>
-                </div>
-                <div class="question-prompt" id="questionPrompt">Spin the wheel to reveal the next question.</div>
-                <div class="question-sub" id="questionSubPrompt">No question has been drawn yet.</div>
-                <div class="judge-note" id="judgeNote" hidden></div>
-                <div class="mc-grid" id="multipleChoiceGrid"></div>
-                <div class="answer-panel" id="answerPanel" hidden>
-                  <strong id="answerHeading">Answer</strong>
-                  <div id="answerText"></div>
-                  <div class="tiny-copy" id="answerExplanation"></div>
-                </div>
-                <div class="question-actions" id="questionActions"></div>
-              </div>
-            </div>
-
-            <div class="panel panel-soft">
-              <p id="winRuleNote">First to 11 points wins, with win by 2 turned on.</p>
-            </div>
-          </div>
-        </section>
-      </div>
-    </section>
+        </div>
+      </section>
+    </div>
   </main>
 
-  <div class="transition-overlay" id="transitionOverlay" aria-hidden="true">
-    <div class="transition-core"><span>Entering<br>Trivia Mode</span></div>
-  </div>
-
-  <div class="winner-overlay" id="winnerOverlay" aria-hidden="true">
+  <div class="winner-overlay" id="winnerOverlay" hidden>
     <div class="winner-card">
-      <div class="winner-icon"><img id="winnerIcon" alt="Winner icon"></div>
-      <div class="section-kicker"><span>Winner</span><span>Trivia Crown</span></div>
+      <div class="winner-avatar" id="winnerAvatar"></div>
+      <div class="section-eyebrow" style="justify-self:center;"><span>Winner</span><span>Trivia Crown</span></div>
       <h2 id="winnerHeading">Player wins!</h2>
       <p id="winnerSummary">They reached the target score first.</p>
       <div class="btn-row" style="justify-content:center;">
@@ -1653,7 +808,8 @@
     </div>
   </div>
 
-  <script src="/trivia/question-bank.js?v=20260527e"></script>
-  <script src="/trivia/trivia-page.js?v=20260527e"></script>
+  <script src="/shared-app-header.js?v=20260421b"></script>
+  <script src="/trivia/question-bank.js?v=20260726a"></script>
+  <script src="/trivia/trivia-page.js?v=20260726a"></script>
 </body>
 </html>

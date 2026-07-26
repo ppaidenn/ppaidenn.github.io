@@ -1,23 +1,15 @@
 **Trivia Sources**
 
-The large local trivia bank in [question-bank.js](/c:/Users/pen/OneDrive/Documents/paiden.com/paiden.github.io/trivia/question-bank.js:1) is adapted from:
+The local trivia bank in [question-bank.js](/C:/Users/pen/OneDrive/Documents/paiden.com/paiden.github.io/trivia/question-bank.js:1) is now a hand-curated classic game-night set.
 
-- OpenTriviaQA by `uberspot`
-- Repo: https://github.com/uberspot/OpenTriviaQA
-- License: CC BY-SA 4.0
-- Open Trivia DB multiple-choice question material
-- Site: https://opentdb.com/
+It is built around:
 
-For paiden.com, the source material is modified by:
+- direct general-knowledge question writing for paiden.com
+- broadly recognizable world capitals, landmarks, songs, films, athletes, historical figures, and science facts
+- a single `classic` difficulty instead of easy/medium/hard/impossible buckets
+- deterministic answer shuffling so the same bank can be validated locally
 
-- selecting only the categories used by the game
-- combining `movies` and `television` into `Movies & TV`
-- normalizing and deduplicating questions
-- trimming entries to four answer choices
-- blending in mainstream Open Trivia DB questions for easier/mid buckets
-- assigning tuned local `easy`, `medium`, `hard`, and `impossible` buckets for browser play
-
-To rebuild the local bank:
+The validator script checks the bank shape, total counts, and duplicate choices:
 
 ```powershell
 node .\trivia\build-question-bank.mjs
