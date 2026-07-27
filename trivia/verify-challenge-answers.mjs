@@ -25,9 +25,9 @@ const groups = [
   {
     key: "GEOGRAPHY_PLACES",
     forward: (left) => `${left} is located in which country?`,
-    reverse: (_left, right) => `Which landmark, region, or natural site is in ${right}?`,
+    reverse: (left) => `In which country would you find ${left}?`,
     forwardAnswer: (_left, right) => right,
-    reverseAnswer: (left) => left,
+    reverseAnswer: (_left, right) => right,
   },
   {
     key: "SCIENCE_ATOMIC_NUMBERS",
@@ -39,30 +39,30 @@ const groups = [
   {
     key: "MUSIC_ALBUMS",
     forward: (left) => `Who released the album ${left}?`,
-    reverse: (_left, right) => `Which album was released by ${right}?`,
+    reverse: (left) => `Which artist is behind the album ${left}?`,
     forwardAnswer: (_left, right) => right,
-    reverseAnswer: (left) => left,
+    reverseAnswer: (_left, right) => right,
   },
   {
     key: "SPORTS_MOMENTS",
     forward: (_left, right) => `Which athlete is associated with ${right}?`,
-    reverse: (left) => `Which achievement or distinction is associated with ${left}?`,
+    reverse: (_left, right) => `Name the athlete known for ${right}.`,
     forwardAnswer: (left) => left,
-    reverseAnswer: (_left, right) => right,
+    reverseAnswer: (left) => left,
   },
   {
     key: "SCREEN_QUOTES",
     forward: (left) => `Which film features the line "${left}"?`,
-    reverse: (_left, right) => `Which line comes from ${right}?`,
+    reverse: (left) => `The line "${left}" appears in which film?`,
     forwardAnswer: (_left, right) => right,
-    reverseAnswer: (left) => left,
+    reverseAnswer: (_left, right) => right,
   },
   {
     key: "HISTORY_EVENTS",
     forward: (left) => `In what year did ${left} occur?`,
-    reverse: (_left, right) => `Which event occurred in ${right}?`,
+    reverse: (left) => `Date this event: ${left}.`,
     forwardAnswer: (_left, right) => right,
-    reverseAnswer: (left) => left,
+    reverseAnswer: (_left, right) => right,
   },
 ];
 
@@ -79,4 +79,20 @@ for (const group of groups) {
   }
 }
 
-console.log(`Verified ${checked} generated challenge prompt-to-answer mappings.`);
+const ambiguousOpenAnswerPatterns = [
+  /^Which song is most closely associated with /,
+  /^Which .+ team plays in .+\?$/,
+  /^Which of these characters comes from /,
+  /^Which of these events happened in /,
+  /^Which line comes from /,
+  /^Which achievement or distinction is associated with /,
+  /^Which event occurred in /,
+  /^Which landmark, region, or natural site is in /,
+  /^Which album was released by /,
+];
+const ambiguousQuestions = bank.filter((question) => ambiguousOpenAnswerPatterns.some((pattern) => pattern.test(question.prompt)));
+if (ambiguousQuestions.length) {
+  throw new Error(`Found ${ambiguousQuestions.length} list-style question(s) that are not valid for Speak It mode.`);
+}
+
+console.log(`Verified ${checked} generated challenge prompt-to-answer mappings and all bank prompts are valid for Speak It mode.`);

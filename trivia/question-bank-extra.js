@@ -5,6 +5,61 @@
   if (!Array.isArray(bank)) return;
 
   const existingIds = new Set(bank.map(function (question) { return question.id; }));
+  function answerText(question) {
+    return question.choices[question.answerIndex];
+  }
+
+  function adoptDirectQuestion(target, source, prompt) {
+    if (!source) throw new Error(`Missing direct replacement for ${target.id}`);
+    target.prompt = prompt;
+    target.choices = source.choices.slice();
+    target.answerIndex = source.answerIndex;
+    target.explanation = source.explanation;
+  }
+
+  function repairAmbiguousLegacyPrompts() {
+    const original = bank.slice();
+    let repaired = 0;
+
+    original.forEach(function (question) {
+      const answer = answerText(question);
+      if (question.category === "Music" && question.prompt.startsWith("Which song is most closely associated with ")) {
+        const source = original.find(function (entry) {
+          return entry.category === "Music" && entry.prompt === `Which artist recorded "${answer}"?`;
+        });
+        adoptDirectQuestion(question, source, `Who recorded "${answer}"?`);
+        repaired += 1;
+        return;
+      }
+      if (question.category === "Sports" && /^Which .+ team plays in .+\?$/.test(question.prompt)) {
+        const source = original.find(function (entry) {
+          return entry.category === "Sports" && entry.prompt === `The ${answer} are based in which city?`;
+        });
+        adoptDirectQuestion(question, source, `In which city do the ${answer} play?`);
+        repaired += 1;
+        return;
+      }
+      if (question.category === "Movies & TV" && question.prompt.startsWith("Which of these characters comes from ")) {
+        const source = original.find(function (entry) {
+          return entry.category === "Movies & TV" && entry.prompt === `${answer} is a character from which movie or series?`;
+        });
+        adoptDirectQuestion(question, source, `Which movie or series features ${answer}?`);
+        repaired += 1;
+        return;
+      }
+      if (question.category === "History" && question.prompt.startsWith("Which of these events happened in ")) {
+        const source = original.find(function (entry) {
+          return entry.category === "History" && entry.prompt === `In what year did ${answer} happen?`;
+        });
+        adoptDirectQuestion(question, source, `When did ${answer} happen?`);
+        repaired += 1;
+      }
+    });
+
+    if (repaired !== 81) throw new Error(`Expected to repair 81 legacy prompts, repaired ${repaired}.`);
+  }
+
+  repairAmbiguousLegacyPrompts();
 
   function normalize(value) {
     return String(value).trim().toLowerCase();
@@ -58,7 +113,7 @@
     bank.push({ id, category, difficulty: "classic", tier: "challenge", prompt, choices: choicePack.choices, answerIndex: choicePack.answerIndex, explanation });
   }
 
-  function addPairs(category, pairs, forward, reverse, explanation, forwardAnswerSide = "right") {
+  function addPairs(category, pairs, forward, reverse, explanation, forwardAnswerSide = "right", reverseAnswerSide = forwardAnswerSide === "left" ? "right" : "left") {
     const leftPool = pairs.map(function (pair) { return pair[0]; });
     const rightPool = pairs.map(function (pair) { return pair[1]; });
     pairs.forEach(function (pair) {
@@ -66,8 +121,8 @@
       const right = pair[1];
       const forwardAnswer = forwardAnswerSide === "left" ? left : right;
       const forwardPool = forwardAnswerSide === "left" ? leftPool : rightPool;
-      const reverseAnswer = forwardAnswerSide === "left" ? right : left;
-      const reversePool = forwardAnswerSide === "left" ? rightPool : leftPool;
+      const reverseAnswer = reverseAnswerSide === "left" ? left : right;
+      const reversePool = reverseAnswerSide === "left" ? leftPool : rightPool;
       add(category, `${left}-to-${right}`, forward(left, right), forwardAnswer, forwardPool, explanation(left, right));
       add(category, `${right}-to-${left}`, reverse(left, right), reverseAnswer, reversePool, explanation(left, right));
     });
@@ -143,8 +198,8 @@
 
   addPairs("Geography", GEOGRAPHY_PLACES,
     function (place) { return `${place} is located in which country?`; },
-    function (place, country) { return `Which landmark, region, or natural site is in ${country}?`; },
-    function (place, country) { return `${place} is located in ${country}.`; });
+    function (place) { return `In which country would you find ${place}?`; },
+    function (place, country) { return `${place} is located in ${country}.`; }, "right", "right");
 
   addPairs("Science", SCIENCE_ATOMIC_NUMBERS,
     function (element, atomicNumber) { return `Which element has atomic number ${atomicNumber}?`; },
@@ -153,23 +208,23 @@
 
   addPairs("Music", MUSIC_ALBUMS,
     function (album) { return `Who released the album ${album}?`; },
-    function (album, artist) { return `Which album was released by ${artist}?`; },
-    function (album, artist) { return `${album} is an album by ${artist}.`; });
+    function (album) { return `Which artist is behind the album ${album}?`; },
+    function (album, artist) { return `${album} is an album by ${artist}.`; }, "right", "right");
 
   addPairs("Sports", SPORTS_MOMENTS,
     function (athlete, moment) { return `Which athlete is associated with ${moment}?`; },
-    function (athlete) { return `Which achievement or distinction is associated with ${athlete}?`; },
-    function (athlete, moment) { return `${athlete} is associated with ${moment}.`; }, "left");
+    function (athlete, moment) { return `Name the athlete known for ${moment}.`; },
+    function (athlete, moment) { return `${athlete} is associated with ${moment}.`; }, "left", "left");
 
   addPairs("Movies & TV", SCREEN_QUOTES,
     function (quote) { return `Which film features the line "${quote}"?`; },
-    function (quote, film) { return `Which line comes from ${film}?`; },
-    function (quote, film) { return `"${quote}" is a line from ${film}.`; });
+    function (quote) { return `The line "${quote}" appears in which film?`; },
+    function (quote, film) { return `"${quote}" is a line from ${film}.`; }, "right", "right");
 
   addPairs("History", HISTORY_EVENTS,
     function (event) { return `In what year did ${event} occur?`; },
-    function (event, year) { return `Which event occurred in ${year}?`; },
-    function (event, year) { return `${event} occurred in ${year}.`; });
+    function (event) { return `Date this event: ${event}.`; },
+    function (event, year) { return `${event} occurred in ${year}.`; }, "right", "right");
 
-  window.PAIDEN_TRIVIA_BANK_VERSION = "20260726c";
+  window.PAIDEN_TRIVIA_BANK_VERSION = "20260726e";
 })();
