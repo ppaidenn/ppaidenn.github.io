@@ -5,32 +5,30 @@
     ? window.PAIDEN_TRIVIA_QUESTION_BANK.slice()
     : [];
 
-  if (!QUESTION_BANK.length) {
-    return;
-  }
+  if (!QUESTION_BANK.length) return;
 
   const CATEGORY_META = {
-    "Music": { color: "#ff6f91", icon: "fa-music", blurb: "Songs, artists, albums, and instruments." },
-    "Sports": { color: "#77e35d", icon: "fa-football", blurb: "Athletes, teams, trophies, and game terms." },
-    "Movies & TV": { color: "#63cfff", icon: "fa-film", blurb: "Big franchises, famous characters, and TV staples." },
-    "History": { color: "#ffbe55", icon: "fa-landmark", blurb: "Major events, leaders, and historical vocabulary." },
-    "Science": { color: "#45dbc7", icon: "fa-flask", blurb: "Elements, planets, discoveries, and core concepts." },
-    "Geography": { color: "#a78dff", icon: "fa-earth-americas", blurb: "Capitals, landmarks, and world geography." },
+    "Music": { color: "#d85d7f", icon: "fa-music", blurb: "Artists, albums, compositions, and instruments." },
+    "Sports": { color: "#60a646", icon: "fa-football", blurb: "Records, rivalries, titles, and moments." },
+    "Movies & TV": { color: "#3b8eb7", icon: "fa-film", blurb: "Screen history, characters, and great lines." },
+    "History": { color: "#c88228", icon: "fa-landmark", blurb: "Events, movements, and the people behind them." },
+    "Science": { color: "#247f86", icon: "fa-flask", blurb: "Discoveries, elements, and how things work." },
+    "Geography": { color: "#7560b8", icon: "fa-earth-americas", blurb: "Places, capitals, landmarks, and borders." },
   };
 
   const PRESET_ICONS = [
-    { id: "rocket", label: "Rocket", icon: "fa-rocket", color: "linear-gradient(135deg, #63cfff, #d7f4ff)" },
-    { id: "star", label: "Star", icon: "fa-star", color: "linear-gradient(135deg, #ffbe55, #ffe4a8)" },
-    { id: "bolt", label: "Bolt", icon: "fa-bolt", color: "linear-gradient(135deg, #45dbc7, #cffff4)" },
-    { id: "crown", label: "Crown", icon: "fa-crown", color: "linear-gradient(135deg, #a78dff, #e5dcff)" },
-    { id: "dice", label: "Dice", icon: "fa-dice", color: "linear-gradient(135deg, #ff6f91, #ffd6e1)" },
-    { id: "ghost", label: "Ghost", icon: "fa-ghost", color: "linear-gradient(135deg, #d6e4ff, #ffffff)" },
-    { id: "chess", label: "Knight", icon: "fa-chess-knight", color: "linear-gradient(135deg, #9fe870, #edffd6)" },
-    { id: "meteor", label: "Meteor", icon: "fa-meteor", color: "linear-gradient(135deg, #ffa46a, #ffe1cf)" },
+    { id: "rocket", label: "Rocket", icon: "fa-rocket", color: "linear-gradient(135deg,#8fd3ff,#e6f7ff)" },
+    { id: "star", label: "Star", icon: "fa-star", color: "linear-gradient(135deg,#ffd36f,#fff0ba)" },
+    { id: "bolt", label: "Bolt", icon: "fa-bolt", color: "linear-gradient(135deg,#63d7c0,#d8fff5)" },
+    { id: "crown", label: "Crown", icon: "fa-crown", color: "linear-gradient(135deg,#b6a2ff,#ece6ff)" },
+    { id: "dice", label: "Dice", icon: "fa-dice", color: "linear-gradient(135deg,#ff9ab4,#ffe0e8)" },
+    { id: "ghost", label: "Ghost", icon: "fa-ghost", color: "linear-gradient(135deg,#d9e5ff,#fff)" },
+    { id: "chess", label: "Knight", icon: "fa-chess-knight", color: "linear-gradient(135deg,#b6ed82,#f1ffdf)" },
+    { id: "meteor", label: "Meteor", icon: "fa-meteor", color: "linear-gradient(135deg,#ffb278,#ffe8d5)" },
   ];
 
   const STEP_ORDER = [
-    { id: "landingStep", label: "Welcome" },
+    { id: "landingStep", label: "Start" },
     { id: "playerCountStep", label: "Players" },
     { id: "playerSetupStep", label: "Roster" },
     { id: "modeStep", label: "Mode" },
@@ -40,91 +38,76 @@
     { id: "gameStep", label: "Play" },
   ];
 
-  const QUESTIONS_BY_CATEGORY = QUESTION_BANK.reduce((map, question) => {
-    if (!map[question.category]) {
-      map[question.category] = [];
-    }
-    map[question.category].push(question);
+  const QUESTIONS_BY_CATEGORY = QUESTION_BANK.reduce(function (map, question) {
+    (map[question.category] ||= []).push(question);
     return map;
   }, {});
 
-  const CATEGORY_COUNTS = Object.keys(CATEGORY_META).reduce((map, category) => {
+  const CATEGORY_COUNTS = Object.keys(CATEGORY_META).reduce(function (map, category) {
     map[category] = (QUESTIONS_BY_CATEGORY[category] || []).length;
     return map;
   }, {});
 
   const dom = {
-    startTriviaBtn: document.getElementById("startTriviaBtn"),
-    jumpToGameBtn: document.getElementById("jumpToGameBtn"),
-    landingContinueBtn: document.getElementById("landingContinueBtn"),
-    heroStats: document.getElementById("heroStats"),
-    bankHighlights: document.getElementById("bankHighlights"),
-    categoryPreview: document.getElementById("categoryPreview"),
-    stepRail: document.getElementById("stepRail"),
-    landingStep: document.getElementById("landingStep"),
-    playerCountStep: document.getElementById("playerCountStep"),
-    playerSetupStep: document.getElementById("playerSetupStep"),
-    modeStep: document.getElementById("modeStep"),
-    pointsStep: document.getElementById("pointsStep"),
-    categoriesStep: document.getElementById("categoriesStep"),
-    orderStep: document.getElementById("orderStep"),
-    gameStep: document.getElementById("gameStep"),
-    playerCountInput: document.getElementById("playerCountInput"),
-    playerCountStatus: document.getElementById("playerCountStatus"),
-    playerCountBackBtn: document.getElementById("playerCountBackBtn"),
-    playerCountContinueBtn: document.getElementById("playerCountContinueBtn"),
-    playerSetupHeading: document.getElementById("playerSetupHeading"),
-    playerSetupSub: document.getElementById("playerSetupSub"),
-    playerPreviewAvatar: document.getElementById("playerPreviewAvatar"),
-    playerPreviewName: document.getElementById("playerPreviewName"),
-    playerNameInput: document.getElementById("playerNameInput"),
-    playerIconGrid: document.getElementById("playerIconGrid"),
-    rosterPreview: document.getElementById("rosterPreview"),
-    playerSetupStatus: document.getElementById("playerSetupStatus"),
-    playerSetupBackBtn: document.getElementById("playerSetupBackBtn"),
-    playerSetupContinueBtn: document.getElementById("playerSetupContinueBtn"),
-    modeGrid: document.getElementById("modeGrid"),
-    modeBackBtn: document.getElementById("modeBackBtn"),
-    modeContinueBtn: document.getElementById("modeContinueBtn"),
-    pointsToWinInput: document.getElementById("pointsToWinInput"),
-    winByTwoInput: document.getElementById("winByTwoInput"),
-    pointsStatus: document.getElementById("pointsStatus"),
-    pointsBackBtn: document.getElementById("pointsBackBtn"),
-    pointsContinueBtn: document.getElementById("pointsContinueBtn"),
-    categoryGrid: document.getElementById("categoryGrid"),
-    categoriesStatus: document.getElementById("categoriesStatus"),
-    categoriesBackBtn: document.getElementById("categoriesBackBtn"),
-    categoriesContinueBtn: document.getElementById("categoriesContinueBtn"),
-    orderList: document.getElementById("orderList"),
-    alphabetizeOrderBtn: document.getElementById("alphabetizeOrderBtn"),
-    orderBackBtn: document.getElementById("orderBackBtn"),
-    beginMatchBtn: document.getElementById("beginMatchBtn"),
-    currentPlayerHeading: document.getElementById("currentPlayerHeading"),
-    gameInstruction: document.getElementById("gameInstruction"),
-    scoreboard: document.getElementById("scoreboard"),
-    wheelRotor: document.getElementById("wheelRotor"),
-    categoryWheelCanvas: document.getElementById("categoryWheelCanvas"),
-    wheelResult: document.getElementById("wheelResult"),
-    questionPoolStatus: document.getElementById("questionPoolStatus"),
-    spinWheelBtn: document.getElementById("spinWheelBtn"),
-    restartMatchBtn: document.getElementById("restartMatchBtn"),
-    startOverBtn: document.getElementById("startOverBtn"),
-    questionCategoryBadge: document.getElementById("questionCategoryBadge"),
-    questionModeBadge: document.getElementById("questionModeBadge"),
-    questionPrompt: document.getElementById("questionPrompt"),
-    questionSubPrompt: document.getElementById("questionSubPrompt"),
-    choicesGrid: document.getElementById("choicesGrid"),
-    answerPanel: document.getElementById("answerPanel"),
-    answerHeading: document.getElementById("answerHeading"),
-    answerText: document.getElementById("answerText"),
-    answerExplanation: document.getElementById("answerExplanation"),
-    questionActions: document.getElementById("questionActions"),
-    winnerOverlay: document.getElementById("winnerOverlay"),
-    winnerAvatar: document.getElementById("winnerAvatar"),
-    winnerHeading: document.getElementById("winnerHeading"),
-    winnerSummary: document.getElementById("winnerSummary"),
-    playAgainBtn: document.getElementById("playAgainBtn"),
-    winnerStartOverBtn: document.getElementById("winnerStartOverBtn"),
+    startTriviaBtn: byId("startTriviaBtn"),
+    landingContinueBtn: byId("landingContinueBtn"),
+    stepRail: byId("stepRail"),
+    playerCountInput: byId("playerCountInput"),
+    playerCountStatus: byId("playerCountStatus"),
+    playerCountBackBtn: byId("playerCountBackBtn"),
+    playerCountContinueBtn: byId("playerCountContinueBtn"),
+    playerSetupHeading: byId("playerSetupHeading"),
+    playerSetupSub: byId("playerSetupSub"),
+    playerPreviewAvatar: byId("playerPreviewAvatar"),
+    playerPreviewName: byId("playerPreviewName"),
+    playerNameInput: byId("playerNameInput"),
+    playerIconGrid: byId("playerIconGrid"),
+    rosterPreview: byId("rosterPreview"),
+    playerSetupStatus: byId("playerSetupStatus"),
+    playerSetupBackBtn: byId("playerSetupBackBtn"),
+    playerSetupContinueBtn: byId("playerSetupContinueBtn"),
+    modeGrid: byId("modeGrid"),
+    modeBackBtn: byId("modeBackBtn"),
+    modeContinueBtn: byId("modeContinueBtn"),
+    pointsToWinInput: byId("pointsToWinInput"),
+    winByTwoInput: byId("winByTwoInput"),
+    pointsStatus: byId("pointsStatus"),
+    pointsBackBtn: byId("pointsBackBtn"),
+    pointsContinueBtn: byId("pointsContinueBtn"),
+    categoryGrid: byId("categoryGrid"),
+    categoriesStatus: byId("categoriesStatus"),
+    categoriesBackBtn: byId("categoriesBackBtn"),
+    categoriesContinueBtn: byId("categoriesContinueBtn"),
+    orderList: byId("orderList"),
+    alphabetizeOrderBtn: byId("alphabetizeOrderBtn"),
+    orderBackBtn: byId("orderBackBtn"),
+    beginMatchBtn: byId("beginMatchBtn"),
+    currentPlayerHeading: byId("currentPlayerHeading"),
+    gameInstruction: byId("gameInstruction"),
+    scoreboard: byId("scoreboard"),
+    wheelRotor: byId("wheelRotor"),
+    categoryWheelCanvas: byId("categoryWheelCanvas"),
+    wheelResult: byId("wheelResult"),
+    questionPoolStatus: byId("questionPoolStatus"),
+    spinWheelBtn: byId("spinWheelBtn"),
+    restartMatchBtn: byId("restartMatchBtn"),
+    startOverBtn: byId("startOverBtn"),
+    questionCategoryBadge: byId("questionCategoryBadge"),
+    questionModeBadge: byId("questionModeBadge"),
+    questionPrompt: byId("questionPrompt"),
+    questionSubPrompt: byId("questionSubPrompt"),
+    choicesGrid: byId("choicesGrid"),
+    answerPanel: byId("answerPanel"),
+    answerHeading: byId("answerHeading"),
+    answerText: byId("answerText"),
+    answerExplanation: byId("answerExplanation"),
+    questionActions: byId("questionActions"),
+    winnerOverlay: byId("winnerOverlay"),
+    winnerAvatar: byId("winnerAvatar"),
+    winnerHeading: byId("winnerHeading"),
+    winnerSummary: byId("winnerSummary"),
+    playAgainBtn: byId("playAgainBtn"),
+    winnerStartOverBtn: byId("winnerStartOverBtn"),
   };
 
   const state = {
@@ -132,7 +115,7 @@
     playerCount: 2,
     players: [],
     editingPlayerIndex: 0,
-    mode: "multiple-choice",
+    mode: "host-judged",
     pointsToWin: 10,
     winByTwo: true,
     categories: Object.keys(CATEGORY_META),
@@ -152,56 +135,39 @@
 
   init();
 
+  function byId(id) {
+    return document.getElementById(id);
+  }
+
   function init() {
     rebuildPlayers(state.playerCount);
     bindEvents();
-    renderHero();
     renderStepRail();
     renderPlayerSetup();
     renderModeGrid();
     renderCategoryGrid();
     renderOrderList();
     renderGame();
-    showStep("landingStep");
+    showStep("landingStep", false);
     window.addEventListener("resize", drawWheel);
   }
 
   function bindEvents() {
-    dom.startTriviaBtn.addEventListener("click", function () {
-      showStep("playerCountStep");
-    });
-    dom.jumpToGameBtn.addEventListener("click", function () {
-      showStep("landingStep");
-      dom.landingStep.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-    dom.landingContinueBtn.addEventListener("click", function () {
-      showStep("playerCountStep");
-    });
-    dom.playerCountBackBtn.addEventListener("click", function () {
-      showStep("landingStep");
-    });
+    dom.startTriviaBtn.addEventListener("click", function () { showStep("playerCountStep"); });
+    dom.landingContinueBtn.addEventListener("click", function () { showStep("playerCountStep"); });
+    dom.playerCountBackBtn.addEventListener("click", function () { showStep("landingStep"); });
     dom.playerCountContinueBtn.addEventListener("click", handlePlayerCountContinue);
     dom.playerNameInput.addEventListener("input", handlePlayerNameInput);
     dom.playerSetupBackBtn.addEventListener("click", handlePlayerSetupBack);
     dom.playerSetupContinueBtn.addEventListener("click", handlePlayerSetupContinue);
-    dom.modeBackBtn.addEventListener("click", function () {
-      showStep("playerSetupStep");
-    });
-    dom.modeContinueBtn.addEventListener("click", function () {
-      showStep("pointsStep");
-    });
-    dom.pointsBackBtn.addEventListener("click", function () {
-      showStep("modeStep");
-    });
+    dom.modeBackBtn.addEventListener("click", function () { showStep("playerSetupStep"); });
+    dom.modeContinueBtn.addEventListener("click", function () { showStep("pointsStep"); });
+    dom.pointsBackBtn.addEventListener("click", function () { showStep("modeStep"); });
     dom.pointsContinueBtn.addEventListener("click", handlePointsContinue);
-    dom.categoriesBackBtn.addEventListener("click", function () {
-      showStep("pointsStep");
-    });
+    dom.categoriesBackBtn.addEventListener("click", function () { showStep("pointsStep"); });
     dom.categoriesContinueBtn.addEventListener("click", handleCategoriesContinue);
     dom.alphabetizeOrderBtn.addEventListener("click", alphabetizeOrder);
-    dom.orderBackBtn.addEventListener("click", function () {
-      showStep("categoriesStep");
-    });
+    dom.orderBackBtn.addEventListener("click", function () { showStep("categoriesStep"); });
     dom.beginMatchBtn.addEventListener("click", startMatch);
     dom.spinWheelBtn.addEventListener("click", spinWheel);
     dom.restartMatchBtn.addEventListener("click", restartMatch);
@@ -210,64 +176,33 @@
     dom.winnerStartOverBtn.addEventListener("click", resetAll);
   }
 
-  function renderHero() {
-    dom.heroStats.innerHTML = [
-      renderStatCard(QUESTION_BANK.length, "classic questions"),
-      renderStatCard(Object.keys(CATEGORY_META).length, "core categories"),
-      renderStatCard("2-8", "local players"),
-    ].join("");
-
-    dom.bankHighlights.innerHTML = [
-      renderPill("Single classic difficulty"),
-      renderPill("Multiple choice or host judged"),
-      renderPill("Refresh clears the session"),
-      renderPill(`${window.PAIDEN_TRIVIA_BANK_VERSION || "local"} bank build`),
-    ].join("");
-
-    dom.categoryPreview.innerHTML = Object.keys(CATEGORY_META)
-      .map(function (category) {
-        const meta = CATEGORY_META[category];
-        return `
-          <div class="preview-card">
-            <div class="section-eyebrow"><i class="fa-solid ${meta.icon}" aria-hidden="true"></i><span>${category}</span></div>
-            <p>${CATEGORY_COUNTS[category]} prompts tuned for general game-night play.</p>
-          </div>
-        `;
-      })
-      .join("");
+  function showStep(stepId, animate = true) {
+    state.currentStep = stepId;
+    STEP_ORDER.forEach(function (step) {
+      const node = byId(step.id);
+      if (!node) return;
+      const active = step.id === stepId;
+      node.hidden = !active;
+      node.classList.remove("is-entering");
+      if (active && animate) {
+        window.requestAnimationFrame(function () {
+          node.classList.add("is-entering");
+          window.setTimeout(function () { node.classList.remove("is-entering"); }, 420);
+        });
+      }
+    });
+    renderStepRail();
+    if (stepId === "gameStep") window.requestAnimationFrame(drawWheel);
   }
 
   function renderStepRail() {
-    const currentIndex = STEP_ORDER.findIndex((step) => step.id === state.currentStep);
+    const currentIndex = STEP_ORDER.findIndex(function (step) { return step.id === state.currentStep; });
     dom.stepRail.innerHTML = STEP_ORDER.map(function (step, index) {
       const classes = ["step-pill"];
       if (index === currentIndex) classes.push("is-active");
       if (index < currentIndex) classes.push("is-complete");
       return `<div class="${classes.join(" ")}"><strong>${index + 1}</strong><span>${step.label}</span></div>`;
     }).join("");
-  }
-
-  function showStep(stepId) {
-    state.currentStep = stepId;
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    STEP_ORDER.forEach(function (step) {
-      const node = document.getElementById(step.id);
-      if (node) {
-        node.hidden = step.id !== stepId;
-      }
-    });
-    renderStepRail();
-    if (stepId === "gameStep") {
-      drawWheel();
-    }
-  }
-
-  function renderStatCard(value, label) {
-    return `<div class="stat-card"><div class="stat-value">${value}</div><p>${label}</p></div>`;
-  }
-
-  function renderPill(text) {
-    return `<div class="status-pill">${text}</div>`;
   }
 
   function rebuildPlayers(count) {
@@ -284,7 +219,7 @@
       });
     }
     state.players = nextPlayers;
-    state.order = state.players.map((player) => player.id);
+    state.order = state.players.map(function (player) { return player.id; });
   }
 
   function getEditingPlayer() {
@@ -300,10 +235,9 @@
   function renderPlayerSetup() {
     const player = getEditingPlayer();
     if (!player) return;
-
     dom.playerSetupHeading.textContent = `Player ${state.editingPlayerIndex + 1}`;
     dom.playerSetupSub.textContent = state.editingPlayerIndex === state.playerCount - 1
-      ? "Finish the last player, then move into the game settings."
+      ? "Finish the last player, then choose the game settings."
       : "Choose a name and token for this player.";
     dom.playerPreviewName.textContent = player.name || `Player ${state.editingPlayerIndex + 1}`;
     dom.playerNameInput.value = player.name;
@@ -311,18 +245,12 @@
     applyAvatar(dom.playerPreviewAvatar, player, "player-avatar");
 
     dom.playerIconGrid.innerHTML = PRESET_ICONS.map(function (preset) {
-      const isSelected = preset.icon === player.icon;
-      return `
-        <button class="icon-tile${isSelected ? " is-selected" : ""}" type="button" data-icon-id="${preset.id}">
-          <div class="icon-mark" style="background:${preset.color}"><i class="fa-solid ${preset.icon}" aria-hidden="true"></i></div>
-          <strong>${preset.label}</strong>
-        </button>
-      `;
+      const selected = preset.icon === player.icon;
+      return `<button class="icon-tile${selected ? " is-selected" : ""}" type="button" data-icon-id="${preset.id}"><div class="icon-mark" style="background:${preset.color}"><i class="fa-solid ${preset.icon}" aria-hidden="true"></i></div><strong>${preset.label}</strong></button>`;
     }).join("");
-
-    Array.from(dom.playerIconGrid.querySelectorAll("[data-icon-id]")).forEach(function (button) {
+    dom.playerIconGrid.querySelectorAll("[data-icon-id]").forEach(function (button) {
       button.addEventListener("click", function () {
-        const preset = PRESET_ICONS.find((entry) => entry.id === button.getAttribute("data-icon-id"));
+        const preset = PRESET_ICONS.find(function (entry) { return entry.id === button.dataset.iconId; });
         if (!preset) return;
         player.icon = preset.icon;
         player.iconLabel = preset.label;
@@ -332,37 +260,36 @@
     });
 
     dom.rosterPreview.innerHTML = state.players.map(function (entry) {
-      return `
-        <div class="player-chip">
-          <div class="player-avatar" style="background:${entry.color}"><i class="fa-solid ${entry.icon}" aria-hidden="true"></i></div>
-          <div>
-            <strong>${escapeHtml(entry.name)}</strong>
-            <span class="muted">${escapeHtml(entry.iconLabel)}</span>
-          </div>
-        </div>
-      `;
+      return `<div class="player-chip"><div class="player-avatar" style="background:${entry.color}"><i class="fa-solid ${entry.icon}" aria-hidden="true"></i></div><div><strong>${escapeHtml(entry.name)}</strong><span class="muted">${escapeHtml(entry.iconLabel)}</span></div></div>`;
     }).join("");
+  }
+
+  function handlePlayerCountContinue() {
+    const count = Number(dom.playerCountInput.value);
+    if (!Number.isInteger(count) || count < 2 || count > 8) {
+      dom.playerCountStatus.textContent = "Choose a whole number from 2 to 8.";
+      return;
+    }
+    state.playerCount = count;
+    state.editingPlayerIndex = 0;
+    rebuildPlayers(count);
+    dom.playerCountStatus.textContent = "";
+    renderPlayerSetup();
+    showStep("playerSetupStep");
   }
 
   function handlePlayerNameInput() {
     const player = getEditingPlayer();
     if (!player) return;
-    player.name = dom.playerNameInput.value.slice(0, 24) || `Player ${state.editingPlayerIndex + 1}`;
-    dom.playerPreviewName.textContent = player.name;
-    renderPlayerSetup();
+    player.name = dom.playerNameInput.value.slice(0, 24);
+    dom.playerPreviewName.textContent = player.name || `Player ${state.editingPlayerIndex + 1}`;
+    renderRosterPreview();
   }
-  function handlePlayerCountContinue() {
-    const count = Number(dom.playerCountInput.value);
-    if (!Number.isInteger(count) || count < 2 || count > 8) {
-      dom.playerCountStatus.textContent = "Choose a whole number between 2 and 8.";
-      return;
-    }
-    dom.playerCountStatus.textContent = "";
-    state.playerCount = count;
-    state.editingPlayerIndex = 0;
-    rebuildPlayers(count);
-    renderPlayerSetup();
-    showStep("playerSetupStep");
+
+  function renderRosterPreview() {
+    dom.rosterPreview.innerHTML = state.players.map(function (entry) {
+      return `<div class="player-chip"><div class="player-avatar" style="background:${entry.color}"><i class="fa-solid ${entry.icon}" aria-hidden="true"></i></div><div><strong>${escapeHtml(entry.name || "Unnamed player")}</strong><span class="muted">${escapeHtml(entry.iconLabel)}</span></div></div>`;
+    }).join("");
   }
 
   function handlePlayerSetupBack() {
@@ -393,32 +320,15 @@
 
   function renderModeGrid() {
     const modes = [
-      {
-        id: "multiple-choice",
-        title: "Multiple Choice",
-        icon: "fa-list-check",
-        description: "Tap the chosen answer on screen, then award the point."
-      },
-      {
-        id: "host-judged",
-        title: "Host Judged",
-        icon: "fa-microphone-lines",
-        description: "Let players answer out loud first, then reveal the official answer."
-      }
+      { id: "host-judged", title: "Speak It", icon: "fa-microphone-lines", description: "Answer out loud first, then reveal the official answer." },
+      { id: "multiple-choice", title: "Multiple Choice", icon: "fa-list-check", description: "A faster round with deliberately close answer options." },
     ];
-
     dom.modeGrid.innerHTML = modes.map(function (mode) {
-      return `
-        <button class="mode-card${state.mode === mode.id ? " is-selected" : ""}" type="button" data-mode="${mode.id}">
-          <div class="section-eyebrow"><i class="fa-solid ${mode.icon}" aria-hidden="true"></i><span>${mode.title}</span></div>
-          <p>${mode.description}</p>
-        </button>
-      `;
+      return `<button class="mode-card${state.mode === mode.id ? " is-selected" : ""}" type="button" data-mode="${mode.id}"><div class="section-eyebrow"><i class="fa-solid ${mode.icon}" aria-hidden="true"></i><span>${mode.title}</span></div><p>${mode.description}</p></button>`;
     }).join("");
-
-    Array.from(dom.modeGrid.querySelectorAll("[data-mode]")).forEach(function (button) {
+    dom.modeGrid.querySelectorAll("[data-mode]").forEach(function (button) {
       button.addEventListener("click", function () {
-        state.mode = button.getAttribute("data-mode") || "multiple-choice";
+        state.mode = button.dataset.mode || "host-judged";
         renderModeGrid();
       });
     });
@@ -427,7 +337,7 @@
   function handlePointsContinue() {
     const value = Number(dom.pointsToWinInput.value);
     if (!Number.isInteger(value) || value < 3 || value > 50) {
-      dom.pointsStatus.textContent = "Choose a whole-number target between 3 and 50.";
+      dom.pointsStatus.textContent = "Choose a whole-number target from 3 to 50.";
       return;
     }
     state.pointsToWin = value;
@@ -441,25 +351,15 @@
     dom.categoryGrid.innerHTML = Object.keys(CATEGORY_META).map(function (category) {
       const meta = CATEGORY_META[category];
       const selected = state.categories.includes(category);
-      return `
-        <button class="category-card${selected ? " is-selected" : ""}" type="button" data-category="${category}">
-          <div class="section-eyebrow"><i class="fa-solid ${meta.icon}" aria-hidden="true"></i><span>${category}</span></div>
-          <h3>${CATEGORY_COUNTS[category]} Questions</h3>
-          <p>${meta.blurb}</p>
-          <small>${selected ? "Included on the wheel" : "Tap to add this category"}</small>
-        </button>
-      `;
+      return `<button class="category-card${selected ? " is-selected" : ""}" type="button" data-category="${category}"><div class="section-eyebrow"><i class="fa-solid ${meta.icon}" aria-hidden="true"></i><span>${category}</span></div><h3>${CATEGORY_COUNTS[category]} questions</h3><p>${meta.blurb}</p><small>${selected ? "Included on the wheel" : "Tap to add this category"}</small></button>`;
     }).join("");
-
-    Array.from(dom.categoryGrid.querySelectorAll("[data-category]")).forEach(function (button) {
+    dom.categoryGrid.querySelectorAll("[data-category]").forEach(function (button) {
       button.addEventListener("click", function () {
-        const category = button.getAttribute("data-category");
+        const category = button.dataset.category;
         if (!category) return;
-        if (state.categories.includes(category)) {
-          state.categories = state.categories.filter((entry) => entry !== category);
-        } else {
-          state.categories = state.categories.concat(category);
-        }
+        state.categories = state.categories.includes(category)
+          ? state.categories.filter(function (entry) { return entry !== category; })
+          : state.categories.concat(category);
         renderCategoryGrid();
       });
     });
@@ -476,69 +376,39 @@
   }
 
   function alphabetizeOrder() {
-    state.order = state.players
-      .slice()
-      .sort(function (left, right) {
-        return left.name.localeCompare(right.name);
-      })
-      .map(function (player) {
-        return player.id;
-      });
+    state.order = state.players.slice().sort(function (left, right) {
+      return left.name.localeCompare(right.name);
+    }).map(function (player) { return player.id; });
     renderOrderList();
   }
 
   function renderOrderList() {
     dom.orderList.innerHTML = state.order.map(function (playerId, index) {
-      const player = state.players.find((entry) => entry.id === playerId);
+      const player = findPlayer(playerId);
       if (!player) return "";
-      return `
-        <div class="order-row">
-          <div style="display:flex; align-items:center; gap:14px;">
-            <div class="player-avatar" style="background:${player.color}"><i class="fa-solid ${player.icon}" aria-hidden="true"></i></div>
-            <div>
-              <strong>${escapeHtml(player.name)}</strong>
-              <span class="muted">Turn ${index + 1}</span>
-            </div>
-          </div>
-          <div class="order-actions">
-            <button type="button" data-move="up" data-index="${index}" aria-label="Move up"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
-            <button type="button" data-move="down" data-index="${index}" aria-label="Move down"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button>
-          </div>
-        </div>
-      `;
+      return `<div class="order-row"><div class="player-chip" style="padding:0;border:0;background:transparent"><div class="player-avatar" style="background:${player.color}"><i class="fa-solid ${player.icon}" aria-hidden="true"></i></div><div><strong>${escapeHtml(player.name)}</strong><span class="muted">Turn ${index + 1}</span></div></div><div class="order-actions"><button type="button" data-order-move="up" data-player-id="${player.id}" aria-label="Move ${escapeHtml(player.name)} up"><i class="fa-solid fa-arrow-up"></i></button><button type="button" data-order-move="down" data-player-id="${player.id}" aria-label="Move ${escapeHtml(player.name)} down"><i class="fa-solid fa-arrow-down"></i></button></div></div>`;
     }).join("");
-
-    Array.from(dom.orderList.querySelectorAll("[data-move]")).forEach(function (button) {
+    dom.orderList.querySelectorAll("[data-order-move]").forEach(function (button) {
       button.addEventListener("click", function () {
-        const index = Number(button.getAttribute("data-index"));
-        const direction = button.getAttribute("data-move");
-        moveOrder(index, direction === "up" ? -1 : 1);
+        const index = state.order.indexOf(button.dataset.playerId);
+        const direction = button.dataset.orderMove === "up" ? -1 : 1;
+        const target = index + direction;
+        if (index < 0 || target < 0 || target >= state.order.length) return;
+        [state.order[index], state.order[target]] = [state.order[target], state.order[index]];
+        renderOrderList();
       });
     });
   }
 
-  function moveOrder(index, delta) {
-    const nextIndex = index + delta;
-    if (nextIndex < 0 || nextIndex >= state.order.length) return;
-    const nextOrder = state.order.slice();
-    const temp = nextOrder[index];
-    nextOrder[index] = nextOrder[nextIndex];
-    nextOrder[nextIndex] = temp;
-    state.order = nextOrder;
-    renderOrderList();
-  }
-
   function startMatch() {
-    state.scores = {};
-    state.order.forEach(function (playerId) {
-      state.scores[playerId] = 0;
-    });
     state.turnIndex = 0;
+    state.scores = Object.fromEntries(state.players.map(function (player) { return [player.id, 0]; }));
     state.usedByCategory = {};
     state.currentCategory = "";
     state.currentQuestion = null;
     state.questionPhase = "idle";
     state.selectedChoiceIndex = null;
+    state.spinning = false;
     state.winnerId = "";
     state.recycleNotice = "";
     dom.winnerOverlay.hidden = true;
@@ -553,11 +423,13 @@
   function resetAll() {
     state.currentStep = "landingStep";
     state.playerCount = 2;
+    state.players = [];
     state.editingPlayerIndex = 0;
-    state.mode = "multiple-choice";
+    state.mode = "host-judged";
     state.pointsToWin = 10;
     state.winByTwo = true;
     state.categories = Object.keys(CATEGORY_META);
+    state.order = [];
     state.turnIndex = 0;
     state.scores = {};
     state.usedByCategory = {};
@@ -577,7 +449,6 @@
     dom.pointsStatus.textContent = "";
     dom.categoriesStatus.textContent = "";
     rebuildPlayers(2);
-    renderHero();
     renderPlayerSetup();
     renderModeGrid();
     renderCategoryGrid();
@@ -587,38 +458,28 @@
     showStep("landingStep");
   }
 
+  function findPlayer(id) {
+    return state.players.find(function (player) { return player.id === id; });
+  }
+
   function getCurrentPlayer() {
-    const playerId = state.order[state.turnIndex] || state.players[0]?.id;
-    return state.players.find((entry) => entry.id === playerId) || state.players[0];
+    return findPlayer(state.order[state.turnIndex]) || state.players[0];
   }
 
   function renderGame() {
     const player = getCurrentPlayer();
-    if (player) {
-      dom.currentPlayerHeading.textContent = `${player.name}'s turn`;
-    }
+    if (player) dom.currentPlayerHeading.textContent = `${player.name}'s turn`;
     dom.gameInstruction.textContent = state.currentQuestion
       ? state.mode === "multiple-choice"
-        ? "Use the answer grid to lock in a choice, then score the turn."
-        : "Let the player answer out loud, then reveal the official answer."
+        ? "Choose an answer, then lock it in before revealing the result."
+        : "Let the player answer out loud before revealing the result."
       : "Spin the wheel to reveal the next category.";
-
     dom.scoreboard.innerHTML = state.order.map(function (playerId) {
-      const entry = state.players.find((item) => item.id === playerId);
-      const isActive = playerId === player?.id;
+      const entry = findPlayer(playerId);
+      const active = playerId === player?.id;
       const score = state.scores[playerId] || 0;
-      return `
-        <div class="score-card${isActive ? " is-selected" : ""}">
-          <div class="player-avatar" style="background:${entry.color}"><i class="fa-solid ${entry.icon}" aria-hidden="true"></i></div>
-          <div style="flex:1;">
-            <strong>${escapeHtml(entry.name)}</strong>
-            <span class="muted">${isActive ? "Current player" : "Waiting"}</span>
-          </div>
-          <div class="stat-value" style="font-size:32px; margin:0;">${score}</div>
-        </div>
-      `;
+      return `<div class="score-card${active ? " is-selected" : ""}"><div class="player-avatar" style="background:${entry.color}"><i class="fa-solid ${entry.icon}" aria-hidden="true"></i></div><div style="flex:1"><strong>${escapeHtml(entry.name)}</strong><span class="muted">${active ? "Current player" : "Waiting"}</span></div><div class="stat-value">${score}</div></div>`;
     }).join("");
-
     dom.spinWheelBtn.disabled = state.spinning || state.questionPhase !== "idle" || !state.categories.length;
     dom.wheelRotor.style.transform = `rotate(${state.wheelRotation}deg)`;
     drawWheel();
@@ -636,7 +497,6 @@
     const radius = Math.min(width, height) * 0.46;
     const categories = state.categories.length ? state.categories : Object.keys(CATEGORY_META);
     const slice = (Math.PI * 2) / categories.length;
-
     context.clearRect(0, 0, width, height);
     categories.forEach(function (category, index) {
       const start = -Math.PI / 2 + index * slice;
@@ -646,45 +506,38 @@
       context.arc(centerX, centerY, radius, start, end);
       context.closePath();
       context.fillStyle = CATEGORY_META[category].color;
-      context.globalAlpha = 0.94;
       context.fill();
-      context.globalAlpha = 1;
-      context.lineWidth = 6;
-      context.strokeStyle = "rgba(7, 16, 28, 0.78)";
+      context.lineWidth = 7;
+      context.strokeStyle = "rgba(255,250,244,.88)";
       context.stroke();
-
       context.save();
       context.translate(centerX, centerY);
       context.rotate(start + slice / 2);
       context.textAlign = "right";
-      context.fillStyle = "#08111f";
-      context.font = "800 28px Avenir Next, Segoe UI, sans-serif";
-      context.fillText(category, radius - 24, 10);
+      context.fillStyle = "#fffaf4";
+      context.font = "900 28px Avenir Next, Trebuchet MS, sans-serif";
+      context.fillText(category, radius - 22, 10);
       context.restore();
     });
-
     context.beginPath();
-    context.arc(centerX, centerY, radius * 0.28, 0, Math.PI * 2);
-    context.fillStyle = "rgba(8, 17, 31, 0.92)";
+    context.arc(centerX, centerY, radius * 0.29, 0, Math.PI * 2);
+    context.fillStyle = "#20262d";
     context.fill();
     context.lineWidth = 8;
-    context.strokeStyle = "rgba(255,255,255,0.18)";
+    context.strokeStyle = "rgba(255,250,244,.82)";
     context.stroke();
-
-    context.fillStyle = "#f6f8fb";
-    context.font = "800 36px Avenir Next, Segoe UI, sans-serif";
+    context.fillStyle = "#fffaf4";
+    context.font = "900 36px Avenir Next, Trebuchet MS, sans-serif";
     context.textAlign = "center";
     context.textBaseline = "middle";
     context.fillText("Spin", centerX, centerY - 10);
-    context.font = "700 18px Avenir Next, Segoe UI, sans-serif";
-    context.fillStyle = "rgba(246,248,251,0.72)";
-    context.fillText("classic deck", centerX, centerY + 24);
+    context.font = "800 17px Avenir Next, Trebuchet MS, sans-serif";
+    context.fillStyle = "rgba(255,250,244,.72)";
+    context.fillText("challenge deck", centerX, centerY + 23);
   }
-  function spinWheel() {
-    if (state.spinning || state.questionPhase !== "idle" || !state.categories.length) {
-      return;
-    }
 
+  function spinWheel() {
+    if (state.spinning || state.questionPhase !== "idle" || !state.categories.length) return;
     const categories = state.categories.slice();
     const categoryIndex = Math.floor(Math.random() * categories.length);
     const category = categories[categoryIndex];
@@ -693,16 +546,12 @@
     const targetDegrees = 360 - (categoryIndex * sliceDegrees + sliceDegrees / 2);
     let delta = 2160 + targetDegrees - currentDegrees;
     if (delta < 0) delta += 360;
-
     state.spinning = true;
     state.wheelRotation += delta;
     dom.wheelResult.textContent = "Spinning...";
-    dom.spinWheelBtn.disabled = true;
     renderGame();
-
     window.setTimeout(function () {
       state.spinning = false;
-      dom.spinWheelBtn.disabled = false;
       revealQuestion(category);
     }, 3600);
   }
@@ -712,18 +561,15 @@
     state.currentQuestion = chooseQuestion(category);
     state.questionPhase = state.currentQuestion ? "active" : "idle";
     state.selectedChoiceIndex = null;
-    dom.wheelResult.textContent = state.currentQuestion ? `${category} selected.` : `No question available for ${category}.`;
+    dom.wheelResult.textContent = state.currentQuestion ? `${category} selected.` : `No question is available for ${category}.`;
     renderGame();
   }
 
   function chooseQuestion(category) {
     const pool = QUESTIONS_BY_CATEGORY[category] || [];
     if (!pool.length) return null;
-    if (!state.usedByCategory[category]) {
-      state.usedByCategory[category] = new Set();
-    }
-    const used = state.usedByCategory[category];
-    let available = pool.filter((question) => !used.has(question.id));
+    const used = state.usedByCategory[category] ||= new Set();
+    let available = pool.filter(function (question) { return !used.has(question.id); });
     if (!available.length) {
       used.clear();
       available = pool.slice();
@@ -731,169 +577,119 @@
     } else {
       state.recycleNotice = "";
     }
-    const question = available[Math.floor(Math.random() * available.length)];
+    const challengeQuestions = available.filter(function (question) { return question.tier === "challenge"; });
+    const selectionPool = challengeQuestions.length && Math.random() < 0.82 ? challengeQuestions : available;
+    const question = selectionPool[Math.floor(Math.random() * selectionPool.length)];
     used.add(question.id);
     return question;
   }
 
   function renderQuestionSurface() {
-    const modeLabel = state.mode === "multiple-choice" ? "Multiple Choice" : "Host Judged";
+    const modeLabel = state.mode === "multiple-choice" ? "Multiple Choice" : "Speak It";
     dom.questionModeBadge.textContent = modeLabel;
-    dom.questionCategoryBadge.textContent = state.currentCategory || "Classic Deck";
-
+    dom.questionCategoryBadge.textContent = state.currentCategory || "Challenge Deck";
+    dom.questionPoolStatus.textContent = buildPoolStatus();
     if (!state.currentQuestion) {
       dom.questionPrompt.textContent = "Spin the wheel to reveal the next question.";
       dom.questionSubPrompt.textContent = state.recycleNotice || "The deck is ready whenever you are.";
       dom.choicesGrid.innerHTML = "";
       dom.answerPanel.hidden = true;
       dom.questionActions.innerHTML = "";
-      dom.questionPoolStatus.textContent = buildPoolStatus();
       return;
     }
-
     const question = state.currentQuestion;
+    const revealed = state.questionPhase === "revealed";
     dom.questionPrompt.textContent = question.prompt;
-    dom.questionSubPrompt.textContent = state.questionPhase === "revealed"
-      ? (state.selectedChoiceIndex === null
-        ? "Official answer revealed."
-        : state.selectedChoiceIndex === question.answerIndex
-          ? "Selected answer matched the correct answer."
-          : "Selected answer did not match the correct answer.")
-      : state.mode === "multiple-choice"
-        ? "Tap the answer the player locks in." 
-        : "Let the player answer out loud, then reveal the official answer.";
-
+    dom.questionSubPrompt.textContent = revealed
+      ? state.selectedChoiceIndex === null ? "Official answer revealed." : state.selectedChoiceIndex === question.answerIndex ? "That answer is correct." : "That answer is not correct."
+      : state.mode === "multiple-choice" ? "Tap an answer, then lock it in." : "Let the player answer aloud, then reveal the answer.";
     dom.choicesGrid.innerHTML = "";
     if (state.mode === "multiple-choice") {
       dom.choicesGrid.innerHTML = question.choices.map(function (choice, index) {
-        const selected = state.selectedChoiceIndex === index;
-        const isCorrect = state.questionPhase === "revealed" && question.answerIndex === index;
-        const isWrong = state.questionPhase === "revealed" && selected && question.answerIndex !== index;
         const classes = ["choice-btn"];
-        if (selected) classes.push("is-selected");
-        if (isCorrect) classes.push("is-correct");
-        if (isWrong) classes.push("is-wrong");
-        return `<button class="${classes.join(" ")}" type="button" data-choice-index="${index}">${escapeHtml(choice)}</button>`;
+        if (state.selectedChoiceIndex === index) classes.push("is-selected");
+        if (revealed && index === question.answerIndex) classes.push("is-correct");
+        if (revealed && index === state.selectedChoiceIndex && index !== question.answerIndex) classes.push("is-wrong");
+        return `<button class="${classes.join(" ")}" type="button" data-choice-index="${index}"${revealed ? " disabled" : ""}>${escapeHtml(choice)}</button>`;
       }).join("");
-
-      Array.from(dom.choicesGrid.querySelectorAll("[data-choice-index]")).forEach(function (button) {
-        button.addEventListener("click", function () {
-          if (state.questionPhase !== "active") return;
-          state.selectedChoiceIndex = Number(button.getAttribute("data-choice-index"));
-          state.questionPhase = "revealed";
-          renderGame();
+      if (!revealed) {
+        dom.choicesGrid.querySelectorAll("[data-choice-index]").forEach(function (button) {
+          button.addEventListener("click", function () {
+            state.selectedChoiceIndex = Number(button.dataset.choiceIndex);
+            state.questionPhase = "selected";
+            renderQuestionSurface();
+          });
         });
-      });
+      }
     }
-
-    dom.answerPanel.hidden = state.questionPhase !== "revealed";
-    if (state.questionPhase === "revealed") {
-      dom.answerHeading.textContent = "Correct Answer";
+    dom.answerPanel.hidden = !revealed;
+    if (revealed) {
+      dom.answerHeading.textContent = "Official answer";
       dom.answerText.textContent = question.choices[question.answerIndex];
       dom.answerExplanation.textContent = question.explanation || "";
     }
-
-    renderQuestionActions();
-    dom.questionPoolStatus.textContent = buildPoolStatus();
+    renderQuestionActions(revealed);
   }
 
-  function renderQuestionActions() {
-    dom.questionActions.innerHTML = "";
-
-    if (!state.currentQuestion) {
-      return;
-    }
-
-    if (state.mode === "host-judged" && state.questionPhase === "active") {
-      const revealButton = createActionButton("btn-secondary", "Reveal Answer", function () {
+  function renderQuestionActions(revealed) {
+    if (!state.currentQuestion) return;
+    if (!revealed) {
+      const canReveal = state.mode === "host-judged" || state.selectedChoiceIndex !== null;
+      dom.questionActions.innerHTML = `<button class="btn" id="revealAnswerBtn" type="button"${canReveal ? "" : " disabled"}>${state.mode === "multiple-choice" ? "Lock answer" : "Reveal answer"}</button>`;
+      byId("revealAnswerBtn").addEventListener("click", function () {
+        if (!canReveal) return;
         state.questionPhase = "revealed";
         renderGame();
       });
-      dom.questionActions.appendChild(revealButton);
       return;
     }
-
-    if (state.questionPhase === "revealed") {
-      const awardButton = createActionButton("btn", "Award Point", function () {
-        finishTurn(true);
-      });
-      const noPointButton = createActionButton("btn-ghost", "No Point", function () {
-        finishTurn(false);
-      });
-      dom.questionActions.appendChild(awardButton);
-      dom.questionActions.appendChild(noPointButton);
-    }
+    const autoCorrect = state.mode === "multiple-choice" && state.selectedChoiceIndex === state.currentQuestion.answerIndex;
+    dom.questionActions.innerHTML = `<button class="btn" id="awardPointBtn" type="button">Award point${autoCorrect ? "" : ""}</button><button class="btn-ghost" id="noPointBtn" type="button">No point</button>`;
+    byId("awardPointBtn").addEventListener("click", function () { finishQuestion(true); });
+    byId("noPointBtn").addEventListener("click", function () { finishQuestion(false); });
   }
 
-  function createActionButton(className, label, handler) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = className;
-    button.textContent = label;
-    button.addEventListener("click", handler);
-    return button;
-  }
-
-  function finishTurn(awardPoint) {
+  function finishQuestion(awardPoint) {
     const player = getCurrentPlayer();
     if (!player) return;
-    if (awardPoint) {
-      state.scores[player.id] = (state.scores[player.id] || 0) + 1;
-      if (checkWinner(player.id)) {
-        renderGame();
-        renderWinner();
-        return;
-      }
+    if (awardPoint) state.scores[player.id] = (state.scores[player.id] || 0) + 1;
+    if (hasWinner(player)) {
+      showWinner(player);
+      return;
     }
     state.turnIndex = (state.turnIndex + 1) % state.order.length;
-    state.currentCategory = "";
     state.currentQuestion = null;
+    state.currentCategory = "";
     state.questionPhase = "idle";
     state.selectedChoiceIndex = null;
     renderGame();
   }
 
-  function checkWinner(playerId) {
-    const score = state.scores[playerId] || 0;
-    if (score < state.pointsToWin) {
-      return false;
-    }
-    const nextBest = Math.max(0, ...state.order.filter((id) => id !== playerId).map((id) => state.scores[id] || 0));
-    if (state.winByTwo && score - nextBest < 2) {
-      return false;
-    }
-    state.winnerId = playerId;
-    return true;
+  function hasWinner(player) {
+    const score = state.scores[player.id] || 0;
+    if (score < state.pointsToWin) return false;
+    if (!state.winByTwo) return true;
+    const secondHighest = Math.max(0, ...state.players.filter(function (entry) { return entry.id !== player.id; }).map(function (entry) { return state.scores[entry.id] || 0; }));
+    return score - secondHighest >= 2;
   }
 
-  function renderWinner() {
-    const winner = state.players.find((player) => player.id === state.winnerId);
-    if (!winner) return;
-    applyAvatar(dom.winnerAvatar, winner, "winner-avatar");
-    dom.winnerHeading.textContent = `${winner.name} wins!`;
-    dom.winnerSummary.textContent = `${winner.name} reached ${state.scores[winner.id]} points${state.winByTwo ? " and held the two-point lead." : "."}`;
+  function showWinner(player) {
+    state.winnerId = player.id;
+    applyAvatar(dom.winnerAvatar, player, "winner-avatar");
+    dom.winnerHeading.textContent = `${player.name} wins!`;
+    dom.winnerSummary.textContent = `${player.name} reached ${state.scores[player.id]} points.`;
     dom.winnerOverlay.hidden = false;
   }
 
   function buildPoolStatus() {
-    if (!state.currentCategory) {
-      return `${QUESTION_BANK.length} classic questions loaded across ${state.categories.length} active categories.`;
-    }
-    const used = state.usedByCategory[state.currentCategory] ? state.usedByCategory[state.currentCategory].size : 0;
-    const total = CATEGORY_COUNTS[state.currentCategory] || 0;
-    const remaining = Math.max(total - used, 0);
-    if (state.recycleNotice) {
-      return `${state.recycleNotice} ${total} questions are available in ${state.currentCategory}.`;
-    }
-    return `${remaining} of ${total} ${state.currentCategory} questions remain before that category refreshes.`;
+    const total = state.categories.reduce(function (sum, category) { return sum + (CATEGORY_COUNTS[category] || 0); }, 0);
+    const used = state.categories.reduce(function (sum, category) { return sum + (state.usedByCategory[category]?.size || 0); }, 0);
+    return `${total - used} questions remain in this deck.`;
   }
 
   function escapeHtml(value) {
-    return String(value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;")
-      .replace(/'/g, "&#39;");
+    return String(value).replace(/[&<>'"]/g, function (character) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;" }[character];
+    });
   }
 })();
