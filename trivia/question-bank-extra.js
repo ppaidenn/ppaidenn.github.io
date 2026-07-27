@@ -58,29 +58,32 @@
     bank.push({ id, category, difficulty: "classic", tier: "challenge", prompt, choices: choicePack.choices, answerIndex: choicePack.answerIndex, explanation });
   }
 
-  function addPairs(category, pairs, forward, reverse, explanation) {
+  function addPairs(category, pairs, forward, reverse, explanation, forwardAnswerSide = "right") {
     const leftPool = pairs.map(function (pair) { return pair[0]; });
     const rightPool = pairs.map(function (pair) { return pair[1]; });
     pairs.forEach(function (pair) {
       const left = pair[0];
       const right = pair[1];
-      add(category, `${left}-to-${right}`, forward(left, right), right, rightPool, explanation(left, right));
-      add(category, `${right}-to-${left}`, reverse(left, right), left, leftPool, explanation(left, right));
+      const forwardAnswer = forwardAnswerSide === "left" ? left : right;
+      const forwardPool = forwardAnswerSide === "left" ? leftPool : rightPool;
+      const reverseAnswer = forwardAnswerSide === "left" ? right : left;
+      const reversePool = forwardAnswerSide === "left" ? rightPool : leftPool;
+      add(category, `${left}-to-${right}`, forward(left, right), forwardAnswer, forwardPool, explanation(left, right));
+      add(category, `${right}-to-${left}`, reverse(left, right), reverseAnswer, reversePool, explanation(left, right));
     });
   }
 
-  const GEOGRAPHY_CAPITALS = [
-    ["Afghanistan", "Kabul"], ["Albania", "Tirana"], ["Armenia", "Yerevan"], ["Azerbaijan", "Baku"],
-    ["Bahamas", "Nassau"], ["Bangladesh", "Dhaka"], ["Belarus", "Minsk"], ["Bosnia and Herzegovina", "Sarajevo"],
-    ["Botswana", "Gaborone"], ["Bulgaria", "Sofia"], ["Cambodia", "Phnom Penh"], ["Cameroon", "Yaounde"],
-    ["Costa Rica", "San Jose"], ["Croatia", "Zagreb"], ["Cuba", "Havana"], ["Ecuador", "Quito"],
-    ["Estonia", "Tallinn"], ["Ethiopia", "Addis Ababa"], ["Ghana", "Accra"], ["Guatemala", "Guatemala City"],
-    ["Iran", "Tehran"], ["Iraq", "Baghdad"], ["Jordan", "Amman"], ["Kazakhstan", "Astana"],
-    ["Laos", "Vientiane"], ["Latvia", "Riga"], ["Lithuania", "Vilnius"], ["Luxembourg", "Luxembourg City"],
-    ["Madagascar", "Antananarivo"], ["Mali", "Bamako"], ["Mongolia", "Ulaanbaatar"], ["Myanmar", "Naypyidaw"],
-    ["Nepal", "Kathmandu"], ["Oman", "Muscat"], ["Slovakia", "Bratislava"], ["Slovenia", "Ljubljana"]
+  const GEOGRAPHY_PLACES = [
+    ["Atacama Desert", "Chile"], ["Okavango Delta", "Botswana"], ["Salar de Uyuni", "Bolivia"], ["Wadi Rum", "Jordan"],
+    ["Bagan", "Myanmar"], ["Plitvice Lakes", "Croatia"], ["Cappadocia", "Turkey"], ["Danakil Depression", "Ethiopia"],
+    ["Zhangjiajie National Forest Park", "China"], ["Komodo National Park", "Indonesia"], ["Fiordland National Park", "New Zealand"], ["Meteora", "Greece"],
+    ["Tikal", "Guatemala"], ["Teotihuacan", "Mexico"], ["Lake Baikal", "Russia"], ["Namib Desert", "Namibia"],
+    ["Galapagos Islands", "Ecuador"], ["Socotra", "Yemen"], ["Mount Kinabalu", "Malaysia"], ["Mount Aconcagua", "Argentina"],
+    ["Erg Chebbi", "Morocco"], ["Lake Bled", "Slovenia"], ["Mount Etna", "Italy"], ["Arenal Volcano", "Costa Rica"],
+    ["Serengeti National Park", "Tanzania"], ["Hokkaido", "Japan"], ["Samarkand", "Uzbekistan"], ["Tsingy de Bemaraha", "Madagascar"],
+    ["Jasper National Park", "Canada"], ["Rila Monastery", "Bulgaria"], ["Bwindi Impenetrable National Park", "Uganda"], ["Ha Long Bay", "Vietnam"],
+    ["Canaima National Park", "Venezuela"], ["Purnululu National Park", "Australia"], ["Tara National Park", "Serbia"], ["Vatnajokull National Park", "Iceland"]
   ];
-
   const SCIENCE_ATOMIC_NUMBERS = [
     ["Beryllium", "4"], ["Boron", "5"], ["Neon", "10"], ["Silicon", "14"], ["Phosphorus", "15"], ["Argon", "18"],
     ["Scandium", "21"], ["Vanadium", "23"], ["Chromium", "24"], ["Manganese", "25"], ["Iron", "26"], ["Cobalt", "27"],
@@ -138,15 +141,15 @@
     ["the Cuban Revolution", "1959"], ["the Prague Spring", "1968"], ["the Watergate break-in", "1972"], ["German reunification", "1990"]
   ];
 
-  addPairs("Geography", GEOGRAPHY_CAPITALS,
-    function (country) { return `What is the capital of ${country}?`; },
-    function (country, capital) { return `${capital} is the capital of which country?`; },
-    function (country, capital) { return `${capital} is the capital of ${country}.`; });
+  addPairs("Geography", GEOGRAPHY_PLACES,
+    function (place) { return `${place} is located in which country?`; },
+    function (place, country) { return `Which landmark, region, or natural site is in ${country}?`; },
+    function (place, country) { return `${place} is located in ${country}.`; });
 
   addPairs("Science", SCIENCE_ATOMIC_NUMBERS,
     function (element, atomicNumber) { return `Which element has atomic number ${atomicNumber}?`; },
     function (element) { return `What is the atomic number of ${element}?`; },
-    function (element, atomicNumber) { return `${element} has atomic number ${atomicNumber}.`; });
+    function (element, atomicNumber) { return `${element} has atomic number ${atomicNumber}.`; }, "left");
 
   addPairs("Music", MUSIC_ALBUMS,
     function (album) { return `Who released the album ${album}?`; },
@@ -156,7 +159,7 @@
   addPairs("Sports", SPORTS_MOMENTS,
     function (athlete, moment) { return `Which athlete is associated with ${moment}?`; },
     function (athlete) { return `Which achievement or distinction is associated with ${athlete}?`; },
-    function (athlete, moment) { return `${athlete} is associated with ${moment}.`; });
+    function (athlete, moment) { return `${athlete} is associated with ${moment}.`; }, "left");
 
   addPairs("Movies & TV", SCREEN_QUOTES,
     function (quote) { return `Which film features the line "${quote}"?`; },
@@ -168,5 +171,5 @@
     function (event, year) { return `Which event occurred in ${year}?`; },
     function (event, year) { return `${event} occurred in ${year}.`; });
 
-  window.PAIDEN_TRIVIA_BANK_VERSION = "20260726b";
+  window.PAIDEN_TRIVIA_BANK_VERSION = "20260726c";
 })();

@@ -94,6 +94,7 @@
     startOverBtn: byId("startOverBtn"),
     questionCategoryBadge: byId("questionCategoryBadge"),
     questionModeBadge: byId("questionModeBadge"),
+    currentScore: byId("currentScore"),
     questionPrompt: byId("questionPrompt"),
     questionSubPrompt: byId("questionSubPrompt"),
     choicesGrid: byId("choicesGrid"),
@@ -468,7 +469,10 @@
 
   function renderGame() {
     const player = getCurrentPlayer();
-    if (player) dom.currentPlayerHeading.textContent = `${player.name}'s turn`;
+    if (player) {
+      dom.currentPlayerHeading.textContent = `${player.name}'s turn`;
+      dom.currentScore.textContent = `Score: ${state.scores[player.id] || 0} / ${state.pointsToWin}`;
+    }
     dom.gameInstruction.textContent = state.currentQuestion
       ? state.mode === "multiple-choice"
         ? "Choose an answer, then lock it in before revealing the result."
