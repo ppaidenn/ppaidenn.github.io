@@ -87,8 +87,8 @@
     scoreboard: byId("scoreboard"),
     wheelRotor: byId("wheelRotor"),
     categoryWheelCanvas: byId("categoryWheelCanvas"),
-    wheelResult: byId("wheelResult"),
-    questionPoolStatus: byId("questionPoolStatus"),
+
+
     spinWheelBtn: byId("spinWheelBtn"),
     restartMatchBtn: byId("restartMatchBtn"),
     startOverBtn: byId("startOverBtn"),
@@ -552,7 +552,7 @@
     if (delta < 0) delta += 360;
     state.spinning = true;
     state.wheelRotation += delta;
-    dom.wheelResult.textContent = "Spinning...";
+
     renderGame();
     window.setTimeout(function () {
       state.spinning = false;
@@ -565,7 +565,7 @@
     state.currentQuestion = chooseQuestion(category);
     state.questionPhase = state.currentQuestion ? "active" : "idle";
     state.selectedChoiceIndex = null;
-    dom.wheelResult.textContent = state.currentQuestion ? `${category} selected.` : `No question is available for ${category}.`;
+
     renderGame();
   }
 
@@ -592,7 +592,7 @@
     const modeLabel = state.mode === "multiple-choice" ? "Multiple Choice" : "Speak It";
     dom.questionModeBadge.textContent = modeLabel;
     dom.questionCategoryBadge.textContent = state.currentCategory || "Challenge Deck";
-    dom.questionPoolStatus.textContent = buildPoolStatus();
+
     if (!state.currentQuestion) {
       dom.questionPrompt.textContent = "Spin the wheel to reveal the next question.";
       dom.questionSubPrompt.textContent = state.recycleNotice || "The deck is ready whenever you are.";
@@ -685,11 +685,6 @@
     dom.winnerOverlay.hidden = false;
   }
 
-  function buildPoolStatus() {
-    const total = state.categories.reduce(function (sum, category) { return sum + (CATEGORY_COUNTS[category] || 0); }, 0);
-    const used = state.categories.reduce(function (sum, category) { return sum + (state.usedByCategory[category]?.size || 0); }, 0);
-    return `${total - used} questions remain in this deck.`;
-  }
 
   function escapeHtml(value) {
     return String(value).replace(/[&<>'"]/g, function (character) {

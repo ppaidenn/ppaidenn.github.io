@@ -181,7 +181,7 @@
     ["Say hello to my little friend!", "Scarface"], ["The first rule of Fight Club is: you do not talk about Fight Club.", "Fight Club"], ["Carpe diem. Seize the day, boys.", "Dead Poets Society"], ["I love the smell of napalm in the morning.", "Apocalypse Now"],
     ["We're gonna need a bigger boat.", "Jaws"], ["A census taker once tried to test me.", "The Silence of the Lambs"], ["My precious.", "The Lord of the Rings"], ["What we've got here is failure to communicate.", "Cool Hand Luke"],
     ["I'm as mad as hell, and I'm not going to take this anymore!", "Network"], ["They may take our lives, but they'll never take our freedom!", "Braveheart"], ["I'm walking here!", "Midnight Cowboy"], ["I'm Spartacus!", "Spartacus"],
-    ["Plastics.", "The Graduate"], ["They call it a Royale with Cheese.", "Pulp Fiction"], ["I am serious. And don't call me Shirley.", "Airplane!"], ["Forget it, Jake. It's Chinatown.", "Chinatown"]
+    ["Do, or do not. There is no try.", "The Empire Strikes Back"], ["They call it a Royale with Cheese.", "Pulp Fiction"], ["I am serious. And don't call me Shirley.", "Airplane!"], ["Forget it, Jake. It's Chinatown.", "Chinatown"]
   ];
 
   const HISTORY_EVENTS = [
@@ -226,5 +226,5 @@
     function (event) { return `Date this event: ${event}.`; },
     function (event, year) { return `${event} occurred in ${year}.`; }, "right", "right");
 
-  window.PAIDEN_TRIVIA_BANK_VERSION = "20260726e";
+  window.PAIDEN_TRIVIA_BANK_VERSION = "20260726f";
 })();
