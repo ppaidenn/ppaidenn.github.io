@@ -171,6 +171,12 @@
     dom.orderBackBtn.addEventListener("click", function () { showStep("categoriesStep"); });
     dom.beginMatchBtn.addEventListener("click", startMatch);
     dom.spinWheelBtn.addEventListener("click", spinWheel);
+    dom.categoryWheelCanvas.addEventListener("click", spinWheel);
+    dom.categoryWheelCanvas.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      spinWheel();
+    });
     dom.restartMatchBtn.addEventListener("click", restartMatch);
     dom.startOverBtn.addEventListener("click", resetAll);
     dom.playAgainBtn.addEventListener("click", restartMatch);
@@ -484,7 +490,9 @@
       const score = state.scores[playerId] || 0;
       return `<div class="score-card${active ? " is-selected" : ""}"><div class="player-avatar" style="background:${entry.color}"><i class="fa-solid ${entry.icon}" aria-hidden="true"></i></div><div style="flex:1"><strong>${escapeHtml(entry.name)}</strong><span class="muted">${active ? "Current player" : "Waiting"}</span></div><div class="stat-value">${score}</div></div>`;
     }).join("");
-    dom.spinWheelBtn.disabled = state.spinning || state.questionPhase !== "idle" || !state.categories.length;
+    const canSpin = !state.spinning && state.questionPhase === "idle" && state.categories.length > 0;
+    dom.spinWheelBtn.disabled = !canSpin;
+    dom.categoryWheelCanvas.setAttribute("aria-disabled", String(!canSpin));
     dom.wheelRotor.style.transform = `rotate(${state.wheelRotation}deg)`;
     drawWheel();
     renderQuestionSurface();
