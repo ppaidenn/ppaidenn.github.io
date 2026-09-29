@@ -259,6 +259,7 @@
 
   function init() {
     resetManualExpenseEntries();
+    ensureCategorySuggestions();
     populateStates();
     wireEvents();
     renderManualExpenseRows();
@@ -384,9 +385,7 @@
         '<div class="entry-row" data-manual-entry-id="' + entry.id + '">',
         '<div class="field">',
         '<label for="manualCategory-' + entry.id + '">Category</label>',
-        '<select id="manualCategory-' + entry.id + '" data-manual-category="' + entry.id + '">',
-        buildBudgetCategoryOptions(entry.category),
-        "</select>",
+        '<input id="manualCategory-' + entry.id + '" type="text" list="budgetCategorySuggestions" maxlength="60" placeholder="e.g., Gym" value="' + escapeHtml(entry.category) + '" data-manual-category="' + entry.id + '">',
         "</div>",
         '<div class="field">',
         '<label for="manualAmount-' + entry.id + '">Monthly amount</label>',
@@ -397,11 +396,11 @@
       ].join("");
     }).join("");
 
-    Array.from(dom.manualExpenseList.querySelectorAll("[data-manual-category]")).forEach(function (select) {
-      select.addEventListener("change", function () {
-        const entry = findManualExpenseEntry(select.getAttribute("data-manual-category"));
+    Array.from(dom.manualExpenseList.querySelectorAll("[data-manual-category]")).forEach(function (input) {
+      input.addEventListener("input", function () {
+        const entry = findManualExpenseEntry(input.getAttribute("data-manual-category"));
         if (entry) {
-          entry.category = select.value || getNextEditableCategory([]);
+          entry.category = String(input.value || "").trim();
         }
         clearStatus();
       });
@@ -442,15 +441,22 @@
         };
       })
       .filter(function (entry) {
-        return entry.amount > 0;
+        return entry.category && entry.amount > 0;
       });
   }
 
-  function buildBudgetCategoryOptions(selectedValue) {
-    return EDITABLE_BUDGET_CATEGORIES.map(function (category) {
-      const selected = category === selectedValue ? " selected" : "";
-      return '<option value="' + escapeHtml(category) + '"' + selected + ">" + escapeHtml(category) + "</option>";
-    }).join("");
+  function ensureCategorySuggestions() {
+    if (document.getElementById("budgetCategorySuggestions")) {
+      return;
+    }
+    const suggestions = document.createElement("datalist");
+    suggestions.id = "budgetCategorySuggestions";
+    EDITABLE_BUDGET_CATEGORIES.forEach(function (category) {
+      const option = document.createElement("option");
+      option.value = category;
+      suggestions.appendChild(option);
+    });
+    document.body.appendChild(suggestions);
   }
 
   function getNextEditableCategory(existingCategories) {
@@ -758,9 +764,7 @@
         '<div class="entry-row" data-budget-entry-id="' + entry.id + '">',
         '<div class="field">',
         '<label for="budgetCategory-' + entry.id + '">Category</label>',
-        '<select id="budgetCategory-' + entry.id + '" data-budget-category="' + entry.id + '">',
-        buildBudgetCategoryOptions(entry.category),
-        "</select>",
+        '<input id="budgetCategory-' + entry.id + '" type="text" list="budgetCategorySuggestions" maxlength="60" placeholder="e.g., Gym" value="' + escapeHtml(entry.category) + '" data-budget-category="' + entry.id + '">',
         "</div>",
         '<div class="field">',
         '<label for="budgetAmount-' + entry.id + '">Monthly amount</label>',
@@ -771,13 +775,21 @@
       ].join("");
     }).join("");
 
-    Array.from(dom.budgetEntryList.querySelectorAll("[data-budget-category]")).forEach(function (select) {
-      select.addEventListener("change", function () {
-        const entry = findBudgetEditorEntry(select.getAttribute("data-budget-category"));
+    Array.from(dom.budgetEntryList.querySelectorAll("[data-budget-category]")).forEach(function (input) {
+      const applyBudgetCategory = function (skipEditorRender) {
+        const entry = findBudgetEditorEntry(input.getAttribute("data-budget-category"));
         if (entry) {
-          entry.category = select.value || getNextEditableCategory([]);
-          renderResults();
+          entry.category = String(input.value || "").trim();
+          renderResults({
+            skipEditorRender: skipEditorRender,
+          });
         }
+      };
+      input.addEventListener("input", function () {
+        applyBudgetCategory(true);
+      });
+      input.addEventListener("change", function () {
+        applyBudgetCategory(false);
       });
     });
     Array.from(dom.budgetEntryList.querySelectorAll("[data-budget-amount]")).forEach(function (input) {
