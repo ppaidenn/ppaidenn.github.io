@@ -167,6 +167,7 @@
     budgetEditorNote: document.getElementById("budgetEditorNote"),
     budgetTargetInput: document.getElementById("budgetTargetInput"),
     budgetEntryList: document.getElementById("budgetEntryList"),
+    addBudgetCategorySelect: document.getElementById("addBudgetCategorySelect"),
     addBudgetEntryRowBtn: document.getElementById("addBudgetEntryRowBtn"),
     expensesChartHeading: document.getElementById("expensesChartHeading"),
     expensesChartCanvas: document.getElementById("expensesChartCanvas"),
@@ -306,7 +307,11 @@
       handleBudgetTargetChange(false);
     });
     dom.addBudgetEntryRowBtn.addEventListener("click", function () {
-      addBudgetEntryRow();
+      const selection = dom.addBudgetCategorySelect ? dom.addBudgetCategorySelect.value : "";
+      if (!selection) {
+        return;
+      }
+      addBudgetEntryRow(selection);
       renderResults();
     });
     dom.runAnotherImportBtn.addEventListener("click", resetToImport);
@@ -749,12 +754,17 @@
     };
   }
 
-  function addBudgetEntryRow() {
+  function addBudgetEntryRow(selection) {
+    const choice = String(selection || "").trim();
     const usedCategories = appState.budgetEditorEntries.map(function (entry) {
       return entry.category;
     });
-    appState.budgetEditorEntries.push(createBudgetEditorEntry({
-      category: getNextEditableCategory(usedCategories),
+    appState.budgetEditorEntries.push(createBudgetEditorEntry(choice === "__custom__" ? {
+      isCustom: true,
+      budgetBucket: "Shopping & Personal",
+      amount: 0,
+    } : {
+      category: choice || getNextEditableCategory(usedCategories),
       amount: 0,
     }));
   }
@@ -810,6 +820,7 @@
       : "Edit your monthly categories and update the charts below.";
     dom.budgetTargetInput.value = monthlyTotal > 0 ? String(roundMoney(monthlyTotal)) : "";
 
+    renderAddBudgetCategoryOptions();
     dom.budgetEntryList.innerHTML = entries.map(function (entry) {
       const isCustom = entry.isCustom;
       return [
@@ -890,6 +901,13 @@
         renderResults();
       });
     });
+  }
+
+  function renderAddBudgetCategoryOptions() {
+    if (!dom.addBudgetCategorySelect) {
+      return;
+    }
+    dom.addBudgetCategorySelect.innerHTML = '<option value="">Choose a category to add...</option>' + buildBudgetCategoryOptions("", true);
   }
 
   function findBudgetEditorEntry(id) {

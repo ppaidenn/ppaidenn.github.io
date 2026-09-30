@@ -383,6 +383,24 @@
     .entry-row .icon-btn {
       margin-bottom: 2px;
     }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .budget-add-row {
+      align-items: center;
+    }
+    .budget-add-row select {
+      min-width: min(100%, 280px);
+      flex: 1 1 260px;
+    }
     .editor-total-row {
       display: flex;
       align-items: end;
@@ -1095,7 +1113,9 @@
             </div>
           </div>
           <div class="entry-list" id="budgetEntryList"></div>
-          <div class="btn-row" style="margin-top:0;">
+          <div class="btn-row budget-add-row" style="margin-top:0;">
+            <label class="sr-only" for="addBudgetCategorySelect">Category to add</label>
+            <select id="addBudgetCategorySelect" aria-label="Category to add"></select>
             <button class="btn-secondary" id="addBudgetEntryRowBtn" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>Add Category</span></button>
           </div>
         </div>
