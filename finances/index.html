@@ -372,6 +372,9 @@
     .entry-row .field {
       margin: 0;
     }
+    .entry-row.is-custom {
+      grid-template-columns: minmax(130px, 1fr) minmax(130px, 1fr) minmax(160px, 1.2fr) minmax(120px, 0.8fr) auto;
+    }
     .entry-row .icon-btn {
       margin-bottom: 2px;
     }
@@ -1037,6 +1040,25 @@
                   <td colspan="4" class="results-empty">Add spending data to compare it.</td>
                 </tr>
               </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="table-card comparison-card" id="customExpenseSection" hidden>
+          <div>
+            <h3>Custom expense details</h3>
+            <div class="legend-note">These named items are included in the pie-chart category shown beside them.</div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Pie chart category</th>
+                  <th>Monthly amount</th>
+                </tr>
+              </thead>
+              <tbody id="customExpenseTableBody"></tbody>
             </table>
           </div>
         </div>

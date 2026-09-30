@@ -174,6 +174,8 @@
     expensesChartNote: document.getElementById("expensesChartNote"),
     comparisonSection: document.getElementById("comparisonSection"),
     comparisonTableBody: document.getElementById("comparisonTableBody"),
+    customExpenseSection: document.getElementById("customExpenseSection"),
+    customExpenseTableBody: document.getElementById("customExpenseTableBody"),
     recommendationBanner: document.getElementById("recommendationBanner"),
     recommendationSummary: document.getElementById("recommendationSummary"),
     recommendationList: document.getElementById("recommendationList"),
@@ -356,9 +358,14 @@
   }
 
   function createManualExpenseEntry(input) {
+    const isCustom = Boolean(input && input.isCustom);
+    const category = input && input.category ? input.category : getNextEditableCategory([]);
     return {
       id: appState.nextManualExpenseId++,
-      category: input && input.category ? input.category : getNextEditableCategory([]),
+      category: isCustom ? "" : category,
+      customCategory: isCustom && input.customCategory ? input.customCategory : "",
+      budgetBucket: input && input.budgetBucket ? input.budgetBucket : category,
+      isCustom: isCustom,
       amount: roundMoney(Number(input && input.amount) || 0),
     };
   }
@@ -381,12 +388,17 @@
     }
 
     dom.manualExpenseList.innerHTML = appState.manualExpenseEntries.map(function (entry) {
+      const isCustom = entry.isCustom;
       return [
-        '<div class="entry-row" data-manual-entry-id="' + entry.id + '">',
+        '<div class="entry-row' + (isCustom ? ' is-custom' : '') + '" data-manual-entry-id="' + entry.id + '">',
         '<div class="field">',
         '<label for="manualCategory-' + entry.id + '">Category</label>',
-        '<input id="manualCategory-' + entry.id + '" type="text" list="budgetCategorySuggestions" maxlength="60" placeholder="e.g., Gym" value="' + escapeHtml(entry.category) + '" data-manual-category="' + entry.id + '">',
+        '<select id="manualCategory-' + entry.id + '" data-manual-category="' + entry.id + '">',
+        buildBudgetCategoryOptions(isCustom ? "__custom__" : entry.category, true),
+        "</select>",
         "</div>",
+        isCustom ? '<div class="field"><label for="manualCustomCategory-' + entry.id + '">Custom item</label><input id="manualCustomCategory-' + entry.id + '" type="text" maxlength="60" placeholder="e.g., Gym" value="' + escapeHtml(entry.customCategory) + '" data-manual-custom-category="' + entry.id + '"></div>' : "",
+        isCustom ? '<div class="field"><label for="manualBudgetBucket-' + entry.id + '">Pie chart category</label><select id="manualBudgetBucket-' + entry.id + '" data-manual-budget-bucket="' + entry.id + '">' + buildBudgetCategoryOptions(entry.budgetBucket, false) + "</select></div>" : "",
         '<div class="field">',
         '<label for="manualAmount-' + entry.id + '">Monthly amount</label>',
         '<input id="manualAmount-' + entry.id + '" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" value="' + escapeHtml(entry.amount > 0 ? String(entry.amount) : "") + '" data-manual-amount="' + entry.id + '">',
@@ -396,12 +408,30 @@
       ].join("");
     }).join("");
 
-    Array.from(dom.manualExpenseList.querySelectorAll("[data-manual-category]")).forEach(function (input) {
-      input.addEventListener("input", function () {
-        const entry = findManualExpenseEntry(input.getAttribute("data-manual-category"));
+    Array.from(dom.manualExpenseList.querySelectorAll("[data-manual-category]")).forEach(function (select) {
+      select.addEventListener("change", function () {
+        const entry = findManualExpenseEntry(select.getAttribute("data-manual-category"));
         if (entry) {
-          entry.category = String(input.value || "").trim();
+          entry.isCustom = select.value === "__custom__";
+          entry.category = entry.isCustom ? "" : select.value;
+          entry.customCategory = entry.isCustom ? entry.customCategory : "";
+          entry.budgetBucket = entry.isCustom ? (entry.budgetBucket || "Shopping & Personal") : entry.category;
+          renderManualExpenseRows();
         }
+        clearStatus();
+      });
+    });
+    Array.from(dom.manualExpenseList.querySelectorAll("[data-manual-custom-category]")).forEach(function (input) {
+      input.addEventListener("input", function () {
+        const entry = findManualExpenseEntry(input.getAttribute("data-manual-custom-category"));
+        if (entry) entry.customCategory = String(input.value || "").trim();
+        clearStatus();
+      });
+    });
+    Array.from(dom.manualExpenseList.querySelectorAll("[data-manual-budget-bucket]")).forEach(function (select) {
+      select.addEventListener("change", function () {
+        const entry = findManualExpenseEntry(select.getAttribute("data-manual-budget-bucket"));
+        if (entry) entry.budgetBucket = select.value || "Shopping & Personal";
         clearStatus();
       });
     });
@@ -436,13 +466,25 @@
     return appState.manualExpenseEntries
       .map(function (entry) {
         return {
-          category: entry.category,
+          category: entry.isCustom ? String(entry.customCategory || "").trim() : entry.category,
+          budgetBucket: entry.isCustom ? entry.budgetBucket : entry.category,
           amount: roundMoney(Math.max(Number(entry.amount) || 0, 0)),
         };
       })
       .filter(function (entry) {
         return entry.category && entry.amount > 0;
       });
+  }
+
+  function buildBudgetCategoryOptions(selectedValue, includeCustom) {
+    const options = EDITABLE_BUDGET_CATEGORIES.map(function (category) {
+      const selected = category === selectedValue ? " selected" : "";
+      return '<option value="' + escapeHtml(category) + '"' + selected + ">" + escapeHtml(category) + "</option>";
+    });
+    if (includeCustom) {
+      options.push('<option value="__custom__"' + (selectedValue === "__custom__" ? " selected" : "") + ">Custom...</option>");
+    }
+    return options.join("");
   }
 
   function ensureCategorySuggestions() {
@@ -673,7 +715,7 @@
         signedAmount: -entry.amount,
         sourceFile: "manual-entry",
         category: entry.category,
-        budgetBucket: entry.category,
+        budgetBucket: entry.budgetBucket,
         categorySource: "manual",
       });
     });
@@ -1594,6 +1636,7 @@
     dom.weeklyNetSub.textContent = "Weekly est.: " + formatCurrency(appState.incomeProfile.weeklyNet);
     renderGuideChart(suggestedBudgetMix);
     renderComparisonTable(comparisonRows);
+    renderCustomExpenseDetails(expenseTransactions, activeMonthCount);
     renderRecommendation(recommendation);
   }
 
@@ -1858,6 +1901,41 @@
         "<td>" + escapeHtml(formatCurrency(row.current)) + "</td>",
         "<td>" + escapeHtml(formatCurrency(row.suggested)) + "</td>",
         '<td><span class="comparison-delta ' + row.level + '">' + escapeHtml(deltaPrefix + formatCurrency(row.delta)) + "</span></td>",
+        "</tr>",
+      ].join("");
+    }).join("");
+  }
+
+  function renderCustomExpenseDetails(expenseTransactions, monthCount) {
+    if (!dom.customExpenseSection || !dom.customExpenseTableBody) {
+      return;
+    }
+    const details = (expenseTransactions || []).filter(function (transaction) {
+      return transaction.categorySource === "manual" && transaction.category !== transaction.budgetBucket;
+    }).reduce(function (grouped, transaction) {
+      const key = transaction.category + "\u0000" + transaction.budgetBucket;
+      if (!grouped[key]) {
+        grouped[key] = {
+          category: transaction.category,
+          budgetBucket: transaction.budgetBucket,
+          amount: 0,
+        };
+      }
+      grouped[key].amount += Number(transaction.spendAmount) || 0;
+      return grouped;
+    }, {});
+    const rows = Object.keys(details).map(function (key) {
+      const entry = details[key];
+      entry.amount = roundMoney(entry.amount / Math.max(monthCount, 1));
+      return entry;
+    });
+    dom.customExpenseSection.hidden = rows.length === 0;
+    dom.customExpenseTableBody.innerHTML = rows.map(function (entry) {
+      return [
+        "<tr>",
+        "<td>" + escapeHtml(entry.category) + "</td>",
+        "<td>" + escapeHtml(entry.budgetBucket) + "</td>",
+        "<td>" + escapeHtml(formatCurrency(entry.amount)) + "</td>",
         "</tr>",
       ].join("");
     }).join("");
