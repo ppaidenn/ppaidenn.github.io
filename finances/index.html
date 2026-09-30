@@ -373,7 +373,12 @@
       margin: 0;
     }
     .entry-row.is-custom {
-      grid-template-columns: minmax(130px, 1fr) minmax(130px, 1fr) minmax(160px, 1.2fr) minmax(120px, 0.8fr) auto;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+    }
+    .entry-row.is-custom .icon-btn {
+      grid-column: 3;
+      grid-row: 1 / span 2;
+      align-self: end;
     }
     .entry-row .icon-btn {
       margin-bottom: 2px;
@@ -757,8 +762,13 @@
       .manual-expense-grid {
         grid-template-columns: 1fr;
       }
-      .entry-row {
+      .entry-row,
+      .entry-row.is-custom {
         grid-template-columns: 1fr;
+      }
+      .entry-row.is-custom .icon-btn {
+        grid-column: auto;
+        grid-row: auto;
       }
       .segmented {
         grid-template-columns: 1fr;

@@ -737,9 +737,14 @@
   }
 
   function createBudgetEditorEntry(input) {
+    const isCustom = Boolean(input && input.isCustom);
+    const category = input && input.category ? input.category : getNextEditableCategory([]);
     return {
       id: appState.nextBudgetEditorId++,
-      category: input && input.category ? input.category : getNextEditableCategory([]),
+      category: isCustom ? "" : category,
+      customCategory: isCustom && input.customCategory ? input.customCategory : "",
+      budgetBucket: input && input.budgetBucket ? input.budgetBucket : category,
+      isCustom: isCustom,
       amount: roundMoney(Math.max(Number(input && input.amount) || 0, 0)),
     };
   }
@@ -754,9 +759,13 @@
     }));
   }
 
+  function getBudgetEntryMixKey(entry) {
+    return String(entry && entry.isCustom ? entry.budgetBucket : entry && entry.category || "").trim();
+  }
+
   function buildMixFromEntries(entries) {
     return (entries || []).reduce(function (grouped, entry) {
-      const key = String(entry.category || "").trim();
+      const key = getBudgetEntryMixKey(entry);
       const amount = roundMoney(Math.max(Number(entry.amount) || 0, 0));
       if (!key || amount <= 0) {
         return grouped;
@@ -802,12 +811,17 @@
     dom.budgetTargetInput.value = monthlyTotal > 0 ? String(roundMoney(monthlyTotal)) : "";
 
     dom.budgetEntryList.innerHTML = entries.map(function (entry) {
+      const isCustom = entry.isCustom;
       return [
-        '<div class="entry-row" data-budget-entry-id="' + entry.id + '">',
+        '<div class="entry-row' + (isCustom ? ' is-custom' : '') + '" data-budget-entry-id="' + entry.id + '">',
         '<div class="field">',
         '<label for="budgetCategory-' + entry.id + '">Category</label>',
-        '<input id="budgetCategory-' + entry.id + '" type="text" list="budgetCategorySuggestions" maxlength="60" placeholder="e.g., Gym" value="' + escapeHtml(entry.category) + '" data-budget-category="' + entry.id + '">',
+        '<select id="budgetCategory-' + entry.id + '" data-budget-category="' + entry.id + '">',
+        buildBudgetCategoryOptions(isCustom ? "__custom__" : entry.category, true),
+        "</select>",
         "</div>",
+        isCustom ? '<div class="field"><label for="budgetCustomCategory-' + entry.id + '">Custom item</label><input id="budgetCustomCategory-' + entry.id + '" type="text" maxlength="60" placeholder="e.g., Gym" value="' + escapeHtml(entry.customCategory) + '" data-budget-custom-category="' + entry.id + '"></div>' : "",
+        isCustom ? '<div class="field"><label for="budgetBucket-' + entry.id + '">Pie chart category</label><select id="budgetBucket-' + entry.id + '" data-budget-bucket="' + entry.id + '">' + buildBudgetCategoryOptions(entry.budgetBucket, false) + "</select></div>" : "",
         '<div class="field">',
         '<label for="budgetAmount-' + entry.id + '">Monthly amount</label>',
         '<input id="budgetAmount-' + entry.id + '" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" value="' + escapeHtml(entry.amount > 0 ? String(entry.amount) : "") + '" data-budget-amount="' + entry.id + '">',
@@ -817,21 +831,34 @@
       ].join("");
     }).join("");
 
-    Array.from(dom.budgetEntryList.querySelectorAll("[data-budget-category]")).forEach(function (input) {
-      const applyBudgetCategory = function (skipEditorRender) {
-        const entry = findBudgetEditorEntry(input.getAttribute("data-budget-category"));
+    Array.from(dom.budgetEntryList.querySelectorAll("[data-budget-category]")).forEach(function (select) {
+      select.addEventListener("change", function () {
+        const entry = findBudgetEditorEntry(select.getAttribute("data-budget-category"));
         if (entry) {
-          entry.category = String(input.value || "").trim();
-          renderResults({
-            skipEditorRender: skipEditorRender,
-          });
+          entry.isCustom = select.value === "__custom__";
+          entry.category = entry.isCustom ? "" : select.value;
+          entry.customCategory = entry.isCustom ? entry.customCategory : "";
+          entry.budgetBucket = entry.isCustom ? (entry.budgetBucket || "Shopping & Personal") : entry.category;
+          renderResults();
         }
-      };
-      input.addEventListener("input", function () {
-        applyBudgetCategory(true);
       });
-      input.addEventListener("change", function () {
-        applyBudgetCategory(false);
+    });
+    Array.from(dom.budgetEntryList.querySelectorAll("[data-budget-custom-category]")).forEach(function (input) {
+      input.addEventListener("input", function () {
+        const entry = findBudgetEditorEntry(input.getAttribute("data-budget-custom-category"));
+        if (entry) {
+          entry.customCategory = String(input.value || "").trim();
+          renderResults({ skipEditorRender: true });
+        }
+      });
+    });
+    Array.from(dom.budgetEntryList.querySelectorAll("[data-budget-bucket]")).forEach(function (select) {
+      select.addEventListener("change", function () {
+        const entry = findBudgetEditorEntry(select.getAttribute("data-budget-bucket"));
+        if (entry) {
+          entry.budgetBucket = select.value || "Shopping & Personal";
+          renderResults();
+        }
       });
     });
     Array.from(dom.budgetEntryList.querySelectorAll("[data-budget-amount]")).forEach(function (input) {
@@ -880,8 +907,7 @@
 
     if (currentTotal > 0) {
       appState.budgetEditorEntries.forEach(function (entry) {
-        const currentAmount = roundMoney(currentMix[entry.category] || 0);
-        entry.amount = roundMoney(currentAmount * (target / currentTotal));
+        entry.amount = roundMoney(entry.amount * (target / currentTotal));
       });
     } else {
       const guideMix = buildChartGroupFromGuide(buildSuggestedBudgetMix(target));
@@ -909,8 +935,12 @@
       const categoryInput = dom.budgetEntryList.querySelector('[data-budget-category="' + entry.id + '"]');
       const amountInput = dom.budgetEntryList.querySelector('[data-budget-amount="' + entry.id + '"]');
       if (categoryInput) {
-        categoryInput.value = entry.category;
+        categoryInput.value = entry.isCustom ? "__custom__" : entry.category;
       }
+      const customCategoryInput = dom.budgetEntryList.querySelector('[data-budget-custom-category="' + entry.id + '"]');
+      const budgetBucketInput = dom.budgetEntryList.querySelector('[data-budget-bucket="' + entry.id + '"]');
+      if (customCategoryInput) customCategoryInput.value = entry.customCategory || "";
+      if (budgetBucketInput) budgetBucketInput.value = entry.budgetBucket || "Shopping & Personal";
       if (amountInput) {
         amountInput.value = entry.amount > 0 ? String(roundMoney(entry.amount)) : "";
       }
